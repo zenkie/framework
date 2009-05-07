@@ -942,7 +942,7 @@ public class DbConnectionDefaultPool  {
                          throws SQLException{
                     	throw new SQLException("NOT implemented.");
                     }                  
-	public Properties getClientInfo(String s)
+	public String getClientInfo(String s)
                          throws SQLException{
                     	throw new SQLException("NOT implemented.");
                     }                  
