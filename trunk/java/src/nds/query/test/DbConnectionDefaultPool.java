@@ -933,6 +933,11 @@ public class DbConnectionDefaultPool  {
                     throws SQLException{
                     	throw new SQLException("NOT implemented.");
                     }
+		public Array createArrayOf(String typeName,
+                    Object[] elements)
+                    throws SQLException  {
+                    	throw new SQLException("NOT implemented.");
+                    }                  
 
         public void setHoldability(int holdability) throws SQLException{
             throw new SQLException("NOT implemented.");
