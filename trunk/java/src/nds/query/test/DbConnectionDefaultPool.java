@@ -928,6 +928,32 @@ public class DbConnectionDefaultPool  {
         public Savepoint setSavepoint() throws SQLException{
              throw new SQLException("NOT implemented.");
         }
+        public void setClientInfo(String name,
+                   String value)
+                   throws SQLClientInfoException{
+                   	throw new SQLException("NOT implemented.");
+                }
+        public boolean isValid(int timeout)
+                throws SQLException{
+                		throw new SQLException("NOT implemented.");
+                }
+		public SQLXML createSQLXML()
+                    throws SQLException{
+                		throw new SQLException("NOT implemented.");
+                }
+	public NClob createNClob()
+                  throws SQLException{
+                  	throw new SQLException("NOT implemented.");
+                  	
+                }   
+                public Blob createBlob()
+                throws SQLException{
+                	throw new SQLException("NOT implemented.");
+                }     
+                public Clob createClob()
+                throws SQLException                        {
+                	throw new SQLException("NOT implemented.");
+                }
         public Struct createStruct(String typeName,
                     Object[] attributes)
                     throws SQLException{
