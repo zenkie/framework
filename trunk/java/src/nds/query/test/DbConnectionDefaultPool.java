@@ -954,6 +954,10 @@ public class DbConnectionDefaultPool  {
                 throws SQLException                        {
                 	throw new SQLException("NOT implemented.");
                 }
+                public void setClientInfo(Properties properties)
+                   throws SQLClientInfoException{
+                   	throw new SQLException("NOT implemented.");
+                }
         public Struct createStruct(String typeName,
                     Object[] attributes)
                     throws SQLException{
