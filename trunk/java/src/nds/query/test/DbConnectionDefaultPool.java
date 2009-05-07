@@ -928,6 +928,12 @@ public class DbConnectionDefaultPool  {
         public Savepoint setSavepoint() throws SQLException{
              throw new SQLException("NOT implemented.");
         }
+        public Struct createStruct(String typeName,
+                    Object[] attributes)
+                    throws SQLException{
+                    	throw new SQLException("NOT implemented.");
+                    }
+
         public void setHoldability(int holdability) throws SQLException{
             throw new SQLException("NOT implemented.");
         }
