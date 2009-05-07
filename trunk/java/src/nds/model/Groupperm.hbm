@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="Groupperm" table="GROUPPERM">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_GROUPPERM</param>
+            </generator>
+        </id>
+        <property column="GROUPID" length="10" name="GroupId" not-null="true" type="integer" />
+        <property column="DIRECTORYID" length="10" name="DirectoryId" not-null="true" type="integer" />
+        <property column="PERMISSION" length="1" name="Permission" not-null="true" type="integer" />
+        <many-to-one class="Groups" name="Group" insert="false" update="false" not-null="true" >
+            <column name="GROUPID" />
+        </many-to-one>
+        <many-to-one class="Directory" name="Directory" insert="false" update="false" not-null="true" >
+            <column name="DIRECTORYID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

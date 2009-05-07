@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-configuration
+    PUBLIC "-//Hibernate/Hibernate Configuration DTD//EN"
+    "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+	<session-factory>
+		<!-- local connection properties -->
+		<property name="hibernate.connection.url">
+			jdbc:oracle:thin:@localhost:1521:test
+		</property>
+		<property name="hibernate.connection.driver_class">
+			oracle.jdbc.driver.OracleDriver
+		</property>
+		<property name="hibernate.connection.username">nds2</property>
+		<property name="hibernate.connection.password">abc123</property>
+		<!-- property name="hibernate.connection.pool_size"></property -->
+		<!-- dialect for Oracle 9 -->
+		<property name="dialect">
+			org.hibernate.dialect.Oracle9Dialect
+		</property>
+		<property name="hibernate.show_sql">false</property>
+		<property name="hibernate.use_outer_join">true</property>
+		<property name="hibernate.max_fetch_depth">1</property>
+		
+		<property name="jta.UserTransaction">
+			java:comp/UserTransaction
+		</property>
+		<mapping resource="nds/model/AdAliastable.hbm" />
+		<mapping resource="nds/model/AdClient.hbm" />
+		<mapping resource="nds/model/AdColumn.hbm" />
+		<mapping resource="nds/model/AdLimitValue.hbm" />
+		<mapping resource="nds/model/AdLimitValueGroup.hbm" />
+		<mapping resource="nds/model/AdOrg.hbm" />
+		<mapping resource="nds/model/AdRefbytable.hbm" />
+		<mapping resource="nds/model/AdTable.hbm" />
+		<mapping resource="nds/model/AdTableCategory.hbm" />
+		<mapping resource="nds/model/AdSubSystem.hbm" />
+		<mapping resource="nds/model/Directory.hbm" />
+		<mapping resource="nds/model/Users.hbm" />			
+		<mapping resource="nds/model/UNews.hbm" />	  
+<!--		<mapping resource="nds/model/UClob.hbm" />-->
+		<mapping resource="nds/model/AdReport.hbm" />
+		<mapping resource="nds/model/AdQuery.hbm" />
+
+<!--
+<mapping resource="nds/model/AdAliastable.hbm" />
+		<mapping resource="nds/model/AdClient.hbm" />
+		<mapping resource="nds/model/AdColumn.hbm" />
+		<mapping resource="nds/model/AdLimitValue.hbm" />
+		<mapping resource="nds/model/AdLimitValueGroup.hbm" />
+		<mapping resource="nds/model/AdOrg.hbm" />
+		<mapping resource="nds/model/AdRefbytable.hbm" />
+		<mapping resource="nds/model/AdSequence.hbm" />
+		<mapping resource="nds/model/AdTable.hbm" />
+		<mapping resource="nds/model/AdTableCategory.hbm" />
+		<mapping resource="nds/model/AdTree.hbm" />
+		<mapping resource="nds/model/AdTreenode.hbm" />
+		<mapping resource="nds/model/AdUserAttr.hbm" />
+		<mapping resource="nds/model/CAcctSchema.hbm" />
+		<mapping resource="nds/model/CBank.hbm" />
+		<mapping resource="nds/model/CBankAccount.hbm" />
+		<mapping resource="nds/model/CBpBankAccount.hbm" />
+		<mapping resource="nds/model/CBpCustomerAcct.hbm" />
+		<mapping resource="nds/model/CBpEmployeeAcct.hbm" />
+		<mapping resource="nds/model/CBpGroup.hbm" />
+		<mapping resource="nds/model/CBpVendorAcct.hbm" />
+		<mapping resource="nds/model/CBpartner.hbm" />
+		<mapping resource="nds/model/CBpartnerLocation.hbm" />
+		<mapping resource="nds/model/CCharge.hbm" />
+		<mapping resource="nds/model/CCity.hbm" />
+		<mapping resource="nds/model/CCountry.hbm" />
+		<mapping resource="nds/model/CCrossorder.hbm" />
+		<mapping resource="nds/model/CCrossorderItem.hbm" />
+		<mapping resource="nds/model/CCurrency.hbm" />
+		<mapping resource="nds/model/CElement.hbm" />
+		<mapping resource="nds/model/CElementValue.hbm" />
+		<mapping resource="nds/model/CGreeting.hbm" />
+		<mapping resource="nds/model/CInvoice.hbm" />
+		<mapping resource="nds/model/CInvoiceItem.hbm" />
+		<mapping resource="nds/model/CLocation.hbm" />
+		<mapping resource="nds/model/COrder.hbm" />
+		<mapping resource="nds/model/COrderItem.hbm" />
+		<mapping resource="nds/model/CPayment.hbm" />
+		<mapping resource="nds/model/CPaymentItem.hbm" />
+		<mapping resource="nds/model/CRegion.hbm" />
+		<mapping resource="nds/model/CSalesRegion.hbm" />
+		<mapping resource="nds/model/CTax.hbm" />
+		<mapping resource="nds/model/CTaxAcct.hbm" />
+		<mapping resource="nds/model/CTaxCategory.hbm" />
+		<mapping resource="nds/model/CUom.hbm" />
+		<mapping resource="nds/model/CUomConversion.hbm" />
+		<mapping resource="nds/model/CValidCombination.hbm" />
+		<mapping resource="nds/model/Directory.hbm" />
+		<mapping resource="nds/model/Employee.hbm" />
+		<mapping resource="nds/model/Groupperm.hbm" />
+		<mapping resource="nds/model/Groups.hbm" />
+		<mapping resource="nds/model/Groupuser.hbm" />
+		<mapping resource="nds/model/MAttribute.hbm" />
+		<mapping resource="nds/model/MAttributeInstance.hbm" />
+		<mapping resource="nds/model/MAttributeSet.hbm" />
+		<mapping resource="nds/model/MAttributeSetInstance.hbm" />
+		<mapping resource="nds/model/MAttributeUse.hbm" />
+		<mapping resource="nds/model/MAttributeValue.hbm" />
+		<mapping resource="nds/model/MInout.hbm" />
+		<mapping resource="nds/model/MInoutItem.hbm" />
+		<mapping resource="nds/model/MLocator.hbm" />
+		<mapping resource="nds/model/MLot.hbm" />
+		<mapping resource="nds/model/MLotctl.hbm" />
+		<mapping resource="nds/model/MProduct.hbm" />
+		<mapping resource="nds/model/MProductBom.hbm" />
+		<mapping resource="nds/model/MProductCategory.hbm" />
+		<mapping resource="nds/model/MReplenish.hbm" />
+		<mapping resource="nds/model/MSernoctl.hbm" />
+		<mapping resource="nds/model/MShipper.hbm" />
+		<mapping resource="nds/model/MStorage.hbm" />
+		<mapping resource="nds/model/MWarehouse.hbm" />
+		<mapping resource="nds/model/MWarehouseAcct.hbm" />
+		<mapping resource="nds/model/SpoDefPriority.hbm" />
+		<mapping resource="nds/model/SpoExportLog.hbm" />
+		<mapping resource="nds/model/UClob.hbm" />
+		<mapping resource="nds/model/UGroup.hbm" />
+		<mapping resource="nds/model/UGroupuser.hbm" />
+		<mapping resource="nds/model/UNews.hbm" />
+		<mapping resource="nds/model/UNewsCategory.hbm" />
+		<mapping resource="nds/model/UNote.hbm" />
+		<mapping resource="nds/model/UNotice.hbm" />
+		<mapping resource="nds/model/Users.hbm" />	
+-->		
+	</session-factory>
+</hibernate-configuration>

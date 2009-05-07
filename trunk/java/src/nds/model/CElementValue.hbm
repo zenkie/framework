@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="CElementValue" table="C_ELEMENTVALUE">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_C_ELEMENTVALUE</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="NAME" length="60" name="Name" not-null="true" type="string" />
+        <property column="DESCRIPTION" length="255" name="Description" not-null="true" type="string" />
+        <property column="ACCOUNTTYPE" length="1" name="AccountType" not-null="true" type="string" />
+        <property column="ACCOUNTSIGN" length="1" name="Accountsign" not-null="true" type="string" />
+        <property column="C_ELEMENT_ID" length="10" name="CElementId" not-null="false" type="integer" />
+        <property column="ISSUMMARY" length="1" name="IsSummary" not-null="true" type="string" />
+        <property column="ISBANKACCOUNT" length="1" name="IsBankAccount" not-null="true" type="string" />
+        <property column="C_BANKACCOUNT_ID" length="10" name="CBankAccountId" not-null="false" type="integer" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="CElement" name="CElement" insert="false" update="false" not-null="false" >
+            <column name="C_ELEMENT_ID" />
+        </many-to-one>
+        <many-to-one class="CBankAccount" name="CBankAccount" insert="false" update="false" not-null="false" >
+            <column name="C_BANKACCOUNT_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="CBpartner" table="C_BPARTNER">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_C_BPARTNER</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="NAME" length="120" name="Name" not-null="true" type="string" />
+        <property column="DESCRIPTION" length="765" name="Description" not-null="true" type="string" />
+        <property column="ISSUMMARY" length="1" name="IsSummary" not-null="true" type="string" />
+        <property column="C_BP_GROUP_ID" length="10" name="CBpGroupId" not-null="false" type="integer" />
+        <property column="ISVENDOR" length="1" name="IsVendor" not-null="true" type="string" />
+        <property column="ISCUSTOMER" length="1" name="IsCustomer" not-null="true" type="string" />
+        <property column="ISEMPLOYEE" length="1" name="IsEmployee" not-null="true" type="string" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="CBpGroup" name="CBpGroup" insert="false" update="false" not-null="false" >
+            <column name="C_BP_GROUP_ID" />
+        </many-to-one>
+        <set inverse="true" lazy="true" name="CBpartnerLocationSet" >
+            <key column="C_BPARTNER_ID" />
+            <one-to-many class="CBpartnerLocation" />
+        </set>
+        <set inverse="true" lazy="true" name="CBpBankAccountSet" >
+            <key column="C_BPARTNER_ID" />
+            <one-to-many class="CBpBankAccount" />
+        </set>
+        <set inverse="true" lazy="true" name="UsersSet" >
+            <key column="C_BPARTNER_ID" />
+            <one-to-many class="Users" />
+        </set>
+    </class>
+</hibernate-mapping>

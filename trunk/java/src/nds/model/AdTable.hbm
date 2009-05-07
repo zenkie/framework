@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="AdTable" table="AD_TABLE">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="assigned"/>
+        </id> 
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="NAME" length="40" name="Name" not-null="true" type="string" />
+        <property column="PK_COLUMN_ID" length="10" name="PkColumnId" not-null="false" type="integer" />
+        <property column="REALTABLE_ID" length="10" name="RealtableId" not-null="false" type="integer" />
+        <property column="FILTER" length="400" name="Filter" not-null="false" type="string" />
+        <property column="DESCRIPTION" length="80" name="Description" not-null="true" type="string" />
+        <property column="AK_COLUMN_ID" length="10" name="AkColumnId" not-null="false" type="integer" />
+        <property column="MASK" length="7" name="Mask" not-null="true" type="string" />
+        <property column="AD_TABLECATEGORY_ID" length="10" name="AdTableCategoryId" not-null="true" type="integer" />
+        <property column="ORDERNO" length="10" name="Orderno" not-null="false" type="integer" />
+        <property column="COMMENTS" length="1000" name="Comments" not-null="false" type="string" />
+        <property column="URL" length="255" name="Url" not-null="false" type="string" />
+        <property column="CLASSNAME" length="255" name="ClassName" not-null="false" type="string" />
+        <property column="DIRECTORY_ID" length="10" name="DirectoryId" not-null="false" type="integer" />
+        <property column="HAS_TRIG_AC" length="1" name="HasTrigAc" not-null="true" type="string" />
+        <property column="TRIG_AC" length="255" name="TrigAc" not-null="false" type="string" />
+        <property column="HAS_TRIG_AM" length="1" name="HasTrigAm" not-null="true" type="string" />
+        <property column="TRIG_AM" length="255" name="TrigAm" not-null="false" type="string" />
+        <property column="HAS_TRIG_BM" length="1" name="HasTrigBm" not-null="true" type="string" />
+        <property column="TRIG_BM" length="255" name="TrigBm" not-null="false" type="string" />
+        <property column="HAS_TRIG_BD" length="1" name="HasTrigBd" not-null="true" type="string" />
+        <property column="TRIG_BD" length="255" name="TrigBd" not-null="false" type="string" />
+        <property column="PROC_SUBMIT" length="255" name="ProcSubmit" not-null="false" type="string" />
+        <property column="ISDISPATCHABLE" length="1" name="IsDispatchable" not-null="true" type="string" />
+        <property column="DISP_COLUMN_ID" length="10" name="DispColumnId" not-null="false" type="integer" />
+        <property column="ISTREE" length="1" name="IsTree" not-null="true" type="string" />
+        <property column="ISMENUOBJ" length="1" name="IsMenuObj" not-null="true" type="string" />
+        <property column="ISSMS" length="1" name="IsSMS" not-null="true" type="string" />
+        <property column="ISDROPDOWN" length="1" name="IsDropdown" not-null="true" type="string" />
+        <property column="ROWCNT" length="10" name="RowCnt" not-null="false" type="integer" />
+        <property column="PARENT_COLUMN_ID" length="10" name="ParentColumnId" not-null="false" type="integer" />
+        <property column="SUMMARY_COLUMN_ID" length="10" name="SummaryColumnId" not-null="false" type="integer" />
+        <property column="DK_COLUMN_ID" length="10" name="DkColumnId" not-null="false" type="integer" />
+        <property column="U_CLOB_ID" length="10" name="UClobId" not-null="false" type="integer" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <property column="ISBIG" length="1" name="IsBig" not-null="false" type="string" />
+        <property column="PARENT_TABLE_ID" length="10" name="ParentTableId" not-null="false" type="integer" />
+        <property column="AD_OBJUICONF_ID" length="10" name="AdObjuiconfId" not-null="false" type="integer" />
+        <!--
+        <many-to-one class="AdColumn" name="PkColumn" insert="false" update="false" not-null="false" >
+            <column name="PK_COLUMN_ID" />
+        </many-to-one>
+        <many-to-one class="AdColumn" name="AkColumn" insert="false" update="false" not-null="false" >
+            <column name="AK_COLUMN_ID" />
+        </many-to-one>
+        <many-to-one class="AdColumn" name="DkColumn" insert="false" update="false" not-null="false" >
+            <column name="DK_COLUMN_ID" />
+        </many-to-one>
+        <many-to-one class="AdColumn" name="DispColumn" insert="false" update="false" not-null="false" >
+            <column name="DISP_COLUMN_ID" />
+        </many-to-one>
+        -->
+        
+        <many-to-one class="AdTable" name="Realtable" insert="false" update="false" not-null="false" >
+            <column name="REALTABLE_ID" />
+        </many-to-one>
+        <many-to-one class="AdTableCategory" name="AdTableCategory" insert="false" update="false" not-null="true" >
+            <column name="AD_TABLECATEGORY_ID" />
+        </many-to-one>
+        <many-to-one class="Directory" name="Directory" insert="false" update="false" not-null="false" >
+            <column name="DIRECTORY_ID" />
+        </many-to-one>
+        <set inverse="true" lazy="true" name="AdColumnSet" order-by="ORDERNO">
+            <key column="AD_TABLE_ID" />
+            <one-to-many class="AdColumn" />
+        </set>
+        <set inverse="true" lazy="true" name="AdAliastableSet" order-by="ORDERNO">
+            <key column="AD_TABLE_ID" />
+            <one-to-many class="AdAliastable" /> 
+        </set>
+        <set inverse="true" lazy="true" name="AdRefbytableSet" order-by="ORDERNO">
+            <key column="AD_TABLE_ID" />
+            <one-to-many class="AdRefbytable" />
+        </set>
+    </class>
+</hibernate-mapping>

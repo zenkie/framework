@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="CPayment" table="C_PAYMENT">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_C_PAYMENT</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="DOCNO" length="20" name="Docno" not-null="true" type="string" />
+        <property column="DOCTYPE" length="10" name="DocType" not-null="true" type="string" />
+        <property column="TARGETDOCTYPE" length="10" name="TargetdocType" not-null="true" type="string" />
+        <property column="DESCRIPTION" length="765" name="Description" not-null="true" type="string" />
+        <property column="SALESREP_ID" length="10" name="SalesrepId" not-null="false" type="integer" />
+        <property column="DATE_LAST_PAYMENT" length="40" name="DateLastPayment" not-null="false" type="date" />
+        <property column="DATE_LAST_ORDER" length="40" name="DateLastOrder" not-null="false" type="date" />
+        <property column="DATE_LAST_INOUT" length="40" name="DateLastInout" not-null="false" type="date" />
+        <property column="DATE_LAST_INVOICE" length="40" name="DateLastInvoice" not-null="false" type="date" />
+        <property column="C_BPARTNER_ID" length="10" name="CBpartnerId" not-null="false" type="integer" />
+        <property column="TOT_TARGET_AMT" length="18" name="TotTargetAmt" not-null="false" type="integer" />
+        <property column="TOT_AMT" length="21" name="TotAmt" not-null="false" type="double" />
+        <property column="TOT_DIFF_AMT" length="21" name="TotDiffAmt" not-null="false" type="double" />
+        <property column="TOT_LINES" length="21" name="TotLines" not-null="false" type="double" />
+        <property column="C_ORDER_ID" length="10" name="COrderId" not-null="false" type="integer" />
+        <property column="C_INVOICE_ID" length="10" name="CInvoiceId" not-null="false" type="integer" />
+        <property column="M_INOUT_ID" length="10" name="MInoutId" not-null="false" type="integer" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <property column="STATUS" length="1" name="Status" not-null="false" type="integer" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="Users" name="Salesrep" insert="false" update="false" not-null="false" >
+            <column name="SALESREP_ID" />
+        </many-to-one>
+        <many-to-one class="CBpartner" name="CBpartner" insert="false" update="false" not-null="false" >
+            <column name="C_BPARTNER_ID" />
+        </many-to-one>
+        <many-to-one class="COrder" name="COrder" insert="false" update="false" not-null="false" >
+            <column name="C_ORDER_ID" />
+        </many-to-one>
+        <many-to-one class="CInvoice" name="CInvoice" insert="false" update="false" not-null="false" >
+            <column name="C_INVOICE_ID" />
+        </many-to-one>
+        <many-to-one class="MInout" name="MInout" insert="false" update="false" not-null="false" >
+            <column name="M_INOUT_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

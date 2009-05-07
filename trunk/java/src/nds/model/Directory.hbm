@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="Directory" table="DIRECTORY">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="assigned"/>
+        </id> 
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="NAME" length="20" name="Name" not-null="true" type="string" />
+        <property column="DESCRIPTION" length="80" name="Description" not-null="false" type="string" />
+        <property column="AD_TABLECATEGORY_ID" length="10" name="AdTableCategoryId" not-null="false" type="integer" />
+        <property column="AD_TABLE_ID" length="10" name="AdTableId" not-null="false" type="integer" />
+        <property column="URL" length="250" name="Url" not-null="false" type="string" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+    </class>
+</hibernate-mapping>

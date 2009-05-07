@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="COrderItem" table="C_ORDERITEM">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_C_ORDERITEM</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="C_ORDER_ID" length="10" name="COrderId" not-null="false" type="integer" />
+        <property column="LINE" length="10" name="Line" not-null="false" type="integer" />
+        <property column="M_PRODUCT_ID" length="10" name="MProductId" not-null="false" type="integer" />
+        <property column="M_ATTRIBUTESETINSTANCE_ID" length="10" name="MAttributeSetInstanceId" not-null="false" type="integer" />
+        <property column="C_UOM_ID" length="10" name="CUomId" not-null="false" type="integer" />
+        <property column="REF_ORDERITEM_ID" length="10" name="RefOrderItemId" not-null="false" type="integer" />
+        <property column="QTYREFERED" length="18" name="Qtyrefered" not-null="false" type="integer" />
+        <property column="QTYORDERED" length="18" name="Qtyordered" not-null="false" type="integer" />
+        <property column="QTYDELIVERED" length="18" name="Qtydelivered" not-null="false" type="integer" />
+        <property column="QTYINVOICED" length="18" name="Qtyinvoiced" not-null="false" type="integer" />
+        <property column="PRICEREFERED" length="18" name="Pricerefered" not-null="false" type="integer" />
+        <property column="PRICELIST" length="21" name="Pricelist" not-null="false" type="double" />
+        <property column="PRICEACTUAL" length="21" name="Priceactual" not-null="false" type="double" />
+        <property column="DISCOUNT" length="21" name="Discount" not-null="false" type="double" />
+        <property column="C_TAX_ID" length="10" name="CTaxId" not-null="false" type="integer" />
+        <property column="FREIGHTAMT" length="21" name="FreightAmt" not-null="false" type="double" />
+        <property column="TOT_AMT_ACTUAL" length="21" name="TotAmtActual" not-null="false" type="double" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <property column="STATUS" length="1" name="Status" not-null="false" type="integer" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="COrder" name="COrder" insert="false" update="false" not-null="false" >
+            <column name="C_ORDER_ID" />
+        </many-to-one>
+        <many-to-one class="MProduct" name="MProduct" insert="false" update="false" not-null="false" >
+            <column name="M_PRODUCT_ID" />
+        </many-to-one>
+        <many-to-one class="MAttributeSetInstance" name="MAttributeSetInstance" insert="false" update="false" not-null="false" >
+            <column name="M_ATTRIBUTESETINSTANCE_ID" />
+        </many-to-one>
+        <many-to-one class="CUom" name="CUom" insert="false" update="false" not-null="false" >
+            <column name="C_UOM_ID" />
+        </many-to-one>
+        <many-to-one class="COrderItem" name="RefOrderItem" insert="false" update="false" not-null="false" >
+            <column name="REF_ORDERITEM_ID" />
+        </many-to-one>
+        <many-to-one class="CTax" name="CTax" insert="false" update="false" not-null="false" >
+            <column name="C_TAX_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

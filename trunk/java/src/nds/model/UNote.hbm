@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="UNote" table="U_NOTE">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_U_NOTE</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="NO" length="20" name="No" not-null="true" type="string" />
+        <property column="PRIORITYRULE" length="1" name="PriorityRule" not-null="true" type="string" />
+        <property column="DOCSTATUS" length="4" name="DocStatus" not-null="false" type="string" />
+        <property column="TITLE" length="255" name="Title" not-null="true" type="string" />
+        <property column="DESCRIPTION" length="400" name="Description" not-null="false" type="string" />
+        <property column="USER_ID" length="10" name="UserId" not-null="false" type="integer" />
+        <property column="STARTDATE" length="40" name="StartDate" not-null="false" type="date" />
+        <property column="LOCATION" length="100" name="Location" not-null="false" type="string" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="Users" name="User" insert="false" update="false" not-null="false" >
+            <column name="USER_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

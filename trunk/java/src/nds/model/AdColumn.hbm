@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="AdColumn" table="AD_COLUMN">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="assigned"/>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_TABLE_ID" length="10" name="AdTableId" not-null="true" type="integer" />
+        <property column="NAME" length="255" name="Name" not-null="false" type="string" />
+        <property column="DBNAME" length="255" name="DbName" not-null="true" type="string" />
+        <property column="COLTYPE" length="80" name="ColType" not-null="true" type="string" />
+        <property column="ISAK" length="1" name="IsAk" not-null="false" type="string" />
+        <property column="ISDK" length="1" name="IsDk" not-null="false" type="string" />
+        <property column="NULLABLE" length="1" name="Nullable" not-null="false" type="string" />
+        <property column="SUMMETHOD" length="10" name="Summethod" not-null="false" type="string" />
+        <property column="DESCRIPTION" length="80" name="Description" not-null="true" type="string" />
+        <property column="ORDERNO" length="10" name="Orderno" not-null="false" type="integer" />
+        <property column="MODIFIABLE" length="1" name="Modifiable" not-null="true" type="string" />
+        <property column="MASK" length="7" name="Mask" not-null="true" type="string" />
+        <property column="OBTAINMANNER" length="20" name="Obtainmanner" not-null="true" type="string" />
+        <property column="SEQUENCENAME" length="60" name="Sequencename" not-null="false" type="string" />
+        <property column="COMMENTS" length="1000" name="Comments" not-null="false" type="string" />
+        <property column="REF_COLUMN_ID" length="10" name="RefColumnId" not-null="false" type="integer" />
+        <property column="AD_LIMITVALUE_GROUP_ID" length="10" name="AdLimitValueGroupId" not-null="false" type="integer" />
+        <property column="DEFAULTVALUE" length="255" name="DefaultValue" not-null="false" type="string" />
+        <property column="REGEXPRESSION" length="255" name="Regexpression" not-null="false" type="string" />
+        <property column="ERRMSG" length="255" name="Errmsg" not-null="false" type="string" />
+        <property column="INTERPRETER" length="255" name="Interpreter" not-null="false" type="string" />
+        <property column="FILTER" length="255" name="Filter" not-null="false" type="string" />
+        <property column="DISPLAYTYPE" length="20" name="DisplayType" not-null="false" type="string" />
+        <property column="DISPLAYROWS" length="10" name="Displayrows" not-null="false" type="integer" />
+        <property column="DISPLAYCOLS" length="10" name="Displaycols" not-null="false" type="integer" />
+        <property column="DISPLAYWIDTH" length="10" name="Displaywidth" not-null="false" type="integer" />
+        <property column="U_CLOB_ID" length="10" name="UClobId" not-null="false" type="integer" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <property column="ISUPPERCASE" length="1" name="IsUpperCase" not-null="false" type="string" />
+        <property column="ISINDEXED" length="1" name="IsIndexed" not-null="false" type="string" />
+        <property column="ONDELETE" length="10" name="OnDelete" not-null="false" type="string" />
+        <property column="STATSIZE" length="10" name="StatSize" not-null="false" type="integer" />
+        <many-to-one class="AdTable" name="AdTable" insert="false" update="false" not-null="true" >
+            <column name="AD_TABLE_ID" /> 
+        </many-to-one>
+        <many-to-one class="AdColumn" name="RefColumn" insert="false" update="false" not-null="false" >
+            <column name="REF_COLUMN_ID" />
+        </many-to-one>
+        
+        <many-to-one class="AdLimitValueGroup" name="AdLimitValueGroup" insert="false" update="false" not-null="false" >
+            <column name="AD_LIMITVALUE_GROUP_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

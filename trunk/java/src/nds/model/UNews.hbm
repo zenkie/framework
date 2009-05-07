@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="UNews" table="U_NEWS">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_U_NEWS</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="NO" length="20" name="No" not-null="true" type="string" />
+        <property column="DOCTYPE" length="40" name="Doctype" not-null="false" type="string" />
+        <property column="U_NEWSCATEGORY_ID" length="10" name="UNewsCategoryId" not-null="false" type="integer" />
+        <property column="SUBJECT" length="255" name="Subject" not-null="true" type="string" />
+        <property column="DESCRIPTION" length="400" name="Description" not-null="false" type="string" />
+        <property column="PUBLISHER" length="255" name="Publisher" not-null="false" type="string" />
+        <property column="AUTHOR" length="128" name="Author" not-null="false" type="string" />
+        <property column="PUBLISHDATE" length="8" name="PublishDate" not-null="false" type="integer" />
+        <property column="PARENT_ID" length="10" name="ParentId" not-null="false" type="integer" />
+        <property column="STYLE" length="10" name="Style" not-null="false" type="string" />
+        <property column="C_CITY_ID" length="10" name="CCityId" not-null="false" type="integer" />
+        <property column="ISPUBLIC" length="1" name="IsPublic" not-null="true" type="string" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <property column="KEYWORDS" length="255" name="Keywords" not-null="false" type="string" />
+
+		<many-to-one class="UNews" name="ParentNews" insert="false" update="false" not-null="false" >
+            <column name="PARENT_ID" />
+        </many-to-one>  
+	    <many-to-one class="AdClient" name="AdClient" insert="false" update="false" not-null="false" >
+            <column name="AD_CLIENT_ID" />
+        </many-to-one>           
+    </class>
+</hibernate-mapping>

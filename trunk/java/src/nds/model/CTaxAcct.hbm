@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="CTaxAcct" table="C_TAX_ACCT">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_C_TAX_ACCT</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="C_ACCTSCHEMA_ID" length="10" name="CAcctSchemaId" not-null="false" type="integer" />
+        <property column="T_DUE_ACCT" length="10" name="TDueAcct" not-null="false" type="integer" />
+        <property column="T_LIABILITY_ACCT" length="10" name="TLiabilityAcct" not-null="false" type="integer" />
+        <property column="T_CREDIT_ACCT" length="10" name="TCreditAcct" not-null="false" type="integer" />
+        <property column="T_RECEIVABLES_ACCT" length="10" name="TReceivablesAcct" not-null="false" type="integer" />
+        <property column="T_EXPENSE_ACCT" length="10" name="TExpenseAcct" not-null="false" type="integer" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="CAcctSchema" name="CAcctSchema" insert="false" update="false" not-null="false" >
+            <column name="C_ACCTSCHEMA_ID" />
+        </many-to-one>
+        <many-to-one class="CValidCombination" name="TDueAcctObj" insert="false" update="false" not-null="false" >
+            <column name="T_DUE_ACCT" />
+        </many-to-one>
+        <many-to-one class="CValidCombination" name="TLiabilityAcctObj" insert="false" update="false" not-null="false" >
+            <column name="T_LIABILITY_ACCT" />
+        </many-to-one>
+        <many-to-one class="CValidCombination" name="TCreditAcctObj" insert="false" update="false" not-null="false" >
+            <column name="T_CREDIT_ACCT" />
+        </many-to-one>
+        <many-to-one class="CValidCombination" name="TReceivablesAcctObj" insert="false" update="false" not-null="false" >
+            <column name="T_RECEIVABLES_ACCT" />
+        </many-to-one>
+        <many-to-one class="CValidCombination" name="TExpenseAcctObj" insert="false" update="false" not-null="false" >
+            <column name="T_EXPENSE_ACCT" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

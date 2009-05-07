@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="CCrossorderItem" table="C_CROSSORDERITEM">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_C_CROSSORDERITEM</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="C_CROSSORDER_ID" length="10" name="CCrossorderId" not-null="false" type="integer" />
+        <property column="LINE" length="10" name="Line" not-null="false" type="integer" />
+        <property column="DESCRIPTION" length="255" name="Description" not-null="false" type="string" />
+        <property column="M_PRODUCT_ID" length="10" name="MProductId" not-null="false" type="integer" />
+        <property column="M_ATTRIBUTESETINSTANCE_ID" length="10" name="MAttributeSetInstanceId" not-null="false" type="integer" />
+        <property column="C_UOM_ID" length="10" name="CUomId" not-null="false" type="integer" />
+        <property column="REF_CROSSORDERITEM_ID" length="10" name="RefCrossorderItemId" not-null="false" type="integer" />
+        <property column="QTY" length="18" name="Qty" not-null="true" type="integer" />
+        <property column="PRICE_PO" length="21" name="PricePo" not-null="false" type="double" />
+        <property column="PRICE_SO" length="21" name="PriceSo" not-null="false" type="double" />
+        <property column="PRICE_DIFF" length="21" name="PriceDiff" not-null="false" type="double" />
+        <property column="AMT_PO" length="21" name="AmtPo" not-null="false" type="double" />
+        <property column="AMT_SO" length="21" name="AmtSo" not-null="false" type="double" />
+        <property column="AMT_DIFF" length="21" name="AmtDiff" not-null="false" type="double" />
+        <property column="C_TAX_ID" length="10" name="CTaxId" not-null="false" type="integer" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <property column="STATUS" length="1" name="Status" not-null="false" type="integer" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="CCrossorder" name="CCrossorder" insert="false" update="false" not-null="false" >
+            <column name="C_CROSSORDER_ID" />
+        </many-to-one>
+        <many-to-one class="MProduct" name="MProduct" insert="false" update="false" not-null="false" >
+            <column name="M_PRODUCT_ID" />
+        </many-to-one>
+        <many-to-one class="MAttributeSetInstance" name="MAttributeSetInstance" insert="false" update="false" not-null="false" >
+            <column name="M_ATTRIBUTESETINSTANCE_ID" />
+        </many-to-one>
+        <many-to-one class="CUom" name="CUom" insert="false" update="false" not-null="false" >
+            <column name="C_UOM_ID" />
+        </many-to-one>
+        <many-to-one class="CCrossorderItem" name="RefCrossorderItem" insert="false" update="false" not-null="false" >
+            <column name="REF_CROSSORDERITEM_ID" />
+        </many-to-one>
+        <many-to-one class="CTax" name="CTax" insert="false" update="false" not-null="false" >
+            <column name="C_TAX_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

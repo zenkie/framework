@@ -1,0 +1,241 @@
+package nds.excel;
+
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.*;
+import java.util.Iterator;
+import java.util.Properties;
+
+import nds.control.event.DefaultWebEvent;
+import nds.control.util.ValueHolder;
+import nds.control.web.ClientControllerWebImpl;
+import nds.log.Logger;
+import nds.log.LoggerManager;
+import nds.query.QueryUtils;
+import nds.schema.Column;
+import nds.schema.Table;
+import nds.schema.TableManager;
+import nds.util.NDSException;
+
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+
+/**
+ * Import Excel file to db, will get file content from file system
+ * then import each records in file to db, and log output(error) to
+ * specified file
+ */
+public class ImportExcel implements Runnable{
+    private static Logger logger=LoggerManager.getInstance().getLogger(ImportExcel.class.getName());
+    private String srcFile;
+    private int tableId;
+    private int startRow;// logical, start from 0
+    private boolean sendEmail;
+    private Properties params;
+    private InputStream excelStream=null;
+    private ClientControllerWebImpl controller;
+    TableManager manager;
+    private Locale locale;
+    public ImportExcel(Locale locale) {
+        manager= TableManager.getInstance();
+        params= new  Properties();
+        this.locale=locale;
+    }
+    public void setController( ClientControllerWebImpl ctrl){
+        controller= ctrl;
+    }
+    /**
+     * @param lineNo start from 1
+     */
+    public void setStartRow(int lineNo){
+        startRow= lineNo -1;
+    }
+    public void setMainTable(int tableId){
+        this.tableId= tableId;
+    }
+    public void setSourceFile(String excelFile){
+        this.srcFile= excelFile;
+    }
+    public void setSourceInputStream(InputStream excelStream){
+        this.excelStream=excelStream;
+    }
+    public void setParameter(String paramName, String paramValue){
+        params.setProperty(paramName, paramValue);
+    }
+      /**
+     * Get cell value which should be defined in by column, note col may not
+     * be maintable's column, it can be fk_table's ak column.
+     */
+    private String getCellValue(int rowNum, HSSFCell cell, Column col){
+        if( cell==null) return "";
+        String s="",t; int colType; long l;double d;
+        try{
+            if( col.isValueLimited()){
+                t=cell.getStringCellValue();
+                s= (t==null?"":t.trim());
+                s= manager.getColumnValueByDescription(col.getId(),s,locale);
+            }else{
+            	int cellType= cell.getCellType();
+            switch(col.getType() ){
+            	case Column.STRING :
+	                try{t=cell.getStringCellValue();}
+	                catch(NumberFormatException e2){
+	                    // cell is a number format, so try using numeric
+	                    d = cell.getNumericCellValue();
+	                    if((long)d==d) t=( (long)d)+"";
+	                	else t= d+"";
+	                }
+	                s= (t==null?"":t.trim());
+	                break;
+                case Column.NUMBER:
+                    if( cellType== cell.CELL_TYPE_STRING) s = cell.getStringCellValue();
+                	else {
+                		d= cell.getNumericCellValue();
+                        s= String.valueOf(d); // null will be '0'
+                	}
+                    break;
+                case Column.DATENUMBER:
+                    try{
+                    	java.util.Date dt= cell.getDateCellValue();
+                    	s=(dt==null?"":((java.text.SimpleDateFormat)QueryUtils.dateNumberFormatter.get()).format( dt));
+                    }catch(Exception ed){
+                    	// not a date format, try using string 
+                    	s= cell.getStringCellValue();
+                    }
+                    break;
+                case Column.DATE:
+                    try{
+                    	java.util.Date dt= cell.getDateCellValue();
+                    	s=(dt==null?"":((java.text.SimpleDateFormat)QueryUtils.dateFormatter.get()).format( dt));
+                    }catch(Exception ed){
+                    	// not a date format, try using string 
+                    	s= cell.getStringCellValue();
+                    }
+                    break;
+                default:
+                    logger.error("Unsupported column type:"+ col.getType());
+            }
+            }
+        }catch(Exception e){
+            logger.error("Error parsing cell(" +rowNum+","+ cell.getCellNum() + ") as column " + col+":"+ e);
+        }
+        //logger.debug(" cell(" +rowNum+","+ cell.getCellNum() + ")="+ s);
+        return s;
+    }
+    /**
+     *  sample :col = Employee.DepartmentID, then return Department_NO
+     *          col = Employee.ModifierID, then return Modifier_No
+     *          col = Employee.CreationDate, then return CreationDate
+     * special  col = Employee.OwnerName( user table's name field) then return
+     *                OwnerName_name
+     * @since 2.0, sample will be:
+     *  col=Employee.DepartmentID, then return departmentid__no
+     *  col=Employee.OwnerName, then return ownername__name
+     */
+    private String getColumnName(Column col){
+        String colName;
+        if( col.getReferenceTable() !=null){
+            Column ak= col.getReferenceTable().getAlternateKey();
+            int len= col.getName().length();
+            /*
+            if( col.getName().toUpperCase().lastIndexOf("ID")== len-2){
+                colName= col.getName().substring(0, len-2)+"_"+ ak.getName() ;
+            }else{
+                colName= col.getName()+"_"+ ak.getName() ;
+            }*/
+            colName=( col.getName()+"__"+ ak.getName()).toLowerCase();
+        }else{
+            colName= col.getName();
+        }
+//        logger.debug("colName for "+ col+ ":"+ colName);
+        return colName;
+    }
+    public DefaultWebEvent createEvent() throws NDSException{
+        DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
+        event.setParameter("command", "ObjectCreate"); // default value, may override by out parameters
+//        event.setParameter("nds.control.ejb.UserTransaction", "N"); set in jsp
+        String key;
+        for(Iterator it=params.keySet().iterator() ;it.hasNext();){
+            key=(String) it.next();
+            event.setParameter(key, params.getProperty(key));
+        }
+
+        Table table= manager.getTable(tableId);
+
+        Column col;
+        String cv;
+
+        ArrayList asc=table.getShowableColumns(Column.ADD);
+        // filter not modifiable columns
+        ArrayList columns=new ArrayList();
+        for( int i=0;i< asc.size();i++){
+            col= (Column) asc.get(i);
+            if( col.isModifiable(Column.ADD)) columns.add(col);
+        }
+        ArrayList directColumnOfData= new ArrayList(); // if column is fk, the fk table's ak will be set here, so make it easier check input data type
+
+        ArrayList colNames=new ArrayList();// if column is FK, the name will be like "col_ak", such as "product(id)_no"
+        for( int i=0;i< columns.size();i++){
+            col=(Column) columns.get(i);
+            colNames.add(getColumnName(col));
+
+            if( col.getReferenceTable() !=null){
+                directColumnOfData.add( col.getReferenceTable().getAlternateKey());
+            }else{
+                directColumnOfData.add( col);
+            }
+        }
+        try{
+
+            POIFSFileSystem fs ;
+            // check input stream first, if not found, use srcFile name
+            if ( this.excelStream !=null) fs= new POIFSFileSystem(excelStream);
+            else fs=new POIFSFileSystem(new FileInputStream(srcFile));
+
+            HSSFWorkbook wb = new HSSFWorkbook(fs);
+            HSSFSheet sheet = wb.getSheetAt(0);
+            logger.debug("Last row num:"+  sheet.getLastRowNum());
+            String[][] colData= new String[columns.size()][1+sheet.getLastRowNum() -startRow];
+            logger.debug("Create array["+columns.size()+"]["+ (sheet.getLastRowNum() -startRow)+"]" );
+            for ( int i= startRow; i<= sheet.getLastRowNum();i++){
+                HSSFRow row = sheet.getRow(i);
+                if( row==null) continue;
+                for( int j=0;j< directColumnOfData.size();j++){
+                    col= (Column) directColumnOfData.get(j);
+                    HSSFCell cell = row.getCell((short)j);
+                    cv= getCellValue(i, cell, col);
+                    colData[j][i-startRow]= cv;
+                }
+            }
+             for( int j=0;j< columns.size();j++){
+//                 logger.debug("param for "+ columns.get(j)+ ":"+ (String)colNames.get(j));
+
+                 event.setParameter( (String)colNames.get(j) ,colData[j] );
+             }
+             return event;
+
+        }catch(Exception e){
+            logger.error("Error exporting to excel" , e);
+            throw new NDSException("在处理请求时出现异常："+ e.getLocalizedMessage() );
+        }
+
+    }
+    /**
+     * Create a DefaultWebEvent of command ObjectCreate and send to controller to handle
+     * parse ValueHolder and set into output file(txt)
+     *
+     */
+    public void run(){
+        try{
+             DefaultWebEvent event= createEvent();
+             ValueHolder holder=controller.handleEvent(event);
+
+        }catch(Exception e){
+            logger.error("Error exporting to excel" , e);
+        }
+
+    }
+}

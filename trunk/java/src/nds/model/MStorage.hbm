@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="MStorage" table="M_STORAGE">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_M_STORAGE</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="M_PRODUCT_ID" length="10" name="MProductId" not-null="false" type="integer" />
+        <property column="M_ATTRIBUTESETINSTANCE_ID" length="10" name="MAttributeSetInstanceId" not-null="false" type="integer" />
+        <property column="M_LOCATOR_ID" length="10" name="MLocatorId" not-null="false" type="integer" />
+        <property column="QTYONHAND" length="10" name="Qtyonhand" not-null="false" type="integer" />
+        <property column="QTYRESERVED" length="10" name="Qtyreserved" not-null="false" type="integer" />
+        <property column="QTYORDERED" length="10" name="Qtyordered" not-null="false" type="integer" />
+        <property column="DATELASTINVENTORY" length="40" name="DateLastinventory" not-null="false" type="date" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="MProduct" name="MProduct" insert="false" update="false" not-null="false" >
+            <column name="M_PRODUCT_ID" />
+        </many-to-one>
+        <many-to-one class="MAttributeSetInstance" name="MAttributeSetInstance" insert="false" update="false" not-null="false" >
+            <column name="M_ATTRIBUTESETINSTANCE_ID" />
+        </many-to-one>
+        <many-to-one class="MLocator" name="MLocator" insert="false" update="false" not-null="false" >
+            <column name="M_LOCATOR_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

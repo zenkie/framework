@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+	"-//Hibernate/Hibernate Mapping DTD//EN"
+	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+
+<hibernate-mapping default-lazy="false" package="nds.model">
+	<class name="UClob" table="U_CLOB">
+		<id 
+			column="ID"
+			name="Id"
+			type="integer"
+		>
+		<generator class="sequence">
+                <param name="sequence">SEQ_U_Clob</param>
+        </generator>
+		</id>
+		<property
+			column="AD_CLIENT_ID"
+			length="10"
+			name="AdClientId"
+			not-null="false"
+			type="integer"
+		 />
+		<property
+			column="MODIFIERID"
+			length="10"
+			name="Modifierid"
+			not-null="false"
+			type="integer"
+		 />
+		<property
+			column="MODIFIEDDATE"
+			length="7"
+			name="Modifieddate"
+			not-null="false"
+			type="date"
+		 />
+		<property
+			column="AD_ORG_ID"
+			length="10"
+			name="AdOrgId"
+			not-null="false"
+			type="integer"
+		 />
+		<property
+			column="ISACTIVE"
+			length="1"
+			name="IsActive"
+			not-null="false"
+			type="string"
+		 />
+		<property
+			column="REFOBJECT_ID"
+			length="10"
+			name="RefObjectId"
+			not-null="false"
+			type="integer"
+		 />
+		<property
+			column="REFURL"
+			length="255"
+			name="RefURL"
+			not-null="false"
+			type="string"
+		 />
+		<property
+			column="OWNERID"
+			length="10"
+			name="OwnerId"
+			not-null="false"
+			type="integer"
+		 />
+		<property
+			column="CREATIONDATE"
+			length="7"
+			name="CreationDate"
+			not-null="false"
+			type="date"
+		 />
+		<property
+			column="NAME"
+			length="80"
+			name="Name"
+			not-null="false"
+			type="string"
+		 />
+		<property
+			column="CONTENT"
+			name="Content"
+			not-null="false"
+			type="clob"
+		 />
+		<property
+			column="REFTABLE"
+			length="80"
+			name="RefTable"
+			not-null="false"
+			type="string"
+		 />
+	</class>
+</hibernate-mapping>

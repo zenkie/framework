@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="CBpBankAccount" table="C_BP_BANKACCOUNT">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_C_BP_BANKACCOUNT</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="ACCOUNTNO" length="60" name="Accountno" not-null="true" type="string" />
+        <property column="C_BPARTNER_ID" length="10" name="CBpartnerId" not-null="false" type="integer" />
+        <property column="C_BANK_ID" length="10" name="CBankId" not-null="false" type="integer" />
+        <property column="CREDITCARDNUMBER" length="60" name="Creditcardnumber" not-null="false" type="string" />
+        <property column="A_NAME" length="180" name="AName" not-null="false" type="string" />
+        <property column="A_STREET" length="180" name="AStreet" not-null="false" type="string" />
+        <property column="A_ZIP" length="60" name="AZip" not-null="false" type="string" />
+        <property column="A_CITY" length="120" name="ACity" not-null="false" type="string" />
+        <property column="A_STATE" length="120" name="AState" not-null="false" type="string" />
+        <property column="A_COUNTRY" length="120" name="ACountry" not-null="false" type="string" />
+        <property column="A_EMAIL" length="120" name="AEmail" not-null="false" type="string" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="CBpartner" name="CBpartner" insert="false" update="false" not-null="false" >
+            <column name="C_BPARTNER_ID" />
+        </many-to-one>
+        <many-to-one class="CBank" name="CBank" insert="false" update="false" not-null="false" >
+            <column name="C_BANK_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

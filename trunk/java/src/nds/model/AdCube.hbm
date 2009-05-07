@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="AdCube" table="AD_Cube">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="assigned"/>
+        </id> 
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="NAME" length="80" name="Name" not-null="true" type="string" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <property column="AD_TABLE_ID" length="10" name="AdTableId" not-null="false" type="integer" />
+    </class> 
+</hibernate-mapping>

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="AdLimitValue" table="AD_LIMITVALUE">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="assigned"/>
+        </id>  
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_LIMITVALUE_GROUP_ID" length="10" name="AdLimitValueGroupId" not-null="true" type="integer" />
+        <property column="ORDERNO" length="10" name="Orderno" not-null="false" type="integer" />
+        <property column="VALUE" length="40" name="Value" not-null="true" type="string" />
+        <property column="DESCRIPTION" length="180" name="Description" not-null="true" type="string" />
+        <property column="COMMENTS" length="1000" name="Comments" not-null="false" type="string" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <many-to-one class="AdLimitValueGroup" name="AdLimitValueGroup" insert="false" update="false" not-null="true" >
+            <column name="AD_LIMITVALUE_GROUP_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

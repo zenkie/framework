@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="MLotctl" table="M_LOTCTL">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_M_LOTCTL</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="NAME" length="180" name="Name" not-null="false" type="string" />
+        <property column="DESCRIPTION" length="760" name="Description" not-null="false" type="string" />
+        <property column="STARTNO" length="10" name="Startno" not-null="false" type="integer" />
+        <property column="INCREMENTNO" length="10" name="Incrementno" not-null="false" type="integer" />
+        <property column="CURRENTNEXT" length="10" name="CurrentNext" not-null="false" type="integer" />
+        <property column="PREFIX" length="30" name="Prefix" not-null="false" type="string" />
+        <property column="SUFFIX" length="30" name="Suffix" not-null="false" type="string" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

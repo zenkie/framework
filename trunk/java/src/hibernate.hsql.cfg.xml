@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-configuration
+    PUBLIC "-//Hibernate/Hibernate Configuration DTD//EN"
+    "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+    <session-factory name="HSQL_SessionFactory" >
+
+		<property name="connection.datasource">java:/HSQLDataSource</property>
+		<!-- dialect for HypersonicSQL --> 
+        <property name="dialect">org.hibernate.dialect.HSQLDialect</property>
+		<property name="transaction.factory_class">
+			org.hibernate.transaction.JTATransactionFactory
+		</property>
+		<property name="hibernate.show_sql">false</property>
+		<property name="hibernate.use_outer_join">true</property>
+		<property name="hibernate.max_fetch_depth">1</property>
+		<property name="jta.UserTransaction">
+			java:comp/UserTransaction
+		</property>
+
+		<mapping resource="nds/model/AdAliastable.hbm" />
+		<mapping resource="nds/model/AdClient.hbm" />
+		<mapping resource="nds/model/AdColumn.hbm" />
+		<mapping resource="nds/model/AdLimitValue.hbm" />
+		<mapping resource="nds/model/AdLimitValueGroup.hbm" />
+		<mapping resource="nds/model/AdOrg.hbm" />
+		<mapping resource="nds/model/AdRefbytable.hbm" />
+		<mapping resource="nds/model/AdTable.hbm" />
+		<mapping resource="nds/model/AdTableCategory.hbm" />
+		<mapping resource="nds/model/AdSubSystem.hbm" />
+		<mapping resource="nds/model/Directory.hbm" />
+		<mapping resource="nds/model/Users.hbm" />			
+
+    </session-factory>
+</hibernate-configuration>

@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="CInvoice" table="C_INVOICE">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_C_INVOICE</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="DOCNO" length="20" name="Docno" not-null="true" type="string" />
+        <property column="DOCTYPE" length="10" name="DocType" not-null="true" type="string" />
+        <property column="TARGETDOCTYPE" length="10" name="TargetdocType" not-null="true" type="string" />
+        <property column="C_ORDER_ID" length="10" name="COrderId" not-null="false" type="integer" />
+        <property column="DESCRIPTION" length="765" name="Description" not-null="true" type="string" />
+        <property column="SALESREP_ID" length="10" name="SalesrepId" not-null="false" type="integer" />
+        <property column="DATEINVOICED" length="40" name="DateInvoiced" not-null="false" type="date" />
+        <property column="DATEACCT" length="40" name="DateAcct" not-null="false" type="date" />
+        <property column="DATEORDERED" length="40" name="DateOrdered" not-null="false" type="date" />
+        <property column="C_BPARTNER_ID" length="10" name="CBpartnerId" not-null="false" type="integer" />
+        <property column="C_BPARTNER_LOCATION_ID" length="10" name="CBpartnerLocationId" not-null="false" type="integer" />
+        <property column="C_CURRENCY_ID" length="10" name="CCurrencyId" not-null="false" type="integer" />
+        <property column="PAYMENTRULE" length="1" name="PaymentRule" not-null="false" type="string" />
+        <property column="TOTALLINES" length="18" name="Totallines" not-null="false" type="integer" />
+        <property column="GRANDTOTAL" length="21" name="Grandtotal" not-null="false" type="double" />
+        <property column="TOT_TAXAMT" length="21" name="TotTaxAmt" not-null="false" type="double" />
+        <property column="C_PAYMENT_ID" length="10" name="CPaymentId" not-null="false" type="integer" />
+        <property column="REF_INVOICE_ID" length="10" name="RefInvoiceId" not-null="false" type="integer" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <property column="STATUS" length="1" name="Status" not-null="false" type="integer" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="COrder" name="COrder" insert="false" update="false" not-null="false" >
+            <column name="C_ORDER_ID" />
+        </many-to-one>
+        <many-to-one class="Users" name="Salesrep" insert="false" update="false" not-null="false" >
+            <column name="SALESREP_ID" />
+        </many-to-one>
+        <many-to-one class="CBpartner" name="CBpartner" insert="false" update="false" not-null="false" >
+            <column name="C_BPARTNER_ID" />
+        </many-to-one>
+        <many-to-one class="CBpartnerLocation" name="CBpartnerLocation" insert="false" update="false" not-null="false" >
+            <column name="C_BPARTNER_LOCATION_ID" />
+        </many-to-one>
+        <many-to-one class="CCurrency" name="CCurrency" insert="false" update="false" not-null="false" >
+            <column name="C_CURRENCY_ID" />
+        </many-to-one>
+        <many-to-one class="CPayment" name="CPayment" insert="false" update="false" not-null="false" >
+            <column name="C_PAYMENT_ID" />
+        </many-to-one>
+        <many-to-one class="CInvoice" name="RefInvoice" insert="false" update="false" not-null="false" >
+            <column name="REF_INVOICE_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

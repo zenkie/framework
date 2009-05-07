@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="CInvoiceItem" table="C_INVOICEITEM">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_C_INVOICEITEM</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="C_INVOICE_ID" length="10" name="CInvoiceId" not-null="false" type="integer" />
+        <property column="LINE" length="10" name="Line" not-null="false" type="integer" />
+        <property column="DESCRIPTION" length="255" name="Description" not-null="false" type="string" />
+        <property column="M_PRODUCT_ID" length="10" name="MProductId" not-null="false" type="integer" />
+        <property column="M_ATTRIBUTESETINSTANCE_ID" length="10" name="MAttributeSetInstanceId" not-null="false" type="integer" />
+        <property column="C_UOM_ID" length="10" name="CUomId" not-null="false" type="integer" />
+        <property column="REF_INVOICEITEM_ID" length="10" name="RefInvoiceItemId" not-null="false" type="integer" />
+        <property column="QTYINVOICED" length="18" name="Qtyinvoiced" not-null="false" type="integer" />
+        <property column="PRICELIST" length="21" name="Pricelist" not-null="false" type="double" />
+        <property column="PRICEACTUAL" length="21" name="Priceactual" not-null="false" type="double" />
+        <property column="LINETOTALAMT" length="21" name="LinetotalAmt" not-null="false" type="double" />
+        <property column="C_TAX_ID" length="10" name="CTaxId" not-null="false" type="integer" />
+        <property column="TAXAMT" length="21" name="TaxAmt" not-null="false" type="double" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="CInvoice" name="CInvoice" insert="false" update="false" not-null="false" >
+            <column name="C_INVOICE_ID" />
+        </many-to-one>
+        <many-to-one class="MProduct" name="MProduct" insert="false" update="false" not-null="false" >
+            <column name="M_PRODUCT_ID" />
+        </many-to-one>
+        <many-to-one class="MAttributeSetInstance" name="MAttributeSetInstance" insert="false" update="false" not-null="false" >
+            <column name="M_ATTRIBUTESETINSTANCE_ID" />
+        </many-to-one>
+        <many-to-one class="CUom" name="CUom" insert="false" update="false" not-null="false" >
+            <column name="C_UOM_ID" />
+        </many-to-one>
+        <many-to-one class="CInvoiceItem" name="RefInvoiceItem" insert="false" update="false" not-null="false" >
+            <column name="REF_INVOICEITEM_ID" />
+        </many-to-one>
+        <many-to-one class="CTax" name="CTax" insert="false" update="false" not-null="false" >
+            <column name="C_TAX_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

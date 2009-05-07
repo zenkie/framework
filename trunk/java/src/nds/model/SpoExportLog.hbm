@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="SpoExportLog" table="SPO_EXPORT_LOG">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_SPO_EXPORT_LOG</param>
+            </generator>
+        </id>
+        <property column="NO" length="40" name="No" not-null="true" type="string" />
+        <property column="USERID" length="10" name="UserId" not-null="true" type="integer" />
+        <property column="CREATIONDATE2" length="40" name="CreationDate2" not-null="false" type="string" />
+        <property column="PRIORITY" length="10" name="Priority" not-null="false" type="integer" />
+        <property column="TABLEDESC" length="20" name="Tabledesc" not-null="false" type="string" />
+        <property column="SQLDESC" length="255" name="Sqldesc" not-null="false" type="string" />
+        <property column="EXPORTTYPE" length="20" name="ExportType" not-null="false" type="string" />
+        <property column="IPADDRESS" length="20" name="Ipaddress" not-null="false" type="string" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="STARTTIME2" length="40" name="Starttime2" not-null="false" type="string" />
+        <property column="DURATION" length="10" name="Duration" not-null="false" type="integer" />
+        <property column="STATEMSG" length="40" name="Statemsg" not-null="false" type="string" />
+        <many-to-one class="Users" name="User" insert="false" update="false" not-null="true" >
+            <column name="USERID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

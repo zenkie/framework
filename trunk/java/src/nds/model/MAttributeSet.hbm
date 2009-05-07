@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="MAttributeSet" table="M_ATTRIBUTESET">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_M_ATTRIBUTESET</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="NAME" length="180" name="Name" not-null="true" type="string" />
+        <property column="DESCRIPTION" length="765" name="Description" not-null="false" type="string" />
+        <property column="ISSERNO" length="1" name="IsSerno" not-null="true" type="string" />
+        <property column="M_SERNOCTL_ID" length="10" name="MSernoctlId" not-null="false" type="integer" />
+        <property column="ISLOT" length="1" name="IsLot" not-null="true" type="string" />
+        <property column="M_LOTCTL_ID" length="10" name="MLotctlId" not-null="false" type="integer" />
+        <property column="ISGUARANTEEDATE" length="1" name="IsGuaranteeDate" not-null="true" type="string" />
+        <property column="GUARANTEEDAYS" length="10" name="Guaranteedays" not-null="true" type="integer" />
+        <property column="ISINSTANCEATTRIBUTE" length="1" name="IsInstanceAttribute" not-null="true" type="string" />
+        <property column="MANDATORYTYPE" length="1" name="MandatoryType" not-null="true" type="string" />
+        <property column="ISGUARANTEEDATEMANDATORY" length="1" name="IsGuaranteeDateMandatory" not-null="true" type="string" />
+        <property column="ISLOTMANDATORY" length="1" name="IsLotmandatory" not-null="true" type="string" />
+        <property column="ISSERNOMANDATORY" length="1" name="IsSernomandatory" not-null="true" type="string" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="MSernoctl" name="MSernoctl" insert="false" update="false" not-null="false" >
+            <column name="M_SERNOCTL_ID" />
+        </many-to-one>
+        <many-to-one class="MLotctl" name="MLotctl" insert="false" update="false" not-null="false" >
+            <column name="M_LOTCTL_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

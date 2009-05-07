@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="GBK"?>
+<!DOCTYPE weblogic-rdbms-jar PUBLIC  '-//BEA Systems, Inc.//DTD WebLogic 6.0.0 EJB RDBMS Persistence//EN' 'http://www.bea.com/servers/wls600/dtd/weblogic-rdbms20-persistence-600.dtd'>
+
+<weblogic-rdbms-jar>
+	<weblogic-rdbms-bean>
+		<ejb-name>Sequence</ejb-name>
+		<data-source-name>nds/jdbc/DataSource</data-source-name>
+
+        	<table-name>SEQUENCES</table-name>
+		<field-map>
+			<cmp-field>index</cmp-field>
+			<dbms-column>curvalue</dbms-column>
+		</field-map>
+
+		<field-map>
+			<cmp-field>name</cmp-field>
+			<dbms-column>name</dbms-column>
+		</field-map>
+
+	</weblogic-rdbms-bean>
+</weblogic-rdbms-jar>

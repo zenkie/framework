@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="AdOrg" table="AD_ORG">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="assigned"/>
+        </id> 
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="NAME" length="120" name="Name" not-null="true" type="string" />
+        <property column="DESCRIPTION" length="765" name="Description" not-null="true" type="string" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <property column="PARENT_ORG_ID" length="10" name="ParentOrgId" not-null="false" type="integer" />
+        <property column="SUPERVISOR_ID" length="10" name="SupervisorId" not-null="false" type="integer" />
+        <property column="ISSUMMARY" length="1" name="IsSummary" not-null="true" type="string" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+	<!--
+        <many-to-one class="AdOrg" name="ParentOrg" insert="false" update="false" not-null="false" >
+            <column name="PARENT_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="Users" name="Supervisor" insert="false" update="false" not-null="false" >
+            <column name="SUPERVISOR_ID" />
+        </many-to-one>
+	-->        
+    </class>
+</hibernate-mapping>

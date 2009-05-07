@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping default-lazy="false" package="nds.model">
+    <class name="MInoutItem" table="M_INOUTITEM">
+        <id column="ID" name="Id" type="integer" >
+            <generator class="sequence">
+                <param name="sequence">SEQ_M_INOUTITEM</param>
+            </generator>
+        </id>
+        <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
+        <property column="AD_ORG_ID" length="10" name="AdOrgId" not-null="false" type="integer" />
+        <property column="M_INOUT_ID" length="10" name="MInoutId" not-null="false" type="integer" />
+        <property column="LINE" length="10" name="Line" not-null="false" type="integer" />
+        <property column="DESCRIPTION" length="255" name="Description" not-null="false" type="string" />
+        <property column="M_PRODUCT_ID" length="10" name="MProductId" not-null="false" type="integer" />
+        <property column="M_ATTRIBUTESETINSTANCE_ID" length="10" name="MAttributeSetInstanceId" not-null="false" type="integer" />
+        <property column="C_UOM_ID" length="10" name="CUomId" not-null="false" type="integer" />
+        <property column="M_LOCATOR_ID" length="10" name="MLocatorId" not-null="false" type="integer" />
+        <property column="REF_INOUTITEM_ID" length="10" name="RefInoutItemId" not-null="false" type="integer" />
+        <property column="C_ORDERLINE_ID" length="10" name="COrderlineId" not-null="false" type="integer" />
+        <property column="PLAN_QTY" length="18" name="PlanQty" not-null="false" type="integer" />
+        <property column="MOVE_QTY" length="18" name="MoveQty" not-null="false" type="integer" />
+        <property column="DIFF_QTY" length="18" name="DiffQty" not-null="false" type="integer" />
+        <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
+        <property column="MODIFIERID" length="10" name="ModifierId" not-null="false" type="integer" />
+        <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
+        <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
+        <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <many-to-one class="AdOrg" name="AdOrg" insert="false" update="false" not-null="false" >
+            <column name="AD_ORG_ID" />
+        </many-to-one>
+        <many-to-one class="MInout" name="MInout" insert="false" update="false" not-null="false" >
+            <column name="M_INOUT_ID" />
+        </many-to-one>
+        <many-to-one class="MProduct" name="MProduct" insert="false" update="false" not-null="false" >
+            <column name="M_PRODUCT_ID" />
+        </many-to-one>
+        <many-to-one class="MAttributeSetInstance" name="MAttributeSetInstance" insert="false" update="false" not-null="false" >
+            <column name="M_ATTRIBUTESETINSTANCE_ID" />
+        </many-to-one>
+        <many-to-one class="CUom" name="CUom" insert="false" update="false" not-null="false" >
+            <column name="C_UOM_ID" />
+        </many-to-one>
+        <many-to-one class="MLocator" name="MLocator" insert="false" update="false" not-null="false" >
+            <column name="M_LOCATOR_ID" />
+        </many-to-one>
+        <many-to-one class="MInoutItem" name="RefInoutItem" insert="false" update="false" not-null="false" >
+            <column name="REF_INOUTITEM_ID" />
+        </many-to-one>
+        <many-to-one class="COrderItem" name="COrderline" insert="false" update="false" not-null="false" >
+            <column name="C_ORDERLINE_ID" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>
