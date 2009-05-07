@@ -1,0 +1,11 @@
+ORA-01507: 未安装数据库 
+
+
+ORACLE 例程已经关闭。
+ORACLE 例程已经启动。
+
+Total System Global Area  135338868 bytes                                       
+Fixed Size                   453492 bytes                                       
+Variable Size             109051904 bytes                                       
+Database Buffers           25165824 bytes                                       
+Redo Buffers                 667648 bytes                                       

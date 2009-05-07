@@ -1,0 +1,7 @@
+run {
+allocate channel c1 type disk;
+sql 'alter database mount';
+restore database;
+recover database;
+sql 'alter database open resetlogs'; 
+}

@@ -1,0 +1,1 @@
+rman cmdfile = cleanbak.rcv

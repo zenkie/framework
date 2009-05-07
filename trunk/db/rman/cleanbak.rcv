@@ -1,0 +1,8 @@
+connect target sys/oracle@orcl;
+crosscheck archivelog all;
+delete expired archivelog all;
+crosscheck backup;
+delete expired backup;
+
+
+ 

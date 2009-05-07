@@ -1,0 +1,7 @@
+connect target sys/oracle@ljy
+connect catalog rman888/rman@rman
+@run_back1.rcv
+@run_back2.rcv
+@run_back3.rcv
+reset database;
+exit

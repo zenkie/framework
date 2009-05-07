@@ -1,0 +1,5 @@
+run {
+allocate channel c1 type disk;
+restore controlfile;
+release channel c1;
+} 

@@ -1,0 +1,27 @@
+connect target sys/password@dbname;
+run {
+allocate channel c1 type disk maxpiecesize=1G;
+allocate channel c2 type disk maxpiecesize=1G;
+allocate channel c3 type disk maxpiecesize=1G;
+allocate channel c4 type disk maxpiecesize=1G;
+allocate channel c5 type disk maxpiecesize=1G;
+backup incremental level 0 tag 'LV0' database
+filesperset 5
+format 'H:\RmanBackup\Level0RmanBak\LV0_%d_%T_%s_%p'
+include current controlfile;
+release channel c1;
+release channel c2;
+release channel c3;
+release channel c4;
+release channel c5;
+sql 'alter system archive log current';
+allocate channel ca1 type disk maxpiecesize=1G;
+allocate channel ca2 type disk maxpiecesize=1G;
+allocate channel ca3 type disk maxpiecesize=1G;
+backup filesperset 6
+format 'H:\RmanBackup\Level0RmanBak\Arc_%d_%T_%s_%p'
+archivelog all delete input;
+release channel ca1;
+release channel ca2;
+release channel ca3;
+}

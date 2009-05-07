@@ -1,0 +1,1 @@
+rman cmdfile = Rman_Backup_Level1.rcv

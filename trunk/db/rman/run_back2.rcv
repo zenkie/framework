@@ -1,0 +1,6 @@
+run {
+set archivelog destination to 'e:/bk';
+allocate channel c1 type disk;
+restore archivelog all;
+release channel c1;
+}

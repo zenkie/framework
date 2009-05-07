@@ -1,0 +1,5 @@
+connect target sys/oracle@201
+connect catalog rman888/rman@rman
+create catalog tablespace rmants;
+register database;
+resync catalog;

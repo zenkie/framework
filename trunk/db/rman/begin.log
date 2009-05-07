@@ -1,0 +1,15 @@
+CREATE TABLESPACE RMANTS DATAFILE
+*
+ERROR 位于第 1 行: 
+ORA-01543: 表空间 'RMANTS' 已经存在 
+
+
+
+用户已创建
+
+
+授权成功。
+
+
+授权成功。
+
