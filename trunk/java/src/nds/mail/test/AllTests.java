@@ -16,9 +16,9 @@ public class AllTests {
 	}
 
 	public static Test suite() throws Exception {
-        nds.query.test.QueryEngineExt qe= new nds.query.test.QueryEngineExt("aa");
+        //nds.query.test.QueryEngineExt qe= new nds.query.test.QueryEngineExt("aa");
         Properties props= new Properties();
-        props.put("Connection", qe.getConnection()  );
+        //props.put("Connection", qe.getConnection()  );
         props.setProperty("mail.host", "localhost");
         props.setProperty("mail.transport.protocol", "smtp");
         props.setProperty("mail.user", "root@aic.com");
