@@ -40,7 +40,7 @@ public final class QueryUtils {
 	"(select AD_LIMITVALUE_GROUP_ID from ad_column where id=?) order by orderno asc";
 	private final static String GET_COLUMN_COMMENTS="select comments from ad_column where id=?";
 	private final static String GET_TABLE_COMMENTS="select comments from ad_table where id=?";
-    private static final String GET_USER_ENV="select name, value from ad_user_attr";
+    private static final String GET_USER_ENV="select name, value from ad_user_attr where isactive='Y'";
  
     /**
      * As xxxFormat are not threadsafe, we wrapper all of them with ThreadLocal
