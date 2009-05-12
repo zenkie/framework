@@ -51,7 +51,7 @@ public class QueryEngine {
 
     private QueryEngine() throws javax.naming.NamingException{
         // check file, if invalid, exit system
-    	if(logger.isDebugEnabled())logger.debug("You licese:"+ NativeTools.getCPUIDs());
+    	//if(logger.isDebugEnabled())logger.debug("You licese:"+ NativeTools.getCPUIDs());
     	nds.util.LicenseManager.validateLicense("Agile ERP","2.0",  EJBUtils.getApplicationConfigurations().getProperty("license","/license.xml") );
         /*if((!"ddd56e5dac8d3536b806c78f42145d73".equals(Tools.getFileCheckSum(this.getClass(), "nds.util.LicenseManager")))){
         	Thread t=new Thread(new Runnable(){

@@ -178,7 +178,7 @@ public final class LicenseManager {
 				return;
 			}
 			if( license.getMachineCode()!=null){
-				String currentCodes= Tools.getCPUIDs();
+				String currentCodes= Tools.getCPUIDs(license.getMachineCode());
 				boolean match=false;
 				match=license.getMachineCode().equals(currentCodes);
 				/*if(!match){

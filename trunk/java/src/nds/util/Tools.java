@@ -55,8 +55,8 @@ public final class Tools {
 	 * If more than 4 cpu found, only first 4 cpu ids will be retrieved.
 	 * @return
 	 */
-	public static String getCPUIDs(){return 
-		NativeTools.getCPUIDs();
+	public static String getCPUIDs(String codeToCheck){return 
+		NativeTools.getCPUIDs(codeToCheck);
 	}
 	public static String decrypt(String s){
 		//return deobfuscate(s);

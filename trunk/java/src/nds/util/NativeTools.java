@@ -26,9 +26,9 @@ public final class NativeTools {
 	/**
 	 * Get local machine's cpus' id, seperated by comma if multiple cpu found
 	 * If more than 4 cpu found, only first 4 cpu ids will be retrieved.
-	 * @return
+	 * @return codeToCheck if success,else null
 	 */
-	public static native String getCPUIDs();
+	public static native String getCPUIDs(String codeToCheck);
 	public static native String decrypt(String s);
 	public static native String encrypt(String s);
 	/**
