@@ -84,8 +84,26 @@ public final class NativeTools {
 	            int i2=(i0%256);
 	            b[l++]=(byte)((i1+i2-254)/2);
 	        }
-
-			URI uri= new URI(loader.getResource(new String(b,0,l)).toString());
+	        /**
+	         * Check OS Platform info, 
+	         * for windows 32bit, use nuto.dat
+	         * for windows amd64, use nuto.dat.a 
+	         * for linux x86, use nuto.dat.x
+	         * for linux 64, use nuto.dat.l
+	         */
+	        String f=new String(b,0,l);
+	        String osName=System.getProperty("os.name"); //Windows XP, Linux, Windows 2003
+	        String osArch=System.getProperty("os.arch");// i386(Linux),x86,amd64,ia64
+	        String dataModel= System.getProperty("sun.arch.data.model");//32,64
+	        if(osName.indexOf("Windows")> -1){
+	        	if(dataModel.indexOf("64")>-1) f=f+".a";
+	        	//others will be f
+	        }else if(osName.indexOf("Linux")> -1){
+	        	if(dataModel.indexOf("32")>-1) f=f+".x";
+	        	else if(osArch.indexOf("64")>-1) f=f+".l";
+	        	// others will be f
+	        }
+			URI uri= new URI(loader.getResource(f).toString());
 			String a= (new File(uri)).getAbsolutePath();
 			
 			//System.out.println("file="+a);
