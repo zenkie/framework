@@ -2,16 +2,23 @@ package nds.control.ejb;
 
 import nds.control.event.NDSEvent;
 import nds.control.util.EJBUtils;
+import nds.control.web.*;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.util.threadpool.DefaultThreadPool;
 import nds.util.threadpool.ThreadPool;
 
+/**
+ * 
+ * @author yfzhu
+ * @deprecated
+ */
 public class AsyncControllerBean{
     private static Logger logger= LoggerManager.getInstance().getLogger(AsyncControllerBean.class.getName());
     private static ThreadPool threadPool=  new DefaultThreadPool(5);
 
     public void sendEvent(final NDSEvent event ) throws Exception {
+    	 if(true)throw new nds.util.NDSException("Deprecated, use ClientControllerWebImpl handleBackground instead");
 //          logger.debug("Begin sending event:"+event);
           threadPool.invokeLater(
               new Runnable() {

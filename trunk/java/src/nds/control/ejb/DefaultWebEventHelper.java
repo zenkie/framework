@@ -6,9 +6,7 @@
 package nds.control.ejb;
 import java.io.Serializable;
 import java.rmi.RemoteException;
-import java.sql.Connection;
 import java.sql.*;
-import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,11 +30,6 @@ import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.mail.NotificationManager;
 import nds.query.*;
-import nds.query.Expression;
-import nds.query.QueryEngine;
-import nds.query.QueryException;
-import nds.query.SPResult;
-import nds.query.SQLCombination;
 import nds.schema.Column;
 import nds.schema.Table;
 import nds.schema.TableManager;
@@ -606,12 +599,16 @@ public class DefaultWebEventHelper {
         }
     }
     public ValueHolder handleEventBackground(DefaultWebEvent event, String outputFileName) throws Exception{
+    	
+    	ClientControllerWebImpl controller=(ClientControllerWebImpl)WebUtils.getServletContextManager().getActor(nds.util.WebKeys.WEB_CONTROLLER);
+    	controller.handleEventBackground(event);
+    	
 //        try{
         ValueHolder res=null;
-            // create mdb
+/*            // create mdb
             AsyncControllerBean asyncControllerBean = new AsyncControllerBean();
             //asyncControllerBean.setEnvironment(hashtable);  //Specify any vendor-specific JNDI settings here
-            asyncControllerBean.sendEvent(event);
+            asyncControllerBean.sendEvent(event);*/
             res= new ValueHolder();
             res.put("message", "@this-command-will-run-in-background-with-log-file@:"+
                     outputFileName);

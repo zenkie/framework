@@ -26,6 +26,9 @@ import nds.security.Directory;
 import nds.security.User;
 import java.text.*;
 import org.json.*;
+import com.Ostermiller.util.CGIParser;
+import com.Ostermiller.util.NameValuePair;;
+
 /**
  * Run jasper report using parameters from ui 
  */
@@ -55,44 +58,88 @@ public class ExecuteJReport extends Command {
 		int userId=user.getId().intValue();
 		JSONObject jo= event.getJSONObject();
 		
-	  	List list;
-	  	int cxtabId= jo.getInt("cxtab");
-	  	String cxtabName;
-  		list=engine.doQueryList("select c.ad_processqueue_id, q.name , c.isbackground,c.name from ad_cxtab c, ad_processqueue q where q.id= c.ad_processqueue_id and c.id="+ cxtabId,conn);
-	  	
-	  	if(list.size()==0) throw new NDSException("@parameter-error@:(cxtab="+ cxtabId+")" );
-	  	int queueId= Tools.getInt( ((List)list.get(0)).get(0),-1);
-	  	String queueName=(String) ((List)list.get(0)).get(1);
-	  	boolean isBg= Tools.getYesNo(((List)list.get(0)).get(2),true);
-	  	cxtabName=(String) ((List)list.get(0)).get(3);
-
-	  	int tableId= jo.optInt("table",-1); 
-		
+		int tableId= jo.getInt("table"); 
 		Table table=TableManager.getInstance().getTable(tableId);
-		if(table!=null){
-			String dir= table.getSecurityDirectory();
-			event.setParameter("directory",  dir);	
-		  	helper.checkDirectoryReadPermission(event, user);
-		}else{
-			// check read permission on cxtab
-			if (!nds.control.util.SecurityUtils.hasObjectPermission(userId,user.name,"AD_CXTAB",cxtabId, 1,event.getQuerySession())){
-				throw new NDSException("@no-permission@");
-			}
-		}
+		String dir= table.getSecurityDirectory();
+		event.setParameter("directory",  dir);	
+	  	helper.checkDirectoryReadPermission(event, user);
+		
 	  	//default file type to html
 	  	String fileType= jo.getString("filetype");
 	  	
+	  	List list;
+	  	String cxtabName= jo.getString("cxtab");
+	  	int cxtabId =Tools.getInt(cxtabName, -1);
+	  	if(cxtabId==-1){
+	  		list=engine.doQueryList("select c.ad_processqueue_id, q.name , c.isbackground,c.name,c.pre_procedure,c.AD_PI_COLUMN_ID from ad_cxtab c, ad_processqueue q where q.id= c.ad_processqueue_id and c.name="+ QueryUtils.TO_STRING(cxtabName),conn);
+	  		cxtabId=Tools.getInt( engine.doQueryOne("select id from ad_cxtab where ad_client_id="+ user.adClientId +" and c.name="+ QueryUtils.TO_STRING(cxtabName),conn), -1);
+	  	}else{
+	  		list=engine.doQueryList("select c.ad_processqueue_id, q.name , c.isbackground,c.name,c.pre_procedure,c.AD_PI_COLUMN_ID from ad_cxtab c, ad_processqueue q where q.id= c.ad_processqueue_id and c.id="+ cxtabName,conn);
+	  	}
+	  	
+	  	if(list.size()==0) throw new NDSException("@parameter-error@:(cxtab="+ cxtabName+")" );		
+	  	int queueId= Tools.getInt( ((List)list.get(0)).get(0),-1);
+	  	String queueName=(String) ((List)list.get(0)).get(1);
+	  	boolean isBg= Tools.getYesNo(((List)list.get(0)).get(2),true);
+	  	
+	  	cxtabName=(String) ((List)list.get(0)).get(3);
+	  	
+	  	String preProcedure=(String) ((List)list.get(0)).get(4);
+	  	int piColumnId=Tools.getInt( ((List)list.get(0)).get(5), -1);//AD_PI_COLUMN_ID
+
+	  	
+//	  cxtab name must be name, not pk in process
+		JSONObject query=new JSONObject( jo.getString("query"));
+		
+		/**
+		 * 两种情况：
+		 * 1）通过cxtab.ad_table_id的索引字段构造的查询（针对普通交接表）
+		 * 2）通过cxtab_jpara 的定义构造的查询（针对预运算存储过程）
+		 * 
+		 * 对于第1种情况，从界面输入来构造查询条件
+		 * 第2种情况，最终的交叉表查询条件类似于 select xxx from dd where ad_pi_id=143, 即结果集的where语句
+		 * 就是 ad_pi_id存放的内容。第2种情况的出现条件是pre_procedure is not null
+		 * 
+		 * AD_CXTAB.AD_PI_COLUMN_ID number(10)，ad_column.id 必须关联到事实表，这个字段用于指明哪个字段的值将被识别为
+		 * 本次报表的数据。这个字段将存储P_PI_ID的值。 建议就设置为 ad_pi_id，无需关联到AD_PINSTANCE表。
+		 * 如果这个字段不进行设置，在查询事实表时，将获取全部数据。
+		 * 
+		 */
+		QueryRequestImpl req=null;
+		int piId=-1;
+
+		int pid=Tools.getInt(engine.doQueryOne("select id from ad_process where classname='nds.process.CxtabRunner' and isactive='Y'",conn),-1);
+		List params= engine.doQueryList("select name, valuetype,nullable,orderno from ad_process_para where ad_process_id="+pid+" order by orderno asc", conn);
+		HashMap map=new HashMap();
+		
+		if(Validator.isNotNull(preProcedure)){
+			
+			piId = engine.getSequence("ad_pinstance");
+			
+			//create filter for cxtab data
+			Expression expr=null;
+			if (piColumnId !=-1) expr=new Expression(new ColumnLink( new int[]{piColumnId}),"="+ piId,null);
+			else logger.debug("find ad_pi_column_id=-1 for cxtab id="+ cxtabId);
+			req=ExecuteCxtab.constructQuery(table,event.getQuerySession(), userId, event.getLocale(),expr);
+			
+			// 将ad_cxtab_jpara里的参数定义构造到 params 里，并将界面上传入的参数值放置到map 里
+			String cs=query.optString("param_str");
+			if ( Validator.isNotNull(cs)){
+				CGIParser parser= new CGIParser(cs,"UTF-8");
+		    	java.util.Enumeration e=parser.getParameterNames();
+		    	HashMap csMap=new HashMap();
+		    	while(e.hasMoreElements()){
+		    		String key= (String)e.nextElement();
+		    		csMap.put(key, parser.getParameter(key));
+		    	}
+		    	ExecuteCxtab.addJparams(params, map, cxtabId,csMap,event.getQuerySession(), userId,event.getLocale(), conn);
+			}
+		}else{
+			req=nds.control.util.AjaxUtils.parseQuery(query, event.getQuerySession(), userId, event.getLocale());
+		}	  	
 	  	// cxtab name must be name, not pk in process
 	  	String queryStr=jo.getString("query");
 		
-		QueryRequestImpl req=null;
-		if( table!=null){
-			JSONObject query=new JSONObject( queryStr);
-			req=nds.control.util.AjaxUtils.parseQuery(query, event.getQuerySession(), userId, event.getLocale());
-		}else{
-			//no table, that's only for jasperreport
-			//will set queryStr to queyr directly
-		}
 		
 		 /* 	"query" - for jasperreport without table, will send json.toString() as query 
 		 * 		"filter" - description of the current filter
@@ -101,24 +148,19 @@ public class ExecuteJReport extends Command {
 		 * 		"chk_run_now*"	- run immediate or by schedule
 		 */
 			
-	  	int pid=Tools.getInt(engine.doQueryOne("select id from ad_process where classname='nds.process.JReportRunner' and isactive='Y'",conn),-1);
-		List params= engine.doQueryList("select name, valuetype,nullable,orderno from ad_process_para where ad_process_id="+pid+" order by orderno asc", conn);
-		
-		HashMap map=new HashMap();
 		map.put("CXTAB", cxtabName);
-		if(req!=null){
-			map.put("FILTER", req.getParamDesc(true));
-			if(req.getParamExpression()!=null)map.put("FILTER_EXPR",req.getParamExpression().toString());
-		}else{
-			map.put("QUERY",queryStr);
-		}
+		map.put("FILTER", req.getParamDesc(true));
+		map.put("QUERY", queryStr);
+		
+		if(req.getParamExpression()!=null)map.put("FILTER_EXPR",req.getParamExpression().toString());
+
 		SimpleDateFormat sdf = new SimpleDateFormat("MMddHHmm");
 		String filename="JRP_"+table.getName()+sdf.format(new Date());
 		
 		map.put("FILENAME", filename);
 		map.put("FILETYPE", fileType);
 		
-	    int piId=ProcessUtils.createAdProcessInstance(pid,queueName, "",user,params,map,conn);
+	    piId=ProcessUtils.createAdProcessInstance(piId,pid,queueName, "",user,params,map,conn);
 	    ValueHolder hd=null;
 	    JSONObject returnObj=new JSONObject();
 	    if(isBg){

@@ -63,6 +63,8 @@ public class JReport {
 	private String fileType;
 	private int reportInstanceId=-1; // check ad_cxtab.AD_COLUMN_CXTABINST_ID , if set, will used this as instance id
 									  // of query, and data will be limited to the range specified
+	private int processInstanceId; // ad_pinstance.ID
+
 	private Properties props;
 	private long startTime;
 	private Table factTable;
@@ -102,7 +104,11 @@ public class JReport {
 			JasperReport jreport= this.getJasperReport(jasperFilePath);
 
 			HashMap parameters=new HashMap();
+			/**
+			 * from 2009.05.19, we do not allow jreport without table defined
+			 */
 			if( tableId==-1 ){
+				if(true)throw new NDSException("table must be defined");
 				// no ad_table, all parameters are read from ad_cxtab_jpara
 				JSONObject jo= new JSONObject(queryStr);
 				JRParameter[] params=jreport.getParameters();
@@ -137,7 +143,8 @@ public class JReport {
 			parameters.put("user", user.name);
 	    	parameters.put("jobid", ReportTools.createJobId(user.id+""));
 	    	parameters.put("userid", String.valueOf(user.id));
-			
+	    	parameters.put("ad_pi_id", String.valueOf(processInstanceId));
+	    	
 			JasperPrint jasperPrint = JasperFillManager.fillReport(jreport, parameters, conn);
 
    	        File destFolder = new File(exportRootPath+File.separator+ user.getClientDomain()+File.separator+  user.name);
@@ -388,7 +395,13 @@ public class JReport {
 		return query;
 	}
 	
-	
+	/**
+	 * This will be needed when doing cube exporting
+	 * @param d
+	 */
+	public void setAD_PInstance_ID(int d){
+		this.processInstanceId=d;
+	}
 	public int getReportInstanceId() {
 		return this.reportInstanceId;
 	}

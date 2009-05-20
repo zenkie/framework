@@ -182,7 +182,8 @@ url=¡±¡¯PATH?...& wfc_<×Ö¶Îid>=¡±+ oc.getMainTableColumnInput(<×Ö¶Îid>)+¡±&wfc_<
 	 * @return Image url to show the query form
 	 */
 	public String getImageURL(){
-		return WebKeys.NDS_URI+"/images/"+ (isDropdown?"dropdown.gif":"find.gif");
+		return WebKeys.NDS_URI+"/images/"+ (isDropdown?"dropdown.gif":
+			(this.isSingle_temp? "find.gif": "filterobj.gif"));
 	}
 	
 	

@@ -7,11 +7,13 @@ package nds.process;
 import java.util.*;
 import java.sql.*;
 
-import nds.control.event.NDSEventException;
+import nds.control.event.*;
 import nds.control.util.SecurityUtils;
 import nds.control.util.ValueHolder;
 import nds.schema.*;
 import nds.query.*;
+import nds.control.web.ClientControllerWebImpl;
+import nds.control.web.WebUtils;
 import nds.security.User;
 import nds.util.NDSException;
 import nds.util.Tools;
@@ -30,6 +32,8 @@ public class JReportRunner extends SvrProcess
 	private String fileName;
 	private String fileType;
 	private QueryEngine engine;
+	private String filter;
+	
 	/**
 	 *  Parameters:
 	 *    filter_expr(with table), query(without table) 
@@ -53,6 +57,8 @@ public class JReportRunner extends SvrProcess
 				fileName= ((String)para[i].getParameter());
 			else if (name.equals("filetype"))
 				fileType= ((String)para[i].getParameter());
+			else if (name.equals("filter"))
+				filter= ((String)para[i].getParameter());
 		}
 	}	//	prepare
 	
@@ -68,13 +74,28 @@ public class JReportRunner extends SvrProcess
 	  	Connection conn=null;
 	  	PreparedStatement pstmt=null;
 		engine=  QueryEngine.getInstance();
-	  	
+		boolean isBackground=true;
 	    try{
 		    conn= engine.getConnection();
 		    // check pre-process for cxtab
 			log.debug("filterExpr="+ filterExpr);
 			log.debug("query="+ query);
+
+			//check PRE_PROCEDURE for cxtab
 		    
+		    List cxInfo=(List) engine.doQueryList(
+		    		"select PRE_PROCEDURE, AD_PI_COLUMN_ID from ad_cxtab where ad_client_id="+ this.getAD_Client_ID()+
+		    		" and name="+ QueryUtils.TO_STRING(cxtabName), conn);
+		    String preProcedure=(String) ((List)cxInfo.get(0)).get(0);
+		    int piColumnId= Tools.getInt( ((List)cxInfo.get(0)).get(1), -1);
+		    
+		    if( nds.util.Validator.isNotNull(preProcedure)){
+		    	ArrayList al=new ArrayList();
+		    	al.add(new Integer(this.getAD_PInstance_ID()));
+		    	engine.executeStoredProcedure(preProcedure, al, false);
+		    	
+		    }	
+		    isBackground=Tools.getYesNo( engine.doQueryOne("select c.isbackground from ad_cxtab c where c.ad_client_id="+ this.getAD_Client_ID() +" and c.name="+ QueryUtils.TO_STRING(cxtabName),conn), false);		    
 		    // create group query
 		    nds.cxtab.JReport cr=new nds.cxtab.JReport();
 		    cr.setCxtabName(cxtabName);
@@ -85,11 +106,26 @@ public class JReportRunner extends SvrProcess
 		    cr.setFileType(fileType);
 		    cr.setUserId( this.getAD_User_ID());
 		    cr.setAdClientId(this.getAD_Client_ID());
+		    cr.setAD_PInstance_ID(this.getAD_PInstance_ID()); // this will be needed when doing cube exporting
+		    
 		    String finalFile= cr.create(conn);
-		    if( "xls".equalsIgnoreCase(fileType)){
+		    
+//		  	if cxtab has pre_procedure and ad_pi_column_id set, then will try eraise report data in fact table
+		    // this task is asynchronized
+		    if(nds.util.Validator.isNotNull(preProcedure) && piColumnId!=-1){
+		    	ClientControllerWebImpl controller=(ClientControllerWebImpl)WebUtils.getServletContextManager().getActor(nds.util.WebKeys.WEB_CONTROLLER);
+		    	DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
+		    	event.setParameter("operatorid", String.valueOf(this.getAD_User_ID()));
+		    	event.setParameter("command", "RemoveCxtabTmpData");
+		    	event.setParameter("cxtab", cxtabName);
+		    	event.setParameter("ad_pi_id", String.valueOf(this.getAD_PInstance_ID()));
+		    	controller.handleEventBackground(event);
+		    }
+		    
+		    if( isBackground){
 		    	// this is asynchronous task, so should notifiy user (creator) of the completion
 		    	notifyOwner("["+cxtabName+"]@report-created@"+((System.currentTimeMillis() - startTime)/1000),
-		    			"@click-attach-url-to-download@",
+		    			"@click-attach-url-to-download@:"+ filter,
 		    			"/servlets/binserv/GetFile?filename="+ finalFile);
 		    			//+",@file-name@:"+finalFile,"/servlets/binserv/GetFile?filename="+ finalFile);
 		    }
@@ -98,7 +134,7 @@ public class JReportRunner extends SvrProcess
 			
 	    }catch(Throwable e){
 		 	log.error("", e);
-		 	if( "xls".equalsIgnoreCase(fileType)){
+		 	if( isBackground){
 		    	// this is asynchronous task, so should notifiy user (creator) of the completion
 		    	notifyOwner("["+cxtabName+"]@report-creation-failed-for-cxtab@",
 		    			"@error-msg@:"+ nds.util.StringUtils.getRootCause(e).getMessage(),null);

@@ -7,9 +7,11 @@ package nds.process;
 import java.util.*;
 import java.sql.*;
 
-import nds.control.event.NDSEventException;
+import nds.control.event.*;
 import nds.control.util.SecurityUtils;
 import nds.control.util.ValueHolder;
+import nds.control.web.ClientControllerWebImpl;
+import nds.control.web.WebUtils;
 import nds.schema.*;
 import nds.query.*;
 import nds.security.User;
@@ -90,14 +92,27 @@ public class CxtabRunner extends SvrProcess
 		boolean isBackground=true;
 	    try{
 		    conn= engine.getConnection();
-		    // check pre-process for cxtab
-		    int preProcessInstanceId= createPreProcessInstance(conn);
+		    // check PRE_PROCEDURE for cxtab
+		    
+		    List cxInfo=(List) engine.doQueryList(
+		    		"select PRE_PROCEDURE, AD_PI_COLUMN_ID from ad_cxtab where ad_client_id="+ this.getAD_Client_ID()+
+		    		" and name="+ QueryUtils.TO_STRING(cxtabName), conn);
+		    String preProcedure=(String) ((List)cxInfo.get(0)).get(0);
+		    int piColumnId= Tools.getInt( ((List)cxInfo.get(0)).get(1), -1);
+		    
+		    if( nds.util.Validator.isNotNull(preProcedure)){
+		    	ArrayList al=new ArrayList();
+		    	al.add(new Integer(this.getAD_PInstance_ID()));
+		    	engine.executeStoredProcedure(preProcedure, al, false);
+		    	
+		    }
+		    /*int preProcessInstanceId= createPreProcessInstance(conn);
 		    if(preProcessInstanceId!=-1){
 		    	ValueHolder holder=ProcessUtils.executeImmediateADProcessInstance(preProcessInstanceId , this.getAD_User_ID(), false);
 	    	  	if(!holder.isOK()){
 	    	  		throw new NDSException((String)holder.get("message"));
 	    	  	}
-		    }
+		    }*/
 			log.debug("filterExpr="+ filterExpr);
 			log.debug("filterSQL="+ filterSQL);
 			isBackground=Tools.getYesNo( engine.doQueryOne("select c.isbackground from ad_cxtab c where c.ad_client_id="+ this.getAD_Client_ID() +" and c.name="+ QueryUtils.TO_STRING(cxtabName),conn), false);
@@ -111,9 +126,22 @@ public class CxtabRunner extends SvrProcess
 		    cr.setFileType(fileType);
 		    cr.setFilterDesc(filter);
 		    cr.setUserId( this.getAD_User_ID());
-		    cr.setReportInstanceId(preProcessInstanceId); // this may be used as specical filter for sql statement
+		    //cr.setReportInstanceId(preProcessInstanceId); // this may be used as specical filter for sql statement
 		    cr.setAD_PInstance_ID(this.getAD_PInstance_ID()); // this will be needed when doing cube exporting
 		    String finalFile= cr.create(conn);
+		    
+		    // if cxtab has pre_procedure and ad_pi_column_id set, then will try eraise report data in fact table
+		    // this task is asynchronized
+		    if(nds.util.Validator.isNotNull(preProcedure) && piColumnId!=-1){
+		    	ClientControllerWebImpl controller=(ClientControllerWebImpl)WebUtils.getServletContextManager().getActor(nds.util.WebKeys.WEB_CONTROLLER);
+		    	DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
+		    	event.setParameter("operatorid", String.valueOf(this.getAD_User_ID()));
+		    	event.setParameter("command", "RemoveCxtabTmpData");
+		    	event.setParameter("cxtab", cxtabName);
+		    	event.setParameter("ad_pi_id", String.valueOf(this.getAD_PInstance_ID()));
+		    	controller.handleEventBackground(event);
+		    }
+		    
 		    if( isBackground){
 		    	// this is asynchronous task, so should notifiy user (creator) of the completion
 		    	notifyOwner("["+cxtabName+"]@report-created@"+((System.currentTimeMillis() - startTime)/1000),

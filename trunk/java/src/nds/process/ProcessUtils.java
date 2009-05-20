@@ -38,8 +38,14 @@ public class ProcessUtils {
 	 */
 	public static final String TRANSACTION_TIMEOUT="transaction.timeout";
 	
+	public static int createAdProcessInstance( int processId, String ad_processqueue_name,
+			String recordno, User user, List params, 
+			Map event, java.sql.Connection conn) throws Exception{
+		return createAdProcessInstance(-1, processId,ad_processqueue_name,recordno,user,params,event,conn);
+	}
 	/**
 	 * Create process instance and return instance id if creates with no error
+	 * @param pi_id ad_pinstance.id the id of the created instance
 	 * @param pid ad_process.id
 	 * @param ad_processqueue_name ad_processqueue.name
 	 * @param recordno
@@ -50,7 +56,7 @@ public class ProcessUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static int createAdProcessInstance(int processId, String ad_processqueue_name,
+	public static int createAdProcessInstance(int pi_id,int processId, String ad_processqueue_name,
 			String recordno, User user, List params, 
 			Map event, java.sql.Connection conn) throws Exception{
 	  	PreparedStatement pstmt=null;
@@ -67,9 +73,12 @@ public class ProcessUtils {
         list.add(pClassName);
         
         list.add(""); // parameters of pinstance
+        list.add(new Integer(pi_id)); // ad_pinstance.id
+        
         ArrayList res=new ArrayList();
         res.add(Integer.class);
-        logger.debug("ad_pinstance_create(userId="+ userId+",queue="+ad_processqueue_name+",recordno="+recordno+",clss="+pClassName+",param='')" );
+        
+        logger.debug("ad_pinstance_create(userId="+ userId+",queue="+ad_processqueue_name+",recordno="+recordno+",clss="+pClassName+",param='', piid="+pi_id+")" );
         Collection result=QueryEngine.getInstance().executeFunction("ad_pinstance_create", list, res, conn );
         
         // sp returned value contains create pinstance id
