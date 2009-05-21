@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="all" name="Build NEA framework">
+<property name="portal422" location="/portal422/server/default"/>
+<property name="nds.lib" location="/portal422/server/default/deploy/nds.war/WEB-INF/lib"/>
+<property file="/opt/build/conf/build.framework.properties" />
+
+<path id="svnant.classpath"> 
+ <fileset dir="${svn.lib.dir}">     
+	<include name="**/*.jar" />
+ </fileset>
+</path>
+
+<path id="javac.classes">
+	<pathelement location="${java.home}/../lib/tools.jar"/> 
+	<fileset dir="${jbossweb-jetty.sar}">
+		<include name="**/*.jar"/>
+	</fileset>		
+	<fileset dir="${portal.lib}">
+		<include name="**/*.jar"/>
+	</fileset>		
+	<fileset dir="${nds.war}/WEB-INF/lib">
+		<include name="**/*.jar"/>
+	</fileset>
+</path>
+<typedef resource="org/tigris/subversion/svnant/svnantlib.xml" classpathref="svnant.classpath" />  
+
+
+<target name="all" depends="checkout,javac,obfuscate,warndll,output"/>
+<target name="compile" depends="checkout,javac,warndll"/>
+<target name="localcompile" depends="javac,obfuscate,warndll,output"/>
+<target name="full" depends="clean,all"/> 
+
+<target name="checkout"> 
+	<echo>Check out sources from svn repo: framework...</echo>
+	 
+	<svn username="${svn.username}" password="${svn.password}">
+		<checkout url="${svn.url}" revision="${svn.revision}" destPath="${svn.checkout.path}" />
+	</svn>
+</target>
+<target name="javac">
+	<echo>Generate classes ...</echo>
+	<depend
+         srcdir="${javac.src}"
+         destdir="${javac.dest}"
+         cache="${tmp.dir}/dependencies"
+         classpathref="javac.classes"/>
+	
+	<javac srcdir="${javac.src}"
+			     destdir="${javac.dest}"
+			     debug="on"
+		         optimize="on"	
+				nowarn="on"
+		         classpathref="javac.classes"/>
+	<copy todir="${javac.dest}">
+    	<fileset dir="${javac.src}">
+      		<exclude name="**/*.java"/>
+    	</fileset>
+	</copy>
+
+</target>
+
+<target name="obfuscate">
+	<taskdef resource="proguard/ant/task.properties" classpath="${build.lib}/proguard.4.3/proguard.jar" />
+	<echo>Obfuscate classes ...</echo>
+	<proguard skipnonpubliclibraryclasses="off"
+            printmapping="${javac.dest}/proguard.map"
+            overloadaggressively="on"
+            repackageclasses="">
+
+                <!-- Specify the input jars, output jars, and library jars. -->
+                -dontwarn
+  				-ignorewarnings
+                -injars  ${javac.dest}
+                -outjars ${obfuscate.dir}
+
+                -libraryjars ${java.home}/lib/rt.jar
+		        -libraryjars ${build.lib}/junit.jar
+			  	-libraryjars ${jbossweb-jetty.sar}/javax.servlet.jar
+                <!-- Preserve all public applications. -->
+
+                -keep public class * {
+    				public *;
+				}
+	  	    	-keepclassmembers enum * {
+	  	    	    public static **[] values();
+	  	    	    public static ** valueOf(java.lang.String);
+	  	    	}
+                <!-- Preserve all annotations. -->
+
+                -keepattributes *Annotation*
+
+                <!-- Explicitly preserve all serialization members. The Serializable
+                     interface is only a marker interface, so it wouldn't save them.
+                     You can comment this out if your library doesn't use serialization.
+                     If your code contains serializable classes that have to be backward
+                     compatible, please refer to the manual. -->
+
+                -keepclassmembers class * implements java.io.Serializable {
+                    static final long serialVersionUID;
+                    static final java.io.ObjectStreamField[] serialPersistentFields;
+                    private void writeObject(java.io.ObjectOutputStream);
+                    private void readObject(java.io.ObjectInputStream);
+                    java.lang.Object writeReplace();
+                    java.lang.Object readResolve();
+                }
+
+                <!-- Your application may contain more items that need to be preserved;
+                     typically classes that are dynamically created using Class.forName -->
+
+  </proguard>
+	<echo>Restore license checking files(no proguard)...</echo>
+	<copy file="${javac.dest}/nds/util/LicenseManager.class" todir="${obfuscate.dir}/nds/util/" overwrite="true"/>
+	<copy file="${javac.dest}/nds/util/Tools.class" todir="${obfuscate.dir}/nds/util/" overwrite="true"/>
+	<copy file="${javac.dest}/nds/util/NativeTools.class" todir="${obfuscate.dir}/nds/util/" overwrite="true"/>
+	<copy file="${javac.dest}/nds/control/StartupEngine.class" todir="${obfuscate.dir}/nds/control/" overwrite="true"/>
+	<copy file="${javac.dest}/nds/control/web/MainServlet.class" todir="${obfuscate.dir}/nds/control/web/" overwrite="true"/>
+	
+</target>	
+<target name="checkdll">
+	<echo>Check whether ndstools.dll should be rebuilt or not...</echo>
+	
+	<checksum file="${javac.dest}/nds/util/LicenseManager.class" property="LicenseManager.class.md5"/>
+	<checksum file="${javac.dest}/nds/util/Tools.class" property="Tools.class.md5"/> 
+	<checksum file="${javac.dest}/nds/util/NativeTools.class" property="NativeTools.class.md5"/> 
+	<checksum file="${javac.dest}/nds/control/StartupEngine.class" property="StartupEngine.class.md5"/> 
+	<checksum file="${javac.dest}/nds/control/web/MainServlet.class" property="MainServlet.class.md5"/> 
+	<condition property="checksumNochange">
+	    <and>
+	      <equals arg1="${LicenseManager.class.md5}" arg2="${LicenseManager.class.md5.orig}"/>
+	      <equals arg1="${Tools.class.md5}" arg2="${Tools.class.md5.orig}"/> 
+	      <equals arg1="${NativeTools.class.md5}" arg2="${NativeTools.class.md5.orig}"/> 
+	      <equals arg1="${StartupEngine.class.md5}" arg2="${StartupEngine.class.md5.orig}"/> 
+	      <equals arg1="${MainServlet.class.md5}" arg2="${MainServlet.class.md5.orig}"/>
+	    </and>
+  	</condition>
+	
+</target>
+<target name="warndll" depends="checkdll" unless="checksumNochange">
+	<echo>Warning: please update ndstools.dll checksums with following string:
+#define NDS_UTIL_LICENSEMANAGER_MD5 "${LicenseManager.class.md5}"
+#define NDS_UTIL_TOOLS_MD5 "${Tools.class.md5}"
+#define NDS_UTIL_NATIVETOOLS_MD5 "${NativeTools.class.md5}"
+#define NDS_CONTROL_STARTUPENGINE_MD5 "${StartupEngine.class.md5}"
+#define NDS_CONTROL_WEB_MAINSERVLET_MD5 "${MainServlet.class.md5}"
+	
+	</echo>
+	
+</target>
+<target name="output">
+	<echo>Output classes...</echo>
+	<!--Note this path will be used by portal/next build.xml to fetch latest nds classes -->
+	<copy todir="${output.dir}/framework/classes">
+    	<fileset dir="${obfuscate.dir}"/>
+  	</copy>
+
+</target>
+
+<target name="clean">
+	<echo>Clean build folder</echo>
+	<delete>
+		<fileset dir="${tmp.dir}"/>
+		<fileset dir="${output.dir}/framework"/>
+	</delete>
+	<mkdir dir="${tmp.dir}/classes"/>
+	<mkdir dir="${tmp.dir}/proguard"/>
+	<mkdir dir="${tmp.dir}/dependencies"/>
+	<mkdir dir="${output.dir}/framework/classes"/>
+</target>	
+</project>

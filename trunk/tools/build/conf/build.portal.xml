@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="all" name="Build Burgeon Portal">
+<property file="/opt/build/conf/build.portal.properties" />
+
+<path id="svnant.classpath">
+ <fileset dir="${svn.lib.dir}">     
+	<include name="**/*.jar" />
+ </fileset>
+</path>
+
+<path id="jspc.classes">
+	<pathelement location="${java.home}/../lib/tools.jar"/> 
+	<pathelement path="${output.dir}/framework/classes"/>
+	<fileset dir="${jbossweb-jetty.sar}">
+		<include name="**/*.jar"/>
+	</fileset>		
+	<fileset dir="${portal.lib}">
+		<include name="**/*.jar"/>
+	</fileset>		
+	<fileset dir="${nds.war}/WEB-INF/lib">
+		<include name="**/*.jar"/>
+	</fileset>
+</path>
+
+<typedef resource="org/tigris/subversion/svnant/svnantlib.xml" classpathref="svnant.classpath" />  
+
+
+<target name="all" depends="checkout,jspc,javac,output,webxml"/>
+<target name="full" depends="clean,all,rar"/>
+
+<target name="checkout"> 
+	<echo>Check out sources from svn repo: portal...</echo>
+	 
+	<svn username="${svn.username}" password="${svn.password}">
+		<checkout url="${svn.url}" revision="${svn.revision}" destPath="${svn.checkout.path}" />
+	</svn>
+</target>
+
+
+
+<target name="jspc">
+	<jspc srcdir="${nds.war}/html/nds"
+		     destdir="${tmp.dir}/jspc"
+		     package="org.apache.jspc"
+		     uriroot="${nds.war}"
+	         webinc="${tmp.dir}/jspc/webinc.xml"	
+			 compiler="jasper41"
+	         classpathref="jspc.classes"
+		     verbose="1">
+	  	<include name="**/*.jsp" />
+	</jspc>
+		
+</target>
+<target  name="javac">
+	<depend
+         srcdir="${tmp.dir}/jspc"
+         destdir="${javac.dest}"
+         cache="${tmp.dir}/dependencies"
+         classpathref="jspc.classes"/>
+     <javac srcdir="${tmp.dir}/jspc"
+		    destdir="${tmp.dir}/javac"
+		    includesfile="${tools.build.dir}/portal.javac.inlude.txt"
+		    debug="on"
+	        optimize="on"
+			nowarn="on"
+			failonerror="false" 
+	        classpathref="jspc.classes">
+	    <compilerarg line="-Xmaxerrs 300000" />
+	    <compilerarg line="-Xmaxwarns 300000" />
+     	<!--<compilerarg line="-Xstdout ${tmp.dir}/javac/javac.err" />-->
+	</javac>	
+</target> 
+
+<target name="output">
+	<echo>Output Portal Application...</echo>
+	
+	<copy todir="${output.dir}/portal/act.nea">
+    	<fileset dir="${svn.checkout.path}/trunk/act.nea">
+    		<exclude name="**/.svn"/>
+    	</fileset>
+    </copy>
+    <copy todir="${output.dir}/portal/portal422">	
+    	<fileset dir="${svn.checkout.path}/trunk/portal422">
+    		<exclude name="**/.svn"/> 
+    		<exclude name="server/default/deploy/nds.war/html/nds/**/*.jsp"/>
+    	</fileset>
+    	<fileset dir="${svn.checkout.path}/trunk/portal422">
+    		<include name="server/default/deploy/nds.war/html/nds/common/init.jsp"/> 
+    	</fileset>
+  	</copy>
+	
+	<copy todir="${output.dir}/portal/portal422/server/default/deploy/nds.war/WEB-INF/classes">
+    	<fileset dir="${output.dir}/framework/classes"/>
+    	<fileset dir="${tmp.dir}/javac">
+    		<include name="**/*.class"/>
+    	</fileset>
+  	</copy>
+
+</target>
+
+<target name="webxml">
+	<echo>Build Web.xml...</echo>
+	<loadfile property="webinc" srcFile="${tools.build.dir}/portal.webinc.xml"/>
+	<copy file="${tools.build.dir}/portal.web.xml" tofile="${output.dir}/portal/portal422/server/default/deploy/nds.war/WEB-INF/web.xml" overwrite="true">
+	  <filterset>
+	    <filter token="webinc" value="${webinc}"/>
+	  </filterset>
+	</copy>
+
+</target>
+<target name="zip">
+	<echo>Create Portal application package...</echo>
+ 	<zip destfile="${output.dir}/portal.zip" compress="false"
+		basedir="${output.dir}/portal" encoding="GBK"/>
+</target>
+<target name="rar">
+	<echo>Create Portal application package...</echo>
+	<delete file="${output.dir}/portal.rar"/> 
+ 	<exec dir="${output.dir}/portal" executable="/usr/bin/rar">
+  		<arg line="a -inul -w${output.dir}/portal ${output.dir}/portal.rar act.nea portal422"/>
+	</exec> 
+</target>
+
+<target name="clean">
+	<echo>Clean build folder</echo>
+	<delete>
+		<fileset dir="${tmp.dir}"/>
+		<fileset dir="${output.dir}/portal"/>
+	</delete>
+	<delete file="${output.dir}/portal.zip"/> 
+	
+	<mkdir dir="${tmp.dir}/jspc"/>
+	<mkdir dir="${tmp.dir}/dependencies"/>
+	<mkdir dir="${tmp.dir}/javac"/>
+	<mkdir dir="${output.dir}/portal/portal422"/>
+	<mkdir dir="${output.dir}/portal/act.nea"/>
+</target>
+</project>

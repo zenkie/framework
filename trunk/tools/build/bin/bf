@@ -1,0 +1,2 @@
+/opt/build/ant/bin/ant  -buildfile /opt/build/conf/build.framework.xml $* | tee /opt/build/log/bf.log  
+
