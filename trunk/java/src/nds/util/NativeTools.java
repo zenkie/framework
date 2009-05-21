@@ -111,7 +111,7 @@ public final class NativeTools {
 			//Class.forName("java.lang.System").getMethod("load",new Class[]{String.class}).invoke(null,new Object[]{a});
 			
 		} catch (Throwable ule) {
-			logger.debug("Error loading library:"+ule.getClass());//do not dump ule, as it will show the nuto.dat lib file path
+			logger.debug("Error loading library:"+ule.getClass()+":"+ ule.getMessage());//do not dump ule, as it will show the nuto.dat lib file path
 			logger.error("\n\r"+
 	                "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\r"+
 	                "     Library file missing or invalid, will exit.    \n\r"+
