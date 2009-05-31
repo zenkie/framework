@@ -39,6 +39,12 @@ public class ExecShell extends Command{
     	int columnId=Tools.getInt( event.getParameterValue("columnid",true), -1);
     	Column column=TableManager.getInstance().getColumn(columnId);
     	String cmd= column.getDefaultValue();
+    	// user must have write permission on this object
+		if(!nds.control.util.SecurityUtils.hasObjectPermission(usr.getId().intValue(), 
+				usr.getName(),column.getTable().getName(), objectId,Directory.WRITE, event.getQuerySession() )){
+			throw new NDSException("@no-permission@");
+		}
+    	
     	/*if(!usr.name.equals("root"))
     		if (!nds.control.util.SecurityUtils.hasObjectPermission(usr.id.intValue(), usr.name, "AD_CXTAB", cxtabId, nds.security.Directory.WRITE, event.getQuerySession()))
     			throw new NDSException("@no-permission@");
