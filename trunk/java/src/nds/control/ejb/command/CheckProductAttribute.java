@@ -103,51 +103,58 @@ public class CheckProductAttribute extends Command {
 	  	String productName=null, productValue=null, asiName=null;
 	  	String pricelist=null;// take it as string, so we can handle null
 	  	String value1=null,value2=null;
-	  	pstmt= conn.prepareStatement("select id, name, value, m_attributeset_id, pricelist from m_product where name=? and ad_client_id=?");
-	  	pstmt.setString(1, (productUCase? product.toUpperCase():product));
-	  	pstmt.setInt(2, usr.adClientId);
-	  	rs= pstmt.executeQuery();
-	  	if(rs.next()){ 
-	  		productId= rs.getInt(1);// Tools.getInt( al.get(0), -1);
-	  		productName= rs.getString(2);//(String) al.get(1);
-	  		productValue=rs.getString(3);// (String) al.get(2);
-	  		asId=rs.getInt(4);// Tools.getInt( al.get(3), -1);
-	  		if(rs.wasNull()) asId=-1;
-	  		pricelist=String.valueOf( rs.getDouble(5));
-	  		if(rs.wasNull()) pricelist=null;
-	  	}else{
-	  		if(checkAlias){
-	  			rs.close();
-	  			pstmt.close();
-	  			String sql="select m.id, m.name, m.value, m.m_attributeset_id, a.id,a.description, m.pricelist"+
-	  			(this.loadingBurgeonProduct?", a.value1,a.value2":"")
-	  			+" from m_product_alias p, "+
-					"m_product m, m_attributesetinstance a where p.no=? and p.ad_client_id=? and m.id=p.m_product_id and a.id(+)=p.M_ATTRIBUTESETINSTANCE_ID"; 
-							
-	  			pstmt= conn.prepareStatement(sql);
-	  		  	pstmt.setString(1, (manager.getColumn("m_product_alias", "no").isUpperCase()? product.toUpperCase():product));
-	  		  	pstmt.setInt(2, usr.adClientId);
-	  		  	rs=pstmt.executeQuery();
-	  			if(rs.next()){
-	  		  		productId= rs.getInt(1);// Tools.getInt( al.get(0), -1);
-	  		  		productName= rs.getString(2);//(String) al.get(1);
-	  		  		productValue=rs.getString(3);// (String) al.get(2);
-	  		  		asId=rs.getInt(4);// Tools.getInt( al.get(3), -1);
-	  		  		if(rs.wasNull()) asId=-1;
-	  		  		asiId= rs.getInt(5);
-	  		  		if(rs.wasNull()) asiId=-1;
-	  		  		asiName= rs.getString(6);
-	  		  		
-	  		  		pricelist=String.valueOf( rs.getDouble(7));
-	  		  		if(rs.wasNull()) pricelist=null;
-	  		  		if(loadingBurgeonProduct){
-	  		  			value1= rs.getString(8);
-	  		  			value2=rs.getString(9);
-	  		  		}
-	  		  		
-	  			}
-	  		}
-	  	}
+	  	
+	  	// 按照纤丝鸟的要求，条码优先
+  		if(checkAlias){
+  			String sql="select m.id, m.name, m.value, m.m_attributeset_id, a.id,a.description, m.pricelist"+
+  			(this.loadingBurgeonProduct?", a.value1,a.value2":"")
+  			+" from m_product_alias p, "+
+				"m_product m, m_attributesetinstance a where p.no=? and p.ad_client_id=? and m.id=p.m_product_id and a.id(+)=p.M_ATTRIBUTESETINSTANCE_ID"; 
+						
+  			pstmt= conn.prepareStatement(sql);
+  		  	pstmt.setString(1, (manager.getColumn("m_product_alias", "no").isUpperCase()? product.toUpperCase():product));
+  		  	pstmt.setInt(2, usr.adClientId);
+  		  	rs=pstmt.executeQuery();
+  			if(rs.next()){
+  		  		productId= rs.getInt(1);// Tools.getInt( al.get(0), -1);
+  		  		productName= rs.getString(2);//(String) al.get(1);
+  		  		productValue=rs.getString(3);// (String) al.get(2);
+  		  		asId=rs.getInt(4);// Tools.getInt( al.get(3), -1);
+  		  		if(rs.wasNull()) asId=-1;
+  		  		asiId= rs.getInt(5);
+  		  		if(rs.wasNull()) asiId=-1;
+  		  		asiName= rs.getString(6);
+  		  		
+  		  		pricelist=String.valueOf( rs.getDouble(7));
+  		  		if(rs.wasNull()) pricelist=null;
+  		  		if(loadingBurgeonProduct){
+  		  			value1= rs.getString(8);
+  		  			value2=rs.getString(9);
+  		  		}
+  		  		
+  			}
+  			rs.close();
+  			pstmt.close();
+  			
+  		}
+  		if(productId ==-1){
+  		  	pstmt= conn.prepareStatement("select id, name, value, m_attributeset_id, pricelist from m_product where name=? and ad_client_id=?");
+  		  	pstmt.setString(1, (productUCase? product.toUpperCase():product));
+  		  	pstmt.setInt(2, usr.adClientId);
+  		  	rs= pstmt.executeQuery();
+  		  	if(rs.next()){ 
+  		  		productId= rs.getInt(1);// Tools.getInt( al.get(0), -1);
+  		  		productName= rs.getString(2);//(String) al.get(1);
+  		  		productValue=rs.getString(3);// (String) al.get(2);
+  		  		asId=rs.getInt(4);// Tools.getInt( al.get(3), -1);
+  		  		if(rs.wasNull()) asId=-1;
+  		  		pricelist=String.valueOf( rs.getDouble(5));
+  		  		if(rs.wasNull()) pricelist=null;
+  		  	}
+  		  	rs.close();
+			pstmt.close();
+  		}
+
 	  	/**
 	  	 * 凡设置了此表作为实现类的表定义，在明细表被调用nds.control.ejb.command.CheckProductAttribute时，
 		 * 将由系统自动调用对应主表的对应存储过程主表名＋"_CHKPDT"(主表记录id, 物料id)，进行是否允许插入指定产品的检验。
@@ -222,7 +229,7 @@ public class CheckProductAttribute extends Command {
   		logger.error("exception",t);
   		throw new NDSException(t.getMessage(), t);
   	}finally{
-  		if(rs!=null)try{rs.close();}catch(Throwable t){}
+  		if(rs!=null )try{rs.close();}catch(Throwable t){}
   		if(pstmt!=null)try{pstmt.close();}catch(Throwable t){}
   		if(conn!=null)try{conn.close();}catch(Throwable t){}
   	}

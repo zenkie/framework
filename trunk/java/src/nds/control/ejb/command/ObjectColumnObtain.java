@@ -243,8 +243,32 @@ public class ObjectColumnObtain extends ColumnObtain{
 		                  }
 		                  
 		                  //logger.debug("str:"+ objectStr[i]);
-		                  result= pstmt.executeQuery();
+		                  //按纤丝鸟要求，条码优先，而不是款号优先
+		                  tmpValue =null;
+		                  if(isAliasSupportTable){
+			                  // try alias table if supported, 目前未考虑在别名表上支持wcf 类型的字段
+			                  // since 3.0
+			                  
+		                  		/*look for associated columns in alias table, and find matched one for this column,
+		                  		  will also setup other columns in associated column list*/
+	                  		  tmpValue = findInAliasTable(objectStr[i], col, i, event, aliasPstmt,assocColumns,eventValueName);
+		                  }
+                  		  if(tmpValue!=null){
+                  			  resultInt[i] =tmpValue;
+                  		  }else{
+                  			  result= pstmt.executeQuery();
+                  			  if(result.next() ){
+                  				  resultInt[i] = result.getBigDecimal(1);
+                  			  }else{
+                  				  if(this.isBestEffort ){
+		                              this.setRowInvalid(i,objectStr[i]+" ("+refTablleDesc+")@not-exists-or-invalid@" );
+		                              resultInt[i]=new BigDecimal(-1);
+		                          }else 
+		                          	throw new NDSEventException("@line@ "+(i+1)+": "+objectStr[i]+"("+refTablleDesc+")@not-exists-or-invalid@");
+                  			  }
+                  		  }
 		                  
+		                  /*result= pstmt.executeQuery();
 		                  if(result.next() ){
 		                      resultInt[i] = result.getBigDecimal(1);
 		                  }else{
@@ -252,8 +276,6 @@ public class ObjectColumnObtain extends ColumnObtain{
 		                  	// since 3.0
 		                  	tmpValue =null;
 		                  	if(isAliasSupportTable){
-		                  		/*look for associated columns in alias table, and find matched one for this column,
-		                  		  will also setup other columns in associated column list*/
 		                  		tmpValue = findInAliasTable(objectStr[i], col, i, event, aliasPstmt,assocColumns,eventValueName);
 		                  	}
 	                  		if(tmpValue!=null){
@@ -269,7 +291,7 @@ public class ObjectColumnObtain extends ColumnObtain{
 		                          	throw new NDSEventException("@line@ "+(i+1)+": "+objectStr[i]+"("+refTablleDesc+")@not-exists-or-invalid@");
 		                    //} 
 	                  		}
-		                  }
+		                  }*/
 	                  }
               	  }
               }catch(Exception e){
