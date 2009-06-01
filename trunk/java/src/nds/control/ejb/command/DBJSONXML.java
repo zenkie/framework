@@ -67,8 +67,9 @@ public class DBJSONXML extends Command {
 	  	param= org.json.XML.toString(paramJSON);
 	  	
 	  	// check permission
-	  	Table t= manager.getTable(table);
-	  	if (!"root".equals(usr.getName())){
+	 // 	Table t= manager.getTable(table);
+	  	Table t= manager.getTable("m_v_product");
+		if (!"root".equals(usr.getName())){
 		  	int perm= helper.getPermissions(t.getSecurityDirectory(),usr.id.intValue());
 		  	int minPerm=1;// read
 		  	if("W".equalsIgnoreCase(permission)){
@@ -82,6 +83,7 @@ public class DBJSONXML extends Command {
 		  		throw new NDSException("@no-permission@");
 		  	}
 	  	}
+	
 	  	// construct procedure name
 	  	String func= table + "_$"+ permission+"_"+ action;
 	  	logger.debug("Call "+ func+"("+usr.getId()+","+param+")");
@@ -115,9 +117,7 @@ public class DBJSONXML extends Command {
   		ValueHolder holder= new ValueHolder();
 		holder.put("message", mh.getMessage(event.getLocale(), "complete"));
 		holder.put("code","0");
-		holder.put("data",data );
-	  	
-
+		holder.put("data",data);
 	  	return holder;
   	}catch(Throwable t){
   		logger.error("exception",t);
