@@ -74,19 +74,14 @@ public class GroupSetPermission extends Command{
          * Find object according to "id" attribute ( locate object )
          * and "command" attribute ( locate object type )
          */
-
         int groupid = Tools.getInt(event.getParameterValue("groupid"),-1);
         int ad_client_id= helper.getAdClientId(event.getQuerySession(), true);
         String  type=(String)event.getParameterValue("type");
-        System.out.print(type);
         ValueHolder v = new ValueHolder();
         Vector sqls=new Vector();
         QueryEngine engine = QueryEngine.getInstance();
-        sqls.addElement("delete from tmp_groupperm");
         if(type.equals("catalog")){
           String[] catalogs=(String[]) event.getParameterValues("directory_catalog");
-            sqls.addElement("insert into tmp_groupperm select * from groupperm where sqlfilter is not null and  groupid="+ groupid);
-            sqls.addElement("delete from groupperm where groupid="+ groupid);
             if(catalogs!=null)for(int i = 0;i<catalogs.length ;i++){
                     logger.debug("The value of catalogs is:"+catalogs[i]) ;
                     String[] perms =event.getRawParameterValues(catalogs[i]);
@@ -96,41 +91,17 @@ public class GroupSetPermission extends Command{
                          perm |= (new Integer(perms[j])).intValue();
                       }catch(Exception eee){}
                     }
+                    sqls.addElement("delete from groupperm where groupid="+ groupid +
+                            " and directoryid in (select id from Directory where ad_tablecategory_id = "+ catalogs[i]+")");
                     sqls.addElement("insert into groupperm ( id, ad_client_id, groupid, directoryid, permission,sqlfilter, filterdesc)" +
                                     "select GET_SEQUENCES('GroupPerm'),"+ad_client_id+","+ groupid+ ", Directory.id, "+ perm +", sec_get_filter("+ groupid+",Directory.id)"+ ", sec_get_filterdesc("+ groupid+",Directory.id)"+
                                     " from Directory where Directory.ad_tablecategory_id ="+catalogs[i]+"") ;
             }
             // copy back from tmp_groupperm the sqldesc and sql
             //sqls.addElement("update groupperm set (sqlfilter,filterdesc)= (select a.sqlfilter ,a.filterdesc from tmp_groupperm a where a.groupid=groupperm.groupid and a.directoryid= groupperm.directoryid) where groupid="+ groupid);
-        }else if(type.equals("directory")){
-          String[] directories= (String[])event.getParameterValues("directory_id");
-          String catalog=(String)event.getParameterValue("catalog");
-          // save sqlfilter to tmp_groupperm
-          sqls.addElement("insert into tmp_groupperm select * from groupperm where sqlfilter is not null and  groupid="+ groupid+
-                           " and directoryid in (select id from Directory where ad_tablecategory_id = "+ catalog+")");
-          sqls.addElement("delete from groupperm where groupid="+ groupid +
-                          " and directoryid in (select id from Directory where ad_tablecategory_id = "+ catalog+")");
-          if(directories !=null){
-            for(int i = 0;i<directories.length ;i++){
-              String[] perms =event.getRawParameterValues("d"+directories[i]);
-              int perm=0;
-              for( int j=0;j< perms.length;j++){
-                try{
-                   perm |= (new Integer(perms[j])).intValue();
-                }catch(Exception eee){}
-              }
-              sqls.addElement("insert into groupperm ( id, ad_client_id, groupid, directoryid, permission,sqlfilter, filterdesc) values " +
-                              "(GET_SEQUENCES('GroupPerm'),"+ad_client_id+","+ groupid+ ","+ directories[i]+ ","+ perm+", sec_get_filter("+ groupid+","+directories[i]+")"+ ", sec_get_filterdesc("+ groupid+","+directories[i]+")"+")"
-                              );
-
-            }
-          }
           }else{
         	  //add system;
         	  String[] subsystems=(String[]) event.getParameterValues("directory_subsystem");  
-        	  
-              sqls.addElement("insert into tmp_groupperm select * from groupperm where sqlfilter is not null and  groupid="+ groupid);
-              sqls.addElement("delete from groupperm where groupid="+ groupid);
               if(subsystems!=null)for(int i = 0;i<subsystems.length ;i++){
                       logger.debug("The value of subsystems is:"+subsystems[i]) ;
                       String[] perms =event.getRawParameterValues(subsystems[i]);
@@ -144,6 +115,8 @@ public class GroupSetPermission extends Command{
                     	  List tablecategoryid=(List)QueryEngine.getInstance().doQueryList("select id from ad_tablecategory where ad_subsystem_id="+subsystems[j]);
                     	  if(tablecategoryid.size()>0){
                     		  for(int k=0;k<tablecategoryid.size();k++){
+                    			  sqls.addElement("delete from groupperm where groupid="+ groupid +
+                                          " and directoryid in (select id from Directory where ad_tablecategory_id = "+tablecategoryid.get(k)+")");
                     			  sqls.addElement("insert into groupperm ( id, ad_client_id, groupid, directoryid, permission,sqlfilter, filterdesc)" +
                                       "select GET_SEQUENCES('GroupPerm'),"+ad_client_id+","+ groupid+ ", Directory.id, "+ perm +", sec_get_filter("+ groupid+",Directory.id)"+ ", sec_get_filterdesc("+ groupid+",Directory.id)"+
                                       " from Directory where Directory.ad_tablecategory_id ="+tablecategoryid.get(k)+"") ;
