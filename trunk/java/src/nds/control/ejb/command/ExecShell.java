@@ -6,6 +6,8 @@ package nds.control.ejb.command;
 import java.io.File;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.sql.*;
 
 import nds.control.ejb.Command;
@@ -38,12 +40,14 @@ public class ExecShell extends Command{
     	int objectId=Tools.getInt( event.getParameterValue("objectid",true), -1);
     	int columnId=Tools.getInt( event.getParameterValue("columnid",true), -1);
     	Column column=TableManager.getInstance().getColumn(columnId);
-    	String cmd= column.getDefaultValue();
     	// user must have write permission on this object
 		if(!nds.control.util.SecurityUtils.hasObjectPermission(usr.getId().intValue(), 
 				usr.getName(),column.getTable().getName(), objectId,Directory.WRITE, event.getQuerySession() )){
 			throw new NDSException("@no-permission@");
 		}
+		
+		//replace @xxx@ with data of current row column value
+		
     	
     	/*if(!usr.name.equals("root"))
     		if (!nds.control.util.SecurityUtils.hasObjectPermission(usr.id.intValue(), usr.name, "AD_CXTAB", cxtabId, nds.security.Directory.WRITE, event.getQuerySession()))
@@ -51,7 +55,9 @@ public class ExecShell extends Command{
     	*/
     	ValueHolder holder=new ValueHolder();
     	String message="@complete@";
+    	String cmd=null;
     	try{
+        	cmd= parseWildcardDefaultValue(column, objectId);
     		if(nds.util.Validator.isNotNull(cmd)){
     			Configurations conf= (Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
     			
@@ -75,6 +81,44 @@ public class ExecShell extends Command{
 		holder.put("code", new Integer(0));//no change for current page		
     	return holder;
     }
-    
+    /**
+     * 类似于WildcardFilter,我们允许命令行里有Wildcard column 作为参数内容,这里将替换为实际的字段的内容.
+     * 
+     * 当前仅支持本表的字段作为Wildcard column
+     * 
+    */
+    private String parseWildcardDefaultValue(Column column, int objectId) throws Exception{
+		// 定位关联字段
+		Pattern a= Pattern.compile("@(.*?)@");
+		String cmd= column.getDefaultValue();
+		Matcher m= a.matcher(cmd);
+		TableManager manager=TableManager.getInstance();
+		java.util.ArrayList cs=new ArrayList();  
+		while(m.find()){
+			String c= m.group(1); // this will be the ref column
+			Column fc= (Column)manager.getColumn(c.toUpperCase());
+			if(fc == null) fc= column.getTable().getColumn(c.toUpperCase());
+			if(fc==null)throw new NDSRuntimeException("Wildcard defaultvalue error for column"+ column+": Could not find column '"+ c+"' defined in defaultvallue");
+			if(column.getTable().getId() != fc.getTable().getId()){
+				throw new NDSRuntimeException("Current only defaultvalue containing column of the same table is supported:"+ column +": defaultvalue="+column.getDefaultValue());
+			}
+			
+			cs.add(fc);
+		}
+		if(cs.size()==0){
+			return cmd;
+		}
+		// cmd format: /opt/build/bin/@NAME@ @ID@
+		// sql: select 'opt/build/bin/' || NAME ||' ' || ID ||'' from b_project where id=1343
+		String sql="select '" + cmd + "' from "+ column.getTable().getRealTableName()+" "+ column.getTable()
+			+" where id="+ objectId;
+		for(int i=0;i<cs.size();i++){
+			Column col= (Column) cs.get(i);
+			
+			sql= StringUtils.replace(sql, "@"+ col.getName()+"@","'||"+ col.getName()+"||'"); 
+		}
+		logger.debug(sql);
+		return (String)QueryEngine.getInstance().doQueryOne(sql);
+    }        
 	    
 }
