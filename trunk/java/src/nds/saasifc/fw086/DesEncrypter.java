@@ -81,7 +81,7 @@ output: base64_encrypted_data
             byte[] enc = ecipher.doFinal(utf8);
             
             // Encode bytes to base64 to get a string
-            return new sun.misc.BASE64Encoder().encode(enc);
+            return new String(nds.util.Base64.encode(enc));
         } catch (javax.crypto.BadPaddingException e) {
         } catch (IllegalBlockSizeException e) {
         } catch (UnsupportedEncodingException e) {
@@ -93,7 +93,7 @@ output: base64_encrypted_data
     public String decrypt(String str) {
         try {
             // Decode base64 to get bytes
-            byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(str);
+            byte[] dec = nds.util.Base64.decode(str.toCharArray());
 
             // Decrypt
             byte[] utf8 = dcipher.doFinal(dec);
