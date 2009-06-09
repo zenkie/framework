@@ -147,13 +147,22 @@ public class ObjectCreate extends Command{
            boolean checkItems=  (copyFromIds!=null) && (bundledTable.size()>0);
            logger.debug("checkItems="+checkItems);
            int cfid;
+
+           String psql=createImpl.getPreparedStatementSQL();
+           logger.debug(psql);
+           stmt=con.prepareStatement(psql);
+           QueryEngine engine = QueryEngine.getInstance() ;
            
            boolean createAttributeDetail=table.supportAttributeDetail();
            boolean createAttributeDetailByJson=false;
+
+           
            boolean createAttributeDetailByCopy=false;
            Object jsonobj= event.getParameterValue("jsonobj");
            Object[] jo=null;
            BigDecimal[] pdtIds=null;
+           
+           int[] asiRelateColumnsPosInStatement=null;
            if(createAttributeDetail){
 	           if(jsonobj!=null){
                	  	if(jsonobj.getClass().isArray()){
@@ -163,17 +172,21 @@ public class ObjectCreate extends Command{
 		            if(pdts!=null)pdtIds = (BigDecimal[])pdts.elementAt(0);
 		            createAttributeDetailByJson = pdts!=null;
 	           }else{
-	           		createAttributeDetailByCopy=(copyFromIds!=null);
+	        	   /**
+	        	    * deprecated, no longer support m_attributedetail table.
+	        	    * yfzhu 2009-06-06
+	        	    */
+	        	   //createAttributeDetailByCopy=(copyFromIds!=null);
 	           }
+	           asiRelateColumnsPosInStatement=createImpl.getASIRelateColumnsPosInStatement();
+	           if(asiRelateColumnsPosInStatement[0]==-1 || asiRelateColumnsPosInStatement[1]==-1 
+	        		   || asiRelateColumnsPosInStatement[2]==-1)
+	        	   throw new NDSException("Not expected condition: not found ID, ASI or *QTY* column in createAttributeDetail request");
            }
            logger.debug("createAttributeDetailByJson="+ createAttributeDetailByJson+
            			",createAttributeDetailByCopy="+createAttributeDetailByCopy);
            int realPos;
            
-           String psql=createImpl.getPreparedStatementSQL();
-           logger.debug(psql);
-           stmt=con.prepareStatement(psql);
-           QueryEngine engine = QueryEngine.getInstance() ;
            //String sql;
            ArrayList row;
            java.sql.Savepoint  sp=null;
@@ -186,28 +199,39 @@ public class ObjectCreate extends Command{
                    row= (ArrayList) sqlData.get(i);
                    //if(i< 10)logger.debug(sql); // only first 10 records will be displayed
                    
-                   executeUpdate(stmt,row,sqlDataColumnTypes );
+                   setData(stmt,row,sqlDataColumnTypes );
                    
                    // check if attribute detail support table, since 3.0 at 2007-05-30
                    if(createAttributeDetailByJson){
                    		//jsonobj will be stored into m_attributedetail table
+                	   
                    		if(pdtIds[realPos]==null){
                    			logger.debug(" not found product id");
                    		}else{
-                   			helper.createAttributeDetailRecordsByJSON(table, jo[realPos], event, oids[i], con);
+                   			helper.execStmtOfAttributeDetailRecordsByJSON(table, jo[realPos], 
+                   					oids[i], con, stmt,asiRelateColumnsPosInStatement,"AC");
                    			jsonObjectCreated=true;//"jsonobj-splitted"
                    		}
                    }else if(createAttributeDetailByCopy){
                    		// it's not possible that we do both createAttributeDetailByJson and createAttributeDetailByCopy
+                	   if(true)throw new NDSException("no longer supportd");
                    		/**
                    		 * copy from table: table, id: cfid= Tools.getInt(copyFromIds[i], -1)
                    		 * copy to   table: table, id: oids[i]
                    		 */
                    		cfid= Tools.getInt(copyFromIds[realPos], -1);
+                   		stmt.executeUpdate();
                    		if(cfid!=-1)
                    			helper.createAttributeDetailRecordsByCopy(table, userId, cfid,oids[realPos],con);
+                   		helper.doTrigger("AC", table, oids[realPos], con);
+                   }else{
+                	   //normal update and ac procedure
+                	   
+                	   stmt.executeUpdate();
+                	   helper.doTrigger("AC", table, oids[realPos], con);
+                	   
                    }
-                   helper.doTrigger("AC", table, oids[realPos], con);
+                   
                    
                    // check refby table records should be copied.
                    // there will be a special param in event: copyfromid, if exists, that will be the
@@ -321,14 +345,14 @@ public class ObjectCreate extends Command{
 
   }
   /**
-   * Execute statement with data
+   * set statement with data
    * @param pstmt
    * @param rowData
    * @param columnTypes elements are Column.NUMBER, STRING, DATENUMBER, DATE
    * @return execute result
    * @throws Exception
    */
-  private int executeUpdate(PreparedStatement pstmt, ArrayList rowData, int[] columnTypes) throws Exception{
+  private void setData(PreparedStatement pstmt, ArrayList rowData, int[] columnTypes) throws Exception{
 	  Object v;
 	  for(int i=0;i< columnTypes.length;i++){
 		  v=rowData.get(i);
@@ -350,7 +374,7 @@ public class ObjectCreate extends Command{
 		       	 throw new NDSException("Unexpected column type:"+ columnTypes[i]);			  
 		  }
 	  }
-	  return pstmt.executeUpdate();
+	  
   }
   /**
    * Create records of refbytable, duplicated from original one's ref records

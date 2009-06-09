@@ -120,6 +120,35 @@ public class ObjectCreateImpl{
        sql.append(")");
        String psql= sql.toString();
        return psql;
-    }    
+    }   
+    /**
+     * 
+     * @return array with 3 elements, 
+     * 0 - ID column position in PreparedStatement of getPreparedStatementSQL
+     * 1 - M_ATTRBIUTESETINSTANCE_ID column
+     * 2 - *QTY* column
+     */
+    public int[] getASIRelateColumnsPosInStatement(){
+    	int[] positions=new int[]{-1,-1,-1};
+    	int j=1; // setXXX in PreparedStatement using column index starting form 1
+    	ArrayList cols = table.getAllColumns() ;
+        for(int i=0;i<cols.size();i++){
+            Column column = (Column)cols.get(i);
+            String columnName = column.getName();
+            if(column.getObtainManner().equals("trigger") ){
+                continue;
+            }
+            if(columnName.equalsIgnoreCase("id")){
+            	positions[0]=j;
+            }else if(columnName.equalsIgnoreCase("m_attributesetinstance_id")){
+            	positions[1]=j;
+            }else if(column.getType()== Column.NUMBER &&  column.isMaskSet(Column.MASK_CREATE_EDIT) 
+            		&& columnName.indexOf("QTY")>-1){
+            	positions[2]=j;
+            }
+            j++;
+        }
+        return positions;
+    }
     
 }

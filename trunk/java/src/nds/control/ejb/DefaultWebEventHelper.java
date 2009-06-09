@@ -294,6 +294,56 @@ public class DefaultWebEventHelper {
      * @param jsonobj JSONArray
      * @param masterEvent event that will be duplicated 
      * @param objId item table record id
+     * @param asiRelateColumnsPosInStatement array with 3 elements, 
+     * 0 - ID column position in PreparedStatement of getPreparedStatementSQL
+     * 1 - M_ATTRBIUTESETINSTANCE_ID column
+     * 2 - *QTY* column
+     * @param acamTrigger "AC" or "AM" for trigger on each newly created record
+     * @throws Exception
+     */
+    public void execStmtOfAttributeDetailRecordsByJSON(Table table, Object jsonobj, 
+    		int objId, Connection con,PreparedStatement pstmt,
+    		int[] asiRelateColumnsPosInStatement, String acamTrigger) throws Exception{
+    	if(jsonobj==null) return;
+    	JSONArray ja=null;
+    	if(jsonobj instanceof JSONArray) ja= (JSONArray)jsonobj;
+    	else if(jsonobj.equals(JSONObject.NULL) ){
+    		ja=new JSONArray();
+    	}else if(jsonobj instanceof String){
+    		if(Validator.isNull((String)jsonobj) )
+    			ja= new JSONArray();
+    		else
+    			ja= new JSONArray((String)jsonobj);
+    	}else{
+    		throw new IllegalArgumentException("jsonobj type not supported:"+ jsonobj.getClass());
+    	}
+         try {
+             if(ja.length()>0){
+	             int pasiId, qty, pkid;
+	             JSONArray attributePair;
+	             for(int i=0;i< ja.length();i++){
+	             	attributePair= ja.getJSONArray(i);
+	             	pasiId=Tools.getInt( attributePair.getString(0).substring(1), -1); // first char is "P", should be removed
+	             	qty= attributePair.getInt(1);
+	             	pkid= (i==0? objId: QueryEngine.getInstance().getSequence(table.getName(), con));
+	             	pstmt.setInt(asiRelateColumnsPosInStatement[0]/*id*/,pkid);
+	             	pstmt.setInt(asiRelateColumnsPosInStatement[1]/*asiid*/,pasiId );
+	             	pstmt.setInt(asiRelateColumnsPosInStatement[2]/*qty*/,qty );
+	             	pstmt.executeUpdate();
+	             	doTrigger(acamTrigger, table, pkid, con);
+	             }
+             }
+         } catch (Exception ce) {
+         	logger.error("Error createAttributeDetailRecords table="+ table+", jsonobj="+ jsonobj+", objid="+objId , ce);
+             throw ce;
+         }
+    }  
+    /**
+     * Create records in m_attributedetail table 
+     * @param table
+     * @param jsonobj JSONArray
+     * @param masterEvent event that will be duplicated 
+     * @param objId item table record id
      * @throws Exception
      */
     public void createAttributeDetailRecordsByJSON(Table table, Object jsonobj, 
