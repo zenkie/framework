@@ -2,7 +2,6 @@
 package nds.taglibs.input;
 
 import nds.portlet.util.PortletUtils;
-import nds.util.MessagesHolder;
 import nds.util.*;
 
 import java.util.*;
@@ -115,7 +114,7 @@ public class Filter extends TagSupport {
             	if(c==null)throw new NDSException("Not find column in table "+ column.getTable() + " with name:"+tableInput);
             	
             	table="encodeURIComponent(dwr.util.getValue('column_"+ c.getId()+"'))";
-            	temp_table=table;
+            	temp_table="";
             	checkScript="if(oq.isEmpty('column_"+ c.getId()+"')==true){alert('"+PortletUtils.getMessage(pageContext,"input-first")+":"+c.getDescription(req.getLocale())+"');return;}";
             }else{
             	table= props.getProperty("table");
@@ -127,14 +126,18 @@ public class Filter extends TagSupport {
             String action="'/html/nds/query/search.jsp?table='+"+ table+"+'&return_type=f&accepter_id="+ id +"'";
             String imageurl="";
             String popflag="";
-            Table toggle_table=null;
-            toggle_table=TableManager.getInstance().getTable(temp_table);
             String toggle;
+            Table toggle_table=null;
+            if(temp_table.equals("")){
+            	toggle="oq.toggle_m(";
+            }else{
+            	toggle_table=TableManager.getInstance().getTable(temp_table);
+            	toggle = toggle_table.isDropdown() ? "oq.toggle(": "oq.toggle_m(";  
+            }
             imageurl=nds.util.Validator.isNotNull(desc)?"clear.gif":"filterobj.gif";
-            popflag=nds.util.Validator.isNotNull(desc)?"clear":"popup";
-            toggle=toggle_table.isDropdown()?"oq.toggle(":"oq.toggle_m(";
-            out.print("<span class='coolButton' id=\""+Util.quote(id)+"_link\" title="+popflag+" onaction=\""+checkScript+toggle+ action+", '"+this.id+"');\"><img id='"+this.id+"_img' border=0 width=16 height=16 align=absmiddle src='/html/nds/images/"+imageurl+"'></span>");
-            out.print("<script>createButton(document.getElementById('"+ Util.quote(id) +"_link'));</script>");     
+            popflag=nds.util.Validator.isNotNull(desc)?"clear":"popup";         
+			out.print("<span class='coolButton' id=\""+Util.quote(id)+"_link\" title="+popflag+" onaction=\""+checkScript+toggle+ action+", '"+this.id+"');\"><img id='"+this.id+"_img' border=0 width=16 height=16 align=absmiddle src='/html/nds/images/"+imageurl+"'></span>");
+            out.print("<script>createButton(document.getElementById('"+ Util.quote(id) +"_link'));</script>");           
         } catch (Exception ex) {
             throw new JspTagException(ex.getMessage());
         }
