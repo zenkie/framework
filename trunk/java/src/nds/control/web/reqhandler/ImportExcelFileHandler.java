@@ -91,6 +91,9 @@ public class ImportExcelFileHandler extends RequestHandlerSupport {
             ei.setMainTable(tableId );
             ei.setStartRow(Tools.getInt(props.getProperty("startRow"), 1)) ;
             boolean bgRun="true".equalsIgnoreCase(""+props.getProperty("bgrun"));
+            
+            boolean update_on_unique_constraints="true".equalsIgnoreCase(""+props.getProperty("update_on_unique_constraints"));
+            
             String df= dateFormatter.format(new Date());
             if(bgRun) ei.setParameter("outputfile", conf.getProperty("export.root.nds","/aic/home") +"/"+user.getClientDomain()+ "/"+ operatorName+"/OutExcel"+ df +".txt");
             Enumeration enu= props.keys() ;
@@ -101,6 +104,8 @@ public class ImportExcelFileHandler extends RequestHandlerSupport {
             }
 
             DefaultWebEvent event=ei.createEvent();
+            event.setParameter("update_on_unique_constraints",  update_on_unique_constraints?"Y":"N");
+
             if(user !=null && user.getSession()!=null)
             	event.put("nds.query.querysession",user.getSession());
             return event;

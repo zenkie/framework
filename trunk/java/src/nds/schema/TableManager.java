@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Vector;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -683,6 +684,79 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     		logger.error("Fail to get comments of column "+ column, t);
     	}
     	return "";
+    }
+    /**
+     * 当导入Excel时，最有可能导致导入错误的Unique Index，目前支持的UNIQUE INDEX 应当：
+     * 所有的字段都是在AD_COLUMN里定义了的，而且至少有一个字段是可以在新增时输入的。
+     * 如果有多个UNIQUE INDEX符合，将按名称排倒序，取第一个
+     * @param table
+     * @return null 没有符合上述条件的Unique Index
+     */
+    public String getUniqueIndexName(Table table){
+    	if( ((TableImpl)table).getUniqueIndexColumns()==null){
+    		findUniqueIndex((TableImpl)table);
+    	}
+    	return  ((TableImpl)table).getUniqueIndexName();
+    }
+    /**
+     *
+     * @param table
+     * @return elements are Column or Collections.EMPTY_LIST
+     */
+    public List getUniqueIndexColumns(Table table){
+    	
+    	if( ((TableImpl)table).getUniqueIndexColumns()==null){
+    		findUniqueIndex((TableImpl)table);
+    	}
+    	return  ((TableImpl)table).getUniqueIndexColumns();
+    }
+    /**
+     * @todo This one should be moved to database specific implementation
+     * @param table
+     */
+    private void findUniqueIndex(TableImpl table){
+    	try{
+    		List idx=QueryEngine.getInstance().doQueryList("SELECT INDEX_NAME FROM USER_INDEXES WHERE TABLE_NAME='"+ table.getRealTableName()+"' AND index_type='NORMAL' AND UNIQUENESS='UNIQUE' ORDER BY INDEX_NAME DESC");
+    		String idxName=null;
+    		for(int i=0;i< idx.size();i++){
+    			idxName=(String) idx.get(i);
+    			//  所有的字段都是在AD_COLUMN里定义了的，而且至少有一个字段是可以在新增时输入的。
+    			List cols=QueryEngine.getInstance().doQueryList(
+    					"SELECT COLUMN_NAME FROM USER_IND_COLUMNS WHERE INDEX_NAME='"+ idxName +"' AND TABLE_NAME='"+ table.getRealTableName()+"'"
+    					);
+    			boolean b=true;
+    			int cnt=0;// editable columns count
+    			ArrayList al=new ArrayList(); 
+    			for(int j=0;j< cols.size();j++){
+    				Column col= table.getColumn((String)cols.get(j));
+    				if(col!=null ){ 
+    					if(col.isMaskSet(col.MASK_CREATE_EDIT)){
+    						cnt++;
+    					}
+    				}else{
+    					// not found in ad, so suppose to be a column used by proc or trigger, this index is
+    					// not qualified as our unique index
+    					b=false;
+    					break;
+    				}
+    				al.add(col);
+    			}
+    			if(b && cnt >0){
+    				// ok, we just need one
+    				table.setUniqueIndex(idxName, al);
+    				logger.debug("find unique index "+ idxName+" on "+ table);
+    				break;
+    			}else{
+    				logger.debug(idxName+" is not unique index what we need");
+    			}
+    		}
+    		if( ((TableImpl)table).getUniqueIndexColumns()==null){
+    			// no unique index 
+    			table.setUniqueIndex(null, Collections.EMPTY_LIST);
+    		}
+    	}catch(Throwable t){
+    		logger.error("fail to load udx", t);
+    	}
     }
     /**
      * Replace public instance with tmp instance

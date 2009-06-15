@@ -61,7 +61,7 @@ public class DBSchemaLoader {
     		session=adTableDAO.createSession();
     		long t=System.currentTimeMillis();
     		//List colList= session.createSQLQuery("select {c.*} from ad_column {c} where {c}.IsActive='Y' and exists (select 1 from ad_table a, ad_tablecategory g where a.id={c}.ad_table_id and g.id=a.ad_tablecategory_id and g.isactive='Y' and a.isactive='Y') order by {c}.Orderno", "c", AdColumn.class).list();
-    		List colList= session.createSQLQuery("select * from ad_column where ad_column.IsActive='Y' and exists (select 1 from ad_table a, ad_tablecategory g where a.id=ad_column.ad_table_id and g.id=a.ad_tablecategory_id and g.isactive='Y' and a.isactive='Y') order by ad_column.Orderno").addEntity(AdColumn.class).list();
+    		List colList= session.createSQLQuery("select * from ad_column where ad_column.IsActive='Y' and exists (select 1 from ad_table a, ad_tablecategory g, ad_subsystem s where a.id=ad_column.ad_table_id and g.id=a.ad_tablecategory_id and s.id=g.ad_subsystem_id and s.isactive='Y' and g.isactive='Y' and a.isactive='Y') order by ad_column.Orderno").addEntity(AdColumn.class).list();
     		
     		for(Iterator it=colList.iterator();it.hasNext();){
     			AdColumn col= (AdColumn) it.next();

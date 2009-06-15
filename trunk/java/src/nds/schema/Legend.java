@@ -18,11 +18,18 @@ public class Legend {
 		public String getStyle(){
 			return style;
 		}
+		public String getDescription(){
+			return description;
+		}
 		public String getDescription(Locale locale){
 			return nds.util.MessagesHolder.getInstance().getMessage(locale,  description);
 		}
 	}
-	public final static Legend EMPTY_LEGEND=new Legend();
+	public final static Legend EMPTY_LEGEND=new Legend(){
+		public String toString(){
+			return "EMPTY_LEGEND";
+		}
+	};
 	
 	ArrayList items;
 	public Legend(){

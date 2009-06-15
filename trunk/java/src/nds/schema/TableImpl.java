@@ -80,6 +80,7 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Date;
+import java.util.List;
 import org.json.JSONException;
 import org.json.JSONObject;
 import nds.util.*;
@@ -149,6 +150,13 @@ public class TableImpl implements Table {
     private int uiconfigId=-1; //id of nds.web.config.ObjectUIConfig
     private int parentTableId=-1;// parent table id
     private PairTable lengendQueryList=null;
+    /**
+     * 当导入Excel时，最有可能导致导入错误的Unique Index，如果一张表上有多个Unique Index，
+     * 将首选 索引中的字段都是可在新增时修改的 那个
+     * 赋值是通过 TableManager来做到的
+     */
+    private String uniqueIndexName =null;
+    private java.util.List uniqueIndexColumns=null; //elements are Column
     
     public TableImpl(int id,int order,String tableName,String desc,String rowURL,String rowClass,TableCategory category, boolean[] mask, Properties trigs,String comment) {
         this.id=id;
@@ -178,15 +186,33 @@ public class TableImpl implements Table {
     	this.id=id;
     }
     /**
+     * 当导入Excel时，最有可能导致导入错误的Unique Index，如果一张表上有多个Unique Index，
+     * 将首选 索引中的字段都是可在新增时修改的 那个
+     * 赋值是通过 TableManager来做到的
+     * @param name
+     * @param columns
+     */
+    void setUniqueIndex(String name, List columns){
+    	uniqueIndexName=name;
+    	uniqueIndexColumns=columns;
+    }
+    
+    String getUniqueIndexName(){
+    	return uniqueIndexName;
+    }
+    List getUniqueIndexColumns(){
+    	return uniqueIndexColumns;
+    }
+    /**
      * Legend to mark table records style. 
      * For each column that has UIAlerter, will construct a legend. The returned 
      * PairTable will contain all these columns and their legends
-     * @param columnMask Column.QUERY_LIST, or Column.QUERY_SUBLIST, 
-     * currently only Column.QUERY_LIST implemented
+     * @param columnMask Column.MASK_QUERY_LIST, or Column.MASK_QUERY_SUBLIST, 
+     * currently only Column.MASK_QUERY_LIST implemented
      * @return PairTable may be null, key: Column, value: Legend
      */
     public PairTable getLegends(int columnMask){
-    	if(columnMask != Column.QUERY_LIST) return null;
+    	if(columnMask != Column.MASK_QUERY_LIST) return null;
     	
     	if(lengendQueryList==null){
 	    	ArrayList cols= this.getColumns(new int[]{columnMask}, false);

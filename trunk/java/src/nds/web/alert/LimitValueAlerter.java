@@ -23,11 +23,12 @@ import nds.log.*;
 
 public class LimitValueAlerter extends  ColumnAlerterSupport{
 	private final static String GET_CSSCLASS="select cssclass from ad_limitvalue where ad_limitvalue_group_id =(select ad_limitvalue_group_id from ad_column where id=?) and value=?";
-	private final static String GET_LEGEND="select cssclass,description from ad_limitvalue where ad_limitvalue_group_id =(select ad_limitvalue_group_id from ad_column where id=?) order by orderno";
+	private final static String GET_LEGEND="select cssclass,description from ad_limitvalue where cssclass is not null and ad_limitvalue_group_id =(select ad_limitvalue_group_id from ad_column where id=?) order by orderno";
 	private Hashtable cssClasses; // key : col.getId()+ data: value: css
 	private Hashtable legends; //key: column.getId(), value: Legend
 	public LimitValueAlerter(){
 		cssClasses=new Hashtable();
+		legends=new Hashtable();
 	}
 	
 	public Legend getLegend(Column col){
@@ -42,7 +43,7 @@ public class LimitValueAlerter extends  ColumnAlerterSupport{
 	            pstmt.setInt(1, col.getId());
 	            rs= pstmt.executeQuery();
 	            int pid; String value;
-	            if( rs.next() ){
+	            while( rs.next() ){
 	                if(l==null) l=new Legend();
 	                l.addItem(rs.getString(1), rs.getString(2));
 	            }
@@ -62,7 +63,10 @@ public class LimitValueAlerter extends  ColumnAlerterSupport{
 	 * Clear cache
 	 *
 	 */
-	public void clear(){cssClasses.clear();}
+	public void clear(){
+		cssClasses.clear();
+		legends.clear();
+	}
 	/**
 	 * Get css class of current row in result set, current column
 	 * is specified, start from 1. Normally this is used in object list table

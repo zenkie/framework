@@ -47,12 +47,15 @@ public class ObjectCreate extends Command{
     	return true;
     }	
   /**
-   * @return  if jsonobj found in event, and json lines splitted, will singal "jsonObjectCreated" 
+   * Support update for object create when param "update_on_unique_constraints" is set to "Y" (default is "N")
+   * 
+   * @return  if jsonobj found in event, and json lines splitted, will singal "jsonObjectCreated"
+   *   
    * attribute to Boolean.TRUE in returned ValueHolder
    */	
   public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
   	  boolean jsonObjectCreated=false;	
-  	//logger.debug(event.toDetailString());
+  	  logger.debug(event.toDetailString());
       TableManager manager = helper.getTableManager();
       int tableId = Tools.getInt(event.getParameterValue("table"),-1 ) ;
       int userId= helper.getOperator(event).id.intValue();
@@ -60,7 +63,15 @@ public class ObjectCreate extends Command{
       String tableName = table.getName();          // 得到表的名字
       String tableDesc = table.getDescription(Locale.CHINA) ;
       
-      
+      /*
+       *When update_on_unique_constraints, insert exception will be catched and try update in consequence
+      	Currently only supported for single record insertion (matrix input format not supported)
+      	and batch insert mode (excel importing). 
+      	带界面的输入如果重复很难判定该如何刷新明细（例如：两行新增，第二行实际需要update到第一行里，该如何显示呢？
+      */
+      boolean updateOnUniqueConstraints=Tools.getYesNo(
+    		  event.getParameterValue("update_on_unique_constraints", true), false);
+      logger.debug("update_on_unique_constraints="+ updateOnUniqueConstraints);
       String outputFile= (String) event.getParameterValue("outputfile");
       long beginTime=System.currentTimeMillis();
       try{
@@ -90,7 +101,10 @@ public class ObjectCreate extends Command{
       }catch(Exception e){}
 
       java.sql.Connection con=null;
-      PreparedStatement stmt=null;
+      PreparedStatement stmt=null; // insert into xxx () values (?,?)
+      PreparedStatement stmtUpdate=null; // update xxx set a=?,c=? where id=?
+      PreparedStatement stmtIDByUdx=null; // select id from xxx where c=?
+      boolean shouldAddModifierIdToUpdateStatement=false;
       //Table sheetTable=null;int sheetId=-1;
        try{
        	   con= helper.getConnection(event);
@@ -164,7 +178,7 @@ public class ObjectCreate extends Command{
            
            int[] asiRelateColumnsPosInStatement=null;
            if(createAttributeDetail){
-	           if(jsonobj!=null){
+	           if(jsonobj!=null && !jsonobj.equals(org.json.JSONObject.NULL)){
                	  	if(jsonobj.getClass().isArray()){
                	  		jo= ((Object[])jsonobj);
                	  	}else jo= new Object[]{jsonobj};
@@ -178,10 +192,12 @@ public class ObjectCreate extends Command{
 	        	    */
 	        	   //createAttributeDetailByCopy=(copyFromIds!=null);
 	           }
-	           asiRelateColumnsPosInStatement=createImpl.getASIRelateColumnsPosInStatement();
-	           if(asiRelateColumnsPosInStatement[0]==-1 || asiRelateColumnsPosInStatement[1]==-1 
-	        		   || asiRelateColumnsPosInStatement[2]==-1)
-	        	   throw new NDSException("Not expected condition: not found ID, ASI or *QTY* column in createAttributeDetail request");
+	           if(createAttributeDetailByJson){
+	        	   asiRelateColumnsPosInStatement=createImpl.getASIRelateColumnsPosInStatement();
+		           if(asiRelateColumnsPosInStatement[0]==-1 || asiRelateColumnsPosInStatement[1]==-1 
+		        		   || asiRelateColumnsPosInStatement[2]==-1)
+		        	   throw new NDSException("Not expected condition: not found ID, ASI or *QTY* column in createAttributeDetail request");
+	           }
            }
            logger.debug("createAttributeDetailByJson="+ createAttributeDetailByJson+
            			",createAttributeDetailByCopy="+createAttributeDetailByCopy);
@@ -190,6 +206,11 @@ public class ObjectCreate extends Command{
            //String sql;
            ArrayList row;
            java.sql.Savepoint  sp=null;
+           int[] sqlDataColumnTypesForUpdate=null, sqlDataColumnTypesForUdx=null; // elements: Column.STRING/NUMBER/DATENUMBER
+           int[] sqlDataIndexForUpdate=null, sqlDataIndexForUdx=null; // elements: input which col in row of sqlData
+           
+           String uniqueIndexName= manager.getUniqueIndexName(table);
+           
            for( int i=0;i< sqlData.size();i++){
            	   realPos=((Integer)sqlIndex.get(i)).intValue();
            	   //Managed transaction in 
@@ -226,10 +247,55 @@ public class ObjectCreate extends Command{
                    		helper.doTrigger("AC", table, oids[realPos], con);
                    }else{
                 	   //normal update and ac procedure
-                	   
-                	   stmt.executeUpdate();
-                	   helper.doTrigger("AC", table, oids[realPos], con);
-                	   
+                	   try{
+                		   stmt.executeUpdate();
+                		   helper.doTrigger("AC", table, oids[realPos], con);
+                	   }catch(SQLException sqlex){
+                		   //support for unique constraints confliction, and try update
+                		   //如果是Unique Index 错误，要找到存在的记录，做更新
+                		   if(updateOnUniqueConstraints && isUniqueConstraintsError(sqlex,uniqueIndexName)){
+                			   if(stmtUpdate==null){
+                				   //createImpl.prepareUpdateForUdx();
+                				   // select id from xxx where udx_col=? and udx_col2=? 
+                				   String psqlIdByUdx= createImpl.getPreparedStatementSQLForUdx();
+                				   logger.debug(psqlIdByUdx);
+                				   stmtIDByUdx=con.prepareStatement(psqlIdByUdx);
+                		           sqlDataColumnTypesForUdx=createImpl.getSQLDataColumnTypesForUdx();
+                		           sqlDataIndexForUdx=createImpl.getSQLDataIndexForUdx();
+                				   // update xxx set a=?, b=?
+                				   String psqlUpdate=createImpl.getPreparedStatementSQLForUpdate();
+                		           logger.debug(psqlUpdate);
+                				   stmtUpdate=con.prepareStatement(psqlUpdate);
+                				   sqlDataColumnTypesForUpdate=createImpl.getSQLDataColumnTypesForUpdate();
+                				   sqlDataIndexForUpdate =createImpl.getSQLDataIndexForUpdate();
+                				   shouldAddModifierIdToUpdateStatement=createImpl.shouldAddModifierIdToUpdateStatement();
+                			   }
+                			   logger.debug( Tools.toString(row, ","));
+                			   setDataIdByUdx(stmtIDByUdx,row,sqlDataIndexForUdx,sqlDataColumnTypesForUdx );
+                			   int idByUdx=-1;
+                			   ResultSet rsIdByUdx= stmtIDByUdx.executeQuery();
+                			   try{
+	                			   if(rsIdByUdx!=null && rsIdByUdx.next()){
+	                				   idByUdx= rsIdByUdx.getInt(1);
+	                			   }else{
+	                				   throw new NDSException("unexpected condition, rsIdByUdx may not be null or no records");
+	                			   }
+                			   }finally{
+                				   if(rsIdByUdx!=null) try{rsIdByUdx.close();}catch(Throwable txter){}
+                			   }
+                			   if(idByUdx!=-1){
+                				   setDataForUpdate(stmtUpdate,row,sqlDataIndexForUpdate,
+                						   sqlDataColumnTypesForUpdate,userId, idByUdx,shouldAddModifierIdToUpdateStatement);
+                				   int ucnt=stmtUpdate.executeUpdate();
+                				   //do am trigger on that row upated
+                				   helper.doTrigger("AM", table, idByUdx, con);
+                				   oids[realPos]=idByUdx; // not the created one, but the old value
+                			   }
+                			   
+                		   }else{
+                			   throw sqlex;
+                		   }
+                	   }
                    }
                    
                    
@@ -340,6 +406,9 @@ public class ObjectCreate extends Command{
 
        }finally{
            try{if(stmt !=null) stmt.close(); }catch(Exception eee2){}
+           try{if(stmtUpdate !=null) stmtUpdate.close(); }catch(Exception eee2){}
+           try{if(stmtIDByUdx !=null) stmtIDByUdx.close(); }catch(Exception eee2){}
+           
            helper.closeConnection(con, event);
        }
 
@@ -375,6 +444,96 @@ public class ObjectCreate extends Command{
 		  }
 	  }
 	  
+  }
+  //(stmtUpdate,row,sqlDataIndexForUpdate,sqlDataColumnTypesForUpdate,userId, idByUdx)
+/**
+   * set statement with data
+   * @param pstmt
+   * @param rowData
+   * @param sqlDataIndexForUdx colum index in rowData(start from 0)
+   * @param columnTypes elements are Column.NUMBER, STRING, DATENUMBER, DATE
+   * 
+   * @return execute result
+   * @throws Exception
+   */
+  private void setDataForUpdate(PreparedStatement pstmt, ArrayList rowData, 
+		  int[] sqlDataIndexForUpdate, int[] columnTypes, int userId, int objectId,
+		  boolean shouldAddModifierIdToUpdateStatement) throws Exception{
+	  Object v;
+	  for(int i=0;i< columnTypes.length;i++){
+		  v=rowData.get(sqlDataIndexForUpdate[i]);
+		  switch(columnTypes[i]){
+			  case Column.NUMBER:
+			  case Column.DATENUMBER:
+				  /* find oracle will check null in setBidDecimal, so we do not check here
+				  if(v==null) pstmt.setNull(i+1,java.sql.Types.NUMERIC);
+				  else pstmt.setBigDecimal(i+1,(BigDecimal)v);*/
+				  pstmt.setBigDecimal(i+1,(BigDecimal)v);
+				  break;
+			  case Column.STRING:
+				  pstmt.setString(i+1,(String)v );
+				  break;
+			  case Column.DATE:
+				  pstmt.setTimestamp(i+1,new java.sql.Timestamp(((java.sql.Date)v).getTime()));
+				  break;
+			  default:
+		       	 throw new NDSException("Unexpected column type:"+ columnTypes[i]);			  
+		  }
+	  }
+	  if(shouldAddModifierIdToUpdateStatement){
+		  pstmt.setInt(columnTypes.length+1, userId);
+		  pstmt.setInt(columnTypes.length+2, objectId);
+	  }else{
+		  pstmt.setInt(columnTypes.length+1, objectId);
+	  }
+	  
+  }  
+  /**
+   * set statement with data
+   * @param pstmt
+   * @param rowData
+   * @param sqlDataIndexForUdx colum index in rowData(start from 0)
+   * @param columnTypes elements are Column.NUMBER, STRING, DATENUMBER, DATE
+   * 
+   * @return execute result
+   * @throws Exception
+   */
+  private void setDataIdByUdx(PreparedStatement pstmt, ArrayList rowData, int[] sqlDataIndexForUdx, int[] columnTypes) throws Exception{
+	  Object v;
+	  for(int i=0;i< columnTypes.length;i++){
+		  v=rowData.get(sqlDataIndexForUdx[i]);
+		  switch(columnTypes[i]){
+			  case Column.NUMBER:
+			  case Column.DATENUMBER:
+				  /* find oracle will check null in setBidDecimal, so we do not check here
+				  if(v==null) pstmt.setNull(i+1,java.sql.Types.NUMERIC);
+				  else pstmt.setBigDecimal(i+1,(BigDecimal)v);*/
+				  pstmt.setBigDecimal(i+1,(BigDecimal)v);
+				  break;
+			  case Column.STRING:
+				  pstmt.setString(i+1,(String)v );
+				  break;
+			  case Column.DATE:
+				  pstmt.setTimestamp(i+1,new java.sql.Timestamp(((java.sql.Date)v).getTime()));
+				  break;
+			  default:
+		       	 throw new NDSException("Unexpected column type:"+ columnTypes[i]);			  
+		  }
+	  }
+	  
+  }
+  /**
+   * ORA-00001 is unique index error, and the error should not be ID confliction 
+   * @param indexName the unique index to be checked
+   * @return true if is unique constraints error (not PK )
+   */
+  private boolean isUniqueConstraintsError(SQLException t, String indexName){
+	  	String s= nds.util.StringUtils.getRootCause(t).getMessage();
+  		if(s==null) s=t.getMessage();
+  		boolean b= (s.indexOf("ORA-00001") > -1 && s.indexOf(indexName) > -1);
+  	  	logger.debug("check isUniqueConstraintsError("+s+") ="+ b);
+  	  	return b;
+
   }
   /**
    * Create records of refbytable, duplicated from original one's ref records

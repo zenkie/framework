@@ -332,6 +332,13 @@ public class DefaultWebEventHelper {
 	             	pstmt.executeUpdate();
 	             	doTrigger(acamTrigger, table, pkid, con);
 	             }
+             }else{
+            	 throw new NDSException("Unexpected flow condition, ja must have at least one input");
+            	 // pstmt already has pkid, pasid, qty set, this is in case that user input m_product_alias 
+            	 // directly in page
+	             //	pstmt.executeUpdate();
+	             //	doTrigger(acamTrigger, table, objId, con);
+
              }
          } catch (Exception ce) {
          	logger.error("Error createAttributeDetailRecords table="+ table+", jsonobj="+ jsonobj+", objid="+objId , ce);
@@ -896,7 +903,7 @@ public class DefaultWebEventHelper {
     public void checkTableRows(Table table,int[] ids ,Connection con, String errMsg) throws NDSException{
     	if( table ==null || ids==null || ids.length==0) return;
     	String s=""+ids[0];
-    	for(int i=0;i< ids.length;i++) {
+    	for(int i=1;i< ids.length;i++) {
             s +=","+ids[i];
         }
     	int cnt=-1;
