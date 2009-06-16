@@ -67,8 +67,8 @@ public class DBJSONXML extends Command {
 	  	param= org.json.XML.toString(paramJSON);
 	  	
 	  	// check permission
-	 // 	Table t= manager.getTable(table);
-	  	Table t= manager.getTable("m_v_product");
+	  	Table t= manager.getTable(table);
+	  	//Table t= manager.getTable("m_v_product");
 		if (!"root".equals(usr.getName())){
 		  	int perm= helper.getPermissions(t.getSecurityDirectory(),usr.id.intValue());
 		  	int minPerm=1;// read
