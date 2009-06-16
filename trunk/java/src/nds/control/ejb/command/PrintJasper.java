@@ -83,9 +83,9 @@ public class PrintJasper extends Command{
 		  		userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(ctx.getSession()).getActor(nds.util.WebKeys.USER));			  		
 		    	Properties props=userWeb.getPreferenceValues(table.getName().toLowerCase()+".print", false,false);
 		    	defaultTemplate= props.getProperty("template"); // format like: cx123 for ad_cxtab(id=123) definitions, t123 for ad_report(id=123) definitions
-		    	defaultFormat=props.getProperty("format", "htm"); //default to htm format as output
+		    	defaultFormat=props.getProperty("format", "pdf"); //default to htm format as output
 	  		}
-	    	
+	    	  
 	    	String template= params.optString("template",defaultTemplate); //format like: cx123 for ad_cxtab(id=123) definitions, t123 for ad_report(id=123) definitions
 	    	if(nds.util.Validator.isNull(template)){
 	    		template= getPrintTemplate(userWeb,table);
@@ -107,6 +107,8 @@ public class PrintJasper extends Command{
 	    	}
 	    	Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
 	    	String destFolder = conf.getProperty("export.root.nds","/aic/home") + File.separator +  user.getClientDomain()+File.separator+  user.name;
+	    	File fold= new File(destFolder);
+	    	fold.mkdirs();
 	    	String destFile	=destFolder + java.io.File.separator+ fileName+"."+ fileType  ;
 	    	
 	    	String reportType= params.optString("reporttype","O"); // L for List , O for Object
