@@ -40,10 +40,10 @@ public class FAIR_CreateMiniatures extends Command{
     	String clientdomain=usr.getClientDomain();
     	try {
 			fairmanager.createThumbnails(b_pdt_media_id,m_product_id,clientdomain, true);
-			holder.put("message", "图片生成成功!");
+			holder.put("message", "@image-success@");
 		} catch (Exception e) {
 			logger.error(e.getMessage(),e);
-			holder.put("message", "图片生成失败!");
+			holder.put("message", "@image-fail@");
 		}
 		holder.put("code", new Integer(0));//no change for current page		
     	return holder;

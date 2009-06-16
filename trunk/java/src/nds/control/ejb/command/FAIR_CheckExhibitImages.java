@@ -39,10 +39,10 @@ public class FAIR_CheckExhibitImages extends Command{
     	String clientdomain=usr.getClientDomain();
     	try {
 			fairmanager.checkFairThumbnails(b_fair_id,clientdomain);
-			holder.put("message", "检查成功!");
+			holder.put("message", "@ckeck-success@");
 		} catch (Exception e) {
 			logger.error("Failt ot check thumbnails: fair="+b_fair_id, e);
-			holder.put("message", "检查失败!("+ e.getMessage()+")");
+			holder.put("message", "@ckeck-fail@"+"("+ e.getMessage()+")");
 		}
 		holder.put("code", new Integer(0));
     	return holder;
