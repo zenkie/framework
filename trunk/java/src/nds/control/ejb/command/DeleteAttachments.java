@@ -62,7 +62,7 @@ public class DeleteAttachments extends Command {
 	Attachment att= attm.getAttachmentInfo(usr.getClientDomain()+"/" + table.getRealTableName()+"/"+col.getName(),  ""+event.getParameterValue("objectid",true), -1);
     if(att!=null)attm.deleteAttachment(att);
 	
-	v.put("message", "附件链接全部清除！");
+	v.put("message", "@clear-additional-links@");
 	return v;
   }
 }

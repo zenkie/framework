@@ -74,7 +74,7 @@ public class SaveAttachmentURL extends Command {
         }
 		
 		
-		v.put("message", "附件链接设定成功！");
+		v.put("message", "@additional-links-success@");
 		return v;
     }
 }
