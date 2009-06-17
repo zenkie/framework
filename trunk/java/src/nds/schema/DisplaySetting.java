@@ -7,6 +7,9 @@ package nds.schema;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+
+import nds.log.Logger;
+import nds.log.LoggerManager;
 import nds.util.*;
 /**
  * The holder class of screen layout setting of one column field
@@ -27,6 +30,8 @@ import nds.util.*;
  */
 
 public class DisplaySetting {
+	private static Logger logger= LoggerManager.getInstance().getLogger(DisplaySetting.class.getName());
+
 	/**
 	 * Input box, with only one row
 	 */
@@ -151,10 +156,12 @@ public class DisplaySetting {
 	 * 
 	 */
 	public DisplaySetting(String type, Column col){
+		try{
 		if (type==null){
 			checkOnColumn(col);
 			
 		}else{
+			
 			int ps, comma, se;
 	        String p,s;
 
@@ -199,6 +206,11 @@ public class DisplaySetting {
 	        if( t ==null) throw new NDSRuntimeException(" Type \""+type+"\" not recognized by DisplaySetting");
 	        objType= t.intValue();		
 	        //if(columns>3) throw new NDSRuntimeException(" Column \""+col+"\" error in setting display columns(greater than 2):"+columns);
+		}
+		}catch(Throwable t){
+			if(t instanceof NDSRuntimeException) throw (NDSRuntimeException)t;
+			logger.error(" Type \""+type+"\" not recognized by DisplaySetting", t);
+			throw new NDSRuntimeException(" Type \""+type+"\" not recognized by DisplaySetting");
 		}
         
         		  	
