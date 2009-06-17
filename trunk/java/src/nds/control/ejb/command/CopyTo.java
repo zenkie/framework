@@ -61,8 +61,8 @@ public class CopyTo extends Command {
     	if(s !=null && s.length==1){
     		srcTable=manager.getTable( Tools.getInt(s[0],-1));
     	}
-    	if( srcTable ==null)throw new NDSException("必须设置数据源!");
-    	if(destTable==null)throw new NDSException("必须设置目标表!");
+    	if( srcTable ==null)throw new NDSException("@must-set-ds@");
+    	if(destTable==null)throw new NDSException("@must-set-table@");
     	
     	String mainobjecttableid= (String)event.getParameterValue("mainobjecttableid");
     	String objectids= (String)event.getParameterValue("objectids");
@@ -75,7 +75,7 @@ public class CopyTo extends Command {
     		if(sqls !=null && sqls.length==1 && sqls[0]!=null &&  sqls[0].trim().length()>1 ){
     			filter=  " "+sqls[0];
     		}else
-    			throw new NDSException("必须指明数据源过滤条件或具体记录！");
+    			throw new NDSException("@db-filter-condition@");
     		
     	}else{
     		filter=  " IN (" +objectids+")";
@@ -94,10 +94,10 @@ public class CopyTo extends Command {
     	}
     	vh.put("next-screen",nextScreen);
     	if (result.getRowCount()==0) {
-    		vh.put("message","源数据不存在或未找到！");
+    		vh.put("message","@ds-not-exist@");
     		return vh;
     	} 
-    	String message="数据复制成功,尚未保存.";
+    	String message="@data-copy-not-saved@";
 
     	int recordCount= result.getRowCount();
     	DefaultWebEvent e= createCopyToEvent(result, recordCount);

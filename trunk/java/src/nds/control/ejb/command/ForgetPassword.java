@@ -58,7 +58,7 @@ public class ForgetPassword extends Command {
   	
   	int userid= getUserId( email, answer);
 	if( userid ==-1){
-		throw new NDSException("操作失败，提供的信息含有错误");
+		throw new NDSException("@operate-fail@");
 	}
 	java.lang.String password1= (String)event.getParameterValue("password1",true);
 	java.lang.String password2= (String)event.getParameterValue("password2",true);
@@ -82,18 +82,18 @@ public class ForgetPassword extends Command {
 			UserPasswordException ex= (UserPasswordException)e;
 		
 		if( ex.getType() ==UserPasswordException.PASSWORD_ALREADY_USED){
-			msg= "密码已经被使用过了，请更换";
+			msg= "@used-password@";
 		}else if( ex.getType()== UserPasswordException.PASSWORD_INVALID){
-			msg= "密码无效，请更换";
+			msg= "@password-invalid@";
 		}else if ( ex.getType()==UserPasswordException.PASSWORDS_DO_NOT_MATCH){
-			msg= "两次密码不匹配，请重新输入";
+			msg= "@two-dif-passwords@";
 		}else msg=ex.getMessage();
 		}else
 			msg= e.getMessage();
-		throw new NDSException("无法修改用户:"+ msg);
+		throw new NDSException("@can-not-modify-user@"+ msg);
 	}
 	ValueHolder holder= new ValueHolder();
-	holder.put("message", "密码修改成功！, 请至<a href='/login.jsp'>登录界面登录</a>");
+	holder.put("message", "@password-info@");
 	holder.put("code","0");
 	return holder;
   }

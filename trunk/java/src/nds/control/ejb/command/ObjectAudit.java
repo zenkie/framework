@@ -42,7 +42,7 @@ public class ObjectAudit extends Command{
         QueryEngine engine = QueryEngine.getInstance() ;
         int status = engine.getSheetStatus(tableName,pid.intValue() );
         if(status==JNDINames.STATUS_AUDITING || status==JNDINames.STATUS_PERMIT){
-            throw new NDSEventException("该请求已经被提交过了！" );
+            throw new NDSEventException("@req-commited@" );
         }
         Vector sqls= new Vector();
         sqls.addElement("update "+tableName+" set status="+JNDINames.STATUS_AUDITING+",auditorId=null,auditNote=null,modifierid="+ userId+ ", modifieddate=sysdate where id="+pid);
@@ -58,7 +58,7 @@ public class ObjectAudit extends Command{
                  try{if(con !=null) con.close(); }catch(Exception eee){}
             }
             ValueHolder v=new ValueHolder();
-                v.put("message","请求进入审核状态." ) ;
+                v.put("message","@req-audit@" ) ;
             return v;
         }catch(Exception e){
             throw new NDSEventException(e.getMessage() );

@@ -96,7 +96,7 @@ public class CopyItemForMM extends Command{
     	ValueHolder vh=new ValueHolder();
     	vh.put("next-screen",nextScreen);
     	if (values.size()==0) {
-    		vh.put("message","数据未设置！");
+    		vh.put("message","@data-not-set@");
     		return vh;
     	}
     	CollectionValueHashtable ht=new CollectionValueHashtable();
@@ -151,7 +151,7 @@ public class CopyItemForMM extends Command{
     	e.setParameter(DefaultWebEvent.SELECTER_NAME,"selectedItemIdx" );
     	//logger.debug("generated event:"+ e.toDetailString());
     	vh.put(WebKeys.DEFAULT_WEB_EVENT, e);
-    	vh.put("message","数据生成但尚未保存.");
+    	vh.put("message","@data-not-saved@");
     	vh.put("linecount", String.valueOf(values.size()));// will be used by batch add jsp
     	return vh;
     	

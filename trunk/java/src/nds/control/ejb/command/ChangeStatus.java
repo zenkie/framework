@@ -45,7 +45,7 @@ public class ChangeStatus extends Command {
 	params.add(new Integer(fromStatus));
 	QueryEngine.getInstance().executeStoredProcedure("change_status", params, false);
 	ValueHolder holder= new ValueHolder();
-	holder.put("message", "×´Ì¬ÐÞ¸Ä³É¹¦£¡");
+	holder.put("message", "@status-modified-success@");
 	holder.put("code","0");
 	return holder;
   }

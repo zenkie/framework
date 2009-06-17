@@ -91,7 +91,7 @@ public class ObjectAccept extends Command{
 */            
             if(v==null){
             	v=new ValueHolder();
-                v.put("message","请求被批准." ) ;
+                v.put("message","@req-approved@" ) ;
                 v.put("next-screen", "/html/nds/info.jsp");
             }
             return v;

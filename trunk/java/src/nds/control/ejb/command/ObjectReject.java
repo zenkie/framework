@@ -63,7 +63,7 @@ public class ObjectReject extends Command{
 	    	
             if(v==null){
             	v=new ValueHolder();
-                v.put("message","«Î«Û±ª≤µªÿ." ) ;
+                v.put("message","@req-reject@" ) ;
                 v.put("next-screen", "/html/nds/info.jsp");
             }
             return v;

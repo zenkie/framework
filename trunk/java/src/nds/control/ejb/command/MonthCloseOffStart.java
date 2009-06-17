@@ -49,11 +49,11 @@ public class MonthCloseOffStart extends Command{
                 count  = res.getInt(1) ;
             }
             if(count==0){
-                throw new NDSEventException("上个月的月结还没有做，请先结算上个月!");
+                throw new NDSEventException("@month-balance-info@");
             }
         }catch(Exception e){
         	logger.error("error doing query:"+"select count(*) from commrdsfm where yearmon = "+lastYearMonth.intValue(), e);
-            throw new NDSEventException("无法判断上个月是否结算，请重试！",e);
+            throw new NDSEventException("@not-tell-last-month-balance@",e);
         }
         QueryEngine engine = QueryEngine.getInstance() ;
         ArrayList list = new ArrayList();

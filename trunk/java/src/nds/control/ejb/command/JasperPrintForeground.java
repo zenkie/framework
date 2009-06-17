@@ -44,7 +44,7 @@ public class JasperPrintForeground extends Command{
 	    	return holder;
     	}catch(Throwable e){
     		logger.error("User "+ usr.getName() + "@" + usr.getClientDomain()+" fail to print foregound:", e);
-    		throw new NDSException("无法执行打印:"+ e);
+    		throw new NDSException("@dotnot-print@"+ e);
     	}finally{
     		try{conn.close();}catch(Exception e){}
     	}

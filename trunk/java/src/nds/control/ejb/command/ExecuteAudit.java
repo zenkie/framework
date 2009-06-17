@@ -80,7 +80,7 @@ public class ExecuteAudit extends Command {
 		String[] objectStr = event.getParameterValues("itemid");
 	       
 	    if(objectStr==null){
-	        throw new NDSEventException("ÇëÑ¡ÔñÌõÄ¿!");
+	        throw new NDSEventException("@choose-menu@");
 	    }
 	    
 	    String res = "", s; int errCount=0;
