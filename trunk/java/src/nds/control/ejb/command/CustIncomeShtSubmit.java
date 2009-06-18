@@ -32,7 +32,7 @@ public class CustIncomeShtSubmit extends Command{
             QueryEngine engine = QueryEngine.getInstance() ;
             SPResult result = engine.executeStoredProcedure(spName,list,true);
             if(result.isSuccessful() ){
-                v.put("message","@execute-successfully@") ;
+                v.put("message","执行成功!") ;
             }else{
                 v.put("message","执行出现异常：存储过程为"+spName) ;
             }

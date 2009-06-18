@@ -73,18 +73,18 @@ public class ChangePassword extends Command {
 			UserPasswordException ex= (UserPasswordException)e;
 		
 		if( ex.getType() ==UserPasswordException.PASSWORD_ALREADY_USED){
-			msg= "@used-password@";
+			msg= "密码已经被使用过了,请更换!";
 		}else if( ex.getType()== UserPasswordException.PASSWORD_INVALID){
-			msg= "@password-invalid@";
+			msg= "密码无效，请更换!";
 		}else if ( ex.getType()==UserPasswordException.PASSWORDS_DO_NOT_MATCH){
-			msg= "@two-dif-passwords@";
+			msg= "两次密码不匹配,请重新输入!";
 		}else msg=ex.getMessage();
 		}else
 			msg= e.getMessage();
-		throw new NDSException("@can-not-modify-user@:"+ msg);
+		throw new NDSException("无法修改用户到门户安全系统!"+ msg);
 	}
 	ValueHolder holder= new ValueHolder();
-	holder.put("message", "@password-modified-success@");
+	holder.put("message", "密码修改成功!");
 	holder.put("code","0");
 	return holder;
   }
