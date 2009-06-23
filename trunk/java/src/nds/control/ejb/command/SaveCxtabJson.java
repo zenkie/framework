@@ -71,6 +71,7 @@ public class SaveCxtabJson extends Command {
 	  	
 	  	JSONArray axisH=jo.optJSONArray("axisH");
 	  	JSONArray axisV=jo.optJSONArray("axisV");
+		JSONArray axisP=jo.optJSONArray("axisP");
 	  	JSONArray measures=jo.optJSONArray("measures");
 	  	if(savetype.equals("M")){
 		  	
@@ -171,6 +172,32 @@ public class SaveCxtabJson extends Command {
 		  		}
 		  		pstmt.setString(5, "V");
 		  		pstmt.setInt( 6, (i+1+pos)*10);
+		  		pstmt.setInt(7, user.id.intValue());
+		  		pstmt.setInt(8, user.id.intValue());
+		  		pstmt.setString(9,dim.getString("hidehtml"));
+		  		pstmt.executeUpdate();
+		  	}
+		  	int ppos= axisH.length()+axisV.length();
+		  	for(int i=0;i< axisP.length();i++){
+		  		JSONObject dim=axisP.getJSONObject(i);
+		  		pstmt.setInt(1, user.adClientId);
+		  		pstmt.setInt(2, cxtabId);
+		  		String clink=dim.getString("columnlink");
+		  		try{
+		  			ColumnLink cl= new ColumnLink(clink);
+		  		}catch(Throwable t){
+		  			logger.error("fail to create clink:"+ clink, t);
+		  			throw new NDSException( "@axis-p-line@ " + (i+1)+ " @is-invalid@:"+ clink+";");
+		  		}
+		  		pstmt.setString(3, clink);
+		  		String desc=  dim.getString("description");
+		  		if(Validator.isNull(desc )|| desc.startsWith("[")){
+			  		pstmt.setNull(4, Types.VARCHAR);
+		  		}else{
+		  			pstmt.setString(4,desc);
+		  		}
+		  		pstmt.setString(5, "P");
+		  		pstmt.setInt( 6, (i+1+ppos)*10);
 		  		pstmt.setInt(7, user.id.intValue());
 		  		pstmt.setInt(8, user.id.intValue());
 		  		pstmt.setString(9,dim.getString("hidehtml"));
