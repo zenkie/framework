@@ -387,11 +387,17 @@ public class LoginAction extends Action {
 			ActionMapping mapping, ActionForm form, HttpServletRequest req,
 			HttpServletResponse res)
 		throws Exception { 
+		logger.debug(nds.util.Tools.toString(req));
+		
 		
 		HttpSession ses = req.getSession();
+		String redirect=req.getParameter("redirect");
+		if (nds.util.Validator.isNotNull(redirect)) redirect="redirect="+java.net.URLEncoder.encode(redirect,"UTF-8");
+		else redirect="";
+		
 		if(req.getAttribute("USER_ID")!=null){
 			// already login
-			res.sendRedirect("/html/nds/portal/index.jsp");
+			res.sendRedirect("/html/nds/portal/index.jsp?"+redirect );
 			return null;
 		}
 
@@ -413,7 +419,7 @@ public class LoginAction extends Action {
 				 */
 				//res.sendRedirect(themeDisplay.getPathMain());
 				//logger.debug("bbb");
-				res.sendRedirect("/html/nds/portal/index.jsp");
+				res.sendRedirect("/html/nds/portal/index.jsp?"+redirect);
 				return null;
 				//return mapping.findForward("/nds/portal/index.jsp");
 			}
@@ -468,7 +474,7 @@ public class LoginAction extends Action {
 					//res.sendRedirect(themeDisplay.getPathMain());
 					//return null;
 					//logger.debug("ddd");
-					res.sendRedirect("/html/nds/portal/index.jsp");
+					res.sendRedirect("/html/nds/portal/index.jsp?"+redirect);
 					return null;
 					//return mapping.findForward("/nds/portal/index.jsp");
 				}
