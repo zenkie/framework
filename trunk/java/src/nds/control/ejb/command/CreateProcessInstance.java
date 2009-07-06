@@ -61,7 +61,7 @@ public class CreateProcessInstance extends Command {
 	    int queueId=Tools.getInt(QueryEngine.getInstance().doQueryOne("select id from ad_processqueue where ad_client_id="+ 
 	    		user.adClientId+" and name="+QueryUtils.TO_STRING(ad_processqueue_name)+" and isactive='Y'",conn),-1);
 		// check process queue read permission
-		if(!SecurityUtils.hasObjectPermission(userId, user.getName(),
+		if(!user.getName().equals("root") &&  !SecurityUtils.hasObjectPermission(userId, user.getName(),
 				"AD_PROCESSQUEUE",queueId, Directory.READ,event.getQuerySession())) throw new NDSException("@no-permission@");
 	    
 		List params= QueryEngine.getInstance().doQueryList("select name, valuetype,nullable,orderno from ad_process_para where ad_process_id="+pid+" order by orderno asc", conn);
