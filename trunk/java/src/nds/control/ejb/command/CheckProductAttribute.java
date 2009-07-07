@@ -209,11 +209,11 @@ public class CheckProductAttribute extends Command {
 		  				/**
 		  				 * Please note param "compress=false" is to prohibit  com.liferay.filters.compression.CompressionFilter from compressing file content 
 		  				 */
-		  				String storedesc=(String)jo.getString("storedesc");
+		  				int store_colId=Tools.getInt((String)jo.getString("store_colId"),-1);
 		  				String storedata=(String)jo.getString("storedata");
-		  				String destdesc=(String)jo.getString("destdesc");
+		  				int dest_colId=Tools.getInt((String)jo.getString("dest_colId"),-1);
 		  				String destdata=(String)jo.getString("destdata");
-		  				String page=wc.forwardToString(WebKeys.NDS_URI+"/pdt/itemdetail.jsp?compress=f&table="+tableId+"&pdtid="+productId+"&asid="+asId+"&storedata="+storedata+"&storedesc="+storedesc+"&destdesc="+destdesc+"&destdata="+destdata);
+		  				String page=wc.forwardToString(WebKeys.NDS_URI+"/pdt/itemdetail.jsp?compress=f&table="+tableId+"&pdtid="+productId+"&asid="+asId+"&storedata="+storedata+"&store_colId="+store_colId+"&dest_colId="+dest_colId+"&destdata="+destdata);
 		  				ro.put("pagecontent", page);
 		  				ro.put("showDialog",true);
 	  				}else{
