@@ -212,6 +212,9 @@ public class SchemaExport {
 		//real table
 		transferTable(tb.getRealtableId(), level+1);
 		transferDirectory(tb.getDirectoryId(), level);
+		
+		//parent table
+		transferTable(tb.getParentTableId(), level+1);
 		//logger.debug("Table definition "+ tb.getName() + " transfered.");
 		return tableId;
 	}
