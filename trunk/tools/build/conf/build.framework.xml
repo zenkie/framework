@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project default="all" name="Build NEA framework">
+<project default="full" name="Build NEA framework">
 <property name="portal422" location="/portal422/server/default"/>
 <property name="nds.lib" location="/portal422/server/default/deploy/nds.war/WEB-INF/lib"/>
 <property file="/opt/build/conf/build.framework.properties" />
@@ -25,11 +25,47 @@
 <typedef resource="org/tigris/subversion/svnant/svnantlib.xml" classpathref="svnant.classpath" />  
 
 
-<target name="all" depends="checkout,javac,obfuscate,warndll,output"/>
-<target name="compile" depends="checkout,javac,warndll"/>
-<target name="localcompile" depends="javac,obfuscate,warndll,output"/>
-<target name="full" depends="clean,all"/> 
+<target name="all" depends="checkout,javac,obfuscate,checkdll,warndll,output"/>
+<target name="compile" depends="checkout,javac,checkdll,warndll"/>
+<target name="chk" depends="checkdll,warndll"/>
+<target name="localcompile" depends="javac,obfuscate,checkdll,warndll,output"/>
+<target name="full" depends="init,clean,checkout,javac,obfuscate,checkdll,warndll,output,updateversion,end"/> 
 
+<target name="updateversion">
+	<sql driver="${oracle.driver}" url="${pilotdb.url}" userid="${pilotdb.user}" password="${pilotdb.password}" print="yes" showheaders="false"
+		output="${output.dir}/framework/version.txt"><![CDATA[
+			update p_project set ver_build=ver_build+1,builddate=sysdate where no='Framework';
+			SELECT ver_main||'.' || ver_sub|| '.' || ver_build from p_project WHERE no='Framework';
+	]]>
+	</sql>
+
+	<loadfile srcfile="${output.dir}/framework/version.txt" property="framework.version">
+		<filterchain>
+			<headfilter lines="1" skip="1"/>
+			<striplinebreaks/>
+		</filterchain>
+	</loadfile>
+	<concat destfile="${output.dir}/framework/version.txt">${framework.version}</concat>
+	<echo>framework.version is: ${framework.version}</echo> 
+
+</target>
+
+<target name="end">
+	<tstamp>
+       <format property="end.logtime" pattern="yyyy.MM.dd HH:mm:ss"/>
+    </tstamp>
+    <echo>Begin at ${begin.logtime}, ends at ${end.logtime}</echo>
+</target>
+<target name="init">
+	<tstamp>
+       <format property="begin.logtime" pattern="yyyy.MM.dd HH:mm:ss"/>
+    </tstamp> 
+    <available file="${singleton.lockfile}" property="lock.present"/>
+    <fail if="lock.present">
+    	Framework is being built, pls wait or remove lock file ${singleton.lockfile}
+    </fail>
+	<touch file="${singleton.lockfile}"/>
+</target>
 <target name="checkout"> 
 	<echo>Check out sources from svn repo: framework...</echo>
 	 
@@ -49,7 +85,9 @@
 			     destdir="${javac.dest}"
 			     debug="on"
 		         optimize="on"	
-				nowarn="on"
+		          deprecation ="off"
+				 nowarn="on"
+				  encoding="GBK"
 		         classpathref="javac.classes"/>
 	<copy todir="${javac.dest}">
     	<fileset dir="${javac.src}">
@@ -69,6 +107,7 @@
 
                 <!-- Specify the input jars, output jars, and library jars. -->
                 -dontwarn
+                -dontnote 
   				-ignorewarnings
                 -injars  ${javac.dest}
                 -outjars ${obfuscate.dir}
@@ -103,6 +142,8 @@
                     java.lang.Object writeReplace();
                     java.lang.Object readResolve();
                 }
+				-renamesourcefileattribute SourceFile
+				-keepattributes SourceFile,LineNumberTable
 
                 <!-- Your application may contain more items that need to be preserved;
                      typically classes that are dynamically created using Class.forName -->
@@ -135,7 +176,7 @@
   	</condition>
 	
 </target>
-<target name="warndll" depends="checkdll" unless="checksumNochange">
+<target name="warndll" unless="checksumNochange">
 	<echo>Warning: please update ndstools.dll checksums with following string:
 #define NDS_UTIL_LICENSEMANAGER_MD5 "${LicenseManager.class.md5}"
 #define NDS_UTIL_TOOLS_MD5 "${Tools.class.md5}"
@@ -152,7 +193,13 @@
 	<copy todir="${output.dir}/framework/classes">
     	<fileset dir="${obfuscate.dir}"/>
   	</copy>
-
+ 	<jar destfile="${output.dir}/nds.jar" basedir="${output.dir}/framework/classes">
+ 		<manifest>
+      		<attribute name="Built-By" value="Pilot System"/>
+      		<attribute name="Implementation-Version" value="${framework.version}"/>
+    	</manifest>
+	</jar>
+	
 </target>
 
 <target name="clean">

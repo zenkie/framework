@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project default="all" name="Build Burgeon Portal">
+<project default="full" name="Build Burgeon Portal">
 <property file="/opt/build/conf/build.portal.properties" />
 
 <path id="svnant.classpath">
@@ -22,12 +22,65 @@
 	</fileset>
 </path>
 
+<path id="build.tools.path">
+    <path refid="jspc.classes"/>
+    <fileset dir="${build.lib}">
+        <include name="nds-build.jar"/>
+    </fileset>
+</path>
+
+
 <typedef resource="org/tigris/subversion/svnant/svnantlib.xml" classpathref="svnant.classpath" />  
 
 
-<target name="all" depends="checkout,jspc,javac,output,webxml"/>
-<target name="full" depends="clean,all,rar"/>
+<target name="all" depends="checkout,jspc,javac,output,webxml,native,jsmin"/>
+<target name="full" depends="init,clean,checkout,jspc,javac,output,webxml,native,jsmin,portal.rar,setup.tgz,updateversion,end"/>
 
+
+<target name="updateversion">
+	<sql driver="${oracle.driver}" url="${pilotdb.url}" userid="${pilotdb.user}" password="${pilotdb.password}" print="yes" showheaders="false"
+		output="${output.dir}/portal/version.txt"><![CDATA[
+			update p_project set ver_build=ver_build+1 , builddate=sysdate where no='Portal';
+			SELECT ver_main||'.' || ver_sub|| '.' || ver_build from p_project WHERE no='Portal';
+	]]>
+	</sql>
+
+	<loadfile srcfile="${output.dir}/portal/version.txt" property="portal.version">
+		<filterchain>
+			<headfilter lines="1" skip="1"/>
+			<striplinebreaks/>
+		</filterchain>
+	</loadfile>
+	<concat destfile="${output.dir}/portal/version.txt">${portal.version}</concat>
+	<loadfile srcfile="${output.dir}/framework/version.txt" property="framework.version">
+		<filterchain>
+			<headfilter lines="0" skip="0"/>
+			<striplinebreaks/>
+		</filterchain>
+	</loadfile>
+	<echo>portal.version is: ${portal.version}, framework.version is: ${framework.version}</echo> 
+	<replace file="${output.dir}/portal/act.nea/conf/portal.properties">
+		<replacefilter token="@PORTAL.VERSION@" value="${portal.version}"/> 
+		<replacefilter token="@FRAMEWORK.VERSION@" value="${framework.version}"/> 
+	</replace>
+</target> 
+
+<target name="end">
+	<tstamp>
+       <format property="end.logtime" pattern="yyyy.MM.dd HH:mm:ss"/>
+    </tstamp>
+    <echo>Begin at ${begin.logtime}, ends at ${end.logtime}</echo>
+</target>
+<target name="init">
+	<tstamp>
+       <format property="begin.logtime" pattern="yyyy.MM.dd HH:mm:ss"/>
+     </tstamp> 
+	<available file="${singleton.lockfile}" property="lock.present"/>
+    <fail if="lock.present">
+    	Portal is being built, pls wait or remove lock file ${singleton.lockfile}
+    </fail>
+	<touch file="${singleton.lockfile}"/>     
+</target>
 <target name="checkout"> 
 	<echo>Check out sources from svn repo: portal...</echo>
 	 
@@ -39,6 +92,7 @@
 
 
 <target name="jspc">
+	<!--create -->
 	<jspc srcdir="${nds.war}/html/nds"
 		     destdir="${tmp.dir}/jspc"
 		     package="org.apache.jspc"
@@ -57,6 +111,7 @@
          destdir="${javac.dest}"
          cache="${tmp.dir}/dependencies"
          classpathref="jspc.classes"/>
+     
      <javac srcdir="${tmp.dir}/jspc"
 		    destdir="${tmp.dir}/javac"
 		    includesfile="${tools.build.dir}/portal.javac.inlude.txt"
@@ -86,6 +141,7 @@
     	</fileset>
     	<fileset dir="${svn.checkout.path}/trunk/portal422">
     		<include name="server/default/deploy/nds.war/html/nds/common/init.jsp"/> 
+    		<include name="server/default/deploy/nds.war/html/nds/*.jsp"/>
     	</fileset>
   	</copy>
 	
@@ -97,9 +153,63 @@
   	</copy>
 
 </target>
+<target name="webinc"> 
+	<echo>Build ${tools.build.dir}/portal.webinc.xml according to portal.javac.inlude.txt...</echo> 
+	<delete file="${tools.build.dir}/portal.webinc.xml"/> 
+	<java classname="com.agilecontrol.build.WebIncTool">
+         <arg value="${tools.build.dir}/portal.javac.inlude.txt"/>
+         <classpath refid="build.tools.path"/>
+    </java>
+</target> 
+<target name="native"> 
+	<echo>Generate translation files...</echo>
+	<property name="native.dir" value="${output.dir}/portal/portal422/server/default/lib/ext/content"/>
+	<exec dir="${native.dir}" executable="native2ascii">
+  		<arg line="-encoding GBK Language_zh_CN.properties.native Language_zh_CN.properties"/>
+	</exec>
+	<exec dir="${native.dir}" executable="native2ascii">
+  		<arg line="-encoding GB2312 Language-ext_zh_CN.properties.native Language-ext_zh_CN.properties"/>
+	</exec> 
+	<exec dir="${native.dir}" executable="native2ascii">
+  		<arg line="-encoding GB2312 message_zh_CN.properties.native message_zh_CN.properties"/>
+	</exec> 
+	<exec dir="${native.dir}" executable="native2ascii">
+  		<arg line="-encoding GBK Language-ext_ja_JP.properties.native Language-ext_ja_JP.properties"/>
+	</exec> 
+	<exec dir="${native.dir}" executable="native2ascii">
+  		<arg line="-encoding GBK message_ja_JP.properties.native message_ja_JP.properties"/>
+	</exec>
+	
+	<property name="js.dir" value="${output.dir}/portal/portal422/server/default/deploy/nds.war/html/nds/js"/>
+	<exec dir="${js.dir}" executable="native2ascii">
+  		<arg line="-encoding GBK init_portalcontrol_zh_CN.native.js init_portalcontrol_zh_CN.js"/>
+	</exec>
+	<exec dir="${js.dir}" executable="native2ascii">
+  		<arg line="-encoding GBK init_portletcontrol_zh_CN.native.js init_portletcontrol_zh_CN.js"/>
+	</exec>
+	<exec dir="${js.dir}" executable="native2ascii">
+  		<arg line="-encoding GBK init_objcontrol_zh_CN.native.js init_objcontrol_zh_CN.js"/>
+	</exec>
+	<exec dir="${js.dir}" executable="native2ascii">
+  		<arg line="-encoding GBK init_ahca_zh_CN.native.js init_ahca_zh_CN.js"/>
+	</exec>
 
-<target name="webxml">
-	<echo>Build Web.xml...</echo>
+	<exec dir="${js.dir}" executable="native2ascii">
+  		<arg line="-encoding GBK init_optioncontrol_zh_CN.native.js init_optioncontrol_zh_CN.js"/>
+	</exec>
+	<exec dir="${js.dir}" executable="native2ascii">
+  		<arg line="-encoding GBK init_object_query_zh_CN.native.js init_object_query_zh_CN.js"/>
+	</exec>
+	
+</target>
+
+<target name="webxml" >
+	<echo>Build Web.xml...</echo> 
+	<!-- create portal.webinc.xml  according to portal.javac.inlude.txt  -->
+	<java classname="com.agilecontrol.build.WebIncTool">
+         <arg value="${tools.build.dir}/portal.javac.inlude.txt"/>
+         <classpath refid="build.tools.path"/>
+    </java>
 	<loadfile property="webinc" srcFile="${tools.build.dir}/portal.webinc.xml"/>
 	<copy file="${tools.build.dir}/portal.web.xml" tofile="${output.dir}/portal/portal422/server/default/deploy/nds.war/WEB-INF/web.xml" overwrite="true">
 	  <filterset>
@@ -107,28 +217,318 @@
 	  </filterset>
 	</copy>
 
+</target> 
+
+<target name="jsmin"> 
+	<echo>Minimize .js and .css files...</echo>
+ 	<taskdef name="jsmin"
+        classname="net.matthaynes.jsmin.JSMin_Task"
+        classpath="${build.lib}/jsmin/jsmin.0.2.2.jar"/>
+	<taskdef name="jslint"
+          classname="net.happygiraffe.jslint.ant.JSLintTask"
+        classpath="${build.lib}/jsmin/jslint4java-1.1+rhino.jar" />
+  
+<property name="nds.web.path" location="${output.dir}/portal/portal422/server/default/deploy/nds.war/html/nds"/>
+<property name="nds.js.path" location="${output.dir}/portal/portal422/server/default/deploy/nds.war/html/nds/js"/>
+<property name="nds.css.path" location="${output.dir}/portal/portal422/server/default/deploy/nds.war/html/nds/css"/>
+<property name="nds.theme.path" location="${output.dir}/portal/portal422/server/default/deploy/nds.war/html/nds/themes/classic"/>
+
+<echo>Concat portal javascript and css</echo>
+		<concat destfile="${nds.js.path}/portal_aio.js" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="top_css_ext.js,ieemu.js,cb2.js,xp_progress.js,
+		    	helptip.js,common.js,print.js,prototype.js,jquery1.2.3/jquery.js,jquery1.2.3/hover_intent.js,
+		    	jquery1.2.3/ui.tabs.js,jquery.noconflict.js,../../js/sniffer.js,../../js/ajax.js,../../js/util.js,../../js/portal.js,
+		    	xloadtree111/xtree.js,
+		    	xloadtree111/xmlextras.js,xloadtree111/xloadtree.js,formkey.js,selectableelements.js,
+		    	selectabletablerows.js,../../js/dragdrop/coordinates.js,../../js/dragdrop/drag.js,
+		    	calendar.js,dwr.Controller.js,dwr.engine.js,dwr.util.js,application.js,
+		    	alerts.js,dw_scroller.js,portletcontrol.js,portalcontrol.js,object_query.js,categorymenu.js,dockmenu.js,outline.js"/>
+		</concat>
+		<concat destfile="${nds.js.path}/portal_aio_zh_CN.js" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="init_portalcontrol_zh_CN.js,portal_aio.js"/>
+		</concat>
+		<concat destfile="${nds.js.path}/portal_aio_en_US.js" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="init_portalcontrol_en_US.js,portal_aio.js"/>
+		</concat>
+		<!-- portal css -->
+		<concat destfile="${nds.theme.path}/01/css/portal_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="xloadtree111/xtree.css"/>
+		    <filelist dir="${nds.css.path}" files="portlet.css"/>
+		    <filelist dir="${nds.theme.path}/01/css" files="object.css,portal_header.css,portal.css,nds_portal.css,dockmenu.css,ui.tabs.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/02/css/portal_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="xloadtree111/xtree.css"/>
+		    <filelist dir="${nds.css.path}" files="portlet.css"/>
+		    <filelist dir="${nds.theme.path}/02/css" files="object.css,portal_header.css,portal.css,nds_portal.css,dockmenu.css,ui.tabs.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/03/css/portal_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="xloadtree111/xtree.css"/>
+		    <filelist dir="${nds.css.path}" files="portlet.css"/>
+		    <filelist dir="${nds.theme.path}/03/css" files="object.css,portal_header.css,portal.css,nds_portal.css,dockmenu.css,ui.tabs.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/04/css/portal_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="xloadtree111/xtree.css"/>
+		    <filelist dir="${nds.css.path}" files="portlet.css"/>
+		    <filelist dir="${nds.theme.path}/04/css" files="object.css,portal_header.css,portal.css,nds_portal.css,dockmenu.css,ui.tabs.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/05/css/portal_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="xloadtree111/xtree.css"/>
+		    <filelist dir="${nds.css.path}" files="portlet.css"/>
+		    <filelist dir="${nds.theme.path}/05/css" files="object.css,portal_header.css,portal.css,nds_portal.css,dockmenu.css,ui.tabs.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/06/css/portal_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="xloadtree111/xtree.css"/>
+		    <filelist dir="${nds.css.path}" files="portlet.css"/>
+		    <filelist dir="${nds.theme.path}/06/css" files="object.css,portal_header.css,portal.css,nds_portal.css,dockmenu.css,ui.tabs.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="cb2.css"/>
+		</concat>
+
+ <echo>Concat object javascript and css</echo> 
+		<concat destfile="${nds.js.path}/object_aio.js" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="top_css_ext.js,ieemu.js,cb2.js,xp_progress.js,
+		    	helptip.js,common.js,print.js,prototype.js,jquery1.2.3/jquery.js,jquery1.2.3/hover_intent.js,
+		    	jquery1.2.3/ui.tabs.js,jquery.noconflict.js,../../js/sniffer.js,../../js/ajax.js,../../js/util.js,../../js/portal.js,
+		    	objdropmenu.js,formkey.js,selectableelements.js,
+		    	selectabletablerows.js,../../js/dragdrop/coordinates.js,../../js/dragdrop/drag.js,
+		    	calendar.js,dwr.Controller.js,dwr.engine.js,dwr.util.js,application.js,
+		    	alerts.js,dw_scroller.js,objcontrol.js,gridcontrol.js,object_query.js,obj_ext.js"/>
+		</concat>
+		<concat destfile="${nds.js.path}/object_aio_zh_CN.js" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="init_objcontrol_zh_CN.js,object_aio.js"/>
+		</concat>
+		<concat destfile="${nds.js.path}/object_aio_en_US.js" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="init_objcontrol_en_US.js,object_aio.js"/>
+		</concat>
+		<!-- object css -->
+		<concat destfile="${nds.theme.path}/01/css/object_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.theme.path}/01/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="nds_header.css,objdropmenu.css,cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/02/css/object_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.theme.path}/02/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="nds_header.css,objdropmenu.css,cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/03/css/object_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.theme.path}/03/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="nds_header.css,objdropmenu.css,cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/04/css/object_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.theme.path}/04/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="nds_header.css,objdropmenu.css,cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/05/css/object_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.theme.path}/05/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="nds_header.css,objdropmenu.css,cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/06/css/object_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.theme.path}/06/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="nds_header.css,objdropmenu.css,cb2.css"/>
+		</concat>
+
+<echo>Concat header javascript and css</echo> 
+		<concat destfile="${nds.js.path}/header_aio.js" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="top_css_ext.js,ieemu.js,cb2.js,
+		    	../../js/sniffer.js,prototype.js,jquery1.2.3/jquery.js,jquery1.2.3/hover_intent.js,
+		    	jquery1.2.3/ui.tabs.js,jquery.noconflict.js,common.js,print.js,../../js/ajax.js,../../js/util.js,
+		    	selectableelements.js,selectabletablerows.js,../../js/dragdrop/coordinates.js,
+		    	../../js/dragdrop/drag.js,dwr.Controller.js,dwr.engine.js,dwr.util.js,application.js,alerts.js,
+		    	object_query.js,calendar.js"/>
+		</concat>
+		<concat destfile="${nds.js.path}/header_aio_zh_CN.js" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="init_object_query_zh_CN.js,header_aio.js"/>
+		</concat>
+		<concat destfile="${nds.js.path}/header_aio_en_US.js" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.js.path}" files="init_object_query_en_US.js,header_aio.js"/>
+		</concat>
+		
+		<!-- header css -->
+		<concat destfile="${nds.theme.path}/01/css/header_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.theme.path}/01/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/02/css/header_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.theme.path}/02/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/03/css/header_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.theme.path}/03/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/04/css/header_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.theme.path}/04/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/05/css/header_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.theme.path}/05/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="cb2.css"/>
+		</concat>
+		<concat destfile="${nds.theme.path}/06/css/header_aio.css" force="yes" fixlastline="yes">
+		    <filelist dir="${nds.theme.path}/06/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="cb2.css"/>
+		</concat>
+
+<echo>Mininize concated javascript files</echo> 
+	    <echo>portal_aio_zh_CN.js</echo> 
+         <apply executable="java" parallel="false" dest="${nds.js.path}">
+            <filelist dir="${nds.js.path}" files="portal_aio_zh_CN.js"/> 
+            <arg line="-jar"/>
+            <arg path="${build.lib}/jsmin/yuicompressor-2.3.5.jar"/>
+			<srcfile/>
+	        <arg line="-o"/>
+    	    <mapper type="glob" from="*.js" to="*_min.js"/>
+        	<targetfile/>            
+        </apply> 
+         <echo>portal_aio_en_US.js</echo> 
+         <apply executable="java" parallel="false" dest="${nds.js.path}">
+            <filelist dir="${nds.js.path}" files="portal_aio_en_US.js"/> 
+            <arg line="-jar"/>
+            <arg path="${build.lib}/jsmin/yuicompressor-2.3.5.jar"/>
+			<srcfile/>
+	        <arg line="-o"/>
+    	    <mapper type="glob" from="*.js" to="*_min.js"/>
+        	<targetfile/>            
+        </apply>  
+         <echo>object_aio_zh_CN.js</echo> 
+         <apply executable="java" parallel="false" dest="${nds.js.path}">
+            <filelist dir="${nds.js.path}" files="object_aio_zh_CN.js"/> 
+            <arg line="-jar"/>
+            <arg path="${build.lib}/jsmin/yuicompressor-2.3.5.jar"/>
+			<srcfile/>
+	        <arg line="-o"/>
+    	    <mapper type="glob" from="*.js" to="*_min.js"/>
+        	<targetfile/>            
+        </apply>
+         <echo>object_aio_en_US.js</echo> 
+         <apply executable="java" parallel="false" dest="${nds.js.path}">
+            <filelist dir="${nds.js.path}" files="object_aio_en_US.js"/> 
+            <arg line="-jar"/>
+            <arg path="${build.lib}/jsmin/yuicompressor-2.3.5.jar"/>
+			<srcfile/>
+	        <arg line="-o"/>
+    	    <mapper type="glob" from="*.js" to="*_min.js"/>
+        	<targetfile/>            
+        </apply>
+         <echo>header_aio_zh_CN.js</echo> 
+         <apply executable="java" parallel="false" dest="${nds.js.path}">
+            <filelist dir="${nds.js.path}" files="header_aio_zh_CN.js"/> 
+            <arg line="-jar"/>
+            <arg path="${build.lib}/jsmin/yuicompressor-2.3.5.jar"/>
+			<srcfile/>
+	        <arg line="-o"/>
+    	    <mapper type="glob" from="*.js" to="*_min.js"/>
+        	<targetfile/>            
+        </apply>
+         <echo>header_aio_en_US.js</echo> 
+         <apply executable="java" parallel="false" dest="${nds.js.path}">
+            <filelist dir="${nds.js.path}" files="header_aio_en_US.js"/> 
+            <arg line="-jar"/>
+            <arg path="${build.lib}/jsmin/yuicompressor-2.3.5.jar"/>
+			<srcfile/>
+	        <arg line="-o"/>
+    	    <mapper type="glob" from="*.js" to="*_min.js"/>
+        	<targetfile/>            
+        </apply>
+         <echo>highslide.js</echo> 
+         <apply executable="java" parallel="false" dest="${nds.js.path}">
+            <filelist dir="${nds.js.path}" files="highslide.js"/> 
+            <arg line="-jar"/>
+            <arg path="${build.lib}/jsmin/yuicompressor-2.3.5.jar"/>
+			<srcfile/>
+	        <arg line="-o"/>
+    	    <mapper type="glob" from="*.js" to="*_min.js"/>
+        	<targetfile/>            
+        </apply>
+<echo>Mininize concated css files</echo> 		
+        <apply executable="java" parallel="false" dest="${nds.theme.path}/01/css">
+            <filelist dir="${nds.theme.path}/01/css" files="header_aio.css,portal_aio.css,object_aio.css"/> 
+            <arg line="-jar"/>
+            <arg path="${build.lib}/jsmin/yuicompressor-2.3.5.jar"/>
+			<srcfile/>
+	        <arg line="-o"/>
+    	    <mapper type="glob" from="*.css" to="*_min.css"/>
+        	<targetfile/>  
+        </apply>
+         <apply executable="java" parallel="false" dest="${nds.theme.path}/02/css">
+            <filelist dir="${nds.theme.path}/02/css" files="header_aio.css,portal_aio.css,object_aio.css"/> 
+            <arg line="-jar"/>
+            <arg path="${build.lib}/jsmin/yuicompressor-2.3.5.jar"/>
+			<srcfile/>
+	        <arg line="-o"/>
+    	    <mapper type="glob" from="*.css" to="*_min.css"/>
+        	<targetfile/>  
+        </apply>
+         <apply executable="java" parallel="false" dest="${nds.theme.path}/03/css">
+            <filelist dir="${nds.theme.path}/03/css" files="header_aio.css,portal_aio.css,object_aio.css"/> 
+            <arg line="-jar"/>
+            <arg path="${build.lib}/jsmin/yuicompressor-2.3.5.jar"/>
+			<srcfile/>
+	        <arg line="-o"/>
+    	    <mapper type="glob" from="*.css" to="*_min.css"/>
+        	<targetfile/>  
+        </apply>
+        <apply executable="java" parallel="false" dest="${nds.theme.path}/04/css">
+            <filelist dir="${nds.theme.path}/04/css" files="header_aio.css,portal_aio.css,object_aio.css"/> 
+            <arg line="-jar"/>
+            <arg path="${build.lib}/jsmin/yuicompressor-2.3.5.jar"/>
+			<srcfile/>
+	        <arg line="-o"/>
+    	    <mapper type="glob" from="*.css" to="*_min.css"/>
+        	<targetfile/>  
+        </apply>
+        <apply executable="java" parallel="false" dest="${nds.theme.path}/05/css">
+            <filelist dir="${nds.theme.path}/05/css" files="header_aio.css,portal_aio.css,object_aio.css"/> 
+            <arg line="-jar"/>
+            <arg path="${build.lib}/jsmin/yuicompressor-2.3.5.jar"/>
+			<srcfile/>
+	        <arg line="-o"/>
+    	    <mapper type="glob" from="*.css" to="*_min.css"/>
+        	<targetfile/>  
+        </apply>
+        <apply executable="java" parallel="false" dest="${nds.theme.path}/06/css">
+            <filelist dir="${nds.theme.path}/06/css" files="header_aio.css,portal_aio.css,object_aio.css"/> 
+            <arg line="-jar"/>
+            <arg path="${build.lib}/jsmin/yuicompressor-2.3.5.jar"/>
+			<srcfile/>
+	        <arg line="-o"/>
+    	    <mapper type="glob" from="*.css" to="*_min.css"/>
+        	<targetfile/>  
+        </apply>
 </target>
+
 <target name="zip">
 	<echo>Create Portal application package...</echo>
  	<zip destfile="${output.dir}/portal.zip" compress="false"
 		basedir="${output.dir}/portal" encoding="GBK"/>
 </target>
-<target name="rar">
+<target name="portal.rar">
 	<echo>Create Portal application package...</echo>
 	<delete file="${output.dir}/portal.rar"/> 
  	<exec dir="${output.dir}/portal" executable="/usr/bin/rar">
   		<arg line="a -inul -w${output.dir}/portal ${output.dir}/portal.rar act.nea portal422"/>
 	</exec> 
 </target>
-
+<target name="setup.tgz" >
+	<echo>Create Portal Setup...</echo>
+	<delete file="${output.dir}/portal.setup.tgz"/> 
+	<copy todir="${output.dir}/setup/data" file="${output.dir}/portal.rar"/>	
+ 	<exec dir="${output.dir}/setup" executable="tar">
+  		<arg line="czf ${output.dir}/portal.setup.tgz ."/>
+	</exec>
+	 
+</target>
 <target name="clean">
 	<echo>Clean build folder</echo>
 	<delete>
 		<fileset dir="${tmp.dir}"/>
 		<fileset dir="${output.dir}/portal"/>
 	</delete>
-	<delete file="${output.dir}/portal.zip"/> 
-	
+	<delete file="${output.dir}/portal.rar"/> 
+	<delete file="${output.dir}/portal.setup.rar"/> 
 	<mkdir dir="${tmp.dir}/jspc"/>
 	<mkdir dir="${tmp.dir}/dependencies"/>
 	<mkdir dir="${tmp.dir}/javac"/>
