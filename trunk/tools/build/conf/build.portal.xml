@@ -306,28 +306,28 @@
 		</concat>
 		<!-- object css -->
 		<concat destfile="${nds.theme.path}/01/css/object_aio.css" force="yes" fixlastline="yes">
-		    <filelist dir="${nds.theme.path}/01/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
-		    <filelist dir="${nds.css.path}" files="nds_header.css,objdropmenu.css,cb2.css"/>
-		</concat>
+		    <filelist dir="${nds.theme.path}/01/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,objdropmenu.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="nds_header.css,cb2.css"/>
+		</concat>	
 		<concat destfile="${nds.theme.path}/02/css/object_aio.css" force="yes" fixlastline="yes">
-		    <filelist dir="${nds.theme.path}/02/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
-		    <filelist dir="${nds.css.path}" files="nds_header.css,objdropmenu.css,cb2.css"/>
+		    <filelist dir="${nds.theme.path}/02/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,objdropmenu.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="nds_header.css,cb2.css"/>
 		</concat>
 		<concat destfile="${nds.theme.path}/03/css/object_aio.css" force="yes" fixlastline="yes">
-		    <filelist dir="${nds.theme.path}/03/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
-		    <filelist dir="${nds.css.path}" files="nds_header.css,objdropmenu.css,cb2.css"/>
+		    <filelist dir="${nds.theme.path}/03/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,objdropmenu.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="nds_header.css,cb2.css"/>
 		</concat>
 		<concat destfile="${nds.theme.path}/04/css/object_aio.css" force="yes" fixlastline="yes">
-		    <filelist dir="${nds.theme.path}/04/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
-		    <filelist dir="${nds.css.path}" files="nds_header.css,objdropmenu.css,cb2.css"/>
+		    <filelist dir="${nds.theme.path}/04/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,objdropmenu.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="nds_header.css,cb2.css"/>
 		</concat>
 		<concat destfile="${nds.theme.path}/05/css/object_aio.css" force="yes" fixlastline="yes">
-		    <filelist dir="${nds.theme.path}/05/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
-		    <filelist dir="${nds.css.path}" files="nds_header.css,objdropmenu.css,cb2.css"/>
+		    <filelist dir="${nds.theme.path}/05/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,objdropmenu.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="nds_header.css,cb2.css"/>
 		</concat>
 		<concat destfile="${nds.theme.path}/06/css/object_aio.css" force="yes" fixlastline="yes">
-		    <filelist dir="${nds.theme.path}/06/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,custom-ext.css"/>
-		    <filelist dir="${nds.css.path}" files="nds_header.css,objdropmenu.css,cb2.css"/>
+		    <filelist dir="${nds.theme.path}/06/css" files="portal.css,nds_portal.css,ui.tabs.css,object.css,objdropmenu.css,custom-ext.css"/>
+		    <filelist dir="${nds.css.path}" files="nds_header.css,cb2.css"/>
 		</concat>
 
 <echo>Concat header javascript and css</echo> 

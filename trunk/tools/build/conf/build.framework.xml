@@ -155,6 +155,15 @@
 	<copy file="${javac.dest}/nds/util/NativeTools.class" todir="${obfuscate.dir}/nds/util/" overwrite="true"/>
 	<copy file="${javac.dest}/nds/control/StartupEngine.class" todir="${obfuscate.dir}/nds/control/" overwrite="true"/>
 	<copy file="${javac.dest}/nds/control/web/MainServlet.class" todir="${obfuscate.dir}/nds/control/web/" overwrite="true"/>
+	<!-- you can use
+	-keepattributes InnerClasses,Signature,Deprecated,
+                SourceFile,LineNumberTable,*Annotation*,EnclosingMethod 
+    but I copy from non-proguarded class here -->
+    <copy todir="${obfuscate.dir}/nds/schema" overwrite="true">
+    	<fileset dir="${javac.dest}/nds/schema">
+      		<include name="WebAction*.java"/>
+    	</fileset>
+  	</copy>
 	
 </target>	
 <target name="checkdll">
