@@ -54,6 +54,11 @@ public class Button {
     	return sb.toString();
     	
     }
+    /**
+     * Show button as input in object page
+     * @return
+     * @throws IOException
+     */
     public String toHTML() throws IOException{
     	StringBuffer sb=new StringBuffer();
     	sb.append("<input class='cbutton' type=\"").append(getType()).append("\" ")
@@ -67,7 +72,27 @@ public class Button {
     	
     	return sb.toString();
     }
-    
+    /**
+     * Show button as menu item in object page
+     * @return
+     * @throws IOException
+     * @since 4.0
+     */
+    public String toMenuItem() throws IOException{
+    	/*
+		 <li class="ListCopyTo">
+		<a href="javascript:pc.doListCopyTo()">¸´ÖÆ</a>
+		</li>
+		 */
+    	StringBuffer sb=new StringBuffer();
+    	sb.append("<li><a href=\"");
+    	String onclick= (String)attributes.get("onclick");
+    	if(onclick!=null) onclick="javascript:"+ onclick;
+    	else onclick="#";
+    	sb.append(onclick).append("\">").append(value).append("</a></li>");
+    	
+    	return sb.toString();
+    }
 	/**
 	 * @return Returns the attributesText.
 	 */

@@ -77,6 +77,18 @@ public class DefaultWebEvent implements  NDSEvent {
         this.eventName=eventName;
         creationDate=new Date();
     }
+    /**
+     * 
+     * @param eventName
+     * @param m will be the data of event elements, notes every element name must be 
+     * uppercase, else will not be retrieved since all getParameterValue method of 
+     * DefaultWebEvent will make name uppercase as key
+     */
+    public DefaultWebEvent(String eventName, Map m){
+        data=new HashMap(m);
+        this.eventName=eventName;
+        creationDate=new Date();
+    }
     public Date getCreationDate(){
     	return creationDate;
     }
@@ -113,6 +125,7 @@ public class DefaultWebEvent implements  NDSEvent {
     public void put(String param, Object value){
         data.put(param.toUpperCase(), value);
     }
+    
     /**
      * @param param - name of parameter to be set, note characters to change
      *                to upper case when store

@@ -1,13 +1,16 @@
 package nds.query.web;
 
 import java.util.*;
-
+import java.sql.*;
 import javax.servlet.http.HttpServletRequest;
 
+import nds.query.*;
 import nds.control.web.*;
+import nds.log.Logger;
+import nds.log.LoggerManager;
 import nds.schema.*;
 import nds.security.NDSSecurityException;
-import nds.util.Validator;
+import nds.util.*;
 
 /**
  * Create Sub System view for user
@@ -15,6 +18,8 @@ import nds.util.Validator;
  *
  */
 public class SubSystemView {
+	private static Logger logger=LoggerManager.getInstance().getLogger(SubSystemView.class.getName());
+	
 	public SubSystemView(){}
 	/**
 	 * 
@@ -42,7 +47,7 @@ public class SubSystemView {
 			al=new ArrayList();
 			for(int i=0;i< manager.getSubSystems().size();i++){
 				SubSystem ss=(SubSystem) manager.getSubSystems().get(i);
-				if(containsViewableTableCategories(request, ss.getId())){
+				if(containsViewableChildren(request, ss)){
 					al.add(new Integer(ss.getId()));
 					subs.add(ss);
 				}
@@ -52,102 +57,187 @@ public class SubSystemView {
 		return subs;
 	}
 	/**
+	 * 
+	 * @param request
+	 * @param subSystemId
+	 * @return
+	 */
+	private boolean containsViewableActions(HttpServletRequest request, SubSystem ss){
+		List<WebAction> list=ss.getWebActions();
+    	Connection conn=null;
+    	try{
+		UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
+    	conn=QueryEngine.getInstance().getConnection();
+    	HashMap webActionEnv=new HashMap();
+    	webActionEnv.put("connection",conn);
+    	webActionEnv.put("httpservletrequest",request);
+    	webActionEnv.put("userweb",userWeb);
+		
+		for(int i=0;i<list.size();i++){
+			WebAction wa=list.get(i);
+			if(wa.canDisplay(webActionEnv)){
+				return true;
+			}
+		}
+    	}catch(Throwable t){
+    		logger.error("Fail to load subsystem webaction", t);
+    	}finally{
+    		try{if(conn!=null)conn.close();}catch(Throwable te){}
+    	}
+    	return false;
+	}
+	/**
 	 * if contains one category, will return true;
 	 * @param request
 	 * @param subSystemId
 	 * @return
 	 */
-	private boolean containsViewableTableCategories(HttpServletRequest request, int subSystemId){
-		
-		// Create categories and their tables in hashtable
+	private boolean containsViewableChildren(HttpServletRequest request, SubSystem ss){
+//		 Create categories and their tables in hashtable
 		TableManager manager=TableManager.getInstance();
-        Iterator tables = manager.getAllTables().iterator();
-        Hashtable categories = new Hashtable(50,20); // key:Integer(category id), values :List of table
-        SubSystem ss;Integer tableCategoryId;Table table ;
-        while(tables.hasNext()) {
-            table= (Table)tables.next();
-            tableCategoryId=new Integer(table.getCategory().getId());
-            ss=table.getCategory().getSubSystem();
-            if(ss ==null || ss.getId() !=subSystemId )continue;
-            //skip item table
-            if(!table.isMenuObject()){
-            	continue;
-            }
-            // check for current user permission
-            try{
-                WebUtils.checkTableQueryPermission(table.getName(),request );
-            }catch(NDSSecurityException e){
-                continue;
-            }
-            // user has table view permission and that table belongs to current system
-            return true;
+        //Iterator tables = manager.getAllTables().iterator();
+        //Hashtable categories = new Hashtable(50,20); // key:Integer(category id), values :List of table
+        Integer tableCategoryId;Table table ;
+        WebAction action;
+        ArrayList cats = new ArrayList();
+        Connection conn= null;
+        try{
+        	UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
+        	conn=QueryEngine.getInstance().getConnection();
+        	HashMap webActionEnv=new HashMap();
+        	webActionEnv.put("connection",conn);
+        	webActionEnv.put("httpservletrequest",request);
+        	webActionEnv.put("userweb",userWeb);
+        	
+	        List categories= ss.children();
+	        for(int i=0;i<categories.size();i++ ){
+	        	Object o= categories.get(i); // TableCategory or WebAction
+	        	if(o instanceof TableCategory){
+		        	TableCategory tc= (TableCategory)o;
+		        	List children= tc.children();
+		        	ArrayList catschild= new ArrayList();
+		        	for(int j=0;j< children.size();j++){
+		        		if(children.get(j) instanceof Table){
+		        			table=(Table)children.get(j);
+		        			if(!table.isMenuObject()){
+		                    	continue;
+		                    }
+		        			try{
+		                        WebUtils.checkTableQueryPermission(table.getName(),request );
+		                    }catch(NDSSecurityException e){
+		                        continue;
+		                    }
+		                    // table is ok for current user to list
+		                    return true;
+		        		}else if(children.get(j) instanceof WebAction){
+		        			action=(WebAction)children.get(j);
+		        			if(action.canDisplay(webActionEnv))
+		        				return true;
+		        		}else{
+		        			throw new NDSRuntimeException("Unsupported element in TableCategory children:"+ 
+		        					children.get(j).getClass());
+		        			
+		        		}
+		        	}
+		        	
+	        	}else if(o instanceof WebAction){
+	        		if(((WebAction)o).canDisplay(webActionEnv)){
+		        		return true;
+	        		}
+	        	}else{
+	        		throw new NDSException("Unexpected class in subsystem (id="+ ss.getId()+"), class is "+ o.getClass());
+	        	}
+	        	
+	        }
+        }catch(Throwable t){
+        	logger.error("Fail to load subsystem tree", t);
+        }finally{
+        	try{if(conn!=null)conn.close();}catch(Throwable e){}
         }
-        return false;        
+        
+        return false;            
 	}
 	/**
 	 * Return table categories and table that user has view permission
 	 * @param request
 	 * @param subSystemId
-	 * @return never null, elements are List, contains 2 elements: 
-	 * 		nds.schema.TableCategory,
-	 * 		java.util.List (nds.schema.Table) 
+	 * @return never null, elements are List, containing 2 elements: 
+	 * 		1)when first element is nds.schema.TableCategory, then second will be
+	 * 		java.util.List (nds.schema.Table or nds.schema.WebAction)
+	 * 		2) when first element is nds.schema.WebAction, then second is null 
 	 */
 	public List getTableCategories(HttpServletRequest request, int subSystemId){
 		// Create categories and their tables in hashtable
 		TableManager manager=TableManager.getInstance();
-        Iterator tables = manager.getAllTables().iterator();
-        Hashtable categories = new Hashtable(50,20); // key:Integer(category id), values :List of table
+        //Iterator tables = manager.getAllTables().iterator();
+        //Hashtable categories = new Hashtable(50,20); // key:Integer(category id), values :List of table
         SubSystem ss;Integer tableCategoryId;Table table ;
-        while(tables.hasNext()) {
-            table= (Table)tables.next();
-            tableCategoryId=new Integer(table.getCategory().getId());
-            ss=table.getCategory().getSubSystem();
-            if(ss ==null || ss.getId() !=subSystemId )continue;
-            //skip item table
-            if(!table.isMenuObject()){
-            	continue;
-            }
-            // check for current user permission
-            try{
-                WebUtils.checkTableQueryPermission(table.getName(),request );
-            }catch(NDSSecurityException e){
-                continue;
-            }
-
-            if(categories.containsKey(tableCategoryId)) { //has thisCategory
-                List oldCatedGroup = (List)categories.get(tableCategoryId);
-                oldCatedGroup.add(table);
-            } else { //First Init this Category
-            	List catedGroup = new ArrayList();
-                catedGroup.add(table);
-                categories.put(tableCategoryId,catedGroup);
-            }
-        }
-        List v;
-        for ( Iterator it= categories.keySet().iterator();it.hasNext();){
-            v= (List) categories.get( it.next() );
-            nds.util.ListSort.sort(v,"Order");
+        WebAction action;
+        ArrayList cats = new ArrayList();
+        Connection conn= null;
+        try{
+        	UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
+        	conn=QueryEngine.getInstance().getConnection();
+        	HashMap webActionEnv=new HashMap();
+        	webActionEnv.put("connection",conn);
+        	webActionEnv.put("httpservletrequest",request);
+        	webActionEnv.put("userweb",userWeb);
+        	
+	        List categories= manager.getSubSystem(subSystemId).children();
+	        for(int i=0;i<categories.size();i++ ){
+	        	Object o= categories.get(i); // TableCategory or WebAction
+	        	if(o instanceof TableCategory){
+		        	TableCategory tc= (TableCategory)o;
+		        	List children= tc.children();
+		        	ArrayList catschild= new ArrayList();
+		        	for(int j=0;j< children.size();j++){
+		        		if(children.get(j) instanceof Table){
+		        			table=(Table)children.get(j);
+		        			if(!table.isMenuObject()){
+		                    	continue;
+		                    }
+		        			try{
+		                        WebUtils.checkTableQueryPermission(table.getName(),request );
+		                    }catch(NDSSecurityException e){
+		                        continue;
+		                    }
+		                    // table is ok for current user to list
+		                    catschild.add(table);
+		        		}else if(children.get(j) instanceof WebAction){
+		        			action=(WebAction)children.get(j);
+		        			if(action.canDisplay(webActionEnv))
+		        				catschild.add(action);
+		        		}else{
+		        			throw new NDSRuntimeException("Unsupported element in TableCategory children:"+ 
+		        					children.get(j).getClass());
+		        			
+		        		}
+		        	}
+		        	if(catschild.size()>0){
+		        		// show this category
+		        		ArrayList row= new ArrayList();
+		                row.add(tc);
+		                row.add(catschild);
+		                cats.add(row);
+		        	}
+	        	}else if(o instanceof WebAction){
+	        		if(((WebAction)o).canDisplay(webActionEnv)){
+		        		ArrayList row= new ArrayList();
+		                row.add(o);
+		                row.add(Collections.EMPTY_LIST );
+		                cats.add(row);
+	        		}
+	        	}else{
+	        		throw new NDSException("Unexpected class in subsystem (id="+ subSystemId+"), class is "+ o.getClass());
+	        	}
+	        	
+	        }
+        }catch(Throwable t){
+        	logger.error("Fail to load subsystem tree", t);
+        }finally{
+        	try{if(conn!=null)conn.close();}catch(Throwable e){}
         }
         
-        // So categories contains category which has internal table ordered
-        
-        // Order table categories in this sub system 
-        ArrayList rtn = new ArrayList();
-        ArrayList row;ArrayList catedTableGroup;
-        Integer categoryId;
-        ArrayList tcs = TableManager.getInstance().getTableCategories(); // elements are TableCategory
-        for ( int i=0;i< tcs.size();i++){
-        	TableCategory tc=  (TableCategory)tcs.get(i);
-        	categoryId=new Integer(tc.getId());
-            catedTableGroup = (ArrayList)categories.get(categoryId);
-            if( catedTableGroup !=null){
-                row= new ArrayList();
-                row.add(tc);
-                row.add(catedTableGroup);
-                rtn.add(row);
-                categories.remove(categoryId);
-            }
-        }
-        return rtn;        
+        return cats;        
     }	
 }

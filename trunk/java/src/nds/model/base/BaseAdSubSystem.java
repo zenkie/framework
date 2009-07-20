@@ -23,6 +23,7 @@ public abstract class BaseAdSubSystem  implements Serializable {
 	public static String PROP_MODIFIER_ID = "ModifierId";
 	public static String PROP_COMMENTS = "Comments";
 	public static String PROP_URL = "Url";
+	public static String PROP_ICONURL = "IconUrl";
 	public static String PROP_NAME = "Name";
 	public static String PROP_MODIFIED_DATE = "ModifiedDate";
 	public static String PROP_ID = "Id";
@@ -40,6 +41,7 @@ public abstract class BaseAdSubSystem  implements Serializable {
 	private java.lang.String _name;
 	private java.lang.Integer _orderno;
 	private java.lang.String _url;
+	private java.lang.String _iconUrl;
 	private java.lang.String _comments;
 	private java.lang.Integer _ownerId;
 	private java.lang.Integer _modifierId;
@@ -161,7 +163,20 @@ public abstract class BaseAdSubSystem  implements Serializable {
 		this._url = _url;
 	}
 
+	/**
+	 * Return the value associated with the column: URL
+	 */
+	public java.lang.String getIconUrl () {
+		return _iconUrl;
+	}
 
+	/**
+	 * Set the value related to the column: URL
+	 * @param _url the URL value
+	 */
+	public void setIconUrl (java.lang.String _iconUrl) {
+		this._iconUrl = _iconUrl;
+	}
 	/**
 	 * Return the value associated with the column: COMMENTS
 	 */

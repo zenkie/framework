@@ -27,12 +27,13 @@ public class DBSchemaLoader {
 	private Hashtable adTables=new Hashtable();// key:table id(Integer) value: AdTable
 	private Hashtable tables= new Hashtable();// key:table id, value TableImpl
 	private HashMap categories= new HashMap(); // key: category id (Integer) values are TableCategory
-	private HashMap subsystems= new HashMap(); // key: category id (Integer) values are TableCategory
+	private HashMap subsystems= new HashMap(); // key: category id (Integer) values are SubSystem
 	/**
 	 * By default, comments of column and table will not be loaded into memory
 	 * this can be changed using portal.properties#schema.loadcomments 
 	 */
 	private boolean loadingComments=false;
+	
 /*	private static String[] apTables={"AD_SYSTEM","AD_TABLE","AD_COLUMN", 
 			"AD_ALIASTABLE","AD_REFBYTABLE","AD_TABLECATEGORY","AD_TABLESQL","DIRECTORY", "AD_LIMITVALUE","AD_LIMITVALUE_GROUP",};
 */			 
@@ -46,6 +47,7 @@ public class DBSchemaLoader {
 		categories=null;
 		subsystems=null;
 	}
+	
 	/**
 	 * Currenty ad_client_id is ignored
 	 * @param ad_client_id
@@ -71,19 +73,26 @@ public class DBSchemaLoader {
     			AdTable tb= (AdTable) it.next();
    				createRefByTables(tb);
     		}
-    		//loading table category by order for used by CreatePortal to construct portal page
-    		/*colList= adTableDAO.find("from AdTableCategory a where a.IsActive='Y' order by a.Orderno",session);
-    		for(Iterator it=colList.iterator();it.hasNext();){
-    			AdTableCategory tc= (AdTableCategory) it.next();
-    			categories.add(tc.getName());
-    		}*/
+    		
+    		//add subsystems who has no tablecategory but do have webaction as child
+    		List ss= session.createSQLQuery("select * from ad_subsystem where ad_subsystem.IsActive='Y' and exists (select 1 from ad_action a where a.ad_subsystem_id=ad_subsystem.id and a.isactive='Y') and not exists (select 1 from ad_tablecategory c where c.ad_subsystem_id=ad_subsystem.id and c.isactive='Y') order by ad_subsystem.Orderno")
+    			.addEntity(AdSubSystem.class).list();
+    		for(Iterator it=ss.iterator();it.hasNext();){
+    			AdSubSystem s= (AdSubSystem) it.next();
+    			createSubSystem(s);
+    		}
+    		
     		logger.debug("Total meta loading time :" +(System.currentTimeMillis()-t)/1000.0);
     	}finally{
     		if(session !=null){
     			try{adTableDAO.closeSession();}catch(Exception e2){}
     		}
     	}
+    	// unload adtable in cache 2009-7-5
+    	adTables.clear();
 	}
+	
+	
 	private TableImpl getTableImpl(AdTable tb){
 		TableImpl table= (TableImpl)tables.get(tb.getId()) ;
 		if(table ==null)
@@ -103,10 +112,12 @@ public class DBSchemaLoader {
 		ss.setName(ass.getName());
 		ss.setOrderno(ass.getOrderno());
 		ss.setPageURL(ass.getUrl());
+		ss.setIconURL(ass.getIconUrl());
 		//tc.setParent
 		subsystems.put(ass.getId(), ss);
 		return ss;
-	}	
+	}
+	
 	private TableCategory getTableCategory(AdTableCategory tc){
 		TableCategory category= (TableCategory)this.categories.get(tc.getId());
 		if( category==null) category=createTableCategory(tc);
@@ -116,7 +127,7 @@ public class DBSchemaLoader {
 		TableCategory tc= new TableCategory( );
 		tc.setId(atc.getId().intValue());
 		tc.setName(atc.getName());
-		tc.setOrderno(atc.getOrderno());
+		tc.setOrder(Tools.getInt(atc.getOrderno(),-1));
 		tc.setPageURL(atc.getUrl());
 		tc.setSubSystem(getSubSystem(atc.getAdSubSystem()));
 		//tc.setParent
@@ -325,6 +336,7 @@ public class DBSchemaLoader {
 		
 	}
 	public ArrayList getSubSystems(){
+		
 		ArrayList  col=new ArrayList( this.subsystems.values());
 		ListSort.sort(col,"Orderno");
 		return col;
@@ -335,7 +347,7 @@ public class DBSchemaLoader {
 	 */
 	public ArrayList getTableCategories(){
 		ArrayList  col=new ArrayList( this.categories.values());
-		ListSort.sort(col,"Orderno");
+		ListSort.sort(col,"Order");
 		return col;
 	}
 	/**

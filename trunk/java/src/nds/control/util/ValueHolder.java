@@ -35,6 +35,13 @@ public class ValueHolder  implements java.io.Serializable{
     public ValueHolder(){
         data=new HashMap();
     }
+    /**
+     * put all elements into value holder directly
+     * @param m
+     */
+    public ValueHolder(Map m){
+        data=new HashMap(m);
+    }
     public Object get(String name){
         return data.get(name);
     }

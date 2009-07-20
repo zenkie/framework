@@ -158,6 +158,8 @@ public class TableImpl implements Table {
     private String uniqueIndexName =null;
     private java.util.List uniqueIndexColumns=null; //elements are Column
     
+    private List<WebAction>[] actions=null;
+    
     public TableImpl(int id,int order,String tableName,String desc,String rowURL,String rowClass,TableCategory category, boolean[] mask, Properties trigs,String comment) {
         this.id=id;
         this.tableOrder=order;
@@ -170,7 +172,7 @@ public class TableImpl implements Table {
         this.triggers= trigs;
         this.comment=comment;
         if( actionMask==null || actionMask.length!=8) throw new IllegalArgumentException("Action mask of table "+tableName+" is not valid.");
-
+        
     }
     public TableImpl(){
     	actionMask=new boolean[8];
@@ -178,6 +180,27 @@ public class TableImpl implements Table {
     public TableImpl(int id){
     	this.id=id;
     	actionMask=new boolean[8];
+    }
+    public void addWebAction(WebAction action){
+    	int idx=action.getDisplayType().getIndex();
+
+    	if(actions==null) actions=new ArrayList[5]; // treenode should not be here
+    	if(actions[idx]==null) actions[idx]=new ArrayList<WebAction>();
+    	
+    	actions[idx].add(action);
+    	
+    }
+    /**
+     * Get WebAction from ad_action
+     * @param dte actions of which display type
+     * @return List nerver be null
+     * @since 4.1
+     */
+    public List<WebAction> getWebActions(WebAction.DisplayTypeEnum dte){
+    	if(actions ==null || actions.length< dte.getIndex() || actions[dte.getIndex()]==null)
+    		return Collections.EMPTY_LIST;
+    	else 
+    		return actions[dte.getIndex()];
     }
     public void setTriggers(TriggerHolder th){
         triggers= th.getTriggers();

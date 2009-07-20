@@ -36,10 +36,7 @@ association 表示了关联关系，1 表示分页上仅一条记录，（直接显示）n 表示分页上有多
 
 package nds.schema;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Locale;
+import java.util.*;
 
 import nds.util.PairTable;
 import org.json.JSONString;
@@ -336,6 +333,14 @@ public interface Table extends Serializable  {
      * @since 2.0
      */
     public String getSecurityDirectory();
+    
+    /**
+     * Get WebAction from ad_action
+     * @param dte actions of which display type
+     * @return List nerver be null
+     * @since 4.1
+     */
+    public List<WebAction> getWebActions(WebAction.DisplayTypeEnum dte);
     /**
      * 
      * @return procname of the submit method, will be used

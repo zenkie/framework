@@ -111,6 +111,7 @@ public class ButtonFactory {
 	}
 	private void init(PageContext context){
 		createButton("Add", context, "N");
+		createButton("CreateAndAdd", context,"L");
 		createButton("Create", context,"S");
 		createButton("Modify", context, "S");
 		createButton("Delete", context, "X");

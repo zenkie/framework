@@ -29,6 +29,7 @@ import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.query.QueryEngine;
 import nds.util.*;
+import nds.web.action.WebActionUtils;
 /**
  * There have only one public instance of TableManager
  * But when reloading, we have two. Only when we successfully load the schema from db, will the
@@ -103,6 +104,12 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
      * 2008-05-03 for Table that not is menuObject, will not take as view
      */
     public Hashtable views;
+    
+    /**
+     * Key: Ad_Action.id 
+     * Value: WebAction
+     */
+    private Hashtable webActions;
     /**
      * TableManager's name
      */
@@ -123,6 +130,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
         fkColumns=new CollectionValueHashtable();
         tableList=new Vector();
         parentTables=new Hashtable(20,0.1f);
+        webActions=new Hashtable();
         props= new Properties();
         logger.debug("New instance of TableManager created:"+ name);
         
@@ -195,6 +203,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
         tableList.clear();
         parentTables.clear();
         views.clear();
+        webActions.clear();
         dateTable=null;
         /**
          * Clear limit value alerter cache
@@ -217,13 +226,72 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
             it=loader.getTables();
             tableCategories = loader.getTableCategories();
             subSystems= loader.getSubSystems();
+            
         } catch(Exception e) {
             logger.error("Could not get schema structure from db",e);
             throw new NDSRuntimeException("Internal Error, schema could not load from db.", e);
         }
         return it;
     }
-    
+    /**
+     * Add table categories to subsystem
+     *
+     */
+    private void initSubSystems(){
+    	for(int i=0;i<tableCategories.size();i++){
+    		TableCategory tc=(TableCategory)tableCategories.get(i);
+    		tc.getSubSystem().addTableCategory(tc);
+    	}
+    	for(int i=0;i< this.subSystems.size();i++)
+    		((SubSystem)subSystems.get(i)).sortTableCategoryAndActions();
+    }
+    /**
+     * Add tables to category
+     * Since this contains sorting method over WebAction, call this after #initActions
+     */
+    private void initTableCategories(){
+    	for(int i=0;i<tableList.size();i++){
+    		Table t=(Table)tableList.get(i);
+    		t.getCategory().addTable(t);
+    	}
+    	for(int i=0;i<tableCategories.size();i++){
+    		TableCategory tc=(TableCategory)tableCategories.get(i);
+    		tc.sortTablesAndActions();
+    	}
+    }
+    /**
+     * Load actions from db and update memory table/category
+     * Must be called after tables are initialized
+     */
+    private void initActions(){
+    	try{
+	    	List<WebAction> list=WebActionUtils.loadActions();
+	    	for(int i=0;i<list.size();i++){
+	    		WebAction a=list.get(i);
+	    		if(a.getSubSystemId()!=-1){
+	    			SubSystem ss=getSubSystem(a.getSubSystemId());
+	    			if(ss==null) throw new NDSException("Web action id="+ a.getId()+" has subsystem id="+a.getSubSystemId()+" not loaded in memory");
+	    			ss.addWebAction(a);
+	    		}else
+	    		if(a.getTableCategoryId()!=-1){
+	    			TableCategory tc= getTableCategory(a.getTableCategoryId());
+	    			if(tc==null) throw new NDSException("Web action id="+ a.getId()+" has tablecategory id="+a.getTableCategoryId()+" not loaded in memory");	    			
+	    			tc.addWebAction(a);
+	    		}else
+	    		if(a.getTableId()!=-1){
+	    			TableImpl t=(TableImpl)tableIDs.get(new Integer(a.getTableId()));
+	    			if(t==null) throw new NDSException("Web action id="+ a.getId()+" has table id="+a.getTableId()+" not loaded in memory");
+	    			t.addWebAction(a);
+	    		}else{
+	    			throw new NDSException("Web action id="+ a.getId()+" does not combined with any of subsystem,tablecategory or table");
+	    		}
+	    		webActions.put( a.getId(), a);
+	    	}
+    	}catch(Throwable t){
+    		logger.error("Fail to load actions from db",t);
+    		throw new NDSRuntimeException("Internal Error, some actions could not load from db.", t);
+    	}
+    }
     /**
      * 
      * @param it elements are Table
@@ -251,6 +319,9 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
         initViews(); // must be init before initParentTables, which will use view hashtable
         initParentTables();
         dict.init(this);
+        initActions();
+        initSubSystems();
+        initTableCategories();
     	/*
     	 * 建立时间表 T_DAY
     	 */
@@ -668,6 +739,10 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     	}
     	
     }
+    
+    public WebAction getWebAction(int actionId){
+    	return (WebAction)webActions.get(actionId);
+    }    
     /**
      * This will load comment from db and set to Column, comment of column is quite big, 
      * so we do lazy loading here 
@@ -777,6 +852,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     	instance.parentTables= tmpInstance.parentTables;
     	instance.views=tmpInstance.views;
     	instance.dateTable= tmpInstance.dateTable;
+    	instance.webActions= tmpInstance.webActions;
     	logger.debug("TableManger "+ instance.name+" is updated by "+ tmpInstance.name);
     	tmpInstance=null;
     }

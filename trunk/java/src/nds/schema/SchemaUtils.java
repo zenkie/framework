@@ -13,6 +13,7 @@ import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.model.*;
 
+import nds.web.action.*;
 /**
  * 
  * @author yfzhu@agilecontrol.com
@@ -26,6 +27,8 @@ public class SchemaUtils {
 		
 		Tools.writeFile(dir+File.separator+dbName+ ".properties", false, out.toString(), "ISO-8859-1");
 	}
+	
+	
 	/**
 	 * Get records in ad_table_transfer 
 	 * @param file no ".script" extension
