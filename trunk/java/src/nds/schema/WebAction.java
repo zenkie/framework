@@ -75,8 +75,9 @@ public interface WebAction {
 	    public static SaveObjectEnum parse(String type){
 	    	if("ask".equals(type)) return ASK;
 	    	else if("force".equals(type)) return FORCE;
-	    	else if("none".equals(type)) return NONE;
-	    	else throw new nds.util.NDSRuntimeException("type "+ type +" is invalid as SaveObjectEnum");
+	    	else 
+	    		 return NONE;
+	    	//else throw new nds.util.NDSRuntimeException("type "+ type +" is invalid as SaveObjectEnum");
 	    }
 	};
 	public enum DisplayTypeEnum{
