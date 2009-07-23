@@ -425,7 +425,7 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
             return;
         }
         if( c.getTable().getId() !=mainTable.getId()) {
-            throw new QueryException("Column linked ("+c+") must start from main table:"+ c.getTable());
+            throw new QueryException("Column linked ("+c+") must start from main table:"+ mainTable);
         }
     }
     /**
