@@ -52,7 +52,7 @@ public class SecurityUtils {
     private final static String GET_USER_BY_NAME_AND_CLIENT="select u.id, u.name, u.isactive,u.ad_client_id, u.ad_org_id, u.language, c.name from users u, ad_client c where u.name=? and u.ad_client_id=c.id and c.domain=?";
     private final static String GET_USER_BY_EMAIL_AND_CLIENT="select u.id, u.name, u.isactive,u.ad_client_id, u.ad_org_id, u.language, c.name from users u, ad_client c where u.email=? and u.ad_client_id=c.id and c.domain=?";
     private final static String GET_USER_BY_ID="select u.name,c.domain,u.isactive, u.description, u.ad_client_id, u.ad_org_id, u.language, c.name  from users u,ad_client c where u.ID=? and c.id=u.ad_client_id";
-
+ 
     /**
     @roseuid 3BF38E580012
     */
@@ -225,6 +225,10 @@ public class SecurityUtils {
                 if ( sql !=null && sql.length() > 1){
                     st.put(sql, new String[]{desc, tn});
 //                    logger.debug("found sql:" + sql +", with desc=" + desc);
+                }else{
+                	//has at least one group which allows current user to work on all data
+                	st.clear();
+                	break;
                 }
 
             }
