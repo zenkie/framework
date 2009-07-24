@@ -66,10 +66,23 @@ public class QueueExecuterJob implements InterruptableJob {
 	private long getEndTime(int queueId, java.util.Date  scheduledDate){
 		long endTime;
 		long maxDuration=-1;
+		Connection conn= null;
+		PreparedStatement pstmt=null;
+		ResultSet rs=null;
 		try{
-			maxDuration=Tools.getInt(QueryEngine.getInstance().doQueryOne("select duration from ad_processqueue where id="+ queueId),-1);
+			conn= QueryEngine.getInstance().getConnection();
+			pstmt=conn.prepareStatement("select duration from ad_processqueue where id=?");
+			pstmt.setInt(1, queueId);
+			rs= pstmt.executeQuery();
+			if(rs.next()){
+				maxDuration=rs.getInt(1);
+			}
 		}catch(Exception e){
 			logger.error("Fail to get ad_processqueue duration for id="+queueId+":"+ e);
+		}finally{
+			if(rs!=null) try{rs.close();}catch(Exception e){}
+			if(pstmt!=null) try{pstmt.close();}catch(Exception e){}
+			if(conn!=null) try{conn.close();}catch(Exception e){}
 		}
 		if(maxDuration <=0){
 			endTime= Long.MAX_VALUE;
@@ -163,11 +176,21 @@ public class QueueExecuterJob implements InterruptableJob {
 			msg="Finished "+jobName+ " at "+ ((java.text.SimpleDateFormat)QueryUtils.dateTimeSecondsFormatter.get()).format(new java.util.Date())+", handled "+ cnt+", failed " + failed +", duration " +seconds+ " seconds";
 			logger.debug(msg);
 		}
+		Connection conn= null;
+		PreparedStatement pstmt=null;
 		try{
-			QueryEngine.getInstance().executeUpdate("update ad_processqueue set modifieddate=sysdate, lastmsg=" + QueryUtils.TO_STRING(msg,2000)+" where id="+queueId);
+			conn= QueryEngine.getInstance().getConnection();
+			pstmt=conn.prepareStatement("update ad_processqueue set modifieddate=sysdate, lastmsg=? where id=?");
+			pstmt.setString(1,  QueryUtils.TO_STRING(msg,2000));
+			pstmt.setInt(2,  queueId);
+			pstmt.executeUpdate();
 		}catch(Exception e){
 			logger.error("Fail to update queue "+ queueId,e);
+		}finally{
+			if(pstmt!=null) try{pstmt.close();}catch(Exception e){}
+			if(conn!=null) try{conn.close();}catch(Exception e){}
 		}
+		
 		
 	}
 	
