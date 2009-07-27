@@ -19,7 +19,7 @@ import nds.util.*;
  */
 public class SubSystemView {
 	private static Logger logger=LoggerManager.getInstance().getLogger(SubSystemView.class.getName());
-	
+	 
 	/**
 	 * People can view the specified subsystem
 	 */
@@ -231,20 +231,84 @@ public class SubSystemView {
         
         return false;            
 	}
+
 	/**
-	 * Cxtab whose fact table belongs to currrent table category
+	 * 事实表和关联报表属于当前传入数组的交叉报表
 	 * @param request
-	 * @param tables
 	 * @return elements are ArrayList, first is cxtab id, second is cxtab name
 	 */
-	public List getCxtabs(HttpServletRequest request, List<Table> tables){
+	public List getCxtabs(HttpServletRequest request, int tableCategoryId){
+		List tables= getChildrenOfTableCategory(request, tableCategoryId,false);
+		ArrayList<Integer> al=new ArrayList();
+		for(int i=0;i< tables.size();i++){
+			al.add( ((Table)tables.get(i)).getId() );
+		}
+		return getCxtabs(request, al);
+        
+	}	
+	/**
+	 * 事实表和关联报表属于当前传入数组的交叉报表
+	 * @param request
+	 * @param tables elements are table.id
+	 * @return elements are ArrayList, first is cxtab id, second is cxtab name
+	 */
+	public List getCxtabs(HttpServletRequest request, List<Integer> tables){
+		TableManager manager=TableManager.getInstance();
+        UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
+        StringBuffer sb=new StringBuffer();
+        for(int i=0;i<tables.size();i++){
+        	//Table t= tables.get(i);
+        	if(i>0 )sb.append(",");
+        	sb.append(tables.get(i));
+        }
+        String ts= sb.toString();
+		try{
+	        Table cxtabTable= manager.getTable("AD_CXTAB"); 
+	    	QueryRequestImpl queryData;
+	    	// only pk,dk will be selected, order by ak asc
+	    	queryData=QueryEngine.getInstance().createRequest(userWeb.getSession());
+	    	queryData.setMainTable(cxtabTable.getId());
+	    	
+	    	queryData.addSelection(cxtabTable.getPrimaryKey().getId());
+	    	queryData.addSelection(cxtabTable.getDisplayKey().getId());
+	
+	    	Column colOrderNo=cxtabTable.getColumn("orderno") ;
+	    	queryData.setOrderBy( new int[]{ colOrderNo.getId()}, true);
+	    	queryData.setRange(0, Integer.MAX_VALUE);
+	    	
+	    	Expression expr= new Expression(null, "(AD_CXTAB.AD_TABLE_ID in ("+ts+
+	    			") or exists (select 1 from ad_cxtab_reftable r where r.ad_cxtab_id=AD_CXTAB.id and r.ad_table_id in ("+
+	    			ts+")))",null);
+	    	
+	    	
+	    	//set reporttype to "S"
+	    	expr=expr.combine(new Expression(new ColumnLink("AD_CXTAB.REPORTTYPE"), "=S",null), SQLCombination.SQL_AND,null);
+	    	expr=expr.combine(new Expression(new ColumnLink("AD_CXTAB.ISACTIVE"), "=Y",null), SQLCombination.SQL_AND,null);
+	    	expr=expr.combine(new Expression(new ColumnLink("AD_CXTAB.ISPUBLIC"), "=Y",null), SQLCombination.SQL_AND,null);
+	    	expr=expr.combine(userWeb.getSecurityFilter(cxtabTable.getName(), 1) ,  SQLCombination.SQL_AND,null);
+	    	queryData.addParam(expr);//read permission
+
+    		return QueryEngine.getInstance().doQueryList(queryData.toSQL());
+		}catch(Throwable t){
+			logger.error("Fail to load reports for user "+userWeb.getUserId()+" with table ids: "+ ts, t);
+		}
+		return Collections.EMPTY_LIST;
+        
+	}	
+	/**
+	 * 事实表属于当前传入数组的交叉报表
+	 * @param request
+	 * @param tables elements are table.id
+	 * @return elements are ArrayList, first is cxtab id, second is cxtab name
+	 */
+	/*public List getCxtabs(HttpServletRequest request, List<Integer> tables){
 		TableManager manager=TableManager.getInstance();
         UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
         StringBuffer ts=new StringBuffer();
         for(int i=0;i<tables.size();i++){
-        	Table t= tables.get(i);
+        	//Table t= tables.get(i);
         	if(i>0 )ts.append(",");
-        	ts.append(t.getId());
+        	ts.append(tables.get(i));
         }
 		try{
 	        Table cxtabTable= manager.getTable("AD_CXTAB"); 
@@ -275,14 +339,16 @@ public class SubSystemView {
 		}
 		return Collections.EMPTY_LIST;
         
-	}
+	}*/
+	
 	/**
 	 * 
 	 * @param request
 	 * @param tableCategoryId
+	 * @paqram includeAction if true, will load webactions also
 	 * @return elements are Table or WebAction
 	 */
-	public List getChildrenOfTableCategory(HttpServletRequest request, int tableCategoryId){
+	public List getChildrenOfTableCategory(HttpServletRequest request, int tableCategoryId, boolean includeAction){
 		TableManager manager=TableManager.getInstance();
 		
 		WebAction action;
@@ -297,11 +363,13 @@ public class SubSystemView {
     	List children= tc.children();
     	ArrayList catschild= new ArrayList();
     	try{
-            conn=QueryEngine.getInstance().getConnection();
-        	webActionEnv=new HashMap();
-        	webActionEnv.put("connection",conn);
-        	webActionEnv.put("httpservletrequest",request);
-        	webActionEnv.put("userweb",userWeb);
+            if(includeAction){
+	    		conn=QueryEngine.getInstance().getConnection();
+	        	webActionEnv=new HashMap();
+	        	webActionEnv.put("connection",conn);
+	        	webActionEnv.put("httpservletrequest",request);
+	        	webActionEnv.put("userweb",userWeb);
+            }
 	    	for(int j=0;j< children.size();j++){
 	    		if(children.get(j) instanceof Table){
 	    			table=(Table)children.get(j);
@@ -316,9 +384,11 @@ public class SubSystemView {
 	                // table is ok for current user to list
 	                catschild.add(table);
 	    		}else if(children.get(j) instanceof WebAction){
-	        			action=(WebAction)children.get(j);
-	        			if(action.canDisplay(webActionEnv))
-	        				catschild.add(action);
+	        		if(includeAction){	
+		    			action=(WebAction)children.get(j);
+		        		if(action.canDisplay(webActionEnv))
+		        			catschild.add(action);
+	        		}
 	    		}else{
 	    			throw new NDSRuntimeException("Unsupported element in TableCategory children:"+ 
 	    					children.get(j).getClass());
