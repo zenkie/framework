@@ -43,6 +43,7 @@ public class FKObjectQueryModel {
 	private String acceptorId;
 	private boolean isDropdown;
 	private boolean isSingle_temp;
+	private int queryindex;
 	/**
 	 * @param isInTitleArea when searchOnColumn is WFC(WildcardFilter Column, Column.isFilteredByWildCard=true), this param will decide
 	 * 	where to fetch the reference column in WFC filter.
@@ -166,8 +167,13 @@ url=¡±¡¯PATH?...& wfc_<×Ö¶Îid>=¡±+ oc.getMainTableColumnInput(<×Ö¶Îid>)+¡±&wfc_<
 	 */
 	public String getButtonClickEventScript(boolean mustBeActive){
 		String bUrl= url;
-		if(!mustBeActive) bUrl= bUrl+"+'&mustbeactive=N'";
-		return (isDropdown? "dq.toggle":(this.isSingle_temp)?"oq.toggle":"oq.toggle_m")+"("+bUrl+",'"+acceptorId +"'"+ 
+		String oqUrl= url;
+		if(!mustBeActive) {
+			bUrl= bUrl+"+'&mustbeactive=N'";
+			oqUrl=oqUrl+"+'&mustbeactive=N'";
+		}
+		oqUrl=oqUrl+"+'&queryindex='+encodeURIComponent(document.getElementById('queryindex_"+this.queryindex+"').value)";
+		return (isDropdown? "dq.toggle("+bUrl:(this.isSingle_temp)?"oq.toggle("+oqUrl:"oq.toggle_m("+oqUrl)+",'"+acceptorId +"'"+ 
 			(options==null?"":","+options)+ ")";
 	}	
 	/**
@@ -192,4 +198,7 @@ url=¡±¡¯PATH?...& wfc_<×Ö¶Îid>=¡±+ oc.getMainTableColumnInput(<×Ö¶Îid>)+¡±&wfc_<
     	}
     	return listThreshold;
     }
+	public void setQueryindex(int queryindex) {
+		this.queryindex = queryindex;
+	}
 }
