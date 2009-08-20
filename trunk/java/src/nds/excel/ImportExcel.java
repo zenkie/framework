@@ -1,10 +1,9 @@
 package nds.excel;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
+
 import java.util.*;
-import java.util.Iterator;
-import java.util.Properties;
+import java.util.regex.Pattern;
 
 import nds.control.event.DefaultWebEvent;
 import nds.control.util.ValueHolder;
@@ -15,7 +14,7 @@ import nds.query.QueryUtils;
 import nds.schema.Column;
 import nds.schema.Table;
 import nds.schema.TableManager;
-import nds.util.NDSException;
+import nds.util.*;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
@@ -27,6 +26,8 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem;
  * Import Excel file to db, will get file content from file system
  * then import each records in file to db, and log output(error) to
  * specified file
+ * 
+ * Excel file can be xls, txt and csv format
  */
 public class ImportExcel implements Runnable{
     private static Logger logger=LoggerManager.getInstance().getLogger(ImportExcel.class.getName());
@@ -34,13 +35,19 @@ public class ImportExcel implements Runnable{
     private int tableId;
     private int startRow;// logical, start from 0
     private boolean sendEmail;
+    /**
+     * 对于文本格式(file_format='txt')，支持分隔符(txt_type=token)和固定宽度(txt_type=fix)，
+     * 分隔符(txt_token)支持tab(\t),space( ),comma(,),and others(xx)，连续分隔作为单个处理，
+     * 固定宽度的需给出每个列的宽度定义(txt_fix_len)，不足用空格补齐 
+     */
     private Properties params;
     private InputStream excelStream=null;
     private ClientControllerWebImpl controller;
-    TableManager manager;
     private Locale locale;
+    
+    
+    
     public ImportExcel(Locale locale) {
-        manager= TableManager.getInstance();
         params= new  Properties();
         this.locale=locale;
     }
@@ -76,7 +83,7 @@ public class ImportExcel implements Runnable{
             if( col.isValueLimited()){
                 t=cell.getStringCellValue();
                 s= (t==null?"":t.trim());
-                s= manager.getColumnValueByDescription(col.getId(),s,locale);
+                s= TableManager.getInstance().getColumnValueByDescription(col.getId(),s,locale);
             }else{
             	int cellType= cell.getCellType();
             switch(col.getType() ){
@@ -163,7 +170,7 @@ public class ImportExcel implements Runnable{
             event.setParameter(key, params.getProperty(key));
         }
 
-        Table table= manager.getTable(tableId);
+        Table table= TableManager.getInstance().getTable(tableId);
 
         Column col;
         String cv;
@@ -189,38 +196,124 @@ public class ImportExcel implements Runnable{
             }
         }
         try{
-
-            POIFSFileSystem fs ;
-            // check input stream first, if not found, use srcFile name
-            if ( this.excelStream !=null) fs= new POIFSFileSystem(excelStream);
-            else fs=new POIFSFileSystem(new FileInputStream(srcFile));
-
-            HSSFWorkbook wb = new HSSFWorkbook(fs);
-            HSSFSheet sheet = wb.getSheetAt(0);
-            logger.debug("Last row num:"+  sheet.getLastRowNum());
-            String[][] colData= new String[columns.size()][1+sheet.getLastRowNum() -startRow];
-            logger.debug("Create array["+columns.size()+"]["+ (sheet.getLastRowNum() -startRow)+"]" );
-            for ( int i= startRow; i<= sheet.getLastRowNum();i++){
-                HSSFRow row = sheet.getRow(i);
-                if( row==null) continue;
-                for( int j=0;j< directColumnOfData.size();j++){
-                    col= (Column) directColumnOfData.get(j);
-                    HSSFCell cell = row.getCell((short)j);
-                    cv= getCellValue(i, cell, col);
-                    colData[j][i-startRow]= cv;
-                }
-            }
-             for( int j=0;j< columns.size();j++){
-//                 logger.debug("param for "+ columns.get(j)+ ":"+ (String)colNames.get(j));
-
-                 event.setParameter( (String)colNames.get(j) ,colData[j] );
-             }
-             return event;
-
+        
+	        if("txt".equals(params.getProperty("file_format"))){
+	        	//txt file handling
+	            /**
+	             * 对于文本格式(file_format='txt')，支持分隔符(txt_type=token)和固定宽度(txt_type=fix)，
+	             * 分隔符(txt_token)支持tab(\t),space( ),comma(,),and others(xx)，连续分隔作为单个处理，
+	             * 固定宽度的需给出每个列的宽度定义(txt_fix_len)，不足用空格补齐 
+	             */
+	        	if(excelStream==null) throw new NDSException("must set inputstream");
+	        	BufferedReader  isr=new BufferedReader(new InputStreamReader(excelStream, "GBK"));
+	        	
+	        	boolean txtLineTypeIsToken= "token".equals(params.getProperty("txt_type","token"));
+	        	StringTokenizer fixedLength=new StringTokenizer( params.getProperty("txt_fix_len","20,5"),",");
+	        	String token=  params.getProperty("txt_token");
+	        	
+	        	Pattern tokenPattern=null;
+	        	
+	        	int[] fixedLengths=new int[columns.size()];
+	        	int[] startIdx=new int[columns.size()];
+	        	int[] endIdx=new int[columns.size()];
+	        	if(txtLineTypeIsToken){
+	        		//
+	        		if(Validator.isNull(token)) throw new NDSException("未设置分隔符");
+	        		tokenPattern= Pattern.compile(token);
+	        	}else{
+		        	int cnt=0;
+	        		 while(fixedLength.hasMoreTokens()){ 
+	        			 fixedLengths[cnt]=Tools.getInt(fixedLength.nextToken(), -1);
+	        			 cnt++;
+	        		 }
+	        		 startIdx[0]=0;
+	        		 endIdx[0]=fixedLengths[0];
+	        		 
+        			 for(int i=0;i<fixedLengths.length;i++){
+        				 if(fixedLengths[i] <1) throw new NDSException("固定宽度列定义错误："+params.getProperty("txt_fix_len","20,5"));
+        				 if(i>0){
+        					 startIdx[i]=startIdx[i-1]+fixedLengths[i-1];
+        					 endIdx[i]=startIdx[i]+fixedLengths[i];
+        				 }
+        			 }
+	        	}
+	        	
+	        	ArrayList[] colData= new ArrayList[columns.size()];
+	        	for(int i=0;i<columns.size();i++) colData[i]=new ArrayList();
+	        	String line= isr.readLine();
+	        	int lcnt =0;
+	        	String colPart;
+	        	while(line!=null){
+	        		if(line.trim().length()>0){
+		        		if(txtLineTypeIsToken){
+		        			//分隔符
+		        			String[] s=tokenPattern.split(line);
+		        			for(int i=0;i<colData.length && i< s.length;i++ ){
+		        				colData[i].add(s[i].trim());
+		        			}
+		        			// s element count may less than expected
+		        			for(int i=s.length;i<colData.length;i++ )colData[i].add("");
+		        			
+		        		}else{
+		        			//固定宽度
+		        			for(int i=0;i<fixedLengths.length;i++){
+		        				try{
+		        					colPart= line.substring(startIdx[i], endIdx[i]);
+		        				}catch(IndexOutOfBoundsException  e){
+		        					if(endIdx[i]>line.length()){
+		        						try{
+		        							colPart= line.substring(startIdx[i]);
+		        						}catch(IndexOutOfBoundsException  e2){
+		        							colPart="";
+		        						}
+		        					}else
+		        						colPart="";
+		        				}
+		        				colData[i].add(colPart.trim());
+		        			}
+		        		}
+		        		lcnt++;
+	        		}
+	        		line= isr.readLine();
+	        	}
+	        	isr.close();
+	        	for( int j=0;j< columns.size();j++){
+	        		event.setParameter( (String)colNames.get(j) ,colData[j].toArray() );
+	        	}
+	        }else{
+	        	//xls file handling
+	            POIFSFileSystem fs ;
+	            // check input stream first, if not found, use srcFile name
+	            if ( this.excelStream !=null) fs= new POIFSFileSystem(excelStream);
+	            else fs=new POIFSFileSystem(new FileInputStream(srcFile));
+	
+	            HSSFWorkbook wb = new HSSFWorkbook(fs);
+	            HSSFSheet sheet = wb.getSheetAt(0);
+	            logger.debug("Last row num:"+  sheet.getLastRowNum());
+	            String[][] colData= new String[columns.size()][1+sheet.getLastRowNum() -startRow];
+	            logger.debug("Create array["+columns.size()+"]["+ (sheet.getLastRowNum() -startRow)+"]" );
+	            for ( int i= startRow; i<= sheet.getLastRowNum();i++){
+	                HSSFRow row = sheet.getRow(i);
+	                if( row==null) continue;
+	                for( int j=0;j< directColumnOfData.size();j++){
+	                    col= (Column) directColumnOfData.get(j);
+	                    HSSFCell cell = row.getCell((short)j);
+	                    cv= getCellValue(i, cell, col);
+	                    colData[j][i-startRow]= cv;
+	                }
+	            }
+	             for( int j=0;j< columns.size();j++){
+	//                 logger.debug("param for "+ columns.get(j)+ ":"+ (String)colNames.get(j));
+	                 event.setParameter( (String)colNames.get(j) ,colData[j] );
+	             }
+		
+		        
+	        }
         }catch(Exception e){
             logger.error("Error exporting to excel" , e);
             throw new NDSException("在处理请求时出现异常："+ e.getLocalizedMessage() );
         }
+        return event;
 
     }
     /**
