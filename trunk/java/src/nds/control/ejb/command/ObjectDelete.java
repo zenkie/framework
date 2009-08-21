@@ -82,7 +82,12 @@ public class ObjectDelete extends Command{
        helper.doTrigger("BD", table, objectid, con);
        Table parent= helper.getParentTable(table,event);
        int[] poids= helper.getParentTablePKIDs( table, new int[]{objectid}, con);
-       helper.checkTableRows(parent, poids, con, helper.PARENT_NOT_FOUND);
+       
+       //helper.checkTableRows(parent, poids, con, helper.PARENT_NOT_FOUND);
+       
+       //check parent table records exist and modifiable
+ 	   helper.checkTableRowsModifiable(parent, poids, con);
+       
        int count = engine.doUpdate(vec,con);
 
        // call parent table's after modify method

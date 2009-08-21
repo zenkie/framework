@@ -140,6 +140,7 @@ public class ObjectCreate extends Command{
            int[] oids= new int[objectId.length];
            for(int i=0;i<oids.length;i++) oids[i]= objectId[i].intValue();
            Table parent= helper.getParentTable( table,event);
+
            
            ObjectCreateImpl createImpl = new ObjectCreateImpl(hashMap, event, table, recordLen);
            createImpl.setInvalidRows(invalidRows) ;
@@ -309,6 +310,7 @@ public class ObjectCreate extends Command{
                    		if(cfid!=-1)
                    			copyRefbyTableRecords( table,cfid, oids[realPos],bundledTable,con , event);
                    }
+             	   
                    //con.releaseSavepoint(sp); oracle not support this method currently
                }catch(Throwable e){
                	   logger.error("Failed ", e);
@@ -320,6 +322,11 @@ public class ObjectCreate extends Command{
                    }
                }
            }
+
+           //check parent table records exist and modifiable
+     	   int[] poids= helper.getParentTablePKIDs(table,oids, con);
+     	   helper.checkTableRowsModifiable(parent, poids, con);
+           
            // commit all 
            try{
         	   if(bestEffort)con.commit();
@@ -337,8 +344,6 @@ public class ObjectCreate extends Command{
            }
            engine.doUpdate(sqlVector,con);
            */
-     	   int[] poids= helper.getParentTablePKIDs(table,oids, con);
-     	   helper.checkTableRows(parent, poids, con, helper.PARENT_NOT_FOUND);
 
            int successCount =recordLen;
            if (invalidRows !=null){
@@ -376,10 +381,8 @@ public class ObjectCreate extends Command{
                }
 
            }
-           //helper.triggerAfterModify(sheetTable, sheetId, con);
-           // after modify, first doing triggers on the current table
-           // then do trigger on parent table, if exists.
-//           helper.doTrigger("AC", table, oids, con);
+
+
      	  
            helper.doTrigger("AM", parent, poids, con);
 //         commit all 
@@ -388,6 +391,10 @@ public class ObjectCreate extends Command{
        	   }catch(Throwable t2){}  
            return v;
        }catch(Exception e){
+    	   try{
+    		   if(bestEffort)con.rollback();
+    	   }catch(Throwable t3){}
+    	   
            try{
                if (outputFile !=null && outputFile.length() > 0){
                    FileWriter fw= new FileWriter(outputFile,false);

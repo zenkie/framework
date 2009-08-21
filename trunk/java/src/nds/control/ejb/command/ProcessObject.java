@@ -131,6 +131,7 @@ public class ProcessObject extends Command {
 
   		masterObjectId= masterObj.getInt("id");
 		logger.debug("masterTable="+ masterTable+",masterObjectId="+masterObjectId);
+		
 		// this will be master record, may create or modify
 		evt=createSingleObjEvent(masterObj,template);
 		if(Tools.getInt(masterObj.get("id"),-1)==-1){
@@ -138,6 +139,9 @@ public class ProcessObject extends Command {
 			masterObjectCreateAction=true;
 			mainAction= Table.ADD;
 		}else{
+			//check table records exist and modifiable, object modify will check it first
+	 	   	//helper.checkTableRowsModifiable(masterTable, new int[]{masterObjectId}, conn);
+			
 			evt.setParameter("command", masterTable.getName()+"Modify");
 		}
 		vh=helper.handleEventWithNewTransaction(evt);

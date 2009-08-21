@@ -112,7 +112,11 @@ public class ObjectModify extends Command{
        int objectId =Tools.getInt(event.getParameterValue("id"),-1);
        QueryEngine engine = QueryEngine.getInstance() ;
        con= engine.getConnection();
+       int[] oids= new int[]{objectId};
 
+       //check table records exist and modifiable
+ 	   helper.checkTableRowsModifiable(table, oids, con);
+       
        ObjectModifyImpl modifyImpl = new ObjectModifyImpl(event,table,recordLen);
 
        // call proc before modify
@@ -187,12 +191,15 @@ public class ObjectModify extends Command{
        // call proc after modify
        // after modify, first doing triggers on the current table
        // then do trigger on parent table, if exists.
-       int[] oids= new int[]{objectId};
        helper.doTrigger("AM", table, oids, con);
        Table parent= helper.getParentTable( table,event);
  	   int[] poids= helper.getParentTablePKIDs(table,oids, con);
        logger.debug("parent of "+ table+ ":"+ parent+", poids="+ ( poids!=null? Tools.toString(poids): "null" ));
- 	   helper.checkTableRows(parent, poids, con, helper.PARENT_NOT_FOUND);
+ 	   //helper.checkTableRows(parent, poids, con, helper.PARENT_NOT_FOUND);
+
+       //check parent table records exist and modifiable
+ 	   helper.checkTableRowsModifiable(parent, poids, con);
+
  	   
        helper.doTrigger("AM", parent, poids, con);
 
