@@ -893,6 +893,48 @@ public class DefaultWebEventHelper {
     		for(int i=0;i<ids.length;i++) doTrigger(action, table, ids[i], con);
     	}
     }
+    /**
+     * Table records exist and modifiable
+     * @param table
+     * @param ids
+     * @param con
+     * @throws NDSException
+     */
+    public void checkTableRowsModifiable(Table table,int[] ids ,Connection con) throws NDSException{
+    	if( table ==null || ids==null || ids.length==0) return;
+    	String s=""+ids[0];
+    	for(int i=1;i< ids.length;i++) {
+            s +=","+ids[i];
+        }
+    	int cnt=-1;
+    	ResultSet rs=null;
+    	String sql=null;
+    	try{
+	    	QueryEngine engine=QueryEngine.getInstance();
+	    	QueryRequestImpl query= engine.createRequest(null);
+	    	query.setMainTable(table.getId());
+	    	query.addSelection( table.getPrimaryKey().getId());
+	    	query.addParam(table.getPrimaryKey().getId(), " in ("+ s+")");
+	    	Column statusColumn=table.getColumn("status");
+	    	if(statusColumn!=null)
+	    		query.addParam( statusColumn.getId(), "=1");
+	    	sql=query.toCountSQL();
+	    	rs= con.createStatement().executeQuery( sql);
+	    	rs.next();
+	    	cnt=rs.getInt(1);
+	    	logger.debug(sql+":"+ cnt+", ids.length="+ ids.length);
+    	}catch(Exception e){
+    		logger.error("found error:",e);
+    		throw new NDSException("@can-not-check-records@:"+ e.getMessage());
+    	}
+    	finally{
+    		if(rs!=null) try{rs.close();}catch(Exception ee){}
+    	}
+    	if (cnt!= ids.length){
+    		logger.error("Not all records modifiable:("+sql+"):"+ cnt+", ids.length="+ ids.length);
+    		throw new NDSException("@parent-record-not-modifiable@");
+    	}
+    }
     /* 检查父表的存在性，如果不存在或未找到，抛出错误，这种情况发生在以下情况：
     父表的状态被改变了，而子表的界面仍然保留在那里，故用户可以对子表进行操作，导致
      父表出现错误
