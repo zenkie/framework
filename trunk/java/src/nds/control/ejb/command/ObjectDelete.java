@@ -39,7 +39,7 @@ public class ObjectDelete extends Command{
       	 * 2005-11-15 增加了对status 字段的判断，如果status字段为2 则当前记录不允许删除。这种情况主要发生
       	 * 在支持审计的单视图模式下。此模式下所有的单据都在一个界面，对于已审计通过的单据应禁止删除。系统会在通过
       	 * 审计的单据上修改status=2，作为判断条件。
-      	 */
+      	 */ 
     	java.sql.Connection con=null;
        try{
        manager = helper.getTableManager() ;
@@ -100,7 +100,8 @@ public class ObjectDelete extends Command{
 
        return v;
        }catch(Exception e){
-           throw new NDSEventException("异常",e);
+           if(e instanceof NDSException) throw (NDSException)e;
+           else throw new NDSException(e.getMessage(),e);
        }finally{
            try{if(con !=null) con.close(); }catch(Exception eee){}
        }

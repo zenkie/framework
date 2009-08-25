@@ -524,9 +524,9 @@ public class DefaultWebEventHelper {
             if( pstmt!=null){try{pstmt.close();}catch(Exception e){}}
             if( con!=null){try{con.close();}catch(Exception e){}}
         }
-        if( usr==null)
-            throw new NDSEventException("@operator-not-found@.( event name="+ event.getEventName()+
-                                        ", command="+ event.getParameterValue("command")+")");
+        if( usr==null){
+            throw new NDSEventException("@operator-not-found@.( operatorid="+(String)event.getParameterValue("operatorid")+")");
+        }
         return usr;
 
     }
@@ -900,7 +900,7 @@ public class DefaultWebEventHelper {
      * @param con
      * @throws NDSException
      */
-    public void checkTableRowsModifiable(Table table,int[] ids ,Connection con) throws NDSException{
+    public static void checkTableRowsModifiable(Table table,int[] ids ,Connection con) throws NDSException{
     	if( table ==null || ids==null || ids.length==0) return;
     	String s=""+ids[0];
     	for(int i=1;i< ids.length;i++) {

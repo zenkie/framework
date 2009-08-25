@@ -185,16 +185,25 @@ public class ImportExcel implements Runnable{
         ArrayList directColumnOfData= new ArrayList(); // if column is fk, the fk table's ak will be set here, so make it easier check input data type
 
         ArrayList colNames=new ArrayList();// if column is FK, the name will be like "col_ak", such as "product(id)_no"
+        /**
+         * 需求：在导入盘点单明细时，数量需要乘以一个倍数作为整箱货品记入
+         */
+        int multiplyNum=Tools.getInt(params.getProperty("multiply_num"), -1);
+        int multiplyColumnIndex=-1; // index in columns array
         for( int i=0;i< columns.size();i++){
             col=(Column) columns.get(i);
             colNames.add(getColumnName(col));
-
+            if(multiplyNum>1 && col.getName().contains("QTY") && 
+            		col.getType()== Column.NUMBER && multiplyColumnIndex==-1){
+            	multiplyColumnIndex=i;
+            }
             if( col.getReferenceTable() !=null){
                 directColumnOfData.add( col.getReferenceTable().getAlternateKey());
             }else{
                 directColumnOfData.add( col);
             }
         }
+        
         try{
         
 	        if("txt".equals(params.getProperty("file_format"))){
@@ -230,7 +239,11 @@ public class ImportExcel implements Runnable{
 	        		 endIdx[0]=fixedLengths[0];
 	        		 
         			 for(int i=0;i<fixedLengths.length;i++){
-        				 if(fixedLengths[i] <1) throw new NDSException("固定宽度列定义错误："+params.getProperty("txt_fix_len","20,5"));
+        				 if(fixedLengths[i] <1){
+        					 //nullable?
+        					 if(! ((Column)columns.get(i)).isNullable())
+        						 throw new NDSException("固定宽度列定义错误："+params.getProperty("txt_fix_len","20,5"));
+        				 }
         				 if(i>0){
         					 startIdx[i]=startIdx[i-1]+fixedLengths[i-1];
         					 endIdx[i]=startIdx[i]+fixedLengths[i];
@@ -278,7 +291,11 @@ public class ImportExcel implements Runnable{
 	        	}
 	        	isr.close();
 	        	for( int j=0;j< columns.size();j++){
-	        		event.setParameter( (String)colNames.get(j) ,colData[j].toArray() );
+	        		 //处理倍增请求
+	        		if(multiplyColumnIndex==j){
+	        			event.setParameter( (String)colNames.get(j) ,multiply(colData[j].toArray(),multiplyNum)  );
+	        		}else
+	        			event.setParameter( (String)colNames.get(j) ,colData[j].toArray() );
 	        	}
 	        }else{
 	        	//xls file handling
@@ -304,17 +321,47 @@ public class ImportExcel implements Runnable{
 	            }
 	             for( int j=0;j< columns.size();j++){
 	//                 logger.debug("param for "+ columns.get(j)+ ":"+ (String)colNames.get(j));
-	                 event.setParameter( (String)colNames.get(j) ,colData[j] );
+//	            	处理倍增请求
+		        		if(multiplyColumnIndex==j){
+		        			event.setParameter( (String)colNames.get(j) ,multiply(colData[j],multiplyNum)  );
+		        		}else
+		        			event.setParameter( (String)colNames.get(j) ,colData[j] );
 	             }
 		
 		        
 	        }
+	       
+    		
+
         }catch(Exception e){
             logger.error("Error exporting to excel" , e);
             throw new NDSException("在处理请求时出现异常："+ e.getLocalizedMessage() );
         }
         return event;
 
+    }
+    /**
+     * Multiply every element with multiplyNum
+     * @param e
+     * @param multiplyNum
+     * @return
+     */
+    private Object[] multiply(Object[] e, int multiplyNum ){
+    	Object[] r=new Object[e.length];
+    	for(int i=0;i< e.length;i++){
+    		Object ele=e[i];
+    		if(ele==null) r[i]=null;
+    		else{
+    			try{
+    				r[i] = Double.parseDouble(ele.toString()) * multiplyNum;
+    			}catch(Throwable t){
+    				logger.error("Fail to convert to double:"+ele.toString()+":"+ t);
+    				r[i]=null;
+    			}
+    		}
+    		
+    	}
+    	return r;
     }
     /**
      * Create a DefaultWebEvent of command ObjectCreate and send to controller to handle

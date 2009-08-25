@@ -92,9 +92,25 @@ public class RequestProcessor  implements ServletContextActor, java.io.Serializa
                  * Add security information here
                  */
                 if(event instanceof DefaultWebEvent){
-                    UserWebImpl user= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession(true)).getActor(WebKeys.USER));
-                    String operatorid=""+user.getUserId();
-                    ((DefaultWebEvent)event).setParameter("operatorid", operatorid);
+                	//if event contains "JSESSIONID", will load operator id from securtiyManagerWebImpl
+                	String jsessionId=String.valueOf(((DefaultWebEvent)event).getParameterValue("JSESSIONID"));
+                	if(jsessionId!=null ){
+                	    ServletContextManager manager= WebUtils.getServletContextManager();
+                	    SecurityManagerWebImpl se=(SecurityManagerWebImpl)manager.getActor(nds.util.WebKeys.SECURITY_MANAGER);
+                		SessionInfo si= se.getSession(jsessionId);
+                		if(si!=null){
+                			((DefaultWebEvent)event).setParameter("operatorid", String.valueOf(si.getUserId()));
+                		}else{
+                    		UserWebImpl user= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession(true)).getActor(WebKeys.USER));
+                    		String operatorid=""+user.getUserId();
+                    		((DefaultWebEvent)event).setParameter("operatorid", operatorid);
+                			
+                		}
+                	}else{
+                		UserWebImpl user= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession(true)).getActor(WebKeys.USER));
+                		String operatorid=""+user.getUserId();
+                		((DefaultWebEvent)event).setParameter("operatorid", operatorid);
+                	}
                 }
                 
                 v = scc.handleEvent(event);

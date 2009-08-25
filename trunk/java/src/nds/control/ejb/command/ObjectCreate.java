@@ -62,7 +62,7 @@ public class ObjectCreate extends Command{
       Table table = manager.getTable(tableId) ;
       String tableName = table.getName();          // 得到表的名字
       String tableDesc = table.getDescription(Locale.CHINA) ;
-      
+       
       /*
        *When update_on_unique_constraints, insert exception will be catched and try update in consequence
       	Currently only supported for single record insertion (matrix input format not supported)

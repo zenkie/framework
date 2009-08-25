@@ -160,6 +160,7 @@ public class TableImpl implements Table {
     
     private List<WebAction>[] actions=null;
     
+
     public TableImpl(int id,int order,String tableName,String desc,String rowURL,String rowClass,TableCategory category, boolean[] mask, Properties trigs,String comment) {
         this.id=id;
         this.tableOrder=order;
@@ -1047,6 +1048,18 @@ public class TableImpl implements Table {
     public boolean supportAttributeDetail(){
     	return false;
     }
+    /**
+     * has column named "status"
+     * @return
+     * @since 4.0
+     */
+    /*public boolean hasStatusColumn(){
+    	if(statusColumnCheck==0){
+    		if(this.getColumn("status")==null) statusColumnCheck=1;
+    		else statusColumnCheck=2;
+    	}
+    	return statusColumnCheck==2;
+    }*/
     /**
      * Indexed columns
      * @return

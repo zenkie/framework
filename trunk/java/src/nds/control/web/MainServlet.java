@@ -103,11 +103,12 @@ public class MainServlet extends HttpServlet {
             //request.setAttribute("errorMsg",ex.getMessage());//By Hawke
         }
         //Hawke Begin
-        if(request.getParameter("formRequest")!=null)
+        String formRequest=nds.util.ParamUtils.getAttributeOrParameter(request, "formRequest");
+        if(formRequest!=null)
         { 
           //request.removeAttribute("error");
-         logger.debug("forward to :" + request.getParameter("formRequest"));
-          getServletContext().getRequestDispatcher(request.getParameter("formRequest").toString()).forward(request,response);
+        	logger.debug("forward to :" + formRequest);
+          getServletContext().getRequestDispatcher(formRequest).forward(request,response);
           return;
         }
         //Hawke end

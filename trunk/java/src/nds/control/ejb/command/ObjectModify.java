@@ -41,7 +41,7 @@ public class ObjectModify extends Command{
     * then filter those not has any bit set in typer "column_masks". 
     * So the columns is less or equal than Column.MASK_MODIFY_EDIT
     * @param event
-    * @param table
+    * @param table 
     * @return
     * @throws Exception
     */
