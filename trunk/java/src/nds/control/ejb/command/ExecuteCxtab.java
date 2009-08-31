@@ -125,6 +125,7 @@ public class ExecuteCxtab extends Command {
 		List params= engine.doQueryList("select name, valuetype,nullable,orderno from ad_process_para where ad_process_id="+pid+" order by orderno asc", conn);
 		HashMap map=new HashMap();
 		
+		String filterDesc=null;
 		if(Validator.isNotNull(preProcedure)){
 			
 			piId = engine.getSequence("ad_pinstance");
@@ -145,7 +146,10 @@ public class ExecuteCxtab extends Command {
 		    		String key= (String)e.nextElement();
 		    		csMap.put(key, parser.getParameter(key));
 		    	}
-				addJparams(params, map, cxtabId,csMap,event.getQuerySession(), userId,event.getLocale(), conn);
+
+		    	//logger.debug( Tools.toString(csMap));
+		    	
+		    	filterDesc=addJparams(params, map, cxtabId,csMap,event.getQuerySession(), userId,event.getLocale(), conn);
 			}
 		}else{
 			req=nds.control.util.AjaxUtils.parseQuery(query, event.getQuerySession(), userId, event.getLocale());
@@ -167,7 +171,7 @@ public class ExecuteCxtab extends Command {
 		 */
 			
 		map.put("CXTAB", cxtabName);
-		map.put("FILTER", req.getParamDesc(true));
+		map.put("FILTER", ((filterDesc==null)? req.getParamDesc(true): filterDesc));
 		if(req.getParamExpression()!=null)map.put("FILTER_EXPR",req.getParamExpression().toString());
 		
 		
@@ -232,17 +236,18 @@ public class ExecuteCxtab extends Command {
    * @param cxtabId
    * @param jo from event
    * @param conn
+   * @return filter description for all parameters
    * @throws Exception
    */
-  static void addJparams(List params, HashMap map, int cxtabId, HashMap jo,QuerySession qession,int userId, Locale locale,Connection conn) throws Exception{
-	  	
-//	  	logger.debug( jo.toString());
+  static String addJparams(List params, HashMap map, int cxtabId, HashMap jo,QuerySession qession,int userId, Locale locale,Connection conn) throws Exception{
+	  	StringBuffer descs=new StringBuffer();
 	  	// always set param value in ad_pinstance_para.INFO_TO, so set ad_process_para.VALUETYPE is set to 'B' (Blob Data)
 	  	// first 4 selection must be in accordance with 
 	  	// select name, valuetype,nullable,orderno from ad_process_para where ad_process_id="+pid+" order by orderno asc
 	  	List jparas= QueryEngine.getInstance().doQueryList("select name, 'B',nullable,orderno+1000, ad_column_id,SELECTIONTYPE, PARATYPE, description from ad_cxtab_jpara where isactive='Y' and ad_cxtab_id="+ cxtabId+" order by orderno asc",conn);
 	  	params.addAll(jparas);
 	  	TableManager manager= TableManager.getInstance();
+        String desc;
 	    for(int i=0;i<jparas.size();i++){
           List para= (List) jparas.get(i);
 		  Column column=manager.getColumn( Tools.getInt( para.get(4),-1));
@@ -290,8 +295,13 @@ public class ExecuteCxtab extends Command {
 //			 else will set storeValue to empty
 		  }
 //          logger.debug(inputName+":="+ storeValue);
+          
           map.put(inputName,storeValue );
+          if(i>0) 
+        	  descs.append(" "+MessagesHolder.getInstance().getMessage(locale,"sql-and")+" " );
+          descs.append(" (").append(description ).append(" ").append(value).append(")");
 	    }
+	    return StringUtils.shortenInBytes(descs.toString(), 4000); // db can only store 4000 bytes
   }
   /**
    * 

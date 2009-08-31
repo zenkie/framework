@@ -134,9 +134,13 @@ public class JReport {
 					 * $p(where) - only where clause
 					 */
 					parameters.put("sql",sql);
+					logger.debug("$p(sql):"+ sql);
 					if(whereClause==null)
 						parameters.put("where", "1=1");
-					else parameters.put("where", whereClause);
+					else {
+						parameters.put("where", whereClause);
+						logger.debug("$p(where):"+ whereClause);
+					}
 				}
 			}
 			parameters.put("ad_client_id", String.valueOf(user.adClientId));

@@ -108,10 +108,10 @@ public class ExecuteJReport extends Command {
 		QueryRequestImpl req=null;
 		int piId=-1;
 
-		int pid=Tools.getInt(engine.doQueryOne("select id from ad_process where classname='nds.process.CxtabRunner' and isactive='Y'",conn),-1);
+		int pid=Tools.getInt(engine.doQueryOne("select id from ad_process where classname='nds.process.JReportRunner' and isactive='Y'",conn),-1);
 		List params= engine.doQueryList("select name, valuetype,nullable,orderno from ad_process_para where ad_process_id="+pid+" order by orderno asc", conn);
 		HashMap map=new HashMap();
-		
+		String filterDesc=null;
 		if(Validator.isNotNull(preProcedure)){
 			
 			piId = engine.getSequence("ad_pinstance");
@@ -132,7 +132,9 @@ public class ExecuteJReport extends Command {
 		    		String key= (String)e.nextElement();
 		    		csMap.put(key, parser.getParameter(key));
 		    	}
-		    	ExecuteCxtab.addJparams(params, map, cxtabId,csMap,event.getQuerySession(), userId,event.getLocale(), conn);
+		    	//logger.debug( Tools.toString(csMap));
+		    	
+		    	filterDesc=ExecuteCxtab.addJparams(params, map, cxtabId,csMap,event.getQuerySession(), userId,event.getLocale(), conn);
 			}
 		}else{
 			req=nds.control.util.AjaxUtils.parseQuery(query, event.getQuerySession(), userId, event.getLocale());
@@ -149,8 +151,8 @@ public class ExecuteJReport extends Command {
 		 */
 			
 		map.put("CXTAB", cxtabName);
-		map.put("FILTER", req.getParamDesc(true));
-		map.put("QUERY", queryStr);
+		map.put("FILTER", ((filterDesc==null)? req.getParamDesc(true): filterDesc));
+		map.put("QUERY", queryStr); 
 		
 		if(req.getParamExpression()!=null)map.put("FILTER_EXPR",req.getParamExpression().toString());
 
