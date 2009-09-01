@@ -64,7 +64,7 @@ public class JReport {
 	private int reportInstanceId=-1; // check ad_cxtab.AD_COLUMN_CXTABINST_ID , if set, will used this as instance id
 									  // of query, and data will be limited to the range specified
 	private int processInstanceId; // ad_pinstance.ID
-
+	private String filterDesc;
 	private Properties props;
 	private long startTime;
 	private Table factTable;
@@ -134,12 +134,12 @@ public class JReport {
 					 * $p(where) - only where clause
 					 */
 					parameters.put("sql",sql);
-					logger.debug("$p(sql):"+ sql);
+					logger.debug("$p!{sql}:"+ sql);
 					if(whereClause==null)
 						parameters.put("where", "1=1");
 					else {
 						parameters.put("where", whereClause);
-						logger.debug("$p(where):"+ whereClause);
+						logger.debug("$p!{where}:"+ whereClause);
 					}
 				}
 			}
@@ -206,9 +206,31 @@ public class JReport {
     		int seconds= (int)((System.currentTimeMillis() - startTime)/1000);
     		logger.debug( cxtabName+":"+  (new Date(startTime))+ ", "+ seconds +" seconds:" + this.fileName);
     		
+//    		 create description file for report
+		    createDescriptionFile(destFolder+File.separator+ this.fileName+"."+ this.fileType );
+		    
 		    return  this.fileName+"."+ this.fileType;
 	    		    
 	}	
+	/**
+	 * Create description file in folder of user web folder, contents is from filterDesc
+	 * @param file
+	 */
+	private void createDescriptionFile(String file){
+		try{
+			File f=new File(file);
+			File descFolder=new File(f.getParent() + File.separator+ "desc");
+			if(!descFolder.exists()) descFolder.mkdirs();
+			String descFile= f.getParent() + File.separator+ "desc"+  File.separator+  f.getName();
+			String p;
+			if(nds.util.Validator.isNull(filterDesc)) p="";
+			else p= ":"+filterDesc;
+			nds.util.Tools.writeFile(descFile, "["+cxtabName+"]"+p, "UTF-8");
+			 
+		}catch(Throwable t){
+			logger.error("Fail to write desc file for "+file+":"+ t);
+		}
+	}		
 	/**
      * Parse java class name to param type:
      * 	 "N" - Number
@@ -458,5 +480,7 @@ public class JReport {
 	public void setReportParameters(HashMap p){
 		this.params=p;
 	}
-	
+	public void setFilterDesc(String s){
+		this.filterDesc=s;
+	}
 }

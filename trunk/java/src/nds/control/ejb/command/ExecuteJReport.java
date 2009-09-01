@@ -157,8 +157,8 @@ public class ExecuteJReport extends Command {
 		if(req.getParamExpression()!=null)map.put("FILTER_EXPR",req.getParamExpression().toString());
 
 		SimpleDateFormat sdf = new SimpleDateFormat("MMddHHmm");
-		String filename="JRP_"+table.getName()+sdf.format(new Date());
-		
+		//String filename="JRP_"+table.getName()+sdf.format(new Date());
+		String filename="CXR_"+cxtabId+sdf.format(new Date());
 		map.put("FILENAME", filename);
 		map.put("FILETYPE", fileType);
 		

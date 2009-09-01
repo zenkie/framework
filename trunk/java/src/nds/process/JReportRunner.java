@@ -104,6 +104,7 @@ public class JReportRunner extends SvrProcess
 		    cr.setFilterExpr(filterExpr);
 		    cr.setFileName(fileName);
 		    cr.setFileType(fileType);
+		    cr.setFilterDesc(filter);
 		    cr.setUserId( this.getAD_User_ID());
 		    cr.setAdClientId(this.getAD_Client_ID());
 		    cr.setAD_PInstance_ID(this.getAD_PInstance_ID()); // this will be needed when doing cube exporting
