@@ -536,7 +536,10 @@ public class CxtabReport {
         		Column col= TableManager.getInstance().getColumn(colId);
         		
         		if(nds.jcrosstab.fun.FunUtil.isValidGroupByFunction(function)){
-            		facts.add( function+"("+ factTable.getName()+"."+col.getName() + ")");
+            		if(col.isVirtual())
+            			facts.add( function+"("+ col.getName() + ")");
+            		else 
+            			facts.add( function+"("+ factTable.getName()+"."+col.getName() + ")");
             		factDescs.add(mea.get(3));
 
         		}else{
