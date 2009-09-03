@@ -897,8 +897,9 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
             sql.append(" ORDER BY "+ orderbyClause);
 //        return "SELECT "+ outSelect+" FROM ( SELECT ROWNUM row_num, "+ outSelect+" FROM ( "+
 //                sql+ " )) WHERE row_num BETWEEN "+(getStartRowIndex()+1)+" AND "+(getStartRowIndex()+getRange());
+        String asql=this.replaceVariables(sql.toString());
         return this.replaceVariables("SELECT "+ outSelect+" FROM ( SELECT ROWNUM row_num, "+ outSelect+" FROM ( "+
-                sql+ " ) WHERE ROWNUM <= "+ (getStartRowIndex()+getRange()) + " ) WHERE row_num>="+ (getStartRowIndex()+1));
+        		asql+ " ) WHERE ROWNUM <= "+ (getStartRowIndex()+getRange()) + " ) WHERE row_num>="+ (getStartRowIndex()+1));
 
     }
     /**
@@ -1355,7 +1356,8 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
 
         if(orderbyClause !=null)
             sql.append(" ORDER BY "+ orderbyClause);
-        return sql.toString();
+        return this.replaceVariables(sql.toString());
+        //return sql.toString();
     }
     /**
      * 提取用来制作报告（report）的SQL语句,Hawke
@@ -1441,11 +1443,11 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
 
         if(orderbyClause !=null)
             sql.append(" ORDER BY "+ orderbyClause);
-
+        
         //return "SELECT "+ outSelect+" FROM ( SELECT ROWNUM row_num, "+ outSelect+" FROM ( "+
         //        sql+ " )) WHERE row_num BETWEEN "+(getStartRowIndex()+1)+" AND "+(getStartRowIndex()+getRange());
           return "SELECT "+ outSelect+" FROM ( SELECT ROWNUM row_num, "+ outSelect+" FROM ( "+
-                sql+ " ) WHERE ROWNUM <= "+ (getStartRowIndex()+getRange()) + " ) WHERE row_num>="+ (getStartRowIndex()+1);
+          this.replaceVariables(sql.toString())+ " ) WHERE ROWNUM <= "+ (getStartRowIndex()+getRange()) + " ) WHERE row_num>="+ (getStartRowIndex()+1);
 
     }
     /**
