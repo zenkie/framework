@@ -370,7 +370,7 @@ public class JReport {
         }
 		
         logger.debug("sexpr="+sexpr);
-        whereClause=query.addParam(sexpr);
+        whereClause=QueryUtils.replaceVariables(query.addParam(sexpr), qsession);
 
 		List measures=  engine.doQueryList("select ad_column_id, function_, userfact, description, VALUEFORMAT,valuename, param1,param2,param2 from ad_cxtab_fact where ad_cxtab_id="+
 				cxtabId+" and isactive='Y' order by orderno asc",conn);
