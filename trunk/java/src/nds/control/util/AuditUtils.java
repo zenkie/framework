@@ -620,17 +620,20 @@ public class AuditUtils {
 		TableManager manager=TableManager.getInstance();
 		Table table =manager.getTable(tb.getRealTableName());
 		Column col=table.getColumn("au_pi_id");
+		if(col==null) col= tb.getColumn("au_pi_id");
 		String sql=null;
 			
 		if (col!=null && col.getReferenceColumn()!=null && col.getReferenceColumn().getId()== manager.getTable("au_phaseinstance").getPrimaryKey().getId()){
 			sql= " au_pi_id="+ phaseInstanceId;
 		}
 		col= table.getColumn("au_state");
+		if(col==null) col= tb.getColumn("au_state");
 		if(col!=null && col.isValueLimited()){
 			if(sql==null)sql = " au_state='"+ state+"'";
 			else sql += ",au_state='"+ state+"'";
 		}
 		col= table.getColumn("status");
+		if(col==null) col= tb.getColumn("status");
 		if(("W".equals(state)|| "R".equals(state)) && col!=null){
 			if(sql!=null)sql+=",status=" + ("W".equals(state)?3:1);
 			else sql="status=" + ("W".equals(state)?3:1);
@@ -640,6 +643,8 @@ public class AuditUtils {
 			sql = "update " + table.getRealTableName()+ " set "+sql + " where id="+ objectId;
 			logger.debug(sql);
 			conn.createStatement().executeUpdate(sql);
+		}else{
+			logger.error("Not gen sql for audit object:"+ tb + " objectid="+ objectId+", phaseInstanceId="+ phaseInstanceId+",state="+state);
 		}
 	}
 	private static QueryRequestImpl createRequest(HttpServletRequest request, boolean showAssignment) throws Exception{
