@@ -17,10 +17,12 @@ import com.liferay.portal.ejb.UserManagerFactory;
 
 */
 import nds.security.User;
+import nds.control.web.*;
 
 /**
  * Change user password
  * Liferay has its own transaction control
+ * Add support for plain password storage in users table if admin specified 
  */
 
 public class ChangePassword extends Command {
@@ -59,9 +61,17 @@ public class ChangePassword extends Command {
 	 */
 	try{
 		String userd= helper.getUserDomainName(userid);
+		
+		
 		//logger.debug("beign update user " + userd + " with password:"+ password1);
 		UserLocalServiceUtil.updatePassword(userd, password1,
 				password2, passwordReset);
+
+		//store password to users table in plain text
+		Configurations conf= (Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
+		if("true".equals(conf.getProperty("security.password.plain", "false")))
+			storePlainPassword(userid,password1, usr.name);
+		
 		/*UserManager userManager = UserManagerFactory.getManager();
 		
 		userManager.updateUser(userd, password1,
@@ -87,5 +97,9 @@ public class ChangePassword extends Command {
 	holder.put("message", "ÃÜÂëÐÞ¸Ä³É¹¦!");
 	holder.put("code","0");
 	return holder;
+  }
+  private void storePlainPassword(int userId, String passwd, String operator)throws Exception{
+	  logger.debug("Change password of "+ userId +" by "+operator);
+	  QueryEngine.getInstance().executeUpdate("UPDATE USERS SET PASSWORDHASH="+QueryUtils.TO_STRING(passwd)+" WHERE ID="+ userId);
   }
 }
