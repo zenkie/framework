@@ -128,7 +128,7 @@ public class TableImpl implements Table {
     private int tableOrder;
     private boolean[] actionMask;// 8 elements, means QADMSPGU by order
     private ArrayList columns=new ArrayList();
-    private Properties triggers;
+    private TriggerHolder triggers;
     //warning to programmer: Any time a new variable added, remind add it to clone() method
     private String comment;
     
@@ -161,7 +161,7 @@ public class TableImpl implements Table {
     private List<WebAction>[] actions=null;
     
 
-    public TableImpl(int id,int order,String tableName,String desc,String rowURL,String rowClass,TableCategory category, boolean[] mask, Properties trigs,String comment) {
+    public TableImpl(int id,int order,String tableName,String desc,String rowURL,String rowClass,TableCategory category, boolean[] mask, TriggerHolder trigs,String comment) {
         this.id=id;
         this.tableOrder=order;
         name=tableName;
@@ -204,7 +204,7 @@ public class TableImpl implements Table {
     		return actions[dte.getIndex()];
     }
     public void setTriggers(TriggerHolder th){
-        triggers= th.getTriggers();
+        triggers= th;
     }
     void setId(int id){
     	this.id=id;
@@ -712,6 +712,15 @@ public class TableImpl implements Table {
     	return isActiveFilterEnabled;
     	
     }
+    /**
+     * Get trigger of specified event, the trigger is a kind of procedure
+     * which will be called during execution
+     * @param event currently support "AC","AM","BD" only
+     * @return null or VersionedTrigger
+     */
+    public TriggerHolder.VersionedTrigger getTrigger(String event){
+    	return triggers.getTrigger(event);
+    }
     
     /**
      * Get trigger name of specified condition, the trigger is a kind of procedure
@@ -723,14 +732,14 @@ public class TableImpl implements Table {
      * <before-delete/> mapping to $Table.Name + "_BD"
      * if trigger has its specified name, that name will be used instead.
      */
-    public String getTriggerName(String condition){
+    /*public String getTriggerName(String condition){
         if ( triggers==null ) return null;
         String trigname= this.triggers.getProperty(condition);
         if( "".equals(trigname)){
             // use default trigger name, rule is: TableName+ "_" + condition
             return this.name + "_"+ condition;
         }else return trigname;
-    }
+    }*/
 
     //////////////////////////////////////////////////
     /// override Object method

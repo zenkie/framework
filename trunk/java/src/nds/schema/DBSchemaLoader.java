@@ -172,16 +172,17 @@ public class DBSchemaLoader {
 			table.setRealTableName(tb.getName());
 		if(tb.getDirectory()!=null)
 			table.setSecurityDirectory(tb.getDirectory().getName());
+
 		TriggerHolder th=new TriggerHolder();
 
 		if(Tools.getYesNo(tb.getHasTrigAc(),false))
-			th.setAfterCreate(tb.getTrigAc());
+			th.setAfterCreate(tb.getTrigAc(),tb.getName()+"_AC" );
 		if(Tools.getYesNo(tb.getHasTrigAm(),false))
-			th.setAfterModify(tb.getTrigAm());
+			th.setAfterModify(tb.getTrigAm(),tb.getName()+"_AM" );
 		if(Tools.getYesNo(tb.getHasTrigBd(),false))
-			th.setBeforeDelete(tb.getTrigBd());
+			th.setBeforeDelete(tb.getTrigBd(),tb.getName()+"_BD" );
 		if(Tools.getYesNo(tb.getHasTrigBm(),false))
-			th.setBeforeModify(tb.getTrigBm());
+			th.setBeforeModify(tb.getTrigBm(),tb.getName()+"_BM" );
 		table.setTriggers(th);
 		
 		// alias table

@@ -300,11 +300,13 @@ public class DefaultWebEventHelper {
      * 2 - *QTY* column
      * @param acamTrigger "AC" or "AM" for trigger on each newly created record
      * @throws Exception
+     * @return result of last element's ac/am procedure 
      */
-    public void execStmtOfAttributeDetailRecordsByJSON(Table table, Object jsonobj, 
+    public SPResult execStmtOfAttributeDetailRecordsByJSON(Table table, Object jsonobj, 
     		int objId, Connection con,PreparedStatement pstmt,
     		int[] asiRelateColumnsPosInStatement, String acamTrigger) throws Exception{
-    	if(jsonobj==null) return;
+    	if(jsonobj==null) return null;
+    	SPResult spr=null;
     	JSONArray ja=null;
     	if(jsonobj instanceof JSONArray) ja= (JSONArray)jsonobj;
     	else if(jsonobj.equals(JSONObject.NULL) ){
@@ -330,7 +332,7 @@ public class DefaultWebEventHelper {
 	             	pstmt.setInt(asiRelateColumnsPosInStatement[1]/*asiid*/,pasiId );
 	             	pstmt.setInt(asiRelateColumnsPosInStatement[2]/*qty*/,qty );
 	             	pstmt.executeUpdate();
-	             	doTrigger(acamTrigger, table, pkid, con);
+	             	spr= doTrigger(acamTrigger, table, pkid, con);
 	             }
              }else{
             	 throw new NDSException("Unexpected flow condition, ja must have at least one input");
@@ -344,6 +346,7 @@ public class DefaultWebEventHelper {
          	logger.error("Error createAttributeDetailRecords table="+ table+", jsonobj="+ jsonobj+", objid="+objId , ce);
              throw ce;
          }
+         return spr;
     }  
     /**
      * Create records in m_attributedetail table 
@@ -827,7 +830,20 @@ public class DefaultWebEventHelper {
 
     }
     /**
-     * 
+     * Since 4.0, stored procedure interface support 2 formats in arguments:
+     * ver 1, with only 1 param, that is objectid (int)
+     * ver 2, with 3 params, as following:
+      		PROC_NAME ( id in number, p_code out number, p_message out varchar2)
+			其中 p_code:
+			代码描述（与单对象界面按钮/菜单项的处理方式一致）
+			0 不刷新
+			1 刷新当前对象页
+			2 关闭当前对象窗口
+			3 尝试刷新当前界面的明细标签页，如果失败（如：不存在明细标签页），刷新当前页面
+			4 以p_message内容作为新的URL，按URL目标页定义替换当前页面的DIV或者构造HREF
+			5 以p_message内容作为新的JAVASCRIPT, 解析并执行
+			99 关闭当前窗口
+
      * @param action "AM", "BD","BM"
      * @param table
      * @param id
@@ -835,27 +851,39 @@ public class DefaultWebEventHelper {
      * @since 2.0 will throw exception if found error, can it's outsider to consider whether handle it or 
      *  rollback whole process
      */
-    public void doTrigger(String action, Table table, int id, Connection con) throws NDSException {
+    public SPResult doTrigger(String action, Table table, int id, Connection con) throws NDSException {
         //try{ marked after 2.0
-            if( table== null || id==-1) return;
-            String spName= table.getTriggerName(action);
+            if( table== null || id==-1) return null;
+            SPResult spr=null;
+            nds.schema.TriggerHolder.VersionedTrigger vt;
+            vt=table.getTrigger(action);
             /**
              * If not exists, call real-table's trigger
              */
-            if( spName ==null) spName= TableManager.getInstance().getTable(table.getRealTableName()).getTriggerName(action);
+            if( vt ==null) vt= TableManager.getInstance().getTable(table.getRealTableName()).getTrigger(action);
 //            logger.info("spName =" + spName);
-            if( spName ==null) return;
+            if( vt ==null) return null;
             // yfzhu modified 2003-12-24 for crc re-calculate, so we will find a java class to handle first
-            if( execTriggerClass(spName, id,con) ==true) {
+            spr= execTriggerClass(vt.getName(), id,con);
+            if(spr!=null) {
 //                logger.info("exec class ok  for spName =" + spName);
-                return;
+                return spr;
             }
+            // executing procedure in db, currently support 2 type interfaces
             ArrayList al=new ArrayList();
             al.add(new Integer(id));
-            QueryEngine.getInstance().executeStoredProcedure(spName,al, false,con);
-        /*}catch(Exception e){
-            logger.error("Error do trigger('"+action+"')" +table+ "(id=" + id+ ")" ,e);
-        }  */  	
+            switch(vt.getVersion()){
+            	case 1:
+            		spr=QueryEngine.getInstance().executeStoredProcedure(vt.getName(),al, false,con);
+            		break;
+            	case 2:
+            		spr=QueryEngine.getInstance().executeStoredProcedure(vt.getName(),al, true,con);
+            		break;
+            	default:
+            		logger.error("unsupported version of trigger:"+ vt+" for table:"+ table);
+            }
+            return spr;
+            
     }
     /**
      * Get root message of exception
@@ -885,13 +913,16 @@ public class DefaultWebEventHelper {
      * @param table  
      * @param ids  id array 
      * @param con
+     * @return last elements' am/ac procdure result
      */
-    public void doTrigger( String action, Table table, int[] ids, Connection con) throws NDSException{
-    	if(table==null || ids==null || ids.length==0 ) return;
+    public SPResult doTrigger( String action, Table table, int[] ids, Connection con) throws NDSException{
+    	if(table==null || ids==null || ids.length==0 ) return null;
+    	SPResult spr=null;
     	TableManager manager=TableManager.getInstance();
-    	if( table.getTriggerName(action)!=null || manager.getTable(table.getRealTableName()).getTriggerName(action)!=null){
-    		for(int i=0;i<ids.length;i++) doTrigger(action, table, ids[i], con);
+    	if( table.getTrigger(action)!=null || manager.getTable(table.getRealTableName()).getTrigger(action)!=null){
+    		for(int i=0;i<ids.length;i++) spr=doTrigger(action, table, ids[i], con);
     	}
+    	return spr;
     }
     /**
      * Table records exist and modifiable
@@ -1002,7 +1033,7 @@ public class DefaultWebEventHelper {
     	if(parent ==null)return null;
     	int[] rids=null;
     	// this method is solely for parent table am, so checked it here first
-    	if( parent.getTriggerName("AM")!=null){
+    	if( parent.getTrigger("AM")!=null){
 			// get pk ids of tb
 			try{
 				rids= getPKIDs( childTable, manager.getParentFKColumn(childTable), ids, con );
@@ -1056,10 +1087,10 @@ public class DefaultWebEventHelper {
      *  Find class for that name and execute, the class must belong to some package, that is, contains
      * dot in name, so we can figure out whether its class or not (stored procedure)
      * @param className full class name to be executed, if not contains ".", will not take as class object
-     * @return true if class found and executed, false if class not found or not trigger interface
+     * @return null if class not found or not trigger interface
      */
-    private boolean execTriggerClass(String className, int id, Connection con)  {
-        if (Validator.isNull(className) || className.indexOf('.')<0 ) return false;
+    private SPResult execTriggerClass(String className, int id, Connection con)  {
+        if (Validator.isNull(className) || className.indexOf('.')<0 ) return null;
     	Trigger t=null;
         try{
             //yfzhu changed following class finding mechanism, from specified package to any package acceptable
@@ -1069,10 +1100,9 @@ public class DefaultWebEventHelper {
             t= (Trigger)c.newInstance();
         }catch(Exception e){
             logger.debug("Could not load class:"+className+":"+e);
-            return false;
+            return null;
         }
-        t.execute(id, con);
-        return true;
+        return t.execute(id, con);
 
     }
     /**

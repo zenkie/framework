@@ -79,7 +79,7 @@ public class TableMapping {
     Vector sumFields;//element:ColumnMapping
     Vector fLinks;//element:ColumnMapping
     Vector aliasTables; // element: AliasTable
-    Properties triggers; // key: trigger type ( such as before-modify), value: trigger name ( if "", then use default name)
+    TriggerHolder triggers; // key: trigger type ( such as before-modify), value: trigger name ( if "", then use default name)
     /* --- following is added for dispatching --*/
     boolean shouldDispatch = false; // whether dispatch this table's records to shop or not
     String dispatchColumnName =null; //dipatch column, is valid when shouldDispatch= true
@@ -219,7 +219,7 @@ public class TableMapping {
 
     }
     public void setTriggers(TriggerHolder th){
-        triggers= th.getTriggers();
+        triggers= th;
     }
     public void addAlternateKey2(String keys) {//by Hawkins
         Vector v=new Vector();
@@ -288,11 +288,11 @@ public class TableMapping {
     			 tb.getId()+ ", :AD_CLIENT_ID,'Y','"+name.toUpperCase()+"',"+ (manager.getTable(realTableName)==null?"null": ""+manager.getTable(realTableName).getId())+",'"+StringUtils.escapeForSQL(filter)+"',"+
 				 "'"+ StringUtils.escapeForSQL(desc)+"','"+ maskString+"',get_id_by_name(:AD_CLIENT_ID,'AD_TABLECATEGORY','"+ StringUtils.escapeForSQL(this.category)+"'), "+ order+",'"+StringUtils.escapeForSQL(url)+"',"+ tb.getPrimaryKey().getId()+","+ tb.getAlternateKey().getId()+
 				 ",'" + (this.dispatchColumnName==null?"N":"Y")+"'," +(tb.getDispatchColumn()==null?"null": ""+ tb.getDispatchColumn().getId() )+",null,get_id_by_name(:AD_CLIENT_ID,'DIRECTORY	','"+ tb.getSecurityDirectory()+"'),'N',"  );
-    	if(triggers==null) triggers=new Properties();
-    	b.print(( triggers.getProperty("AC")!=null?"'Y'":"'N'")+","+(triggers.getProperty("AC")!=null?"'"+triggers.getProperty("AC")+"'":"null")+",");
-    	b.print(( triggers.getProperty("AM")!=null?"'Y'":"'N'")+","+(triggers.getProperty("AM")!=null?"'"+triggers.getProperty("AM")+"'":"null")+","); 
-    	b.print(( triggers.getProperty("BM")!=null?"'Y'":"'N'")+","+(triggers.getProperty("BM")!=null?"'"+triggers.getProperty("BM")+"'":"null")+",");
-    	b.print(( triggers.getProperty("BD")!=null?"'Y'":"'N'")+","+(triggers.getProperty("BD")!=null?"'"+triggers.getProperty("BD")+"'":"null")+",");
+    	if(triggers==null) triggers=new TriggerHolder();
+    	b.print(( triggers.getTrigger("AC")!=null?"'Y'":"'N'")+","+(triggers.getTrigger("AC")!=null?"'"+triggers.getTrigger("AC")+"'":"null")+",");
+    	b.print(( triggers.getTrigger("AM")!=null?"'Y'":"'N'")+","+(triggers.getTrigger("AM")!=null?"'"+triggers.getTrigger("AM")+"'":"null")+","); 
+    	b.print(( triggers.getTrigger("BM")!=null?"'Y'":"'N'")+","+(triggers.getTrigger("BM")!=null?"'"+triggers.getTrigger("BM")+"'":"null")+",");
+    	b.print(( triggers.getTrigger("BD")!=null?"'Y'":"'N'")+","+(triggers.getTrigger("BD")!=null?"'"+triggers.getTrigger("BD")+"'":"null")+",");
     	b.print("sysdate, sysdate, 0,0,null,null);");
     	b.println();
     	// alias tables

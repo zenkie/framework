@@ -10,7 +10,7 @@ import jonelo.jacksum.algorithm.Crc16;
 import nds.control.ejb.Trigger;
 import nds.log.Logger;
 import nds.log.LoggerManager;
-import nds.query.QueryEngine;
+import nds.query.*;
 import nds.query.QueryException;
 import nds.util.ColumnInterpretException;
 import nds.util.ColumnInterpreter;
@@ -38,12 +38,12 @@ public class PickBoxSht_AM implements Trigger, ColumnInterpreter{
     }
     /**parse specified value to string that can be easily interpreted by users
      * @throws ColumnInterpretException if input value is not valid
-     */
+     */ 
     public String parseValue(Object value, Locale locale) throws ColumnInterpretException{
         Connection conn=null;
         try {
             conn= QueryEngine.getInstance().getConnection();
-            return this.execute( (new Integer(""+value)).intValue() , conn);
+            return this.execute( (new Integer(""+value)).intValue() , conn).getMessage();
         }
         catch (NumberFormatException ex) {
             logger.error("Could not parse "+ value +" into integer", ex);
@@ -63,7 +63,7 @@ public class PickBoxSht_AM implements Trigger, ColumnInterpreter{
         return str;
     }
 
-    public String execute(int objectId, Connection conn){
+    public SPResult execute(int objectId, Connection conn){
         PreparedStatement pstmt=null;
         ResultSet rs=null;
         Crc16 crcHead, crcItem;
@@ -94,11 +94,11 @@ public class PickBoxSht_AM implements Trigger, ColumnInterpreter{
                 */
                 if ( sort !=3){
                     logger.debug("Not a disshiptranssht for pickboxsht id="+objectId );
-                    return "";
+                    return new SPResult();
                 }
                 if (posInstalled(shopId,conn)==false) {
                     logger.debug("peer shop id="+shopId+" has not installed pos (pickboxsht.id="+ objectId+")" );
-                    return "";
+                    return new SPResult();
                 }
                 // 2 means return to center
                 updateCRC(crcHead, no+",2,"+ whId+","+ shopId);
@@ -119,14 +119,14 @@ public class PickBoxSht_AM implements Trigger, ColumnInterpreter{
             conn.createStatement().executeUpdate("update pickboxsht set crc='"+crc+"', crcmodifieddate=sysdate where id="+ objectId );
 
 
-            return crc;
+            return new SPResult(crc);
         }
         catch (SQLException ex) {
             logger.error("Could not generate crc for pickboxsht id="+ objectId, ex);
             try{
                 conn.createStatement().executeUpdate("update pickboxsht set crc=null, crcmodifieddate=null where id="+ objectId );
             }catch(Exception ee){}
-            return "";
+            return new SPResult();
         }finally{
             try{if( rs!=null) rs.close();}catch(Exception e){}
         }

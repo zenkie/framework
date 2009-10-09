@@ -65,10 +65,9 @@ url=¡±¡¯PATH?...& wfc_<×Ö¶Îid>=¡±+ oc.getMainTableColumnInput(<×Ö¶Îid>)+¡±&wfc_<
 	 * @param fixedColumns key: ColumnLink/String for that, Value:String. Will filter query with pt, pt will be converted to nds.query.Expression
 	 * @see nds.query.Expression#paresePairTable
 	 */
-	public FKObjectQueryModel( boolean isInTitleArea, Table table, String acceptorId,  Column searchOnColumn, PairTable fixedColumns){
-		boolean isSingle=true;// always true
-		if(isSingle)isDropdown= table.isDropdown();
-		else isDropdown=false;
+	public FKObjectQueryModel( boolean isDropdown, boolean isInTitleArea, Table table, String acceptorId,  Column searchOnColumn, PairTable fixedColumns){
+		boolean isSingle=true;
+		this.isDropdown=isDropdown;
 		this.acceptorId= acceptorId;
 		this.isSingle_temp=true;
 		try {
@@ -101,6 +100,9 @@ url=¡±¡¯PATH?...& wfc_<×Ö¶Îid>=¡±+ oc.getMainTableColumnInput(<×Ö¶Îid>)+¡±&wfc_<
 			logger.error("Fail to init FKObjectQueryModel for column:"+searchOnColumn, e );
 			throw new NDSRuntimeException(e.getMessage());
 		}
+	}
+	public FKObjectQueryModel( boolean isInTitleArea, Table table, String acceptorId,  Column searchOnColumn, PairTable fixedColumns){
+		this(table.isDropdown(),isInTitleArea,table,acceptorId,searchOnColumn,fixedColumns);
 	}
 	public FKObjectQueryModel(Table table, String acceptorId,  Column searchOnColumn, PairTable fixedColumns, boolean isSingle){
 		if(isSingle)isDropdown= table.isDropdown();

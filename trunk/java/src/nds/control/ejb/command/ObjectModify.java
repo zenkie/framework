@@ -21,7 +21,7 @@ import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEventException;
 import nds.control.util.ValueHolder;
 import nds.mail.NotificationManager;
-import nds.query.QueryEngine;
+import nds.query.*;
 import nds.query.UpdateException;
 import nds.schema.*;
 import nds.util.NDSException;
@@ -191,7 +191,7 @@ public class ObjectModify extends Command{
        // call proc after modify
        // after modify, first doing triggers on the current table
        // then do trigger on parent table, if exists.
-       helper.doTrigger("AM", table, oids, con);
+       SPResult spr=helper.doTrigger("AM", table, oids, con);
        Table parent= helper.getParentTable( table,event);
  	   int[] poids= helper.getParentTablePKIDs(table,oids, con);
        logger.debug("parent of "+ table+ ":"+ parent+", poids="+ ( poids!=null? Tools.toString(poids): "null" ));
@@ -207,7 +207,7 @@ public class ObjectModify extends Command{
       String message  ="@total-records-updated@: "+ realCount ;
        v.put("message",message) ;
        v.put("jsonObjectCreated", new Boolean(jsonObjectCreated));
-       
+       v.put("spresult", spr);
        return v;
        }finally{
            try{if(con !=null) con.close(); }catch(Exception eee){}

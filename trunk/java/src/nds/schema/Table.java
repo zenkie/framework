@@ -180,13 +180,16 @@ public interface Table extends Serializable  {
      */
     public int getOrder();
 
+    //deprecated after versioned trigger created 
+    //public String getTriggerName(String condition);
+    
     /**
-     * Get trigger name of specified condition, the trigger is a kind of procedure
+     * Get trigger of specified event, the trigger is a kind of procedure
      * which will be called during execution
-     * @param condition such as "after-modify", for more, see Schema.TriggerHolder
-     * @return
+     * @param event currently support "AC","AM","BD" only
+     * @return null or VersionedTrigger
      */
-    public String getTriggerName(String condition);
+    public TriggerHolder.VersionedTrigger getTrigger(String event);
     /**
      * Sum fields of this table，elements are Column
      * 通常这些伪Column 有如下共同特征：

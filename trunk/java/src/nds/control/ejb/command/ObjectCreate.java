@@ -104,6 +104,7 @@ public class ObjectCreate extends Command{
       PreparedStatement stmt=null; // insert into xxx () values (?,?)
       PreparedStatement stmtUpdate=null; // update xxx set a=?,c=? where id=?
       PreparedStatement stmtIDByUdx=null; // select id from xxx where c=?
+      SPResult spr=null; // trigger result
       boolean shouldAddModifierIdToUpdateStatement=false;
       //Table sheetTable=null;int sheetId=-1;
        try{
@@ -230,7 +231,7 @@ public class ObjectCreate extends Command{
                    		if(pdtIds[realPos]==null){
                    			logger.debug(" not found product id");
                    		}else{
-                   			helper.execStmtOfAttributeDetailRecordsByJSON(table, jo[realPos], 
+                   			spr=helper.execStmtOfAttributeDetailRecordsByJSON(table, jo[realPos], 
                    					oids[i], con, stmt,asiRelateColumnsPosInStatement,"AC");
                    			jsonObjectCreated=true;//"jsonobj-splitted"
                    		}
@@ -245,12 +246,12 @@ public class ObjectCreate extends Command{
                    		stmt.executeUpdate();
                    		if(cfid!=-1)
                    			helper.createAttributeDetailRecordsByCopy(table, userId, cfid,oids[realPos],con);
-                   		helper.doTrigger("AC", table, oids[realPos], con);
+                   		spr=helper.doTrigger("AC", table, oids[realPos], con);
                    }else{
                 	   //normal update and ac procedure
                 	   try{
                 		   stmt.executeUpdate();
-                		   helper.doTrigger("AC", table, oids[realPos], con);
+                		   spr=helper.doTrigger("AC", table, oids[realPos], con);
                 	   }catch(SQLException sqlex){
                 		   //support for unique constraints confliction, and try update
                 		   //如果是Unique Index 错误，要找到存在的记录，做更新
@@ -289,7 +290,7 @@ public class ObjectCreate extends Command{
                 						   sqlDataColumnTypesForUpdate,userId, idByUdx,shouldAddModifierIdToUpdateStatement);
                 				   int ucnt=stmtUpdate.executeUpdate();
                 				   //do am trigger on that row upated
-                				   helper.doTrigger("AM", table, idByUdx, con);
+                				   spr=helper.doTrigger("AM", table, idByUdx, con);
                 				   oids[realPos]=idByUdx; // not the created one, but the old value
                 			   }
                 			   
@@ -354,8 +355,9 @@ public class ObjectCreate extends Command{
            ValueHolder v = new ValueHolder();
            v.put("objectid",new Integer(objectId[0].intValue())) ; // this will be used in sheet_item.jsp to locate which sheet has been created
            v.put("jsonObjectCreated", new Boolean(jsonObjectCreated));
+           v.put("spresult", spr);
            StringBuffer sb=new StringBuffer();
-
+           
            if(! bestEffort ){
                sb.append("@total-records-created-is@:"+ successCount +"("+tableDesc+")");
                v.put("message", sb.toString()) ;

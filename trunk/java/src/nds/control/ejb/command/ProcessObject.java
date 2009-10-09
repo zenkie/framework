@@ -89,6 +89,8 @@ public class ProcessObject extends Command {
 	 * 			};
 	 * 			this.masterpage="html page content for master object";
 	 *          this.masterid=124; -- master object id, may newly created
+	 *          this.spresult={code:1,message:'alert("hello")'} -- main object's ac/am execution result, 
+	 *            for code spec, see DefaultWebEventHelper#doTrigger
 	 * 		}
 	 	row is the row index of this.data in GridControl
 	 	
@@ -122,6 +124,7 @@ public class ProcessObject extends Command {
 	boolean errorFound=false;
 	String returnMsg=null;
 	boolean masterObjectCreateAction=false; //what's on master object, add or modify?
+	SPResult spr=null; // main object's ac/am procedure result 
   	try{
   		/*
   		 * Master object handling
@@ -145,11 +148,14 @@ public class ProcessObject extends Command {
 			evt.setParameter("command", masterTable.getName()+"Modify");
 		}
 		vh=helper.handleEventWithNewTransaction(evt);
+		
 		masterObjectId= Tools.getInt( (Integer)vh.get("objectid"), masterObjectId);
 		logger.debug("handled:masterObjectId="+masterObjectId);
-  		
-		/*
-		 *Inline object handling  
+  		spr=(SPResult)vh.get("spresult");
+  		returnObj.put("spresult", spr);
+
+  		/*
+		 *Inline single object (1:1) handling  
 		 */
 		JSONObject inlineObject= jo.optJSONObject("inlineobj");
 		if(inlineObject!=null){
@@ -167,7 +173,7 @@ public class ProcessObject extends Command {
 		}
 		String fixedColumns=null;
 		/*
-		 * Detail object handling
+		 * inline multiple objects (1:m) handling
 		 */
 		boolean hasItems= jo.optBoolean("bestEffort", false);
 		boolean hasItemAddList=false; // for item adding list checking

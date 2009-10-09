@@ -31,34 +31,34 @@ package nds.query;
 
 import java.sql.CallableStatement;
 import java.sql.SQLException;
+import org.json.*;
 /**
  *  
  */
-public class SPResult {
-    boolean isOK=true;
-    int code;
-    String msg="";
+public class SPResult implements JSONString {
+    private int code;
+    private String msg="";
     public SPResult(CallableStatement stmt, int paramIndex) throws SQLException{
         code = stmt.getInt( paramIndex);
         String returnMsg = stmt.getString( paramIndex + 1);
         msg = returnMsg;
-       	isOK=(code==0);
     }
     public SPResult( int code, String msg){
         this.code=code;
         this.msg= msg;
-        isOK= (code ==0);
     }
-    public SPResult() {}
+    public SPResult() {
+    	code=0;
+    }
      /**
      * 直接在其他程序中创建SPResult时调用此方法
      */
     public SPResult(String message){
-        isOK=true;
+        code=0;
         msg=message;
     }
     public boolean isSuccessful(){
-        return isOK;
+        return code==0;
     }
     public int getCode(){
         return code;
@@ -71,5 +71,15 @@ public class SPResult {
     }
     public String toString(){
         return "["+msg+"]";
+    }
+    public String toJSONString(){
+    	try{
+	    	JSONObject jo=new JSONObject();
+	    	jo.put("code", code);
+	    	jo.put("message",msg);
+	    	return jo.toString();
+    	}catch(JSONException je){
+    		return  JSONObject.NULL.toString();
+    	}
     }
 }

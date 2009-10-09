@@ -10,7 +10,7 @@ import nds.log.LoggerManager;
 import nds.schema.*;
 import nds.util.JSONUtils;
 import nds.util.MessagesHolder;
-
+import nds.query.web.FKObjectQueryModel;
 import java.util.*;
 
 import org.json.*;
@@ -96,13 +96,15 @@ public class EditableGridMetadata {
 			logger.error("Could not fetch user preference", t);
 		}
 		ArrayList cls=table.getColumns(masks,false ); // nerver load displaytype in {'xml','file','image'}
-		columns.add(createGridColumn("rowIdx", MessagesHolder.getInstance().getMessage(locale,"rowindex"), true,null,Column.STRING,table.getId(),4,true,true, null,locale));
-		columns.add(createGridColumn("state__", MessagesHolder.getInstance().getMessage(locale,"rowstate"), false,null,Column.STRING,-1,-1,false,false,null,locale));
-		columns.add(createGridColumn("errmsg", MessagesHolder.getInstance().getMessage(locale,"errmsg"), true,null,Column.STRING,-1,-1,false,false,null,locale));
-		columns.add(createGridColumn("jsonobj", MessagesHolder.getInstance().getMessage(locale,"jsonobj"), true,null,Column.STRING,-1,-1,true,true,null,locale));
+		columns.add(createGridColumn("rowIdx", MessagesHolder.getInstance().getMessage(locale,"rowindex"), true,null,Column.STRING,table.getId(),4,true,true, null,locale,null));
+		columns.add(createGridColumn("state__", MessagesHolder.getInstance().getMessage(locale,"rowstate"), false,null,Column.STRING,-1,-1,false,false,null,locale,null));
+		columns.add(createGridColumn("errmsg", MessagesHolder.getInstance().getMessage(locale,"errmsg"), true,null,Column.STRING,-1,-1,false,false,null,locale,null));
+		columns.add(createGridColumn("jsonobj", MessagesHolder.getInstance().getMessage(locale,"jsonobj"), true,null,Column.STRING,-1,-1,true,true,null,locale,null));
 		Column pk= table.getPrimaryKey();
-		columns.add(createGridColumn(pk.getName(),"ID", false, pk,pk.getType(), -1, -1, false, true,null,locale));
+		columns.add(createGridColumn(pk.getName(),"ID", false, pk,pk.getType(), -1, -1, false, true,null,locale,null));
 		String defaultValue=null;
+		FKObjectQueryModel fkQueryModel;
+		String fkQueryURL;
 		for(int i=0;i< cls.size();i++){
 			Column col=(Column)cls.get(i);
 			if(prefs!=null && userWeb!=null){
@@ -111,24 +113,32 @@ public class EditableGridMetadata {
 			}
 			if( col.getReferenceTable() !=null) {
 				Column col2=col.getReferenceTable().getAlternateKey();
+				if(col.isMaskSet(Column.MASK_CREATE_EDIT) && col.isMaskSet(Column.MASK_MODIFY_EDIT)){
+				//@ACCEPTER@ will be replaced by specific row input id
+					fkQueryModel=new FKObjectQueryModel(false,false,col.getReferenceTable(),"@ACCEPTER@",col,null);
+					fkQueryModel.setQueryindex(-1);
+					fkQueryURL=fkQueryModel.getButtonClickEventScript(true);
+				}else{
+					fkQueryURL=null;
+				}
 				columns.add(createGridColumn(col.getName()+"__"+ col2.getName(),col.getDescription(locale),
 						true, col,col2.getType(),col.getReferenceTable().getId(), columns.size()+1,
 						 col.isMaskSet(Column.MASK_CREATE_EDIT), 
-						 col.isMaskSet(Column.MASK_MODIFY_EDIT),defaultValue,locale));
+						 col.isMaskSet(Column.MASK_MODIFY_EDIT),defaultValue,locale,fkQueryURL));
 				columns.add(createGridColumn(col.getName()+"__ID" ,col.getDescription(locale),
-						false, col, col.getType(),-1,-1, false,false,null,locale));
+						false, col, col.getType(),-1,-1, false,false,null,locale,null));
 				
 			}else{
 				columns.add(createGridColumn(col.getName(),col.getDescription(locale),
 					true, col,col.getType(),-1, -1, 
 					col.isMaskSet(Column.MASK_CREATE_EDIT), 
-					col.isMaskSet(Column.MASK_MODIFY_EDIT ),defaultValue,locale));
+					col.isMaskSet(Column.MASK_MODIFY_EDIT ),defaultValue,locale,null));
 			}
 		}
 	}
 	private GridColumn createGridColumn(String name, String desc, boolean isVisible, 
 			Column col, int type, int rTableId, int objIdPos, 
-			boolean uploadWhenCreate, boolean uploadWhenModify, String defaultValue, Locale locale){
+			boolean uploadWhenCreate, boolean uploadWhenModify, String defaultValue, Locale locale, String fkQueryURL){
 		GridColumn c=new GridColumn();
 		c.setName(name);
 		c.setDescription(desc);
@@ -141,6 +151,7 @@ public class EditableGridMetadata {
 		c.setUploadWhenModify(uploadWhenModify);
 		c.setDefaultValue(defaultValue);
 		c.setLocale(locale);
+		c.setFkQueryURL(fkQueryURL);
 		return c;
 	}
 	/**
