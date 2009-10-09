@@ -261,9 +261,9 @@ public class TableImpl implements Table {
      *   "M" - Modify
      *   "S" - Submit
      *   "Q" - Query
-     *   "P" - Permit
+     *   "P" - UNSUBMIT
      *   "G" - Group Submit( all selected id whill be concated by comma, and send to ObjectSubmit('id1,id2')
-     *   "U" - Unsubmit (@since 4.0) 
+     *   "U" - Unsubmit (@since 4.0) DEPRECATED 
      *   if action mask not found, the permission on the table will be denied
      */
     public void setMask(String maskString) {
@@ -281,7 +281,7 @@ public class TableImpl implements Table {
                 case 'S': actionMask[4]=true;break;
                 case 'P': actionMask[5]=true;break;
                 case 'G': actionMask[6]=true;break;
-                case 'U': actionMask[7]=true;break;
+                case 'U': actionMask[5]=true;break;// EQUAL TO P
                 default: throw new Error("Unsupported action mask:"+ maskString+"(table="+ name+")");
             }
         }

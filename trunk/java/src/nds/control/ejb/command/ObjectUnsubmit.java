@@ -24,7 +24,7 @@ import nds.util.*;
 public class ObjectUnsubmit extends Command{
    
     /**
-     * 必须是已经提交的单据才支持反提交，反提交要求用户是单据的最后修改人（即由本人提交的单据）
+     * 必须是已经提交的单据才支持反提交，反提交要求用户具有审核权限
      */
     public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
     	Integer pid = new Integer(Tools.getInt(event.getParameterValue("id") ,-1));
@@ -65,7 +65,18 @@ public class ObjectUnsubmit extends Command{
         }
         User user=helper.getOperator(event);
         int userId=user.getId().intValue()  ;
+
+        // security check
+        boolean b=false;
+        try{
+        	b=SecurityUtils.hasObjectPermission(userId, user.getName(), origTableName, 
+        			pid.intValue(),Directory.AUDIT, event.getQuerySession());
+        }catch(Exception e){
+            throw new NDSEventException(e.getMessage() );
+        }
+        if (!b) throw new NDSEventException("@no-permission@!" );
         
+        /*
         // security check, last modifier must be operator itself
         boolean b=false;
         int modifierId=-1;
@@ -77,7 +88,7 @@ public class ObjectUnsubmit extends Command{
     	if(userId!=modifierId){
     		throw new NDSEventException("@no-permission-to-unsubmit@" );
     	}
-
+		*/
         ValueHolder v = null;
         String state=null;
         SPResult s=null;

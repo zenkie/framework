@@ -470,6 +470,7 @@ public interface Table extends Serializable  {
      */
     public final static int SUBMIT=4;
     /**
+     * Support unsubmit on object
      * AUDIT action on table, which means user can do permit or rollback action from GUI, if
      * isActionEnabled(Table.AUDIT) is return true; normally only xxxSht table will
      * has this action set. If table has Audit action, submit will be set what ever it
@@ -485,6 +486,6 @@ public interface Table extends Serializable  {
      * Support unsubmit on object
      * 
      */
-    public final static int UNSUBMIT=7;
+    //public final static int UNSUBMIT=7;
 
 }

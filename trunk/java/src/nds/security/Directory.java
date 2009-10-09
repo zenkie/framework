@@ -27,13 +27,13 @@ package nds.security;
 
 
 public interface Directory {
-  public final int READ=1;
+  public final int READ=1; //r
   // write including read
-  public final int WRITE=3;
+  public final int WRITE=3;//w
   // submit including read, but not write
-  public final int SUBMIT=5;
-  // audit including read, but not write submit
-  public final int AUDIT=9;
+  public final int SUBMIT=5; //s
+  // audit including read, can do unsubmit, table mask should have "U" 
+  public final int AUDIT=9;//u
   //BATCH EXPORT 
-  public final int EXPORT=17;
+  public final int EXPORT=17; //e
 }
