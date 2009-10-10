@@ -613,7 +613,8 @@ public final class WebUtils {
  				}
  			}else{
  				if(!wfc_rc.isNullable()){
- 					throw new NDSException("input "+ wfc_rc.getDescription(locale)+ " first");
+ 					String msg=MessagesHolder.getInstance().getMessage(locale, "pls-input" );
+ 					throw new NDSException(msg.replace("0", wfc_rc.getDescription(locale)));
  				}
  				wfc_rcv= "NULL";// replaced with null
  			}
