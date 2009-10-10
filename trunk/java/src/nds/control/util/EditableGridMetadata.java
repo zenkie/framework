@@ -95,6 +95,8 @@ public class EditableGridMetadata {
 		}catch(Throwable t){
 			logger.error("Could not fetch user preference", t);
 		}
+		boolean canAdd=table.isActionEnabled(Table.ADD);
+		boolean canModify=table.isActionEnabled(Table.MODIFY);
 		ArrayList cls=table.getColumns(masks,false ); // nerver load displaytype in {'xml','file','image'}
 		columns.add(createGridColumn("rowIdx", MessagesHolder.getInstance().getMessage(locale,"rowindex"), true,null,Column.STRING,table.getId(),4,true,true, null,locale,null));
 		columns.add(createGridColumn("state__", MessagesHolder.getInstance().getMessage(locale,"rowstate"), false,null,Column.STRING,-1,-1,false,false,null,locale,null));

@@ -154,7 +154,7 @@ url=¡±¡¯PATH?...& wfc_<×Ö¶Îid>=¡±+ oc.getMainTableColumnInput(<×Ö¶Îid>)+¡±&wfc_<
 	public FKObjectQueryModel(Table table, String acceptorId, Column column){
 		this(table,acceptorId, column, null );
 	}
-
+	
 	/**
 	 * script for key event handling
 	 * 
