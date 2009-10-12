@@ -327,13 +327,17 @@ public class TableImpl implements Table {
 	 *  will be inner dialog
 	 */
 	public void setRowURL(String rowURL) {
-		
-		String[] s=Pattern.compile("[:]").split(rowURL);
-		if(s.length>1){
-			this.rowURL = s[0];
-			this.rowURLTarget=s[1];
+		if(nds.util.Validator.isNotNull(rowURL){
+			String[] s=Pattern.compile("[:]").split(rowURL);
+			if(s.length>1){
+				this.rowURL = s[0];
+				this.rowURLTarget=s[1];
+			}else{
+				this.rowURL = rowURL;
+				this.rowURLTarget=null;
+			}
 		}else{
-			this.rowURL = rowURL;
+			this.rowURL = null;
 			this.rowURLTarget=null;
 		}
 	}
