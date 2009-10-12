@@ -327,7 +327,7 @@ public class TableImpl implements Table {
 	 *  will be inner dialog
 	 */
 	public void setRowURL(String rowURL) {
-		if(nds.util.Validator.isNotNull(rowURL){
+		if(nds.util.Validator.isNotNull(rowURL)){
 			String[] s=Pattern.compile("[:]").split(rowURL);
 			if(s.length>1){
 				this.rowURL = s[0];
