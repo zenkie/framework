@@ -156,7 +156,11 @@ public interface Table extends Serializable  {
      * @roseuid 3B8468CF029C
      */
     public String getRowURL();
-
+    /**
+     * Target for Row URL to display, "_blank" for seperate window, others will be as dialog
+     * @return
+     */
+    public String getRowURLTarget();
     /**
      * @return null if this table's row can not be mapped to a class, else return the full name of that Class
      * @roseuid 3B84690302D3

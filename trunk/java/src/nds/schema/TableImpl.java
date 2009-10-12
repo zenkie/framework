@@ -81,6 +81,8 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import nds.util.*;
@@ -123,6 +125,7 @@ public class TableImpl implements Table {
     private boolean hasSubTotal=false;
     private Column primaryKey=null;
     private String rowURL;
+    private String rowURLTarget;//"_blank" for seperate window
     private String rowClass;
     private TableCategory category;
     private int tableOrder;
@@ -318,10 +321,24 @@ public class TableImpl implements Table {
 		this.rowClass = rowClass;
 	}
 	/**
-	 * @param rowURL The rowURL to set.
+	 * @param rowURL The rowURL to set. in format like:
+	 * 	url:<target>
+	 *  target can be "_blank" or null, if "_blank:, will show in sepereate window, else
+	 *  will be inner dialog
 	 */
 	public void setRowURL(String rowURL) {
-		this.rowURL = rowURL;
+		
+		String[] s=Pattern.compile("[:]").split(rowURL);
+		if(s.length>1){
+			this.rowURL = s[0];
+			this.rowURLTarget=s[1];
+		}else{
+			this.rowURL = rowURL;
+			this.rowURLTarget=null;
+		}
+	}
+	public String getRowURLTarget(){
+		return rowURLTarget;
 	}
 	/**
 	*别名表。在Column 中，有些字段为virtual, 表示该column是计算列，
