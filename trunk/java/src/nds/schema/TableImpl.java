@@ -326,14 +326,14 @@ public class TableImpl implements Table {
 	 *  target can be "_blank" or null, if "_blank:, will show in sepereate window, else
 	 *  will be inner dialog
 	 */
-	public void setRowURL(String rowURL) {
-		if(nds.util.Validator.isNotNull(rowURL)){
-			String[] s=Pattern.compile("[:]").split(rowURL);
+	public void setRowURL(String r) {
+		if(r!=null){
+			String[] s=Pattern.compile("[:]").split(r);
 			if(s.length>1){
 				this.rowURL = s[0];
 				this.rowURLTarget=s[1];
 			}else{
-				this.rowURL = rowURL;
+				this.rowURL = r;
 				this.rowURLTarget=null;
 			}
 		}else{
