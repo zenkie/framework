@@ -459,7 +459,9 @@ public class TableQueryModel {
 	            desc= MessagesHolder.getInstance().getMessage(locale, "string-format2")+ (maxLength>0?","+MessagesHolder.getInstance().getMessage(locale, "format-length")  +":"+maxLength:"");
 	            break;
 	        case Column.NUMBER :
-	            desc= MessagesHolder.getInstance().getMessage(locale, "number-format2") + (maxLength>0?","+MessagesHolder.getInstance().getMessage(locale, "format-length")  +":"+maxLength:"");
+	            desc= MessagesHolder.getInstance().getMessage(locale, "number-format2") +
+	            	(maxLength>0?","+MessagesHolder.getInstance().getMessage(locale, "format-length")  +":"+maxLength:"");
+	            if(column.getScale()>0)desc +=","+column.getScale();
 	            break;
 	        case Column.DATENUMBER :
 	        case Column.DATE :

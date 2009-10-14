@@ -109,7 +109,7 @@ public class AjaxUtils {
 			r.setData( d);
         }catch(Throwable t){
         	r.setCode(-1);
-			r.setMessage(MessagesHolder.getInstance().translateMessage(t.getMessage(), locale));
+			r.setMessage(WebUtils.getExceptionMessage(t, locale));
         }
 		r.setCallbackEvent(jo.optString("callbackEvent",command));
 		return r;
