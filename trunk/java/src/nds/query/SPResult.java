@@ -60,8 +60,14 @@ public class SPResult implements JSONString {
     public boolean isSuccessful(){
         return code==0;
     }
+    public void setCode(int c){
+    	this.code = c;
+    }
     public int getCode(){
         return code;
+    }
+    public void setMessage(String s){
+    	this.msg=s;
     }
     public String getMessage(){
         return msg;

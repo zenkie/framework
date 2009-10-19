@@ -163,7 +163,12 @@ public class ProcessObject extends Command {
 			evt=createSingleObjEvent(inlineObject,template);
 			if(Tools.getInt(inlineObject.get("id"),-1)==-1){
 				evt.setParameter("command", inlineTable.getName()+"Create");
-				mainAction= Table.ADD;
+				// unless main object request special ui action, refresh inner tab
+				if(spr!=null){
+					if(spr.getCode()==0){
+						spr.setCode(3);//refresh list
+					}
+				}
 			}else{
 				evt.setParameter("command", inlineTable.getName()+"Modify");
 			}

@@ -39,6 +39,7 @@ public class ExecuteWebAction extends Command {
 	 *      	table: table id
 				id: 	current main table id
 		uk.ltd.getahead.dwr.WebContext - this is for convenience to request jsp result
+		or javax.servlet.http.HttpServletRequest if no WebContext
 		tag - this is used by client to remember locale status, such as for row information,
 				  it will be sent back unchanged.
 		pageurl - String url for loading page, should be absolute url path
@@ -71,15 +72,26 @@ public class ExecuteWebAction extends Command {
 	  	WebAction action=manager.getWebAction(actionId);
 	  	if(action==null) throw new NDSException("@object-not-found@:WebAction("+actionId+")");
 	  	// check permission
-  		WebContext wc=(WebContext) jo.get("org.directwebremoting.WebContext");
-
-    	UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(wc.getSession()).getActor(nds.util.WebKeys.USER));
+	  	
+  		WebContext wc=(WebContext) jo.opt("org.directwebremoting.WebContext");
+  		javax.servlet.http.HttpSession session=null;
+  		javax.servlet.http.HttpServletRequest request=null;
+  		if(wc!=null) {
+  			session=wc.getSession();
+  			request=wc.getHttpServletRequest();
+  		}
+  		else{
+  			request=(javax.servlet.http.HttpServletRequest)jo.opt("javax.servlet.http.HttpServletRequest");
+  			if(request==null) throw new NDSException("Could not get HttpServletRequest");
+  			session=request.getSession();
+  		}
+    	UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(session).getActor(nds.util.WebKeys.USER));
     	conn=QueryEngine.getInstance().getConnection();
     	
     	
     	HashMap webActionEnv=new HashMap();
     	webActionEnv.put("connection",conn);
-    	webActionEnv.put("httpservletrequest",wc.getHttpServletRequest());
+    	webActionEnv.put("httpservletrequest",request);
     	webActionEnv.put("userweb",userWeb);
     	webActionEnv.put("userid",usr.id);
     	webActionEnv.put("webaction",action);
@@ -109,6 +121,14 @@ public class ExecuteWebAction extends Command {
         	}
         	
         	webActionEnv.put("query", query);// always json type
+    	}else{
+    		//for object page
+    		if(objectId!=-1){
+    			JSONObject oj=new JSONObject();
+    			oj.put("table", action.getTableId());
+    			oj.put("id", objectId);
+        		webActionEnv.put("query", oj);
+    		}
     	}
     	
     	

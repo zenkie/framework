@@ -83,9 +83,10 @@ public class Rest implements BinaryHandler{
 	  /**
 	   */
       public void process(HttpServletRequest request,HttpServletResponse  response)  throws Exception{
-    	  
+    	  //long startTime=System.currentTimeMillis();
     	  String message=null;
     	  SipStatus status=null;
+    	  UserWebImpl usr=null;
     	  try{
 	    	  status= validateRequest(request);
 	    	  if(status==SipStatus.SUCCESS ){
@@ -93,13 +94,14 @@ public class Rest implements BinaryHandler{
 	        	  String ts=request.getParameter("transactions");
 	        	  if(ts!=null){
 	        		  SessionContextManager scmanager= WebUtils.getSessionContextManager(request.getSession());
-	        		  UserWebImpl usr=(UserWebImpl)scmanager.getActor(WebKeys.USER);
+	        		  usr=(UserWebImpl)scmanager.getActor(WebKeys.USER);
 	        		  
 	        		  JSONArray ja=new JSONArray(ts);
+	        		  
 	        		  JSONArray jr=new JSONArray();
 	        		  for(int i=0;i< ja.length();i++){
 	        			  // handle every transactions
-	        			  TransactionResponse tr=handleTransaction(usr,ja.getJSONObject(i));
+	        			  TransactionResponse tr=handleTransaction(request,usr,ja.getJSONObject(i));
 	        			  jr.put(tr);
 	        		  }
 	        		  //write to http body
@@ -122,6 +124,9 @@ public class Rest implements BinaryHandler{
 		      PrintWriter out = response.getWriter();
 		      out.println((message ==null?status.toString(): message));
 		  }
+		  /*long duration=System.currentTimeMillis()- startTime;
+		  nds.util.SysLogger.getInstance().debug("rest","batch", usr==null?"n/a":usr.getUserName(),
+				  request.getRemoteAddr(), String.valueOf(duration), usr==null?37:usr.getAdClientId());*/
       }
       /**
 		校验必选参数, 并且根据用户参数，创建用户信息(UserWebImpl)
@@ -186,16 +191,25 @@ public class Rest implements BinaryHandler{
 	}
        * @return
        */
-      private TransactionResponse handleTransaction(UserWebImpl usr, JSONObject tra){
+      private TransactionResponse handleTransaction(HttpServletRequest request,UserWebImpl usr, JSONObject tra){
+    	  long startTime=System.currentTimeMillis();
     	  String traId= tra.optString("id","");
     	  TransactionResponse trs=new TransactionResponse(traId);
+    	  String command=null;
     	  try{
-    		  
-    		  String command=tra.getString("command");
+    		  command=tra.getString("command");
+    		  boolean isWebAction=command.equals("ExecuteWebAction");
     		  JSONObject jo=tra.getJSONObject("params");
     		  jo.put("command",command);
+    		  if(isWebAction){
+    			  //this will be web context substitution
+    			  jo.put("javax.servlet.http.HttpServletRequest", request);
+    		  }else{
+    			  jo.put("parsejson","Y"); 
+    		  }
     		  
     		  Result r=AjaxUtils.handle(jo, usr.getSession(), usr.getUserId(), usr.getLocale());
+    		  
     		  trs.setCode(r.getCode());
     		  trs.setMessage(r.getMessage());
     		  
@@ -204,6 +218,12 @@ public class Rest implements BinaryHandler{
     		  trs.setCode(-1);
     		  trs.setMessage(WebUtils.getExceptionMessage(t, usr.getLocale()));
     	  }
+    	  
+		  long duration=System.currentTimeMillis()- startTime;
+		  nds.util.SysLogger.getInstance().debug("rest",command==null?"cmdfail":command,
+				  usr==null?"n/a":usr.getUserName(),
+				  request.getRemoteAddr(), String.valueOf(duration), usr==null?37:usr.getAdClientId());
+    	  
     	  return trs;
       }
 }
