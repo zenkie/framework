@@ -60,6 +60,7 @@ public class ListMenuItemAction extends WebActionImpl {
 				break;
 			case StoredProcedure:
 			case BeanShell:
+			case Python:
 			case OSShell:
 				sb.append("javascript:pc.webaction(").append(this.getId()).append(",");
 				if(this.getComments()!=null) sb.append("'").append(this.getComments()).append("',");

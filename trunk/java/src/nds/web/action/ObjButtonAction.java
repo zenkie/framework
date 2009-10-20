@@ -5,7 +5,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-
+import nds.control.util.*;
 import nds.control.web.UserWebImpl;
 import nds.query.QueryEngine;
 import nds.query.QueryUtils;
@@ -56,6 +56,7 @@ public class ObjButtonAction extends WebActionImpl {
 				}
 				break;
 			case StoredProcedure:
+			case Python:
 			case BeanShell:
 			case OSShell:
 				sb.append("oc.webaction(").append(this.getId()).append(",");
@@ -101,12 +102,15 @@ public class ObjButtonAction extends WebActionImpl {
 		
 		f=QueryUtils.replaceVariables(f,userWeb.getSession());
 
-		if(isSQLFilter){
+		switch(filterType){
+		case SQL:
 			// replace environment variables
 			
 			int cnt= Tools.getInt(QueryEngine.getInstance().doQueryOne(f,conn), -1);
-			b=(cnt>0); 
-		}else{
+			b=(cnt>0);
+			break;
+			
+		case BEANSHELL:
 			Object ret=BshScriptUtils.evalScript(f,new StringBuffer(),false, env);
 			//when null, return false
 			if(ret!=null){
@@ -114,6 +118,10 @@ public class ObjButtonAction extends WebActionImpl {
 				else if(ret instanceof java.lang.Number) b=((Number)ret).intValue()>0;
 				else b= Tools.getBoolean(ret, false);
 			}
+			break;
+		case PYTHON:
+			b =PythonScriptUtils.convertInt( PythonScriptUtils.evalScript(f,new StringBuffer(),false, env))>0;
+			break;
 		}
 		return b;
 	}

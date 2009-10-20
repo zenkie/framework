@@ -6,6 +6,7 @@ import java.util.Properties;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import bsh.*;
+import org.python.util.PythonInterpreter;
 
 import nds.control.util.EJBUtils;
 import nds.control.util.ValueHolder;
@@ -13,7 +14,8 @@ import nds.util.*;
     /**
         This servlet should will only interact with programs, and only user who has permission
         to write ad_script table will has this permission to execute
-
+	
+	Ö§³ÖBeanShellºÍPython
     */
 public class BshServlet extends HttpServlet{
 
@@ -49,8 +51,12 @@ public class BshServlet extends HttpServlet{
         String script = request.getParameter("bsh.script");
         String client = request.getParameter("bsh.client");
         String output = request.getParameter("bsh.servlet.output");
+        
         String captureOutErr =
                 request.getParameter("bsh.servlet.captureOutErr");
+        
+        String scriptType= request.getParameter("bsh.type");
+        if(nds.util.Validator.isNull(scriptType))scriptType="beanshell";
         boolean capture = false;
         if ( captureOutErr != null && captureOutErr.equalsIgnoreCase("true") )
             capture = true;
@@ -60,8 +66,13 @@ public class BshServlet extends HttpServlet{
         StringBuffer scriptOutput = new StringBuffer();
         if ( script != null ) {
             try {
-                scriptResult = evalScript(
+                if("beanshell".equalsIgnoreCase(scriptType))
+                	scriptResult = evalBeanShellScript(
                         script, scriptOutput, capture, request, response );
+                else if("python".equalsIgnoreCase(scriptType))
+                	scriptResult = evalJythonScript(
+                            script, scriptOutput, capture, request, response );
+                	
             } catch ( Exception e ) {
                 scriptError = e;
             }
@@ -80,7 +91,7 @@ public class BshServlet extends HttpServlet{
         
     }
 
-    String formatScriptResultHTML( 
+    private String formatScriptResultHTML( 
     		String script, Object result, Exception error, 
     		StringBuffer scriptOutput ) 
     		throws IOException
@@ -104,10 +115,42 @@ public class BshServlet extends HttpServlet{
     			   return errString ;
     	
     	}    
+    private Object evalJythonScript(
+            String script, StringBuffer scriptOutput, boolean captureOutErr,
+            HttpServletRequest request, HttpServletResponse response )
+            throws EvalError
+    {
+        // Create a PrintStream to capture output
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream pout = new PrintStream( baos );
+
+        // Create an interpreter instance with a null inputstream,
+        // the capture out/err stream, non-interactive
+        PythonInterpreter psh = new  PythonInterpreter( );
+
+        // set up interpreter
+        psh.set( "bsh.httpServletRequest", request );
+        psh.set( "bsh.httpServletResponse", response );
+
+        // Eval the text, gathering the return value or any error.
+        Object result = "";
+       
+    	psh.setOut(pout);
+    	psh.setErr(pout);
+        try {
+            // Eval the user text
+            psh.exec( script );
+            result= psh.get("retObj");
+        } catch (Throwable t) {
+        	t.printStackTrace(pout);
+        }
+        pout.flush();
+        scriptOutput.append( baos.toString() );
+        return result;
+    }
 
 
-
-    Object evalScript(
+    private Object evalBeanShellScript(
             String script, StringBuffer scriptOutput, boolean captureOutErr,
             HttpServletRequest request, HttpServletResponse response )
             throws EvalError
@@ -136,7 +179,10 @@ public class BshServlet extends HttpServlet{
         try {
             // Eval the user text
             result = bsh.eval( script );
-        } finally {
+        }catch(Throwable t){
+        	t.printStackTrace(pout);
+        }
+        finally {
             if ( captureOutErr ) {
                 System.setOut( sout );
                 System.setErr( serr );
@@ -150,7 +196,7 @@ public class BshServlet extends HttpServlet{
 	Show context number lines of string before and after target line.
 	Add HTML formatting to bold the target line.
 */
-String showScriptContextHTML( String s, int lineNo, int context ) 
+private String showScriptContextHTML( String s, int lineNo, int context ) 
 {
 	StringBuffer sb = new StringBuffer();
 	BufferedReader br = new BufferedReader( new StringReader(s) );

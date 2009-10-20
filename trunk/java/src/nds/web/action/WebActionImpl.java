@@ -7,6 +7,8 @@ import nds.query.*;
 import nds.schema.*;
 import nds.util.*;
 import nds.control.web.*;
+import nds.control.util.*;
+
 import org.json.*;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
@@ -18,7 +20,11 @@ import java.sql.ResultSet;
 
 public abstract class WebActionImpl implements WebAction{
 	protected Logger logger=LoggerManager.getInstance().getLogger(this.getClass().getName());
-	
+	public static enum DisplayFilterType{
+		SQL,
+		BEANSHELL,
+		PYTHON
+	}
 	protected int id;
 	protected String name;
 	protected String description;
@@ -36,7 +42,7 @@ public abstract class WebActionImpl implements WebAction{
 	 */
 	protected int subSystemId;
 	/**
-	 * 显示条件字段，支持sql 和 beanshell (java 的解释形脚本环境) 两种语法
+	 * 显示条件字段，支持sql 和 beanshell, (java 的解释形脚本环境),python 三种语法
 	 * sql	举例:Select count(*) from xxx where yyy
 			当select 的第一个字段返回的内容大于零表示显示，小于等于零表示不显示。Sql 中可以有用户环境变量
 		beanshell	举例：Xxx
@@ -48,7 +54,7 @@ public abstract class WebActionImpl implements WebAction{
 	/**
 	 * 显示条件字段的内容是sql 还是 beanshell可以通过这里进行判定
 	 */
-	protected boolean isSQLFilter;
+	protected DisplayFilterType filterType;
 	/**
 	 * 包括url, javascript, stored procedure, ad_process, beanshell, os command 在内的都属于脚本内容
 	 */
@@ -107,20 +113,26 @@ public abstract class WebActionImpl implements WebAction{
 		Connection conn= (Connection)getValueFromMap("connection", env, null,true);
 		
 		f=QueryUtils.replaceVariables(f,userWeb.getSession());
-
-		if(isSQLFilter){
+		Object ret;
+		switch( filterType){
+		case SQL:
 			// replace environment variables
 			
 			int cnt= Tools.getInt(QueryEngine.getInstance().doQueryOne(f,conn), -1);
-			b=(cnt>0); 
-		}else{
-			Object ret=BshScriptUtils.evalScript(f,new StringBuffer(),false, env);
+			b=(cnt>0);
+			break;
+		case BEANSHELL:
+			ret=BshScriptUtils.evalScript(f,new StringBuffer(),false, env);
 			//when null, return false
 			if(ret!=null){
 				if(ret instanceof Boolean) b= ((Boolean)ret).booleanValue();
 				else if(ret instanceof java.lang.Number) b=((Number)ret).intValue()>0;
 				else b= Tools.getBoolean(ret, false);
 			}
+			break;
+		case PYTHON:
+			ret=PythonScriptUtils.evalScript(f,new StringBuffer(),false, env);
+			b=(PythonScriptUtils.convertInt(ret))>0;
 		}
 		return b;
 	}
@@ -175,6 +187,15 @@ public abstract class WebActionImpl implements WebAction{
 				map.put("message", br.toString());
 			}
 			break;
+		case Python:
+			Object py=PythonScriptUtils.evalScript(this.getScript(),new StringBuffer(),false, params);
+			if(py instanceof Map){
+				map.putAll((Map)py);
+			}else{
+				map.put("code",0);
+				map.put("message", py.toString());
+			}
+			break;
 		case OSShell:
 			
 			Configurations conf= (Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
@@ -223,7 +244,16 @@ public abstract class WebActionImpl implements WebAction{
 	public void setFilter(String filter) {
 		if(filter ==null) return;
 		this.filter = filter.trim();
-		this.isSQLFilter= this.filter.toUpperCase().startsWith("SELECT"); 
+		String uc= this.filter.toUpperCase();
+		if(uc.startsWith("SELECT")){
+			this.filterType=DisplayFilterType.SQL;
+		}else if(uc.startsWith("python:")){
+			this.filterType=DisplayFilterType.PYTHON;
+			this.filter=this.filter.substring(7);
+		}else{
+			this.filterType=DisplayFilterType.BEANSHELL;
+		}
+		
 	}
 	
 	public void setIconURL(String iconURL) {

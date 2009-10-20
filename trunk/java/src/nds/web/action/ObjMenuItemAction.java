@@ -51,6 +51,7 @@ public class ObjMenuItemAction extends ObjButtonAction {
 				break;
 			case StoredProcedure:
 			case BeanShell:
+			case Python:				
 			case OSShell:
 				sb.append("javascript:oc.webaction(").append(this.getId()).append(",");
 				if(this.getComments()!=null) sb.append("'").append(this.getComments()).append("',");

@@ -82,7 +82,8 @@ public interface WebAction {
 	};
 	public enum DisplayTypeEnum{
 		ListButton("listbutton",0), ListMenuItem("listmenuitem",1), ObjButton("objbutton",2),
-		ObjMenuItem("objmenuitem",3),TabButton("tabbutton",4), TreeNode("treenode",99)
+		ObjMenuItem("objmenuitem",3),TabButton("tabbutton",4),
+		TreeNode("treenode",99)
 		;
 	    private String dpt;
 	    private int idx;
@@ -108,7 +109,7 @@ public interface WebAction {
 	};
 	public enum ActionTypeEnum{
 		URL("url"), StoredProcedure("sp"), AdProcess("adproc"),
-		JavaScript("js"),BeanShell("bsh"), OSShell("shell")
+		JavaScript("js"),BeanShell("bsh"), OSShell("shell"),Python("py");
 		;
 	    private String dpt;
 
@@ -125,6 +126,7 @@ public interface WebAction {
 	    	else if("js".equals(type)) return JavaScript;
 	    	else if("bsh".equals(type)) return BeanShell;
 	    	else if("shell".equals(type)) return OSShell;
+	    	else if("py".equals(type)) return Python;
 	    	else throw new nds.util.NDSRuntimeException("type "+ type +" is invalid as ActionTypeEnum");
 	    }	    
 	};
