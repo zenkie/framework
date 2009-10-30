@@ -15,7 +15,7 @@ import nds.util.*;
         This servlet should will only interact with programs, and only user who has permission
         to write ad_script table will has this permission to execute
 	
-	支持BeanShell和Python
+	支鲁諅eanShell潞虗ython
     */
 public class BshServlet extends HttpServlet{
 
@@ -129,8 +129,8 @@ public class BshServlet extends HttpServlet{
         PythonInterpreter psh = new  PythonInterpreter( );
 
         // set up interpreter
-        psh.set( "bsh.httpServletRequest", request );
-        psh.set( "bsh.httpServletResponse", response );
+        psh.set( "httpServletRequest", request );
+        psh.set( "httpServletResponse", response );
 
         // Eval the text, gathering the return value or any error.
         Object result = "";
