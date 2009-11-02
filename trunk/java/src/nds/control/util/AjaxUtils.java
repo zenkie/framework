@@ -4,6 +4,10 @@
  */
 package nds.control.util;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -25,13 +29,9 @@ import nds.schema.Column;
 import nds.schema.DisplaySetting;
 import nds.schema.Table;
 import nds.schema.TableManager;
-import nds.util.MessagesHolder;
-import nds.util.PairTable;
-import nds.util.StringUtils;
-import nds.util.Tools;
-import nds.util.Validator;
-import nds.util.WebKeys;
+import nds.util.*;
 
+import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.directwebremoting.WebContextFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -46,14 +46,45 @@ import com.Ostermiller.util.NameValuePair;;
  */
 
 public class AjaxUtils {
-	private static Logger logger= LoggerManager.getInstance().getLogger(AjaxUtils.class.getName());	 
+	private static Logger logger= LoggerManager.getInstance().getLogger(AjaxUtils.class.getName());
+	
+	
+	public static Result handle(JSONObject jo, nds.query.QuerySession qsession, int userId, Locale locale ) throws Exception{
+        ValueHolder vh=null;
+        
+		Result r=  new Result();
+        try{
+	        vh=process(jo,qsession,userId,locale);
+	        Object d= vh.get("data");
+	        if(d instanceof JSONObject){
+	        	JSONObject data= (JSONObject)d;
+	        	Object qr=data.opt("qresult");
+	        	if(qr !=null && (qr instanceof QueryResultImpl)){
+	        		// it may contain buttons, so should convert to button html
+	    			WebContext ctx = (WebContext)jo.get("org.directwebremoting.WebContext");
+	        		
+	    			HttpServletRequest request = ctx.getHttpServletRequest();
+	    			convertButtonHtml((QueryResultImpl)qr, request);
+	        	}
+	        }
+			r.setCode(Tools.getInt( vh.get("code"), 0));
+			r.setMessage( MessagesHolder.getInstance().translateMessage((String)vh.get("message"), locale));
+			r.setData( d);
+        }catch(Throwable t){
+        	r.setCode(-1);
+			r.setMessage(WebUtils.getExceptionMessage(t, locale));
+        }
+		r.setCallbackEvent(jo.optString("callbackEvent",jo.getString("command")));
+		return r;
+		
+	}
 	/**
 	 * Get jsonObj for nds.control.event.DefaultWebEvent, and return nds.control.util.Result.toJSONString() 
 	 * @param jsonObj should be parsed to DefaultWebEvent
 	 * @return should be nds.control.util.Result.toJSONString() 
 	 * @throws Exception
 	 */
-	public static Result handle(JSONObject jo, nds.query.QuerySession qsession, int userId, Locale locale ) throws Exception{
+	public static ValueHolder process(JSONObject jo, nds.query.QuerySession qsession, int userId, Locale locale ) throws Exception{
 
         DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
         String command=jo.getString("command");
@@ -88,31 +119,7 @@ public class AjaxUtils {
         		"N".equals(jo.optString("nds.control.ejb.UserTransaction", "N"))
         )event.put("nds.control.ejb.UserTransaction" , "N");
         ClientControllerWebImpl scc = (ClientControllerWebImpl)WebUtils.getServletContextManager().getActor(WebKeys.WEB_CONTROLLER);
-		Result r=  new Result();
-        try{
-            ValueHolder vh=null;
-	        vh=scc.handleEvent(event);
-	        Object d= vh.get("data");
-	        if(d instanceof JSONObject){
-	        	JSONObject data= (JSONObject)d;
-	        	Object qr=data.opt("qresult");
-	        	if(qr !=null && (qr instanceof QueryResultImpl)){
-	        		// it may contain buttons, so should convert to button html
-	    			WebContext ctx = (WebContext)jo.get("org.directwebremoting.WebContext");
-	        		
-	    			HttpServletRequest request = ctx.getHttpServletRequest();
-	    			convertButtonHtml((QueryResultImpl)qr, request);
-	        	}
-	        }
-			r.setCode(Tools.getInt( vh.get("code"), 0));
-			r.setMessage( MessagesHolder.getInstance().translateMessage((String)vh.get("message"), locale));
-			r.setData( d);
-        }catch(Throwable t){
-        	r.setCode(-1);
-			r.setMessage(WebUtils.getExceptionMessage(t, locale));
-        }
-		r.setCallbackEvent(jo.optString("callbackEvent",command));
-		return r;
+        return scc.handleEvent(event);
 	}
 	 
 	/**
@@ -316,15 +323,247 @@ public class AjaxUtils {
 		query.setRange(startIdx, range);
 		// order
         ids=QueryUtils.parseIntArray(jo.optString("order_columns"));
-        if(ids !=null) {
+        if(ids !=null && ids.length>0) {
             boolean b= jo.optBoolean("order_asc",true);
             query.setOrderBy(ids, b);
+        }else{
+        	// so "order_columns" take previliage over "orderby"
+    		JSONArray orderby= jo.optJSONArray("orderby");
+    		if(orderby!=null)
+    		for(int i=0;i<orderby.length();i++){
+    			JSONObject od= orderby.getJSONObject(i);
+    			try{
+    				ColumnLink cl= new ColumnLink(table.getName()+"."+ od.getString("column"));
+    				query.addOrderBy( cl.getColumnIDs(), od.optBoolean("asc",true));
+    			}catch(Throwable t){
+    				logger.error("fail to parse column link:"+ table.getName()+"."+ od.optString("column"), t);
+    				throw new NDSException("order by column error:"+ od.optString("column"));
+    			}
+    			
+    		}
+        	
         }
         query.enableFullRangeSubTotal(jo.optBoolean("subtotal", false));
         return query;
 	}
+	/**
+	 * 
+	 * @param jsonObj should be parsed to QueryRequestImpl, javascript object is like:
+
+参数：
+	table: 	对应表的ID
+	columns:[column_name,…] // 通过数组指定要检索的字段，字段必须起始于table指明的表，可以通过ColumnLink方式关联到外键对应的表上的记录，详见Portal关于字段的配置。column_name 为字符串
+	params:{
+		combine: “and” | “or” | “and not” | “or not”
+		expr1: expression,
+		expr2 : expression
+	}，或者 {
+		expr: expression
+	}，expression 描述见下：
+		expression :{ 
+			column : column 名称或者ColumnLink，必须起始于table，忽略主表名称。
+			condition : 字符串设置对应字段的条件, 例如 20090901~20091021表示日期的范围，>10表示数字字段的范围，输入方式与PORTAL界面一致
+		} 通过expression设定某个字段满足某个条件，对于诸如exists类型的请求，可以设置column为空，在condition里直接输入exists(select x from y where z)类似的语句，注意主表在整体SQL语句构造时将被赋予全名称。
+	start: 从结果集合的哪一行开始获取记录（从0计算）
+	range: 最多获取start行开始的多少条记录
+	count: <true>| <false>, 是否计算结果集的总行数，将体现在返回结果的 count里
+	orderby:[ordercol,…] 数组，每个元素都为下文对象
+		ordercol:{
+			column: // 排序字段名称，可以是ColumnLink，字段不必在columns里出现
+			asc: <true>|<false> // 排序，true 为顺序，否则为逆序
+		}
 	
-    
+	 * @return QueryResult.toJSONString()
+	 * @throws Exception
+	 */	
+	public static JSONObject doRestQuery(JSONObject jo, QuerySession qsession, int userId, Locale locale) throws Exception{
+		logger.debug(jo.toString());
+		QueryEngine engine =QueryEngine.getInstance();
+		QueryRequestImpl query = engine.createRequest(qsession);
+		
+		TableManager manager =TableManager.getInstance();
+		Table table= manager.getTable(jo.getInt("table"));
+		query.setMainTable(table.getId());
+		
+		JSONArray columns= jo.optJSONArray("columns");
+		ArrayList selections= new ArrayList();//elements are Column
+		//Select
+		if(columns!=null){
+			for(int i=0;i<columns.length();i++){
+				String colname= columns.getString(i);
+				try{
+					ColumnLink cl= new ColumnLink(table.getName()+"."+ colname);
+					query.addSelection( cl.getColumnIDs(), false,null);
+					selections.add(cl.getLastColumn());
+				}catch(Throwable t){
+					logger.error("fail to parse column link:"+ table.getName()+"."+ colname, t);
+					throw new NDSException("column selection error:"+ colname);
+				}
+			}
+		}else{
+			JSONArray column_masks =jo.optJSONArray("column_masks");
+			
+			int[] columnMasks;
+			if(column_masks!=null){
+				columnMasks=new int[column_masks.length()];
+				for(int i=0;i< columnMasks.length ;i++) columnMasks[i]=  column_masks.getInt(i);
+			}else{
+				columnMasks= new int[]{6};// single object view
+			}
+			ArrayList cols= table.getColumns(columnMasks, false);
+			for(int i=0;i<cols.size();i++){
+				Column col= (Column)cols.get(i);
+				query.addSelection(col.getId());
+				selections.add(col);
+			}
+		}
+		
+		// Where
+		Expression expr=null,expr2;
+		// user read permission
+		expr=SecurityUtils.getSecurityFilter(table.getName(), nds.security.Directory.READ, userId, qsession);
+		if(!expr.isEmpty())
+			expr=expr.combine(parseExpression(jo.optJSONObject("params"), table),Expression.SQL_AND,null);
+		else
+			expr=parseExpression(jo.optJSONObject("params"), table);
+		
+		query.addParam(expr);
+		
+		// range
+        int startIdx=jo.optInt("start", 0);
+        if( startIdx < 0)
+            startIdx=0;
+        int range= jo.optInt("range", 0);
+        if(range <=0){
+			Configurations conf= (Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
+			range=Tools.getInt(conf.getProperty("rest.query.max.range"),-1);
+			if(range==-1) range=QueryUtils.MAXIMUM_RANGE;
+        }
+		query.setRange(startIdx, range);
+		// order
+		JSONArray orderby= jo.optJSONArray("orderby");
+		if(orderby!=null)
+		for(int i=0;i<orderby.length();i++){
+			JSONObject od= orderby.getJSONObject(i);
+			try{
+				ColumnLink cl= new ColumnLink(table.getName()+"."+ od.getString("column"));
+				query.addOrderBy( cl.getColumnIDs(), od.optBoolean("asc",true));
+			}catch(Throwable t){
+				logger.error("fail to parse column link:"+ table.getName()+"."+ od.optString("column"), t);
+				throw new NDSException("order by column error:"+ od.optString("column"));
+			}
+			
+		}
+		
+		boolean bCount= jo.optBoolean("count",false);
+		int count=-1;
+		if(bCount) count=Tools.getInt( engine.doQueryOne( query.toCountSQL()), -1);
+		String sql;
+		if(count >= 0 && count<=range){
+			sql= query.toSQL();
+		}else{
+			sql=query.toSQLWithRange();
+		}
+		logger.debug(sql);
+		JSONArray row;
+		JSONArray res=new JSONArray();
+        Statement stmt=null;
+        ResultSet rs=null;
+        Connection conn=null;
+        java.util.Date date;
+        double d;
+        int dn;
+        String s;
+
+    	SimpleDateFormat dtsf=(SimpleDateFormat)QueryUtils.dateTimeSecondsFormatter.get();
+    	SimpleDateFormat df=(SimpleDateFormat)QueryUtils.dateNumberFormatter.get();
+    	
+        try{
+        	conn= engine.getConnection();
+        	stmt= conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY ) ;
+        	rs= stmt.executeQuery(sql);
+        	while(rs.next()){
+        		row=new JSONArray();
+        		for(int i=0;i< selections.size();i++){
+        			Column col= (Column)selections.get(i);
+        			Object ro= rs.getObject(i+1);
+        			if(!rs.wasNull()){
+        				row.put(ro);
+        			}else{
+        				row.put(JSONObject.NULL);
+        			}
+        		}
+        		res.put(row);
+        	}
+        	// convert limit value description
+        	TableManager tm= TableManager.getInstance();
+        	Object cell;
+            //check columns of ColumnInterpreter
+            for ( int i=0;i< selections.size();i++){
+            	Column col= (Column)selections.get(i);
+                int colId=col.getId();
+                if ( col.isValueLimited() ){
+                    for ( int j=0;j< res.length();j++){
+                        cell=res.getJSONArray(j).get(i);
+                        try{
+                        	s=tm.getColumnValueDescription(colId, String.valueOf(cell),locale);
+                        	res.getJSONArray(j).put(i,s);
+                        }catch(Exception e){
+                            logger.error("Could not interpret cell(" + j + ","+ (i+1)+"):"+cell , e);
+                        }
+
+                    }
+                }
+            }        	
+        }finally{
+            if( rs !=null){try{ rs.close();}catch(Exception e2){}}
+            if( conn !=null){try{ QueryEngine.getInstance().closeConnection(conn);}catch(Exception e){}}
+        	
+        }
+        JSONObject j=new JSONObject();
+        j.put("rows", res);
+        if(bCount) j.put("count",  count);
+
+        return j;
+        
+	}
+	/**
+	 * 
+	 * @param jo {
+		combine: “and” | “or” | “and not” | “or not”
+		expr1: expression,
+		expr2 : expression
+	}，或者 {
+		expression
+	}，expression 描述见下：
+		expression :{ 
+			column : column 名称或者ColumnLink，必须起始于table，忽略主表名称。
+			condition : 字符串设置对应字段的条件, 例如 20090901~20091021表示日期的范围，>10表示数字字段的范围，输入方式与PORTAL界面一致
+		} 通过expression设定某个字段满足某个条件，对于诸如exists类型的请求，可以设置column为空，在condition里直接输入exists(select x from y where z)类似的语句，注意主表在整体SQL语句构造时将被赋予全名称。
+
+	 * @return never null
+	 * @throws Exception
+	 */
+    private static Expression parseExpression(JSONObject jo, Table mainTable)throws Exception{
+    	
+    	if(JSONObject.NULL.equals(jo)) return Expression.EMPTY_EXPRESSION;
+    	Expression expr=null;
+    	String combine= jo.optString("combine");
+    	if(Validator.isNull(combine)){
+    		//load column and description
+    		String condition= jo.getString("condition");
+    		String column= jo.optString("column");
+    		ColumnLink cl=null;
+    		if(nds.util.Validator.isNotNull(column)) 
+    			cl=new ColumnLink(mainTable.getName()+"."+ column);
+    		expr= new Expression(cl,condition,null );
+    	}else{
+    		Expression expr1=parseExpression(jo.getJSONObject("expr1"),mainTable);
+    		Expression expr2=parseExpression(jo.getJSONObject("expr2"),mainTable);
+    		expr= expr1.combine(expr2, Expression.parseCombination(combine),null);
+    	}
+    	return expr;
+    }
     /**
      * yfzhu 2005-05-15 发现关于LimitValue 的字段在界面上直接输入描述选项时查询会出现错误。
      * 例如：状态字段 输入"提交" 时应该由系统自动转换为2

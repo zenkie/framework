@@ -375,7 +375,18 @@ public class Expression implements SQLCombination, Serializable{
 
         return sb.toString();
     }
-
+    /**
+     * @param cmb   ¡°and¡± | ¡°or¡± | ¡°and not¡± | ¡°or not¡±
+     * @return SQL_AND,SQL_OR,SQL_AND_NOT,SQL_OR_NOT
+     */
+    public static int parseCombination(String cmb){
+    	if("and".equalsIgnoreCase(cmb)) return SQL_AND;
+    	else if("or".equalsIgnoreCase(cmb)) return SQL_OR;
+    	else if("and not".equalsIgnoreCase(cmb)) return SQL_AND_NOT;
+    	else if("or not".equalsIgnoreCase(cmb)) return SQL_OR_NOT;
+    	else
+    		throw new java.lang.IllegalArgumentException(cmb);
+    }
     /*-------- following is for xml ------------ */
 
     public void setDescription(String d){

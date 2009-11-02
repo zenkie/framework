@@ -48,7 +48,8 @@ public class ObjectModifyImpl{
 	/**
 	 * Copied from ObjectModify
 	    * If event contains column_masks, then will first get all columns that modifiable,
-	    * then filter those not has any bit set in typer "column_masks". 
+	    * then filter those not has any bit set in typer "column_masks".
+	    *  
 	    * So the columns is less or equal than Column.MASK_MODIFY_EDIT
 	    * @param event
 	    * @param table
@@ -56,35 +57,59 @@ public class ObjectModifyImpl{
 	    * @throws Exception
 	    */
 	private void prepareModifiableColumns() throws NDSException{
-		Object masks= event.getParameterValue("column_masks"); // JSONArray
-		if(masks!=null && masks instanceof JSONArray){
-			logger.debug(masks.toString());
-			
-			int[] mas= new int[((JSONArray)masks).length()];
-			for(int k=0;k< mas.length;k++){
-				try{
-					mas[k]=Tools.getInt(((JSONArray)masks).get(k) ,-1);
-				}catch(Throwable t){
-					throw new NDSException("Fail to parse array of "+ masks.toString(), t);
-				}
-			}
-			
+		boolean isPartialUpdate=false;
+		Object pu= event.getParameterValue("partial_update");
+		try{
+			if(pu!=null)
+				isPartialUpdate=Boolean.parseBoolean(String.valueOf(pu));
+		}catch(Throwable t){
+			logger.error("fail to parse boolean:"+pu+":"+t);
+		}
+		if(isPartialUpdate){
+			/**
+			 * Only columns set in event will get updated, just like sql update "set" clause
+			 * This used mainly for REST request
+			 */
 			modifiableColumns= table.getColumns(new int[]{Column.MASK_MODIFY_EDIT}, false);
 			for(int i=modifiableColumns.size()-1;i>=0;i--){
 				Column col= (Column)modifiableColumns.get(i);
-				boolean isInMasks=false;
-				for(int j=0;j<mas.length;j++){
-					if( col.isMaskSet(mas[j])){
-						isInMasks=true;
-						break;
-					}
-				}
-				if(!isInMasks) modifiableColumns.remove(i);
+				String colName=col.getName();
+				if(col.getReferenceTable()!=null) colName+="__"+col.getReferenceTable().getAlternateKey().getName();
+				boolean isInEvent=event.hasParameter(col.getName());
+				
+				if(!isInEvent) modifiableColumns.remove(i);
 			}
 		}else{
-			modifiableColumns= table.getModifiableColumns(
-	       		(event.getParameterValue("arrayItemSelecter")!=null? nds.schema.Column.QUERY_SUBLIST:Column.MODIFY));
-			
+			Object masks= event.getParameterValue("column_masks"); // JSONArray
+			if(masks!=null && masks instanceof JSONArray){
+				logger.debug(masks.toString());
+				
+				int[] mas= new int[((JSONArray)masks).length()];
+				for(int k=0;k< mas.length;k++){
+					try{
+						mas[k]=Tools.getInt(((JSONArray)masks).get(k) ,-1);
+					}catch(Throwable t){
+						throw new NDSException("Fail to parse array of "+ masks.toString(), t);
+					}
+				}
+				
+				modifiableColumns= table.getColumns(new int[]{Column.MASK_MODIFY_EDIT}, false);
+				for(int i=modifiableColumns.size()-1;i>=0;i--){
+					Column col= (Column)modifiableColumns.get(i);
+					boolean isInMasks=false;
+					for(int j=0;j<mas.length;j++){
+						if( col.isMaskSet(mas[j])){
+							isInMasks=true;
+							break;
+						}
+					}
+					if(!isInMasks) modifiableColumns.remove(i);
+				}
+			}else{
+				modifiableColumns= table.getModifiableColumns(
+		       		(event.getParameterValue("arrayItemSelecter")!=null? nds.schema.Column.QUERY_SUBLIST:Column.MODIFY));
+				
+			}
 		}
 		addCommonModifiableColumns();
 	}	
@@ -113,8 +138,8 @@ public class ObjectModifyImpl{
      * @throws NDSException
      * @throws RemoteException
      */    
-    public ArrayList getSQLData(HashMap hashColValue) throws NDSException,RemoteException{
-    	BigDecimal objectid =new BigDecimal( Tools.getInt(event.getParameterValue("id"),-1 ) );
+    public ArrayList getSQLData(HashMap hashColValue, int objectId) throws NDSException,RemoteException{
+    	//BigDecimal objectid =new BigDecimal( Tools.getInt(event.getParameterValue("id"),-1 ) );
         String[] itemidStr = event.getParameterValues("itemid");
 
         BigDecimal[] itemId = new BigDecimal[length];
@@ -150,7 +175,7 @@ public class ObjectModifyImpl{
         	}	
             // and PK
             if(itemidStr!=null)row.add(itemId[i]);
-            else row.add(objectid);
+            else row.add(new BigDecimal(objectId));
             
         	data.add(row);
         }

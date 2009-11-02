@@ -32,15 +32,15 @@ public abstract class WebActionImpl implements WebAction{
 	/**
 	 * AD_TABLE.ID
 	 */
-	protected int tableId;
+	protected int tableId=-1;
 	/**
 	 * AD_TABLECATEGORY.ID仅针对TreeNode
 	 */
-	protected int tableCategoryId;
+	protected int tableCategoryId=-1;
 	/**
 	 * ad_subsystem.id 仅针对TreeNode
 	 */
-	protected int subSystemId;
+	protected int subSystemId=-1;
 	/**
 	 * 显示条件字段，支持sql 和 beanshell, (java 的解释形脚本环境),python 三种语法
 	 * sql	举例:Select count(*) from xxx where yyy
@@ -184,7 +184,7 @@ public abstract class WebActionImpl implements WebAction{
 				map.put("code", ((Number)br).intValue());
 			}else{
 				map.put("code",0);
-				map.put("message", br.toString());
+				map.put("message", br==null?"complete":br.toString());
 			}
 			break;
 		case Python:
@@ -193,7 +193,7 @@ public abstract class WebActionImpl implements WebAction{
 				map.putAll((Map)py);
 			}else{
 				map.put("code",0);
-				map.put("message", py.toString());
+				map.put("message", py==null?"complete":py.toString());
 			}
 			break;
 		case OSShell:
@@ -213,7 +213,7 @@ public abstract class WebActionImpl implements WebAction{
 			FileUtils.delete(logFile);
 			
 			map.put("code",err);
-			map.put("message",message);
+			map.put("message",message==null?"complete":message);
 			break;
 		default:
 			throw new NDSException("Not supported action type in execute:"+ actionType.getType());

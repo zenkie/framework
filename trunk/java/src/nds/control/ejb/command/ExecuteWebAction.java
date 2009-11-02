@@ -66,11 +66,17 @@ public class ExecuteWebAction extends Command {
   	Connection conn=null;
   	try{
 	  	JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
-	  	Object target= jo.opt("target");
-	  	int objectId= jo.optInt("objectid", -1);
 	  	int actionId= jo.getInt("webaction");
 	  	WebAction action=manager.getWebAction(actionId);
 	  	if(action==null) throw new NDSException("@object-not-found@:WebAction("+actionId+")");
+
+	  	conn=QueryEngine.getInstance().getConnection();
+	  	Object target= jo.opt("target");
+	  	int objectId= jo.optInt("objectid", -1);
+
+	  	if(objectId==-1 && action.getTableId()>0){
+	  		objectId=event.getObjectIdByJSON(jo, manager.getTable(action.getTableId()), usr.adClientId,conn);
+	  	}
 	  	// check permission
 	  	
   		WebContext wc=(WebContext) jo.opt("org.directwebremoting.WebContext");
@@ -86,7 +92,6 @@ public class ExecuteWebAction extends Command {
   			session=request.getSession();
   		}
     	UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(session).getActor(nds.util.WebKeys.USER));
-    	conn=QueryEngine.getInstance().getConnection();
     	
     	
     	HashMap webActionEnv=new HashMap();

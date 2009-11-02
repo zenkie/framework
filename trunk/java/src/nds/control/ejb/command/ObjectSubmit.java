@@ -35,19 +35,19 @@ public class ObjectSubmit extends Command{
      * 先保存后提交 ("nds.savebeforesubmit"="Y") 用户有保存权限，且用户在提交前保存的设置界面上。
      */
     public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
-    	Integer pid = new Integer(Tools.getInt(event.getParameterValue("id") ,-1));
         String spName = (String)event.getParameterValue("spName");
         if(nds.util.Validator.isNull(spName)){
         	spName=(String)event.getParameterValue("command");
         }
         String tableName=null;
         Table table=null;
-        if(nds.util.Validator.isNotNull(spName)){ 
+        if(nds.util.Validator.isNotNull(spName) && !"ObjectSubmit".equals(spName)){ 
         	tableName=spName.substring(0,spName.indexOf("Submit") ) ;
         }else{
         	Object to=event.getParameterValue("table");
         	if(to!=null){
         		logger.debug("table="+ to);
+        		
         		table= TableManager.getInstance().getTable(to.toString());
         		if(table!=null) tableName= table.getName();
         		else{
@@ -64,6 +64,9 @@ public class ObjectSubmit extends Command{
         String origTableName= tableName;
         if(table==null) table=TableManager.getInstance().getTable(tableName);
         
+        User usr= helper.getOperator(event);	
+        int pid =event.getObjectId(table, usr.adClientId);
+        //Integer pid = new Integer(Tools.getInt(event.getParameterValue("id") ,-1));
         //先保存后提交 since 2008-1-9
         if(Tools.getYesNo((String) event.getParameterValue("nds.savebeforesubmit"),false)){
 	    	DefaultWebEvent dwe= (DefaultWebEvent)event.clone();
@@ -77,7 +80,7 @@ public class ObjectSubmit extends Command{
         tableName=table.getRealTableName();
         QueryEngine engine = QueryEngine.getInstance() ;
         
-        int status = engine.getSheetStatus(tableName,pid.intValue() );
+        int status = engine.getSheetStatus(tableName,pid );
         if(status!=1){
             throw new NDSEventException("@object-already-submitted@" );
         }
@@ -93,7 +96,7 @@ public class ObjectSubmit extends Command{
         boolean b=false;
         try{
         	b=SecurityUtils.hasObjectPermission(userId, user.getName(), origTableName, 
-        			pid.intValue(),Directory.SUBMIT, event.getQuerySession());
+        			pid,Directory.SUBMIT, event.getQuerySession());
         }catch(Exception e){
             throw new NDSEventException(e.getMessage() );
         }
@@ -111,7 +114,7 @@ public class ObjectSubmit extends Command{
         SPResult s=null;
         try{
 
-            s= helper.auditOrSubmitObject(table, pid.intValue(), userId, event);
+            s= helper.auditOrSubmitObject(table, pid, userId, event);
         }catch(Exception e){
         	     	
             if( e instanceof NDSException) throw (NDSException)e;
@@ -133,7 +136,7 @@ public class ObjectSubmit extends Command{
 		    	
 		    	org.json.JSONObject params=new org.json.JSONObject();
 		    	params.put("table", table.getId());
-		    	params.put("id", pid.intValue());
+		    	params.put("id", pid);
 		    	
 		    	jo.put("params", params);
 		    	jo.put("org.directwebremoting.WebContext", 

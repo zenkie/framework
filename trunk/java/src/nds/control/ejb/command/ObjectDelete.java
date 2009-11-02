@@ -17,6 +17,7 @@ import nds.mail.NotificationManager;
 import nds.query.QueryEngine;
 import nds.schema.Table;
 import nds.schema.TableManager;
+import nds.security.User;
 import nds.util.JNDINames;
 import nds.util.NDSException;
 import nds.util.Tools;
@@ -48,16 +49,21 @@ public class ObjectDelete extends Command{
 
        String tableName = table.getName() ;
        String tableDesc  = table.getDescription(Locale.CHINA);
-       int objectid = Tools.getInt(event.getParameterValue("id"),-1 ) ;
+
+       User usr= helper.getOperator(event);	
+       QueryEngine engine =QueryEngine.getInstance();
+       con= engine.getConnection();
+
+       //int objectid = Tools.getInt(event.getParameterValue("id"),-1 ) ;
+       int objectid =event.getObjectId(table, usr.adClientId, con);
+       
        //String[] itemidStr = event.getParameterValues("itemid");
 
        Vector vec = new Vector();
        String sql = "";
        int realCount=0;
        MailMsg mail=null; // elements of MailMsg
-       QueryEngine engine =QueryEngine.getInstance();
-       con= engine.getConnection();
-       String operatorDesc= helper.getOperator(event).getDescription() ;
+       String operatorDesc=usr.getDescription() ;
        boolean bCheckStatus= (table.getColumn("status") !=null);
        // check status
        if ( bCheckStatus){

@@ -137,14 +137,16 @@ public class ProcessObject extends Command {
 		
 		// this will be master record, may create or modify
 		evt=createSingleObjEvent(masterObj,template);
-		if(Tools.getInt(masterObj.get("id"),-1)==-1){
+		
+		masterObjectId=evt.getObjectId(masterTable, usr.adClientId);
+		if(masterObjectId==-1){
 			evt.setParameter("command", masterTable.getName()+"Create");
 			masterObjectCreateAction=true;
 			mainAction= Table.ADD;
 		}else{
 			//check table records exist and modifiable, object modify will check it first
 	 	   	//helper.checkTableRowsModifiable(masterTable, new int[]{masterObjectId}, conn);
-			
+			evt.setParameter("id", String.valueOf(masterObjectId));// 强制设置id,减少检索ID的操作
 			evt.setParameter("command", masterTable.getName()+"Modify");
 		}
 		vh=helper.handleEventWithNewTransaction(evt);
@@ -161,7 +163,10 @@ public class ProcessObject extends Command {
 		if(inlineObject!=null){
 			Table inlineTable=manager.getTable( inlineObject.getInt("table"));
 			evt=createSingleObjEvent(inlineObject,template);
-			if(Tools.getInt(inlineObject.get("id"),-1)==-1){
+			
+			int inlineObjectId=evt.getObjectId(inlineTable, usr.adClientId);
+			
+			if(inlineObjectId==-1){
 				evt.setParameter("command", inlineTable.getName()+"Create");
 				// unless main object request special ui action, refresh inner tab
 				if(spr!=null){
@@ -170,10 +175,11 @@ public class ProcessObject extends Command {
 					}
 				}
 			}else{
+				evt.setParameter("id", String.valueOf(inlineObjectId));// 强制设置id,减少检索ID的操作
 				evt.setParameter("command", inlineTable.getName()+"Modify");
 			}
 			vh=helper.handleEventWithNewTransaction(evt);
-			int inlineObjectId= Tools.getInt( (Integer)vh.get("objectid"), masterObjectId);
+			inlineObjectId= Tools.getInt( (Integer)vh.get("objectid"), masterObjectId);
 			logger.debug("handled:inlineObject="+inlineObjectId);
 		}
 		String fixedColumns=null;

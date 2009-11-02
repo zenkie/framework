@@ -181,6 +181,7 @@ public class EditableGridMetadata {
 		return al;
 	
 	}
+	
 	/**
 	 * 
 	 * @return column name that is to send column data to server for modification

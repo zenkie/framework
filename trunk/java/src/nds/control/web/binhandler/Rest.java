@@ -124,6 +124,8 @@ public class Rest implements BinaryHandler{
 		      PrintWriter out = response.getWriter();
 		      out.println((message ==null?status.toString(): message));
 		  }
+		  //logout session
+		  request.getSession().invalidate();
 		  /*long duration=System.currentTimeMillis()- startTime;
 		  nds.util.SysLogger.getInstance().debug("rest","batch", usr==null?"n/a":usr.getUserName(),
 				  request.getRemoteAddr(), String.valueOf(duration), usr==null?37:usr.getAdClientId());*/
@@ -198,20 +200,39 @@ public class Rest implements BinaryHandler{
     	  String command=null;
     	  try{
     		  command=tra.getString("command");
-    		  boolean isWebAction=command.equals("ExecuteWebAction");
+//    		  boolean isWebAction=command.equals("ExecuteWebAction");
+//    		  boolean isCompositeObjectProcessing=command.equals("ProcessOrder") || command.equals("GetObject");
+    		  boolean isQuery= command.equals("Query");
+    		  
+    		  boolean keepJSON=(command.equals("ProcessOrder") || command.equals("GetObject")||command.equals("ExecuteWebAction")); 
+    		  boolean singleTransaction= !command.equals("Import"); // all commands are single transaction except import command
+    		  
     		  JSONObject jo=tra.getJSONObject("params");
     		  jo.put("command",command);
-    		  if(isWebAction){
+    		  if(!isQuery){
     			  //this will be web context substitution
+    			  //and process order is not allow to parse json as event parameters
     			  jo.put("javax.servlet.http.HttpServletRequest", request);
+        		  if(!keepJSON){
+       				  jo.put("parsejson","Y"); 
+        		  }
+        		  if(singleTransaction) jo.put("nds.control.ejb.UserTransaction","Y");
+
+    			  ValueHolder vh=AjaxUtils.process(jo, usr.getSession(), usr.getUserId(), usr.getLocale());
+	    		  trs.setCode(Tools.getInt( vh.get("code"), 0));
+	    		  trs.setMessage( MessagesHolder.getInstance().translateMessage((String)vh.get("message"), usr.getLocale()));
+	    		  JSONObject rr=(JSONObject)vh.get("restResult");
+	    		  if(rr!=null)for(Iterator it=rr.keys();it.hasNext();){
+	    			  String key= String.valueOf(it.next());
+	    			  trs.addData(key, rr.get(key));
+	    		  }
     		  }else{
-    			  jo.put("parsejson","Y"); 
+    			  //query
+    			  JSONObject j=AjaxUtils.doRestQuery(jo, usr.getSession(),usr.getUserId(), usr.getLocale());
+	    		  trs.setCode(0);
+	    		  trs.setMessage( MessagesHolder.getInstance().translateMessage("@complete@:"+((System.currentTimeMillis()- startTime)/1000.0)+" seconds", usr.getLocale()));
+    			  trs.putJSONObject(j);
     		  }
-    		  
-    		  Result r=AjaxUtils.handle(jo, usr.getSession(), usr.getUserId(), usr.getLocale());
-    		  
-    		  trs.setCode(r.getCode());
-    		  trs.setMessage(r.getMessage());
     		  
     	  }catch(Throwable t){
     		  logger.error("fail to handle:"+ tra, t);

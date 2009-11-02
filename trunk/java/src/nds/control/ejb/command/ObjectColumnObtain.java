@@ -407,7 +407,10 @@ public class ObjectColumnObtain extends ColumnObtain{
   }
   /**
    * Find column data in its alias table for matching records. Will also try to fill
-   * all other associated columns in event object for later reference
+   * all other associated columns in event object for later reference.
+   * Current does not write to event value named "ColumnValueHashMap", which will be used by wfc column (may be bugs)
+   * since it's difficult to do update(yfzhu 2009-10-24)
+   *  
    * @param value AK value in alias table
    * @param column FK column
    * @param index current index in event 
@@ -427,6 +430,7 @@ public class ObjectColumnObtain extends ColumnObtain{
         	for(int i=0;i< assocColumns.size();i++){
         		Object assValue= res.getObject(i+2);
         		event.setValue((String)assocColumns.get(assocColumns.getKey(i)), assValue,eventValueName,index);
+        		// should write to ColumnValueHashMap?
         	}
         }
     }

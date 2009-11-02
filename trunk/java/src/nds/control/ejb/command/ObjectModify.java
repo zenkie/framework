@@ -22,8 +22,8 @@ import nds.control.event.NDSEventException;
 import nds.control.util.ValueHolder;
 import nds.mail.NotificationManager;
 import nds.query.*;
-import nds.query.UpdateException;
 import nds.schema.*;
+import nds.security.User;
 import nds.util.NDSException;
 import nds.util.Tools;
 /**
@@ -96,7 +96,8 @@ public class ObjectModify extends Command{
    	}catch(Exception ee){
    		logger.error(ee.toString());
    	}*/
-    int userId= helper.getOperator(event).id.intValue();
+    User usr= helper.getOperator(event);	
+    int userId=usr.id.intValue();
 
    	java.sql.Connection con=null;
        try{
@@ -109,9 +110,14 @@ public class ObjectModify extends Command{
        
        int recordLen = getRecordLength(event);
 
-       int objectId =Tools.getInt(event.getParameterValue("id"),-1);
        QueryEngine engine = QueryEngine.getInstance() ;
        con= engine.getConnection();
+
+       //Tools.getInt(event.getParameterValue("id"),-1);
+       int objectId =event.getObjectId(table, usr.adClientId, con);
+       if(objectId==-1) throw new NDSException("object id not found");
+       //event.setParameter("id", String.valueOf(objectId));
+       
        int[] oids= new int[]{objectId};
 
        //check table records exist and modifiable
@@ -126,7 +132,7 @@ public class ObjectModify extends Command{
        colValueImpl.setActionType("modify");
        HashMap hashMap = colValueImpl.getColumnHashMap(event,table,modifyImpl.getModifiableColumns(),recordLen, con);
 
-       ArrayList sqlData = modifyImpl.getSQLData(hashMap);
+       ArrayList sqlData = modifyImpl.getSQLData(hashMap, objectId);
        
 
        int realCount= sqlData.size();
@@ -258,7 +264,7 @@ public class ObjectModify extends Command{
 	   Object v=null;
 	   int i=0;
 	   try{
-	  logger.debug("length of params:"+columnTypes.length);
+	  
  	  for(i=0;i< columnTypes.length;i++){
  		  v=rowData.get(i);
  		  switch(columnTypes[i]){

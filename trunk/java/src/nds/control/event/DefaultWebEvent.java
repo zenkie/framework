@@ -52,9 +52,9 @@ package nds.control.event;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.query.*;
-
+import nds.schema.*;
 import java.util.*;
-
+import java.sql.Connection;
 import org.json.JSONObject;
 
 import nds.util.NDSRuntimeException;
@@ -71,7 +71,7 @@ public class DefaultWebEvent implements  NDSEvent {
 
     private HashMap data;
     private String eventName;
-    private Date creationDate;
+    private java.util.Date creationDate;
     public DefaultWebEvent(String eventName){
         data=new HashMap();
         this.eventName=eventName;
@@ -136,7 +136,7 @@ public class DefaultWebEvent implements  NDSEvent {
 
     	int nonEmptyArraySize=0;
 	        for( int i=0;i< values.length;i++){
-	            values[i]=values[i]==null? "":  values[i].toString().trim();
+	            values[i]=(values[i]==null? "":   values[i].toString().trim());
 	            if( !values[i].equals(""))nonEmptyArraySize=i+1;
 	        }
         data.put(param.toUpperCase(), values);
@@ -213,6 +213,11 @@ public class DefaultWebEvent implements  NDSEvent {
     public Object getParameterValue(String name){
         return data.get(name.toUpperCase());
     }
+    
+    public boolean hasParameter(String name){
+    	return data.containsKey(name.toUpperCase());
+    }
+    
     /**
      * Returns an array of String objects containing all of the values the given
      * request parameter has, or null if the parameter does not exist.
@@ -254,6 +259,136 @@ public class DefaultWebEvent implements  NDSEvent {
         }else{
         	return 1;
         }
+    }
+    /**
+     * Will not try json attribute
+     * @param table
+     * @param adClientId
+     * @return
+     * @throws QueryException
+     */
+    public int getObjectId(Table table,int adClientId) throws QueryException{
+   		return getObjectId(table,adClientId,false);
+    	
+    }
+    /**
+     * 
+     * @param table
+     * @param adClientId
+     * @param isJSON is in jsonObject attribute
+     * @return
+     * @throws QueryException
+     */
+    public int getObjectId(Table table,int adClientId, boolean isJSON) throws QueryException{
+    	Connection conn=QueryEngine.getInstance().getConnection();
+    	try{
+    		return getObjectId(table,adClientId, conn,isJSON);
+    	}finally{
+    		try{if(conn!=null)conn.close();}catch(Throwable t){}
+    	}
+    	
+    }
+    /**
+     * Will not try json attribute
+     * @param table
+     * @param adClientId
+     * @param conn
+     * @return
+     * @throws QueryException
+     */
+    public int getObjectId(Table table,int adClientId, Connection conn)throws QueryException{
+    	return getObjectId(table,adClientId, conn, false);
+    }
+    public int getObjectIdByJSON(JSONObject jo,Table table,int adClientId, Connection conn)throws QueryException{
+    	logger.debug("getObjectIdByJSON("+ jo+", "+ table+","+ adClientId);
+    	Object v=jo.opt("id");
+    	if(v !=null) return Tools.getInt(v,-1);
+    	int oid=-1;
+    	v=jo.opt("ak");
+		String sv;
+    	if(v!=null){
+    		Column akColumn=table.getAlternateKey();
+    		switch(akColumn.getType()){
+    		case Column.STRING:
+    			sv= QueryUtils.TO_STRING(String.valueOf(v));
+    			break;
+    		case Column.DATENUMBER:
+    		case Column.NUMBER:
+    			sv= String.valueOf(v);
+    			Double.parseDouble(sv); // if not a number,will throw exception
+    			break;
+    		default:
+    			throw new QueryException("ak column type is not supported:"+ akColumn+", type:"+akColumn.getType());
+    		//case Column.DATE:
+    			//sv = QueryUtils.parseInputDate(v,true,SQLTypes.TIMESTAMP);
+    		}
+    		
+    		oid= Tools.getInt(QueryEngine.getInstance().doQueryOne(
+    				"SELECT ID FROM "+ table.getRealTableName()+
+    				" WHERE "+ akColumn.getName()+"="+ sv + 
+    				(table.isAdClientIsolated()?" AND AD_CLIENT_ID="+ adClientId:""), conn),-1);
+    		if(oid==-1) throw new QueryException("ak "+ sv+" not found in "+ table);
+    		return oid;
+    	}
+    	//id_find
+    	v=jo.opt("id_find");
+    	if(v==null)return -1;
+    	sv=String.valueOf(v);
+    	//check sp name
+    	if(!sv.toLowerCase().startsWith("fd_"+table.getName().toLowerCase())) throw new QueryException("id_find not start with "+"fd_"+table.getName().toLowerCase());
+    	if(sv.contains(";")) throw new QueryException("id_find value contains ';' which is not allowed");// not allow ; in sql
+    	oid= Tools.getInt(QueryEngine.getInstance().doQueryOne("SELECT "+ sv+" FROM DUAL", conn),-1);
+		if(oid==-1) throw new QueryException("no id returned with "+ sv+" for "+ table);
+		return oid;
+    	
+    }
+    /**
+     * Get object Id by following rule:
+     * 		fetch value of "id" param, if not exists, then
+     * 		search for "ak" param, if not exists, then
+     * 		search for "id_find" param.
+     * For "id", will return that value directly, for "ak", will look for table ak column with that data,
+     * for "id_find", will start db procedure with name starting with "fd_tablename"
+     * @param table, object table 
+     * @param adClientId, the ad_client.id currently search for
+     * @param conn    
+     * @param isJSON set true if value is set in jsonObject of event
+     * @return -1 if not found
+     */
+    public int getObjectId(Table table,int adClientId, Connection conn, boolean isJSON)throws QueryException{
+    	Object v=getParameterValue("id", isJSON);
+    	if(v !=null) return Tools.getInt(v,-1);
+    	v=getParameterValue("ak", isJSON);
+		String sv;
+    	if(v!=null){
+    		Column akColumn=table.getAlternateKey();
+    		switch(akColumn.getType()){
+    		case Column.STRING:
+    			sv= QueryUtils.TO_STRING(String.valueOf(v));
+    			break;
+    		case Column.DATENUMBER:
+    		case Column.NUMBER:
+    			sv= String.valueOf(v);
+    			Double.parseDouble(sv); // if not a number,will throw exception
+    			break;
+    		default:
+    			return -1;
+    		//case Column.DATE:
+    			//sv = QueryUtils.parseInputDate(v,true,SQLTypes.TIMESTAMP);
+    		}
+    		return Tools.getInt(QueryEngine.getInstance().doQueryOne(
+    				"SELECT ID FROM "+ table.getRealTableName()+
+    				" WHERE "+ akColumn.getName()+"="+ sv + 
+    				(table.isAdClientIsolated()?" AND AD_CLIENT_ID="+ adClientId:""), conn),-1);
+    	}
+    	//id_find
+    	v=getParameterValue("id_find", isJSON);
+    	if(v==null)return -1;
+    	sv=String.valueOf(v);
+    	//check sp name
+    	if(sv.toUpperCase().startsWith("FD_"+table.getName())) return -1;
+    	if(sv.contains(";")) return -1;// not allow ; in sql
+    	return Tools.getInt(QueryEngine.getInstance().doQueryOne("SELECT "+ sv+" FROM DUAL", conn),-1);
     }
     /**
      * 为解决Item 页面上的未选中行(MR102,袁艺)和内容错位(MR103,周沥青), 对该函数处理如下
@@ -316,9 +451,20 @@ public class DefaultWebEvent implements  NDSEvent {
      	 Object[] v=null;
         boolean update=true;
      	 if(values ==null){
-     	 	v= new Object[getRawParameterValueSize(refName)];
-     	 	data.put(n, v);
-     	 	//logger.debug("new array for "+ n +" with size="+ v.length);
+     		 Object ro=data.get(refName.toUpperCase());
+     		 if(ro!=null){
+     			 if(ro.getClass().isArray()){
+     				v= new Object[ ((Object[])ro).length];
+     				data.put(n, v);
+     			 }else{
+     				data.put(n, value);
+         	 		update=false;
+     			 }
+     		 }else{
+     			 // take as object, not array
+  				data.put(n, value);
+     	 		update=false;
+     		 }
      	 }else{
      	 	if(values.getClass().isArray()){
      	 		v=(Object[])values;
@@ -403,6 +549,49 @@ public class DefaultWebEvent implements  NDSEvent {
         //return Tools.getDetailInfo(data);
     	return getDetailInfo(data);
     }
+    public static String toString(Object[] s){
+        try{
+	    	if( s==null || s.length==0 ) return "null";
+	        String ret="";
+	        for(int i=0;i< s.length;i++){
+	        	if(s[i]==null){
+	        		ret+="null,";
+	        		continue;
+	        	}
+	        	if(s[i].getClass().isArray()){
+	        		ret += toString((Object[])s[i])+",";
+	        	}else if(s[i] instanceof Map){
+	        		ret += getDetailInfo((Map)s[i])+",";
+	            }else if(s[i] instanceof Collection){
+	            	ret += toString((Collection)s[i])+",";
+	            }else
+	            	ret += s[i]+",";
+	        }
+	        return ret;
+        }catch(Exception e){
+        	e.printStackTrace();
+        	return "internal error";
+        }
+    }    
+    public static String toString(Collection col){
+    	StringBuffer sb=new StringBuffer();
+    	for(Iterator it=col.iterator();it.hasNext();){
+    		Object value = it.next();
+    		if (value.getClass().isArray() ){
+                try{
+                value= toString( (Object[])value);
+                }catch(Exception e){
+                    value="array(???)";
+                }
+            }else if(value instanceof Map){
+            	value=getDetailInfo((Map)value);
+            }else if(value instanceof Collection){
+            	value=toString((Collection)value);
+            }
+    		sb.append(value).append(";");
+    	}
+    	return sb.toString();
+    }
     /**
      * There's a bug in Tools.getDetailInfo, this is a fixed one
      * Get each property value in Map, and concatenate to a readable string
@@ -416,10 +605,14 @@ public class DefaultWebEvent implements  NDSEvent {
             Object value= content.get(key);
             if (value !=null && value.getClass().isArray() ){
                 try{
-                value= Tools.toString( (Object[])value);
+                value= toString( (Object[])value);
                 }catch(Exception e){
                     value="array(???)";
                 }
+            }else if(value!=null && value instanceof Map){
+            	value=getDetailInfo((Map)value);
+            }else if(value!=null&& value instanceof Collection){
+            	value=toString((Collection)value);
             }
             s.append(key+" = "+ value+ "("+ (value==null? "NULL": value.getClass())+")"+Tools.LINE_SEPARATOR);
         }

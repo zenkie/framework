@@ -32,7 +32,7 @@ import nds.util.NDSException;
 import nds.util.PairTable;
 import nds.util.Tools;
 import nds.util.Validator;
-
+import org.json.*;
 /**
  * Do object creation
  */
@@ -48,9 +48,9 @@ public class ObjectCreate extends Command{
     }	
   /**
    * Support update for object create when param "update_on_unique_constraints" is set to "Y" (default is "N")
-   * 
+   * 	"output_json" - "y"|"n"(default) json array to contain error info
    * @return  if jsonobj found in event, and json lines splitted, will singal "jsonObjectCreated"
-   *   
+   *  
    * attribute to Boolean.TRUE in returned ValueHolder
    */	
   public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
@@ -62,7 +62,10 @@ public class ObjectCreate extends Command{
       Table table = manager.getTable(tableId) ;
       String tableName = table.getName();          // 得到表的名字
       String tableDesc = table.getDescription(Locale.CHINA) ;
-       
+      
+      boolean isOutputJSONError=Tools.getYesNo(
+    		  event.getParameterValue("output_json", true), false);
+      
       /*
        *When update_on_unique_constraints, insert exception will be catched and try update in consequence
       	Currently only supported for single record insertion (matrix input format not supported)
@@ -177,6 +180,8 @@ public class ObjectCreate extends Command{
            Object jsonobj= event.getParameterValue("jsonobj");
            Object[] jo=null;
            BigDecimal[] pdtIds=null;
+
+           logger.debug(event.toDetailString());
            
            int[] asiRelateColumnsPosInStatement=null;
            if(createAttributeDetail){
@@ -351,13 +356,17 @@ public class ObjectCreate extends Command{
                successCount -= invalidRows.keySet().size();
            }
            //doNotification(event, table, hashMap,con);
-
            ValueHolder v = new ValueHolder();
            v.put("objectid",new Integer(objectId[0].intValue())) ; // this will be used in sheet_item.jsp to locate which sheet has been created
+
+           
+           JSONObject restResult=new JSONObject();// for rest call
+           restResult.put("objectid", new Integer(objectId[0].intValue()));
+           v.put("restResult", restResult);
+
            v.put("jsonObjectCreated", new Boolean(jsonObjectCreated));
            v.put("spresult", spr);
            StringBuffer sb=new StringBuffer();
-           
            if(! bestEffort ){
                sb.append("@total-records-created-is@:"+ successCount +"("+tableDesc+")");
                v.put("message", sb.toString()) ;
@@ -366,9 +375,24 @@ public class ObjectCreate extends Command{
                sb.append("\r\n");
                sb.append("@operate-table@："+tableDesc+"\r\n");
                sb.append("@total-lines@:"+ recordLen +", @success-import@:"+ successCount +" ,@fail-import@:"+(recordLen-successCount)+"\r\n");
-               if(invalidRows !=null && successCount !=recordLen)for( int i=0;i< recordLen;i++){
-                   String s= (String) invalidRows.get(new Integer(i));
-                   if( s !=null)sb.append("@line@:"+ (i+startRow)+ ": "+ s+ "\r\n");
+               if(invalidRows !=null && successCount !=recordLen){
+                   JSONArray ja=new JSONArray();
+                   JSONObject job;
+            	   for( int i=0;i< recordLen;i++){
+	                   String s= (String) invalidRows.get(new Integer(i));
+	                   if( s !=null){
+	                	   if(isOutputJSONError){
+	                		   job=new JSONObject();
+	                		   job.put("lineno",(i+startRow) );
+	                		   job.put("errmsg",s);
+	                		   ja.put(job);
+	                	   }else{
+		                	   sb.append("@line@:"+ (i+startRow)+ ": "+ s+ "\r\n");
+	                	   }
+	                   }
+	                   
+            	   }
+            	   restResult.put("errors", ja);
                }
                sb.append("</pre>");
                // if request to write to output file, then write to that file
@@ -379,7 +403,10 @@ public class ObjectCreate extends Command{
                    fw.write(sb.toString());
                    fw.close();
                }else{
-                   v.put("message", sb.toString()) ;
+            	   if(isOutputJSONError){
+            		   v.put("message","complete");
+            	   }else
+            		   v.put("message", sb.toString()) ;
                }
 
            }

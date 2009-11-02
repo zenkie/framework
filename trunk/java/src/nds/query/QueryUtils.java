@@ -112,6 +112,16 @@ public final class QueryUtils {
     private final static int MAX_PARAM_COUNT=30;
     private final static int EXCLUDE_VALUE=0;// column.getValues() must be validate, while 0 is default not valid
     
+    /**
+     * Generate sql like '%xxx%'(both, default) or 'xxx%'(left) for string query
+     */
+	private static boolean isLeftSideMatchOnly= false; 
+	static{
+		// for webclient.multiple=true, will try to figure out which client currently searching on
+		 nds.util.Configurations conf= (nds.util.Configurations)nds.control.web.WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
+		 isLeftSideMatchOnly= ! ("both".equals(conf.getProperty("query.wildcard.match","both")));
+	}
+
     /*static{
     	inputDateFormatter.setLenient(false);
     	dateTimeSecondsFormatter.setLenient(false);
@@ -268,7 +278,14 @@ public final class QueryUtils {
 	            	if(lcseInput.startsWith("is ") || lcseInput.startsWith("in ")) {
 	            		ret=" ("+columnName+" "+ input +") ";
 	            	}else{
-	            		ret= " ("+columnName+" LIKE '%"+input+"%') ";
+	            		if(input.contains("*") ){
+	            			ret= " ("+columnName+" LIKE '"+input.replace("*", "%")+"') ";
+	            		}else if( input.contains("%")){
+	            			ret= " ("+columnName+" LIKE '"+input+"') ";
+	            		}else{
+	            			
+		            		ret= " ("+columnName+" LIKE '"+(isLeftSideMatchOnly?"":"%")+input+"%') ";
+	            		}
 	            	}
 	            }
 	            break;
@@ -406,7 +423,8 @@ public final class QueryUtils {
 	      * "xxx,xxx,..."
 	      */
 	     public static  int[] parseIntArray(String s) {
-	         try {
+	         if(s==null) return null;
+	    	 try {
 	             ArrayList is= new ArrayList();
 	             StringTokenizer st=new StringTokenizer(s,",");
 	             while(st.hasMoreTokens()) {
