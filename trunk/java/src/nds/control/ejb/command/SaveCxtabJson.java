@@ -91,6 +91,7 @@ public class SaveCxtabJson extends Command {
 	  	  		ro.put("code", 2);
 	  		}else{
 		  		List replist=QueryEngine.getInstance().doQueryList("select ad_org_id,description,ad_table_id,filter,ad_process_id,ad_column_cxtabinst_id,sampleurl,attr1,attr2,attr3,isbackground,ad_processqueue_id,ad_cxtab_category_id,reporttype,orderno,pre_procedure,ad_pi_column_id from ad_cxtab where id="+ cxtabId);
+		  		int oldCxtabId=cxtabId;
 		  		cxtabId=QueryEngine.getInstance().getSequence("ad_cxtab");
 		  		if(replist.size()>=0){
 		  			pstmt= conn.prepareStatement(INSERT_CXTAB);
@@ -118,6 +119,11 @@ public class SaveCxtabJson extends Command {
 		  			pstmt.setString(22,"N");
 		  			pstmt.executeUpdate();
 				  	try{pstmt.close();}catch(Throwable td){}
+				  	//clone AD_CXTAB_JPARA
+				  	engine.executeUpdate(
+				  	"insert into AD_CXTAB_JPARA(id,ad_client_id,ad_cxtab_id,name,description,paratype,defaultvalue,ad_column_id,selectiontype,ownerid,modifierid,creationdate,modifieddate,isactive,orderno,nullable) select get_sequences('AD_CXTAB_JPARA'),ad_client_id,"+
+				  	cxtabId+",name,description,paratype,defaultvalue,ad_column_id,selectiontype,modifierid,modifierid,sysdate,sysdate,isactive,orderno,nullable from AD_CXTAB_JPARA where ad_cxtab_id="+oldCxtabId
+				  	);
 		  		}
 		  		flag=true;
 	  		}
