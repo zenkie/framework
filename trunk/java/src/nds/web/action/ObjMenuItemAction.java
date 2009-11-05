@@ -1,6 +1,6 @@
 package nds.web.action;
 
-import java.util.Locale;
+import java.util.*;
 
 import nds.query.QueryEngine;
 import nds.query.QueryUtils;
@@ -11,7 +11,7 @@ import nds.util.Tools;
 
 public class ObjMenuItemAction extends ObjButtonAction {
 
-	public String toHTML(Locale locale) {
+	public String toHTML(Locale locale,Map env) {
 		/*
 		 <li class="ListCopyTo">
 		<a href="javascript:pc.doListCopyTo()">¸´ÖÆ</a>
@@ -72,7 +72,12 @@ public class ObjMenuItemAction extends ObjButtonAction {
 		
 		sb.append(" />");
 		sb.append(StringUtils.escapeForXML(this.getDescription())).append("</a></li>");
-		return sb.toString();			
+		String f= StringUtils.replace(sb.toString(),"$OBJECTID$", 
+				String.valueOf(getValueFromMap("objectid", env, null,true)));
+
+		f= StringUtils.replace(f,"$MAINTABLE$", 
+				String.valueOf(getValueFromMap("maintable", env, null,true)));
+		return f;
 	}
 
 }
