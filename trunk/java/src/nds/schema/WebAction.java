@@ -27,9 +27,10 @@ public interface WebAction {
 	 * Will create html code for displaying. Using canDisplay to check whether
 	 * this action can display in specified session or not before this. 
 	 * @param locale
+	 * @param env same as canDisplay
 	 * @return html code
 	 */
-	public String toHTML(Locale locale);
+	public String toHTML(Locale locale,Map env);
 	/**
 	 * This can be url, ad_process.name, beashell script, os command, and so on
 	 * the content comes from ad_action.content, ad_action.scripts in order

@@ -1,6 +1,6 @@
 package nds.web.action;
 
-import java.util.Locale;
+import java.util.*;
 
 import nds.control.web.WebUtils;
 import nds.query.QueryEngine;
@@ -18,7 +18,7 @@ import nds.util.Tools;
  */
 public class ListButtonAction_HREF extends WebActionImpl {
 
-	public String toHTML(Locale locale) {
+	public String toHTML(Locale locale,Map env) {
 		/*<a href="javascript:pc.doAdd()" accesskey="N">
 		<img src="/html/nds/images/tb_new.gif"/>
 		ÐÂÔö

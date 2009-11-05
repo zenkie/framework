@@ -1,6 +1,6 @@
 package nds.web.action;
 
-import java.util.Locale;
+import java.util.*;
 
 import nds.control.web.WebUtils;
 import nds.query.QueryEngine;
@@ -18,7 +18,7 @@ import nds.util.Tools;
  */
 public class ListButtonAction extends WebActionImpl {
 
-	public String toHTML(Locale locale) {
+	public String toHTML(Locale locale, Map env) {
 		/*<input type="button" class="cbutton" value="help" onclick="javascript:pc.queryList()"/>*/
 		StringBuffer sb=new StringBuffer();
 		sb.append("<input type='button' class='cbutton' id=\"wa_").

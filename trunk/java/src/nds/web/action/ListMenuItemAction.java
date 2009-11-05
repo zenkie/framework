@@ -1,6 +1,6 @@
 package nds.web.action;
 
-import java.util.Locale;
+import java.util.*;
 
 import nds.query.QueryEngine;
 import nds.query.QueryUtils;
@@ -16,7 +16,7 @@ import nds.util.Tools;
  */
 public class ListMenuItemAction extends WebActionImpl {
 
-	public String toHTML(Locale locale) {
+	public String toHTML(Locale locale,Map env) {
 		/*<li class="ListCopyTo">
 		<a href="javascript:pc.doListCopyTo()">¸´ÖÆ</a>
 		</li>*/

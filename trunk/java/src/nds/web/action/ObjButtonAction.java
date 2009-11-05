@@ -17,7 +17,7 @@ import nds.util.Tools;
 
 public class ObjButtonAction extends WebActionImpl {
 
-	public String toHTML(Locale locale) {
+	public String toHTML(Locale locale, Map env) {
 		/*
 		 <input type="button" value="±£´æ(S)" onclick="oc.doModify()" 
 		 accesskey="S" name="Modify" class="cbutton"/>
@@ -77,7 +77,13 @@ public class ObjButtonAction extends WebActionImpl {
 		
 		
 		sb.append(" />");
-		return sb.toString();		
+		String f= StringUtils.replace(sb.toString(),"$OBJECTID$", 
+				String.valueOf(getValueFromMap("objectid", env, null,true)));
+
+		f= StringUtils.replace(f,"$MAINTABLE$", 
+				String.valueOf(getValueFromMap("maintable", env, null,true)));
+		
+		return f;
 	}
 	/**
 	 * Check whether this action can display in specified session or not.

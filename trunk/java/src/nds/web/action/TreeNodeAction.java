@@ -15,7 +15,7 @@ import nds.query.*;
  */
 public class TreeNodeAction extends WebActionImpl {
 	
-	public String toHTML(Locale locale) {
+	public String toHTML(Locale locale, Map env) {
 		//<tree icon="/html/nds/images/table.gif"  text="<%=StringUtils.escapeForXML(tdesc)%>" action="javascript:pc.navigate('<%=tableId%>')"/>
 		
 		StringBuffer sb=new StringBuffer();
@@ -88,6 +88,8 @@ public class TreeNodeAction extends WebActionImpl {
 					
 			}
 		}
+		
+		
 		return sb.toString();
 	}
 
