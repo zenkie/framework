@@ -35,7 +35,7 @@ public class ObjButtonAction extends WebActionImpl {
 			case URL:
 				if(nds.util.Validator.isNull(target)) target="_self";
 				sb.append("popup_window('");
-				sb.append(this.getScript()).append("' target='").
+				sb.append(this.getScript()).append("',target='").
 					append(target).append("')\"");
 				break;
 			case JavaScript:
