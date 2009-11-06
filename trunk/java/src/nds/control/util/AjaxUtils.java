@@ -211,9 +211,13 @@ public class AjaxUtils {
 			}
 			// dropdown filter on the column
 			Column acceptorColumn=  TableManager.getInstance().getColumn(jo.optInt("column",-1));
-			boolean mustBeActive= jo.optBoolean("must_be_active", true);
-			expr2=(acceptorColumn==null?null:QueryUtils.getDropdownFilter(acceptorColumn,mustBeActive));
-			if(expr2!=null)expr=expr2.combine(expr, SQLCombination.SQL_AND,null); 
+			if(acceptorColumn!=null && acceptorColumn.getTable()== table ){
+				//at least for Filter type column, the "column"'s table is not main table to query,
+				//which is set in regexpression's table json property. yfzhu 2009-11-6
+				boolean mustBeActive= jo.optBoolean("must_be_active", true);
+				expr2=(acceptorColumn==null?null:QueryUtils.getDropdownFilter(acceptorColumn,mustBeActive));
+				if(expr2!=null)expr=expr2.combine(expr, SQLCombination.SQL_AND,null); 
+			}
 		}
 			
 		
