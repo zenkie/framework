@@ -123,7 +123,7 @@ public class Filter extends TagSupport {
             	table="'"+ table+"'";
             	checkScript="";
             }
-            String action="'/html/nds/query/search.jsp?table='+"+ table+"+'&return_type=f&accepter_id="+ id +"'";
+            String action="'/html/nds/query/search.jsp?table='+"+ table+"+'&return_type=f&column="+columnId+"&accepter_id="+ id +"'";
             String imageurl="";
             String popflag="";
             String toggle;
