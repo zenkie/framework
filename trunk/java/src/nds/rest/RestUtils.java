@@ -1,12 +1,17 @@
 package nds.rest;
 import nds.util.*;
 import nds.control.util.*;
+import nds.control.web.binhandler.Rest;
+import nds.log.Logger;
+import nds.log.LoggerManager;
 import nds.security.*;
 import java.util.*;
 import java.net.*;
 import java.io.*;
 
 public class RestUtils {
+	private static Logger logger= LoggerManager.getInstance().getLogger(RestUtils.class.getName());	 
+	
 	public static ValueHolder sendRequest(String apiURL, Map<String, String> params, String method) throws Exception {
 
         String queryString = (null == params) ? "" : delimit(params.entrySet(),true	);
@@ -23,20 +28,23 @@ public class RestUtils {
 		while ((line = reader.readLine()) != null) {
 			buffer.append(line);
 		}
-		reader.close();
+		logger.debug(Tools.toString( conn.getHeaderFields()));
         SipStatus status =SipStatus.getStatus( conn.getHeaderField("sip_status"));
+		reader.close();
         conn.disconnect();
 		String msg= buffer.toString();
 		ValueHolder vh=new ValueHolder();
 
-		int code;
-		if(status.equals( SipStatus.SUCCESS)){
-			code=0;
-		}else{
-			code=- nds.util.Tools.getInt(status.getCode(),1);
-			if(code==0){
-				// SipStatus.ERROR =0
-				code=-1;
+		int code=0;
+		if(status!=null){
+			if(status.equals( SipStatus.SUCCESS)){
+				code=0;
+			}else{
+				code=- nds.util.Tools.getInt(status.getCode(),1);
+				if(code==0){
+					// SipStatus.ERROR =0
+					code=-1;
+				}
 			}
 		}
 		

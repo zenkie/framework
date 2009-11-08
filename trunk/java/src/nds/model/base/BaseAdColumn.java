@@ -52,6 +52,7 @@ public abstract class BaseAdColumn  implements Serializable {
 	public static String PROP_IS_DK = "IsDk";
 	public static String PROP_ERRMSG = "Errmsg";
 	public static String PROP_COMMENTS = "Comments";
+	public static String PROP_PROPS = "Props";
 	public static String PROP_SEQUENCENAME = "Sequencename";
 	public static String PROP_ID = "Id";
 	public static String PROP_CREATION_DATE = "CreationDate";
@@ -81,6 +82,7 @@ public abstract class BaseAdColumn  implements Serializable {
 	private java.lang.String _obtainmanner;
 	private java.lang.String _sequencename;
 	private java.lang.String _comments;
+	private java.lang.String _props;
 	private java.lang.Integer _refColumnId;
 	private java.lang.Integer _adLimitValueGroupId;
 	private java.lang.String _defaultValue;
@@ -456,6 +458,20 @@ public abstract class BaseAdColumn  implements Serializable {
 	 */
 	public void setComments (java.lang.String _comments) {
 		this._comments = _comments;
+	}
+	/**
+	 * Return the value associated with the column: Props
+	 */
+	public java.lang.String getProps () {
+		return _props;
+	}
+
+	/**
+	 * Set the value related to the column: Props
+	 * @param _comments the COMMENTS value
+	 */
+	public void setProps (java.lang.String _props) {
+		this._props = _props;
 	}
 
 

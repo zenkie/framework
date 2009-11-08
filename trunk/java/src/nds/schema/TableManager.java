@@ -54,7 +54,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     
     private Dictionary dict;
     private Properties props;
-    private CollectionValueHashtable fkColumns;//key: columnId(Integer),value: tables(Collection)
+    private CollectionValueHashtable fkColumns;//key: PK columnId(Integer),value: Columns(Collection) that referece to that pk
     private ArrayList tableCategories;  //elements are TableCategory
     private ArrayList subSystems;  //elements are SubSystem
     private boolean isInitializing;
@@ -330,7 +330,25 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     		logger.warning(DATE_TABLE + " was not found in table list");
     		//throw new NDSRuntimeException(DATE_TABLE + " was not found in table list");
     	}
+    	//this one must be behinde initReferedColumns
+    	initAutoCompleteTables();
         
+    }
+    /**
+     * If a table has jsonProp "autocomplete" set to true, will update all fk column IsAutoComplete to true
+     *
+     */
+    private void initAutoCompleteTables(){
+    	for(int i=0;i<tableList.size();i++){
+    		Table table= (Table) tableList.elementAt(i);
+    		if(table.getJSONProps()!=null && table.getJSONProps().optBoolean("autocomplete", false)){
+    			Collection c=this.fkColumns.get(Integer.valueOf( table.getPrimaryKey().getId()));
+    			for(Iterator it=c.iterator();it.hasNext();){
+    				ColumnImpl col= (ColumnImpl)it.next();
+    				col.setIsAutoComplete(true);
+    			}
+    		}
+    	}    	
     }
     public void removeTable(Table table){
     	String tableName= table.getName().toUpperCase();
@@ -471,7 +489,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
                 Column pk= col.getReferenceTable().getPrimaryKey();
                 if(pk==null) throw new nds.util.NDSRuntimeException("Could not get column fk info:"+ col);
                 fkColumns.add( new Integer(pk.getId()), col);
-                //                logger.debug("Column "+ pk + " is FK of "+col);
+                //logger.debug("Column "+ pk + " is FK of "+col);
             }
         }
     }

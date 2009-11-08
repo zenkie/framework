@@ -56,6 +56,7 @@ public abstract class BaseAdTable  implements Serializable {
 	public static String PROP_DISP_COLUMN_ID = "DispColumnId";
 	public static String PROP_IS_TREE = "IsTree";
 	public static String PROP_COMMENTS = "Comments";
+	public static String PROP_PROPS = "Props";
 	public static String PROP_IS_DROPDOWN = "IsDropdown";
 	public static String PROP_DIRECTORY = "Directory";
 	public static String PROP_CLASS_NAME = "ClassName";
@@ -82,6 +83,7 @@ public abstract class BaseAdTable  implements Serializable {
 	private java.lang.Integer _adTableCategoryId;
 	private java.lang.Integer _orderno;
 	private java.lang.String _comments;
+	private java.lang.String _props;
 	private java.lang.String _url;
 	private java.lang.String _className;
 	private java.lang.Integer _directoryId;
@@ -375,7 +377,20 @@ public abstract class BaseAdTable  implements Serializable {
 	public void setComments (java.lang.String _comments) {
 		this._comments = _comments;
 	}
+	/**
+	 * Return the value associated with the column: Props
+	 */
+	public java.lang.String getProps () {
+		return _props;
+	}
 
+	/**
+	 * Set the value related to the column: Props
+	 * @param _comments the COMMENTS value
+	 */
+	public void setProps (java.lang.String _props) {
+		this._props = _props;
+	}
 
 	/**
 	 * Return the value associated with the column: URL

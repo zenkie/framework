@@ -162,7 +162,7 @@ public class TableImpl implements Table {
     private java.util.List uniqueIndexColumns=null; //elements are Column
     
     private List<WebAction>[] actions=null;
-    
+    private JSONObject jsonProps=null;
 
     public TableImpl(int id,int order,String tableName,String desc,String rowURL,String rowClass,TableCategory category, boolean[] mask, TriggerHolder trigs,String comment) {
         this.id=id;
@@ -1197,6 +1197,16 @@ public class TableImpl implements Table {
         b.println("</hibernate-mapping>");
         }
         return buf.toString();
+    }
+    /**
+     * Set in ad_column.props as json object
+     * @return null or a valid object
+     */
+    public JSONObject getJSONProps(){
+    	return jsonProps;
+    }
+    public void setJSONProps(JSONObject jo){
+    	this.jsonProps= jo;
     }
         
 }

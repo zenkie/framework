@@ -203,6 +203,30 @@ public class DBSchemaLoader {
 		}
 		if(loadingComments) table.setComment(tb.getComments());
 		
+		String p=tb.getProps();
+		if(nds.util.Validator.isNotNull(p)){
+			/*
+			 * accept both xml and json format to specify properties, xml must be readable by JSONObject.parseXML
+			 * json is the default format
+			 */
+			org.json.JSONObject jo=null;
+			try{
+				jo= new org.json.JSONObject(p);
+			}catch(Throwable t){
+				
+				try{
+					jo =org.json.XML.toJSONObject(p);
+				}catch(Throwable t2){
+					logger.error("Fail to parse to json:"+ p, t2);
+					throw new nds.util.NDSRuntimeException("Fail to parse props of table "+ tb.getName()+" to json:"+ t2);
+				}
+				
+			}
+			if(jo!=null) table.setJSONProps(jo);
+		  	
+			
+		}
+		
 		//if(!isDebugMode)checkAPTable(table);
 		tables.put(tb.getId(),  table);
 		adTables.put(tb.getId(), tb);
@@ -293,6 +317,30 @@ public class DBSchemaLoader {
             	col.setValues(avg.getName(), pt);
             }
             if(loadingComments) col.setComment(column.getComments());
+    		String p=column.getProps();
+    		if(nds.util.Validator.isNotNull(p)){
+    			/*
+    			 * accept both xml and json format to specify properties, xml must be readable by JSONObject.parseXML
+    			 * json is the default format
+    			 */
+    			org.json.JSONObject jo=null;
+    			try{
+    				jo= new org.json.JSONObject(p);
+    			}catch(Throwable t3){
+    				
+    				try{
+    					jo =org.json.XML.toJSONObject(p);
+    				}catch(Throwable t2){
+    					logger.error("Fail to parse to json:"+ p, t2);
+    					throw new nds.util.NDSRuntimeException("Fail to parse props of table "+ column.getName()+" to json:"+ t2);
+    				}
+    				
+    			}
+    			if(jo!=null) col.setJSONProps(jo);
+    		  	
+    			
+    		}
+            
         	table.addColumn(col);
 		
 		

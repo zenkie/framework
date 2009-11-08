@@ -89,6 +89,7 @@ public class ColumnImpl implements Column {
     private List referenceColumnsInWildcardFilter=null;
     private Properties props=null;// parsed from regExpression(json type)
     private boolean isAutoComplete=false;
+    private JSONObject jsonProps=null;
     /**
      * 
      * @param id
@@ -614,6 +615,7 @@ Specify SET NULL if you want db to convert dependent foreign key values to NULL.
         refColumnName = ci.refColumnName ;
         tableColumnName = ci.tableColumnName;
         objectTable = ci.objectTable ;
+        jsonProps=ci.jsonProps;
     }
     private void readObject(java.io.ObjectInputStream stream)throws IOException, ClassNotFoundException {
         int cid= stream.readInt();
@@ -995,6 +997,17 @@ Specify SET NULL if you want db to convert dependent foreign key values to NULL.
 		jo.put("isVirtual", isVirtual);
 		jo.put("isIndexed", isIndexed);
 		jo.put("isAutoComplete", isAutoComplete);
+		jo.put("props", jsonProps);
 		return jo;
 	}    
+    /**
+     * Set in ad_column.props as json object
+     * @return null or a valid object
+     */
+    public JSONObject getJSONProps(){
+    	return jsonProps;
+    }
+    public void setJSONProps(JSONObject jo){
+    	this.jsonProps= jo;
+    }
 }

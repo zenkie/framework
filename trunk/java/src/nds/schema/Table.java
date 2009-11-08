@@ -434,6 +434,17 @@ public interface Table extends Serializable  {
      * @throws JSONException
      */
     public JSONObject toJSONObject(Locale locale) throws JSONException;
+    
+    /**
+     * Set in ad_table.props as json object.
+     * Developer should take care, the returned object should not be modified such as change 
+     * property inside. The later implementation will forbid such kind of operation. 
+     * @return null or a valid object
+     * @since 4.1 
+     * 
+     */
+    public JSONObject getJSONProps();
+    
     /**
      * DISPATCH_NONE 表示不需要下发
      */

@@ -105,9 +105,7 @@ public class Rest implements BinaryHandler{
 	        			  jr.put(tr);
 	        		  }
 	        		  //write to http body
-	        		  response.setContentType(CONTENT_TYPE_TEXT);
-	        		  PrintWriter out = response.getWriter();
-	        		  out.print(jr.toString());
+	        		  message=jr.toString();
 	        	  }else{
 	        		  status=SipStatus.ERROR;
 	        		  message="transactions not found in request";
@@ -118,13 +116,18 @@ public class Rest implements BinaryHandler{
     		  status= SipStatus.ERROR;
     		  message=t.getLocalizedMessage();
     	  }
-    	  response.addHeader("sip_status", status.getCode());
-		  if(status!=SipStatus.SUCCESS){
-		      response.setContentType(CONTENT_TYPE_TEXT);
-		      PrintWriter out = response.getWriter();
-		      out.println((message ==null?status.toString(): message));
-		  }
+    	  logger.debug("sip_status="+status+", code="+status.getCode());
+
+    	  response.setContentType(CONTENT_TYPE_TEXT);
+    	  response.setHeader("sip_status", status.getCode());
+    	  if(!response.containsHeader("sip_status")){
+    		  message="Server error, could not set sip_status in response header";
+    	  }
+		  PrintWriter out = response.getWriter();
+		  out.print(message);
+    	  
 		  //logout session
+		  //request.getSession().setMaxInactiveInterval(5); 
 		  request.getSession().invalidate();
 		  /*long duration=System.currentTimeMillis()- startTime;
 		  nds.util.SysLogger.getInstance().debug("rest","batch", usr==null?"n/a":usr.getUserName(),
