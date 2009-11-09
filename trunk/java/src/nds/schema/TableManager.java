@@ -343,7 +343,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     		Table table= (Table) tableList.elementAt(i);
     		if(table.getJSONProps()!=null && table.getJSONProps().optBoolean("autocomplete", false)){
     			Collection c=this.fkColumns.get(Integer.valueOf( table.getPrimaryKey().getId()));
-    			for(Iterator it=c.iterator();it.hasNext();){
+    			if(c!=null)for(Iterator it=c.iterator();it.hasNext();){
     				ColumnImpl col= (ColumnImpl)it.next();
     				col.setIsAutoComplete(true);
     			}

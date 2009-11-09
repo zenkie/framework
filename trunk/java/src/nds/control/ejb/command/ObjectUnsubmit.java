@@ -27,7 +27,6 @@ public class ObjectUnsubmit extends Command{
      * 必须是已经提交的单据才支持反提交，反提交要求用户具有审核权限
      */
     public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
-    	Integer pid = new Integer(Tools.getInt(event.getParameterValue("id") ,-1));
         String spName = (String)event.getParameterValue("spName");
         if(nds.util.Validator.isNull(spName)){
         	spName=(String)event.getParameterValue("command");
@@ -55,11 +54,14 @@ public class ObjectUnsubmit extends Command{
         logger.debug("table name="+ tableName +", table="+ table);
         String origTableName= tableName;
         if(table==null) table=TableManager.getInstance().getTable(tableName);
+
+        User usr= helper.getOperator(event);	
+        int pid =event.getObjectId(table, usr.adClientId);
         
         tableName=table.getRealTableName();
         QueryEngine engine = QueryEngine.getInstance() ;
         
-        int status = engine.getSheetStatus(tableName,pid.intValue() );
+        int status = engine.getSheetStatus(tableName,pid );
         if(status!=2){
             throw new NDSEventException("@object-not-submitted@" );
         }
@@ -70,7 +72,7 @@ public class ObjectUnsubmit extends Command{
         boolean b=false;
         try{
         	b=SecurityUtils.hasObjectPermission(userId, user.getName(), origTableName, 
-        			pid.intValue(),Directory.AUDIT, event.getQuerySession());
+        			pid,Directory.AUDIT, event.getQuerySession());
         }catch(Exception e){
             throw new NDSEventException(e.getMessage() );
         }

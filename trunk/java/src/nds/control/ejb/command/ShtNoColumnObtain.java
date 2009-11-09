@@ -22,6 +22,10 @@ public class ShtNoColumnObtain extends ColumnObtain{
 //      super();
 //      this.length = length;
   }
+  /**
+   * yfzhu 2009-11-10 if no is already set from event, will use that one just like DirectColumnObtain (byPage)
+   * this specialy for REST
+   */
   public Vector getColumnValue(DefaultWebEvent event,Table table,Column col,int length) throws NDSException,RemoteException{
   	  //logger.debug("==============="+ event.toDetailString());
       String tableName = table.getName();
@@ -35,7 +39,9 @@ public class ShtNoColumnObtain extends ColumnObtain{
 
       String sheetNo = null;
 
-
+      String[] value = event.getParameterValues(col.getName());
+      
+      
       String[] sheetNoSeq = new String[length];
 
       for(int i = 0;i<length;i++){
@@ -43,13 +49,13 @@ public class ShtNoColumnObtain extends ColumnObtain{
               sheetNoSeq[i]="Invalid";
           }else{
               try{
-              	/**
-              	 * Change to get sequence according to sequence head(name)
-              	 * @since 2.0
-              	 */
-	              String resultCol =engine.getSheetNo(col.getSequenceHead(), clientId);
-	              sheetNoSeq[i] = resultCol;
-	              logger.debug(col+":"+resultCol);
+            	//check event data first, if found, retrieve directly yfzhu 2009-11-10
+            	if(value!=null && value.length>i && Validator.isNotNull(value[i])){
+            		sheetNoSeq[i] = value[i];
+            	}else{
+		              String resultCol =engine.getSheetNo(col.getSequenceHead(), clientId);
+		              sheetNoSeq[i] = resultCol;
+            	}
               }catch(NDSException e){
                   if( this.isBestEffort ){
                       this.setRowInvalid(i, "在获取编号时出错："+ e);

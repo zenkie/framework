@@ -57,17 +57,22 @@ public class ObjectDelete extends Command{
        //int objectid = Tools.getInt(event.getParameterValue("id"),-1 ) ;
        int objectid =event.getObjectId(table, usr.adClientId, con);
        
+       if(objectid==-1){
+    	   throw new NDSException("@object-not-found@");
+       }
+       
        //String[] itemidStr = event.getParameterValues("itemid");
 
        Vector vec = new Vector();
        String sql = "";
-       int realCount=0;
        MailMsg mail=null; // elements of MailMsg
        String operatorDesc=usr.getDescription() ;
        boolean bCheckStatus= (table.getColumn("status") !=null);
        // check status
        if ( bCheckStatus){
       	int status=Tools.getInt(engine.doQueryOne("select status from "+ table.getRealTableName()+ " where id="+ objectid, con),-1);
+      	logger.error("Internal Error: status not valid(id="+objectid+")" );
+      	if(status==-1)  throw new NDSException("Internal Error: status not valid");
       	if(status==JNDINames.STATUS_SUBMIT|| status==JNDINames.STATUS_AUDITING){
       		// already submmited, so will not allow delete
       		throw new NDSException("@object-already-submitted-no-delete@");
@@ -75,7 +80,7 @@ public class ObjectDelete extends Command{
       }
        
        sql = getSql(tableName,objectid);
-       vec.addElement(sql) ;
+       /*vec.addElement(sql) ;
        //##################### added by yfzhu for dispatching to shop
        if ( table.getDispatchType() != table.DISPATCH_NONE &&
             table.isActionEnabled(Table.SUBMIT)==false && table.isActionEnabled(Table.AUDIT)==false){
@@ -83,7 +88,7 @@ public class ObjectDelete extends Command{
            // will be deleted
            vec.addElement( Pub.getExpDataRecord(-1, sql+";"));
        }
-       realCount=1;
+       realCount=1;*/
        
        helper.doTrigger("BD", table, objectid, con);
        Table parent= helper.getParentTable(table,event);
@@ -94,14 +99,14 @@ public class ObjectDelete extends Command{
        //check parent table records exist and modifiable
  	   helper.checkTableRowsModifiable(parent, poids, con);
        
-       int count = engine.doUpdate(vec,con);
+       int count = con.createStatement().executeUpdate(sql);
 
        // call parent table's after modify method
        helper.doTrigger("AM", parent, poids, con);
 
        //SendMail(mail);
        ValueHolder v = new ValueHolder();
-       String message ="@total-records-deleted@:" + realCount ;
+       String message ="@total-records-deleted@:" + count ;
        v.put("message",message) ;
 
        return v;
