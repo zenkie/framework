@@ -83,7 +83,13 @@ public class ExportExcel extends Command {
          
          HSSFCellStyle datetimeCellStyle = wb.createCellStyle();
          datetimeCellStyle.setDataFormat(format.getFormat("yyyy-MM-dd hh:mm:ss"));
-         
+
+         HSSFCellStyle stringCellStyle = wb.createCellStyle();
+         stringCellStyle.setDataFormat(format.getFormat("text"));
+
+         HSSFCellStyle numberCellStyle = wb.createCellStyle();
+         numberCellStyle.setDataFormat(format.getFormat("General"));
+
          short i;
          // Create a row and put some cells in it. Rows are 0 based.
          short row=0;
@@ -126,15 +132,17 @@ public class ExportExcel extends Command {
                     s= rs.getString(i+1);
                     if( ! rs.wasNull() ){
                         cell.setCellType(HSSFCell.CELL_TYPE_STRING);
-                        cell.setCellStyle(style);
+                        cell.setCellStyle(stringCellStyle);
                         cell.setEncoding(HSSFCell.ENCODING_UTF_16);
                         cell.setCellValue(s );
+                        
                     }
                     break;
                  case Column.NUMBER :
                     d= rs.getDouble(i+1);
                     if( ! rs.wasNull() ){
                         cell.setCellValue(d );
+                        cell.setCellStyle(numberCellStyle);
                     }
                     break;
                  case Column.DATENUMBER:
@@ -193,8 +201,8 @@ public class ExportExcel extends Command {
                          	throw new NDSException("Unexpected column type:"+ col.getType()+" for column:"+ col);
                          }
                          cell=sheet.getRow(j).createCell(i);
+                         cell.setCellStyle(stringCellStyle);
                          cell.setCellType(HSSFCell.CELL_TYPE_STRING);
-                         cell.setCellStyle(style);
                          cell.setEncoding(HSSFCell.ENCODING_UTF_16);
                          cell.setCellValue(s);
                      }catch(Exception e){
