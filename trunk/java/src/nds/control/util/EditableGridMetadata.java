@@ -154,6 +154,8 @@ public class EditableGridMetadata {
 		c.setDefaultValue(defaultValue);
 		c.setLocale(locale);
 		c.setFkQueryURL(fkQueryURL);
+		c.setHideInEditMode(col!=null && col.getReferenceTable()!=null && col.getReferenceTable().getJSONProps()!=null &&
+					col.getReferenceTable().getJSONProps().optBoolean("embed_obj_hide",false)==true);
 		return c;
 	}
 	/**

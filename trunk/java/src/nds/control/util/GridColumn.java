@@ -26,6 +26,7 @@ public class GridColumn implements JSONString{
 	private String defaultValue;
 	private Locale locale;
 	private String fkQueryURL;// when column is fk (such as m_product_id), how to do search
+	private boolean hideInEditMode;// controlled by embed_obj_hide of FK table
 	public String toJSONString()  {
 		try{
 			return toJSONObject().toString();
@@ -51,6 +52,7 @@ public class GridColumn implements JSONString{
 		jo.put("objIdPos",objIdPos);
 		jo.put("isUploadWhenCreate",isUploadWhenCreate);
 		jo.put("isUploadWhenModify",isUploadWhenModify);
+		if(hideInEditMode)jo.put("hideInEditMode", hideInEditMode);
 		jo.put("defaultValue",defaultValue);
 		jo.put("summethod", col==null?null: col.getSubTotalMethod());
 		jo.put("fkQueryURL", fkQueryURL);
@@ -128,5 +130,11 @@ public class GridColumn implements JSONString{
 	}
 	public void setFkQueryURL(String fkQueryURL) {
 		this.fkQueryURL = fkQueryURL;
+	}
+	public boolean isHideInEditMode() {
+		return hideInEditMode;
+	}
+	public void setHideInEditMode(boolean hideInEditMode) {
+		this.hideInEditMode = hideInEditMode;
 	}
 }
