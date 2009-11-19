@@ -34,7 +34,7 @@ public class ButtonPurRetAllotStyle extends ButtonCommandUI_Impl{
 		boolean b=false;
 		try{
 			int status= Tools.getInt(QueryEngine.getInstance().doQueryOne(
-					"select M_PROCUT_ID from Y_PURRET_ITEM where id="+ objectId), -1);
+					"select M_PRODUCT_ID from Y_PURRET_ITEM where id="+ objectId), -1);
 			return  status==-1;
 		}catch(Throwable t){
 			logger.error("Could not check user permission on ButtonReclaim: column="+ column+", objectId="+objectId+
