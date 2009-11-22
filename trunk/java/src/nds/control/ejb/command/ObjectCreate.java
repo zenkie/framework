@@ -8,11 +8,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Locale;
 import java.util.*;
 
 import nds.control.ejb.Command;
@@ -28,6 +23,7 @@ import nds.schema.Column;
 import nds.schema.RefByTable;
 import nds.schema.Table;
 import nds.schema.TableManager;
+import nds.security.User;
 import nds.util.NDSException;
 import nds.util.PairTable;
 import nds.util.Tools;
@@ -58,7 +54,8 @@ public class ObjectCreate extends Command{
   	  logger.debug(event.toDetailString());
       TableManager manager = helper.getTableManager();
       int tableId = Tools.getInt(event.getParameterValue("table"),-1 ) ;
-      int userId= helper.getOperator(event).id.intValue();
+      User usr=helper.getOperator(event);
+      int userId= usr.id.intValue();
       Table table = manager.getTable(tableId) ;
       String tableName = table.getName();          // 得到表的名字
       String tableDesc = table.getDescription(Locale.CHINA) ;
@@ -367,10 +364,14 @@ public class ObjectCreate extends Command{
            v.put("jsonObjectCreated", new Boolean(jsonObjectCreated));
            v.put("spresult", spr);
            StringBuffer sb=new StringBuffer();
+
+           logger.info("created table="+ table+", lines="+ recordLen+", success="+  successCount+", failed="+(recordLen-successCount)+", first id="+objectId[0]+" by "+ usr.name+" of id"+ usr.id);
+           
            if(! bestEffort ){
-               sb.append("@total-records-created-is@:"+ successCount +"("+tableDesc+")");
+        	   sb.append("@total-records-created-is@:"+ successCount +"("+tableDesc+")");
                v.put("message", sb.toString()) ;
            }else{
+        	   
                sb.append("<pre>### "+ (new java.util.Date())+ ":@finished-import@(@consumed-to@ "+ (System.currentTimeMillis() -beginTime)/1000 + " @seconds@) ###");
                sb.append("\r\n");
                sb.append("@operate-table@："+tableDesc+"\r\n");

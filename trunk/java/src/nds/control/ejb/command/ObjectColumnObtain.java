@@ -28,6 +28,7 @@ import nds.util.*;
  * 
  * 这一功能跟随 AliasSupportTable而补充
  * 
+ * 支持AK2 (2009-11-20 yfzhu)
  * @author yfzhu@agilecontrol.com
  */
 public class ObjectColumnObtain extends ColumnObtain{
@@ -54,8 +55,10 @@ public class ObjectColumnObtain extends ColumnObtain{
            tableColumnName = col.getReferenceColumnName() ;
       }
       Column akColumn = refTable.getAlternateKey();
+      Column ak2Column= refTable.getAlternateKey2();
+      
       String akNo = akColumn.getName();
-      Column akCol = refTable.getAlternateKey();
+      //Column akCol = refTable.getAlternateKey();
       String colName = col.getName();
       int lastIndex = -100;
       String newStr = null;
@@ -119,8 +122,11 @@ public class ObjectColumnObtain extends ColumnObtain{
       String filterSql=null;
       // refTableName must not be real table, but column filter may use the alias table as reference   
       StringBuffer sqlStr=new StringBuffer( "SELECT "+tableColumnName+" FROM "+(refTable.getRealTableName())+
-	    " "+refTable.getName()+" WHERE "+(refTable.isAcitveFilterEnabled()?"ISACTIVE='Y' AND ":"")+akNo+" = ?");
-      
+	    " "+refTable.getName()+" WHERE "+(refTable.isAcitveFilterEnabled()?"ISACTIVE='Y' AND (":"(")+akNo+" = ?");
+      if(ak2Column!=null){
+    	  sqlStr.append(" OR ").append(ak2Column.getName()).append("=?");
+      }
+      sqlStr.append(")");
       // add refTable filter
       if(refTable.getFilter()!=null){
       	sqlStr.append(" AND "+ refTable.getFilter());
@@ -184,14 +190,15 @@ public class ObjectColumnObtain extends ColumnObtain{
       }      
       PreparedStatement pstmt=null;
       ResultSet result=null;
-      boolean isUpperCase = akCol.isUpperCase();
+      boolean isUpperCase = akColumn.isUpperCase();
+      Table aliasTable=null;
       BigDecimal tmpValue;
       try{
       	  logger.debug("object obtain sql= "+ sqlStr);
           pstmt=conn.prepareStatement(sqlStr.toString());
 
           if(isAliasSupportTable){
-          	Table aliasTable=tm.getTable(((AliasSupportTable)refTable).getAliasTable());// m_product_alias
+        	 aliasTable=tm.getTable(((AliasSupportTable)refTable).getAliasTable());// m_product_alias
           	String pkAssocColumn= ((AliasSupportTable)refTable).getAssociatedColumnInAliasTable(); // m_product_id, this is in m_product_alias
           	assocColumns=((AliasSupportTable)refTable).getOtherAssociatedColumnsInAliasTable();// m_attributesetinstance_id
           	
@@ -221,6 +228,8 @@ public class ObjectColumnObtain extends ColumnObtain{
 		                  if(isUpperCase) objectStr[i]= objectStr[i].toUpperCase();
 		                  logger.debug(objectStr[i]);
 		                  pstmt.setString(1,objectStr[i] );
+		                  int cidx=1;
+		                  if(ak2Column!=null)pstmt.setString(++cidx,objectStr[i] );
 		                  
 		                  if(col.isFilteredByWildcard()){
 		                	  for(int j=0;j<rcwf.size();j++ ){
@@ -238,7 +247,7 @@ public class ObjectColumnObtain extends ColumnObtain{
 		                		  // rc should always be fk column, so data is Number
 		                		  BigDecimal[] d=(BigDecimal[]) v.elementAt(0);
 		                		  logger.debug(" value for "+ rc + ":"+d[i]);
-		                		  pstmt.setBigDecimal(j+2,d[i]); // first is objectStr[i], start from 1
+		                		  pstmt.setBigDecimal(++cidx,d[i]);
 		                	  }
 		                  }
 		                  
@@ -251,7 +260,7 @@ public class ObjectColumnObtain extends ColumnObtain{
 			                  
 		                  		/*look for associated columns in alias table, and find matched one for this column,
 		                  		  will also setup other columns in associated column list*/
-	                  		  tmpValue = findInAliasTable(objectStr[i], col, i, event, aliasPstmt,assocColumns,eventValueName);
+	                  		  tmpValue = findInAliasTable(objectStr[i], col, i, event, aliasPstmt,assocColumns,eventValueName,aliasTable);
 		                  }
                   		  if(tmpValue!=null){
                   			  resultInt[i] =tmpValue;
@@ -384,8 +393,11 @@ public class ObjectColumnObtain extends ColumnObtain{
     	}
     }
     aliasTableFilterSqlStr.append(" FROM ").append(aliasTable.getRealTableName()+
-	    " "+aliasTable.getName()+" WHERE "+(aliasTable.isAcitveFilterEnabled()?"ISACTIVE='Y' AND ":"")+aliasTable.getAlternateKey().getName()+" = ?");
-    
+	    " "+aliasTable.getName()+" WHERE "+(aliasTable.isAcitveFilterEnabled()?"ISACTIVE='Y' AND (":"(")+aliasTable.getAlternateKey().getName()+" = ?");
+    if(aliasTable.getAlternateKey2()!=null){
+    	aliasTableFilterSqlStr.append(" OR ").append(aliasTable.getAlternateKey2().getName()).append("=?");
+    }
+    aliasTableFilterSqlStr.append(")");
     // add refTable filter
     if(aliasTable.getFilter()!=null){
     	aliasTableFilterSqlStr.append(" AND "+ aliasTable.getFilter());
@@ -419,9 +431,12 @@ public class ObjectColumnObtain extends ColumnObtain{
    * @return null if no record found
    * @throws Exception
    */
-  private BigDecimal findInAliasTable(String value, Column column, int index, DefaultWebEvent event, PreparedStatement aliasPstmt,PairTable assocColumns, String eventValueName) throws Exception{
+  private BigDecimal findInAliasTable(String value, Column column, int index, 
+		  DefaultWebEvent event, PreparedStatement aliasPstmt,
+		  PairTable assocColumns, String eventValueName, Table aliasTable) throws Exception{
     ResultSet res= null;
     aliasPstmt.setString(1,value );
+    if(aliasTable.getAlternateKey2()!=null) aliasPstmt.setString(2,value );
     res= aliasPstmt.executeQuery();
     BigDecimal aId=null;
     if(res.next()){

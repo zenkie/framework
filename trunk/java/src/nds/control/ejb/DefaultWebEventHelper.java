@@ -854,6 +854,36 @@ public class DefaultWebEventHelper {
     public SPResult doTrigger(String action, Table table, int id, Connection con) throws NDSException {
         //try{ marked after 2.0
             if( table== null || id==-1) return null;
+            
+            /**
+             * 由于条码新旧转换需求，统一在此进行更新，is_pdt_table 是在TableManager#initMProductTables设置的
+             */
+            if("AC".equalsIgnoreCase(action) && table.getJSONProps()!=null && table.getJSONProps().optBoolean("is_pdt_convert",false)){
+            	String sql="UPDATE "+ table.getRealTableName()+" p"+ 
+            		" SET (M_PRODUCT_ID,M_ATTRIBUTESETINSTANCE_ID)=(SELECT n.M_PRODUCT_ID,n.M_ATTRIBUTESETINSTANCE_ID "+
+            		" FROM M_PDT_ALIAS_CON c, M_PRODUCT_ALIAS n, M_PRODUCT_ALIAS o "+
+            		" WHERE n.ID=c.M_PDA_NEW_ID AND o.ID=c.M_PDA_OLD_ID and o.M_PRODUCT_ID=p.M_PRODUCT_ID and o.M_ATTRIBUTESETINSTANCE_ID=p.M_ATTRIBUTESETINSTANCE_ID)"+
+            		" WHERE p.ID=? AND EXISTS(SELECT 1 FROM M_PDT_ALIAS_CON c, M_PRODUCT_ALIAS o "+
+            		" WHERE o.ID=c.M_PDA_OLD_ID and o.M_PRODUCT_ID=p.M_PRODUCT_ID and o.M_ATTRIBUTESETINSTANCE_ID=p.M_ATTRIBUTESETINSTANCE_ID)";
+            	PreparedStatement pstmt=null;
+            	try{
+                	pstmt= con.prepareStatement(sql);
+            		pstmt.setInt(1,id);
+            		int count=pstmt.executeUpdate();
+            		if(count>1){
+            			logger.warning("Unexpected update records count:"+ count+" for sql: "+ sql+" (id="+id+")");
+            		}
+            	}catch(Throwable t){
+            		logger.error("Fail to do barcode conversion :"+ sql+" (id="+id+"):"+ t);
+            		throw new NDSException("Fail to do barcode conversion", t);
+            	}finally{
+            		if(pstmt!=null){
+            			try{pstmt.close();}catch(Throwable tx){}
+            		}
+            	}
+            	
+            }
+            
             SPResult spr=null;
             nds.schema.TriggerHolder.VersionedTrigger vt;
             vt=table.getTrigger(action);

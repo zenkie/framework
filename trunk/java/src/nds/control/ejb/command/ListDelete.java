@@ -85,6 +85,8 @@ public class ListDelete extends Command{
             if (s !=null) {
                 res += s+ "<br>";
                 errCount ++;
+            }else{
+                logger.info("deleted table="+ table+", id="+itemid+" by "+ user.name+" of id"+ user.id);
             }
         }
         if(parent !=null)
@@ -96,7 +98,9 @@ public class ListDelete extends Command{
         if ( errCount > 0) message +=", @failed-count@:"+ errCount +", @detail-msg@:" + res;
         else message +=",@complete@";
         v.put("message",message) ;
-       return v;
+        
+        
+        return v;
        }catch(Exception t){
        		if( t instanceof NDSException ) throw (NDSException)t;
        		else{

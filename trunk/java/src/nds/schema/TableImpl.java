@@ -1198,6 +1198,15 @@ public class TableImpl implements Table {
         }
         return buf.toString();
     }
+    
+    public void setAlternateKey2(String ak2){
+    	ColumnImpl column= (ColumnImpl)this.getColumn(ak2);
+    	if(column!=null){
+    		column.setIsAlternateKey2(true);
+    		alternateKey2=column;
+    	}else
+    		throw new NDSRuntimeException("Column "+ ak2+" not found in "+ name+" as ak2");
+    }
     /**
      * Set in ad_column.props as json object
      * @return null or a valid object

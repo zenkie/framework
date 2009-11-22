@@ -153,7 +153,7 @@ public interface Column extends Serializable {
      */
     public boolean isAlternateKey();
 
-    public boolean isAlternateKey2();//by Hawkins
+    public boolean isAlternateKey2();
     /**
      * 是否显示主键。一般情况下，显示主键＝AK，但对于特殊情况可以分开
      * 例如：科目表中，AK=Value, DK=Name

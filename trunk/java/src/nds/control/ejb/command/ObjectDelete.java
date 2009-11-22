@@ -100,7 +100,6 @@ public class ObjectDelete extends Command{
  	   helper.checkTableRowsModifiable(parent, poids, con);
        
        int count = con.createStatement().executeUpdate(sql);
-
        // call parent table's after modify method
        helper.doTrigger("AM", parent, poids, con);
 
@@ -109,6 +108,7 @@ public class ObjectDelete extends Command{
        String message ="@total-records-deleted@:" + count ;
        v.put("message",message) ;
 
+       logger.info("deleted table="+ table+", id="+objectid+" by "+ usr.name+" of id"+ usr.id);
        return v;
        }catch(Exception e){
            if(e instanceof NDSException) throw (NDSException)e;

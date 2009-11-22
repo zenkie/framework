@@ -332,7 +332,59 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     	}
     	//this one must be behinde initReferedColumns
     	initAutoCompleteTables();
+    	initAK2();
+    	initMProductTables();
         
+    }
+    /**
+     * AK2 设置在表的jsonprops里，将修改table/column的有关定义
+     *
+     */
+    private void initAK2(){
+    	for(int i=0;i<tableList.size();i++){
+    		TableImpl table= (TableImpl) tableList.elementAt(i);
+    		if(table.getJSONProps()!=null){
+    			String ak2= table.getJSONProps().optString("ak2");
+    			if(Validator.isNotNull(ak2))
+    				table.setAlternateKey2(ak2);
+    		}
+    	}    	
+    }
+    /**
+     * 支持新旧条码转换。
+     * 
+     * 输入了一个商品＋ASI，系统在保存完，AC 方法执行前，会自动将 商品+ASI 更新为新的商品+ASI
+     * 此UPDATE动作在INSERT后进行。AC 方法里将识别当前表是否含有M_PRODUCT 和 M_ATTRIBUTESETINSTANCE
+     * 字段，并标记要做自动转换。
+     */
+    private void initMProductTables(){
+    	// system param control
+    	try{
+    		if(!"true".equals(QueryEngine.getInstance().doQueryOne(
+    				"select value from ad_param where name='portal.3333'"))) return;
+    	}catch(Throwable t){
+    		throw new NDSRuntimeException("Unable to query value 'portal.3333'", t);
+    	}
+    	for(int i=0;i<tableList.size();i++){
+    		TableImpl table= (TableImpl) tableList.elementAt(i);
+    		Column pdtCol=table.getColumn("M_PRODUCT_ID");
+    		Column asiCol=table.getColumn("M_ATTRIBUTESETINSTANCE_ID");
+    		if(pdtCol!=null && asiCol!=null){
+    			boolean convert=true;
+    			org.json.JSONObject jo=table.getJSONProps();
+    			if(jo==null){
+    				jo=new org.json.JSONObject();
+    				table.setJSONProps(jo);
+    			}else{
+    				convert= jo.optBoolean("is_pdt_convert", false);
+    			}
+    			try{
+    				if(convert)jo.put("is_pdt_convert", true);
+    			}catch(Throwable t){
+    				logger.error("Fail to set is_pdt_table for table:"+ table+":"+t);
+    			}
+    		}
+    	}    	
     }
     /**
      * If a table has jsonProp "autocomplete" set to true, will update all fk column IsAutoComplete to true

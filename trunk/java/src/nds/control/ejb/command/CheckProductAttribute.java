@@ -28,9 +28,11 @@ import java.sql.*;
  */
 public class CheckProductAttribute extends Command {
 	//for burgeon product, size and color will also try to be loaded
-	private boolean loadingBurgeonProduct=false; //will loading M_ATTRIBUTESETINSTANCE_ID;value1 as color, and M_ATTRIBUTESETINSTANCE_ID;value2 as size 
+	private boolean loadingBurgeonProduct=false; //will loading M_ATTRIBUTESETINSTANCE_ID;value1 as color, and M_ATTRIBUTESETINSTANCE_ID;value2 as size
+	private boolean loadingBurgeonProduct2=false;//load M_ATTRIBUTESETINSTANCE_ID.VALUE1_CODE, and VALUE2_CODE
 	public CheckProductAttribute(){
 		loadingBurgeonProduct=( TableManager.getInstance().getColumn("M_ATTRIBUTESETINSTANCE","VALUE1")!=null);
+		loadingBurgeonProduct2=( TableManager.getInstance().getColumn("M_ATTRIBUTESETINSTANCE","VALUE1_CODE")!=null);
 	}
 	/**
 	 * If we can find product by name, attribute set will be checked, if found, will direct
@@ -102,18 +104,29 @@ public class CheckProductAttribute extends Command {
 	  	int productId=-1,  asId=-1 ,asiId=-1 ;
 	  	String productName=null, productValue=null, asiName=null;
 	  	String pricelist=null;// take it as string, so we can handle null
-	  	String value1=null,value2=null;
+	  	String value1=null,value2=null,value1_code=null,value2_code=null;
+	  	
+	  	Column aliasAk2= manager.getTable("M_PRODUCT_ALIAS").getAlternateKey2();
+	  	Column pdtAk2= manager.getTable("M_PRODUCT").getAlternateKey2();
 	  	
 	  	// 按照纤丝鸟的要求，条码优先
+	  	// 按照LILY要求，条码也有快捷码(AK2)
   		if(checkAlias){
   			String sql="select m.id, m.name, m.value, m.m_attributeset_id, a.id,a.description, m.pricelist"+
-  			(this.loadingBurgeonProduct?", a.value1,a.value2":"")
+  			(this.loadingBurgeonProduct?",a.value1,a.value2":"")+
+  			(this.loadingBurgeonProduct2?",a.value1_code,a.value2_code":"")
   			+" from m_product_alias p, "+
-				"m_product m, m_attributesetinstance a where p.no=? and p.ad_client_id=? and m.id=p.m_product_id and a.id(+)=p.M_ATTRIBUTESETINSTANCE_ID"; 
+				"m_product m, m_attributesetinstance a where (p.no=? "+
+				(aliasAk2==null?"":" or p."+aliasAk2.getName()+"=?" )
+				+" ) and p.ad_client_id=? and m.id=p.m_product_id and a.id(+)=p.M_ATTRIBUTESETINSTANCE_ID"; 
 						
   			pstmt= conn.prepareStatement(sql);
-  		  	pstmt.setString(1, (manager.getColumn("m_product_alias", "no").isUpperCase()? product.toUpperCase():product));
-  		  	pstmt.setInt(2, usr.adClientId);
+  			int i=1;
+  		  	pstmt.setString(i++, (manager.getColumn("m_product_alias", "no").isUpperCase()? product.toUpperCase():product));
+  		  	if(aliasAk2!=null)
+  		  		pstmt.setString(i++, (aliasAk2.isUpperCase()? product.toUpperCase():product));
+  		  	
+  		  	pstmt.setInt(i++, usr.adClientId);
   		  	rs=pstmt.executeQuery();
   			if(rs.next()){
   		  		productId= rs.getInt(1);// Tools.getInt( al.get(0), -1);
@@ -131,6 +144,10 @@ public class CheckProductAttribute extends Command {
   		  			value1= rs.getString(8);
   		  			value2=rs.getString(9);
   		  		}
+  		  		if(loadingBurgeonProduct2){
+  		  			value1_code= rs.getString(10);
+  		  			value2_code=rs.getString(11);
+  		  		}
   		  		
   			}
   			rs.close();
@@ -138,9 +155,13 @@ public class CheckProductAttribute extends Command {
   			
   		}
   		if(productId ==-1){
-  		  	pstmt= conn.prepareStatement("select id, name, value, m_attributeset_id, pricelist from m_product where name=? and ad_client_id=?");
-  		  	pstmt.setString(1, (productUCase? product.toUpperCase():product));
-  		  	pstmt.setInt(2, usr.adClientId);
+  		  	pstmt= conn.prepareStatement("select id, name, value, m_attributeset_id, pricelist from m_product where (name=? "+
+				(pdtAk2==null?"":" or "+pdtAk2.getName()+"=?" )
+				+") and ad_client_id=?");
+  		  	int i=1;
+  		  	pstmt.setString(i++, (productUCase? product.toUpperCase():product));
+  		  	if(pdtAk2!=null)pstmt.setString(i++, (pdtAk2.isUpperCase()? product.toUpperCase():product));
+  		  	pstmt.setInt(i++, usr.adClientId);
   		  	rs= pstmt.executeQuery();
   		  	if(rs.next()){ 
   		  		productId= rs.getInt(1);// Tools.getInt( al.get(0), -1);
@@ -200,6 +221,8 @@ public class CheckProductAttribute extends Command {
 	  	  		ro.put("product_asi_name",asiName);
 	  	  		ro.put("product_value1",value1);
 	  	  		ro.put("product_value2",value2);
+	  	  		ro.put("product_value1_code",value1_code);
+	  	  		ro.put("product_value2_code",value2_code);
 	  		}else{
 	  			if(asId!=-1 && tryMatrix ){
 	  				// does the attribute set support matrix?

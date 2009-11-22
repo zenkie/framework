@@ -23,6 +23,9 @@ import nds.util.Tools;
  * Create alias records for specfied product.
  * 
  * 
+ * 增加M_PRODUCT_ALIAS.AK2的自动生成，规则为：
+ * 将 M_PRODUCT_ALIAS.NO 第一次出现M_PRODUCT.NAME的内容替换为M_PRODUCT.AK2的内容
+ * 
  * @author yfzhu@agilecontrol.com
  */
 public class CreateAlias extends Command{
@@ -45,7 +48,10 @@ public class CreateAlias extends Command{
      */
     public ValueHolder execute(DefaultWebEvent event) throws NDSException, RemoteException{
     	//logger.debug(event.toDetailString());
-    	String dir= TableManager.getInstance().getTable("M_PRODUCT_ALIAS").getSecurityDirectory();
+    	TableManager manager= TableManager.getInstance();
+    	Table pdtTable= TableManager.getInstance().getTable("M_PRODUCT");
+    	Table pdtAliasTable= TableManager.getInstance().getTable("M_PRODUCT_ALIAS"); 
+    	String dir=pdtAliasTable.getSecurityDirectory();
     	event.setParameter("directory",  dir);
 		User usr =helper.getOperator(event);
 		int clientId= usr.adClientId;
@@ -61,7 +67,6 @@ public class CreateAlias extends Command{
     	String pdtColumn=(String) event.getParameterValue("pdtcolumn",true);
     	int idx=pdtColumn.indexOf(",");
     	if(idx>0) pdtColumn= pdtColumn.substring(0, idx);
-    	TableManager manager= TableManager.getInstance();
     	Column col= manager.getColumn(Tools.getInt(pdtColumn,-1));
     	if(col==null) throw new NDSException("Could not find column in m_product:"+ pdtColumn);
     	String pdtColumnValue= (String)engine.doQueryOne("select "+ col.getName() + " from m_product where id="+ pdtId);
@@ -139,6 +144,14 @@ public class CreateAlias extends Command{
 	    			pstmtDeleteAlias.executeUpdate();
 	    			//logger.debug("deactive one for  pdtid="+ pdtId+", asiId="+ asiId);
 	    		}
+	    	}
+	    	// 更新AK2
+	    	Column colAk2= pdtAliasTable.getAlternateKey2();
+	    	if(colAk2!=null && pdtTable.getAlternateKey2()!=null){
+	    		String sql= "UPDATE M_PRODUCT_ALIAS a SET "+ colAk2.getName()+"=(select replace(a.no, p.name,"+
+	    			pdtTable.getAlternateKey2().getName()+") from m_product p where p.id="+pdtId+") where a.m_product_id="+pdtId;
+	    		int cnt=conn.createStatement().executeUpdate(sql);
+	    		logger.debug("(cnt="+ cnt+"):"+sql);
 	    	}
     	}catch(Throwable t){
     		logger.error("failed when create alias for ="+pdtId, t);

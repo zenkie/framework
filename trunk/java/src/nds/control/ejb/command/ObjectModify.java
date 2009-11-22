@@ -214,6 +214,9 @@ public class ObjectModify extends Command{
        v.put("message",message) ;
        v.put("jsonObjectCreated", new Boolean(jsonObjectCreated));
        v.put("spresult", spr);
+       
+       logger.info("modified table="+ table+", id="+objectId+" by "+ usr.name+" of id"+ usr.id);
+       
        return v;
        }finally{
            try{if(con !=null) con.close(); }catch(Exception eee){}

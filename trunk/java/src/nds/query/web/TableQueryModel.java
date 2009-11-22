@@ -243,7 +243,7 @@ public class TableQueryModel {
      */
     private void createColumns(ArrayList showColumns, boolean showNullableIndicator,Locale locale) {
         //ArrayList showColumns= mainTable.getShowableColumns(actionType);
-        ArrayList ak2Columns = new ArrayList();
+        
         String desc, inputName, selectName, columns;
         Column column;
         int size,type,i;String fkDesc;
@@ -267,8 +267,6 @@ public class TableQueryModel {
                     fkDesc= c2.getDescription(locale);
                     columns +=","+c2.getId();
                 }
-                if(column.getReferenceTable().getAlternateKey2() != null)
-                    ak2Columns.add(column);
             } else {
                 size= column.getLength();
                 type=column.getType();
@@ -280,21 +278,7 @@ public class TableQueryModel {
             QueryColumn qc=new QueryColumn(desc,inputName,selectName,columns,size,toTypeDesc(column,locale),fkDesc);
             queryColumns.put(column,qc);
         }
-        for(int j = 0;j < ak2Columns.size();j++){
-            column = (Column)ak2Columns.get(j);
-            desc = column.getDescription(locale);
-            columns=""+column.getId();
-            inputName="param/"+(i+j);
-            selectName="select/"+(i+j);
-            Column c2 = column.getReferenceTable().getAlternateKey2();
-            size = c2.getLength();
-            type = c2.getType();
-            //desc += "" + c2.getDescription(locale);
-            columns += ","+c2.getId();
-            fkDesc= c2.getDescription(locale);
-            QueryColumn qc=new QueryColumn(desc,inputName,selectName,columns,size,toTypeDesc(c2,locale), fkDesc);
-            queryColumns.put(column.getName()+c2.getName(),qc);
-        }
+
 
     }
     /**

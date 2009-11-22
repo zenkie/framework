@@ -12,6 +12,9 @@ import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEventException;
 import nds.control.util.AjaxUtils;
 import nds.control.util.ValueHolder;
+import nds.control.web.SecurityManagerWebImpl;
+import nds.control.web.ServletContextManager;
+import nds.control.web.SessionInfo;
 import nds.control.web.UserWebImpl;
 import nds.control.web.WebUtils;
 import nds.query.*;
@@ -82,16 +85,37 @@ public class ExecuteWebAction extends Command {
   		WebContext wc=(WebContext) jo.opt("org.directwebremoting.WebContext");
   		javax.servlet.http.HttpSession session=null;
   		javax.servlet.http.HttpServletRequest request=null;
+  		UserWebImpl userWeb=null;
   		if(wc!=null) {
   			session=wc.getSession();
   			request=wc.getHttpServletRequest();
+  	    	userWeb=((UserWebImpl)WebUtils.getSessionContextManager(session).getActor(nds.util.WebKeys.USER));
   		}
   		else{
   			request=(javax.servlet.http.HttpServletRequest)jo.opt("javax.servlet.http.HttpServletRequest");
   			if(request==null) throw new NDSException("Could not get HttpServletRequest");
   			session=request.getSession();
+  			//where's the userWeb? some request (such like flash upload) will start a new session
+  			//with jsessionid refers to previous authenticated session, so we will try that first
+  			String jsessionId=jo.optString("JSESSIONID");
+  			if(jsessionId!=null ){
+        	    ServletContextManager scm= WebUtils.getServletContextManager();
+        	    SecurityManagerWebImpl se=(SecurityManagerWebImpl)scm.getActor(nds.util.WebKeys.SECURITY_MANAGER);
+        		SessionInfo si= se.getSession(jsessionId);
+        		if(si!=null){
+        			userWeb= si.getUserWebImpl();
+        			
+        		}else{
+        			userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession(true)).getActor(WebKeys.USER));
+        		}
+        		
+        	}else{
+        		userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession(true)).getActor(WebKeys.USER));        	
+        	}
+        	if(userWeb==null || userWeb.isGuest()){
+        		throw new NDSEventException("Please login");
+        	}  			
   		}
-    	UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(session).getActor(nds.util.WebKeys.USER));
     	
     	
     	HashMap webActionEnv=new HashMap();
@@ -101,7 +125,6 @@ public class ExecuteWebAction extends Command {
     	webActionEnv.put("userid",usr.id);
     	webActionEnv.put("webaction",action);
     	webActionEnv.put("objectid",objectId);
-
     	
     	// convert internal query object, which can be read by AjaxUtils.parseQuery, to sql like:
     	// select id from m_product where name like ¡®adf%¡¯ and isactive=¡¯Y¡¯
@@ -141,6 +164,9 @@ public class ExecuteWebAction extends Command {
 	  	if(table!=null)
 	  		webActionEnv.put("maintable",table.getName());
     	
+	  	//put json into env
+	  	webActionEnv.put("jsonobj", jo);
+	  	
     	if(!action.canDisplay(webActionEnv)){
     		throw new NDSException("@no-permission@");
     	}
@@ -163,7 +189,7 @@ public class ExecuteWebAction extends Command {
 		holder.put("code","0");
 		holder.put("data",data );
 	  	
-
+		logger.info("webaction table="+ table+", id="+objectId+" by "+ usr.name+" of id "+ usr.id);
 	  	return holder;
   	}catch(Throwable t){
   		logger.error("exception",t);

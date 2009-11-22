@@ -197,15 +197,21 @@ public abstract class WebActionImpl implements WebAction{
 			}
 			break;
 		case OSShell:
+			UserWebImpl usr= (UserWebImpl)getValueFromMap("userweb",params,null,true);
+			JSONObject jo=(JSONObject)getValueFromMap("jsonobj",params,null,false);
 			
 			Configurations conf= (Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
 			
 			String logFile = conf.getProperty("dir.tmp","/tmp") + File.separator+ "ExecWebAction_"+ this.getId()+"_"+System.currentTimeMillis()+".log"; 
 			CommandExecuter cmdE= new CommandExecuter(logFile);
 			
-			int err=cmdE.run(this.getScript());
+			String sc=this.getScript();
+			if(usr!=null) sc=QueryUtils.replaceVariables(sc,usr.getSession());
+			logger.debug("for shell:"+jo);
+			if(jo!=null)sc= JSONUtils.replaceVariables(sc, jo);
 			
-			UserWebImpl usr= (UserWebImpl)getValueFromMap("userweb",params,null,true);
+			int err=cmdE.run(sc);
+			
 			logger.info("User "+ usr.getUserName() + "@" + usr.getClientDomain()+" runs command :"+ this.getScript()+" with return code:"+err);
     		SysLogger.getInstance().info("sys", "exec", usr.getUserName(), "", getScript()+"("+ err+")", usr.getAdClientId());
 			String message= Tools.readFile(logFile);
