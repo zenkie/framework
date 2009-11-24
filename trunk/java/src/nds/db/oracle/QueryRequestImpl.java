@@ -190,7 +190,7 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
     private String addParam(int mainTableColumnID, String value, boolean bAddToWhereClause, String desc) throws QueryException {
         checkMainTable(mainTableColumnID);
         Column col=manager.getColumn(mainTableColumnID);
-
+        if(col.isUpperCase()) value=(value==null?value: value.toUpperCase());
         if(col.isColumnLink()){
         	int[] cl=new int[]{mainTableColumnID}; // col.getColumnLink().getColumnIDs();
         	return this.addParam(cl,value,bAddToWhereClause,desc);
@@ -398,6 +398,8 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
             String aliasTable= addAliasTable(clink);
             // create where clause
             Column lastColumn=manager.getColumn(columnLinks[columnLinks.length -1]);
+            if(lastColumn.isUpperCase()) value=value.toUpperCase();
+            
             String columnName=aliasTable+"."+ lastColumn.getName();
             String sub=QueryUtils.toSQLClause(columnName,value, lastColumn.getType());
 
