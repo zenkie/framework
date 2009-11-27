@@ -160,9 +160,208 @@ public class ImportExcel implements Runnable{
 //        logger.debug("colName for "+ col+ ":"+ colName);
         return colName;
     }
-    public DefaultWebEvent createEvent() throws NDSException{
+    /**
+     * ObjectCreate event
+     * @return
+     * @throws Exception
+     */
+    public DefaultWebEvent createEvent () throws Exception{
+    	if("true".equals(params.getProperty("partial_update"))){
+    		return createEventListUpdate();
+    	}else{
+    		return createEventObjCreate();
+    	}
+    }
+    /**
+     * BatchModify event, has parameter "update_columns" specify moidify columns
+     * @return
+     * @throws Exception
+     */
+    private DefaultWebEvent createEventListUpdate() throws Exception{
+    	
         DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
-        event.setParameter("command", "ObjectCreate"); // default value, may override by out parameters
+       	event.setParameter("command","ListUpdate");
+       	event.setParameter("nds.start_time",String.valueOf(System.currentTimeMillis()));
+       	event.setParameter("nds.control.ejb.UserTransaction", "N");// will have no transaction control inside, and multiple transactions will be triggered then 
+       	String key;
+        for(Iterator it=params.keySet().iterator() ;it.hasNext();){
+            key=(String) it.next();
+            event.setParameter(key, params.getProperty(key));
+        }
+        logger.debug(event.toDetailString());
+        
+        Table table= TableManager.getInstance().getTable(tableId);
+
+        Column col;
+        String cv;
+        
+        ArrayList columns=new ArrayList();
+        String columnStr= params.getProperty("update_columns");
+        StringTokenizer st=new StringTokenizer(columnStr,",");
+
+        while(st.hasMoreTokens()){
+        	col=table.getColumn(st.nextToken());
+        	columns.add(col);
+        }
+
+        ArrayList directColumnOfData= new ArrayList(); // if column is fk, the fk table's ak will be set here, so make it easier check input data type
+
+        ArrayList colNames=new ArrayList();// if column is FK, the name will be like "col_ak", such as "product(id)_no"
+        for( int i=0;i< columns.size();i++){
+            col=(Column) columns.get(i);
+            colNames.add(getColumnName(col));
+            if( col.getReferenceTable() !=null){
+                directColumnOfData.add( col.getReferenceTable().getAlternateKey());
+            }else{
+                directColumnOfData.add( col);
+            }
+        }
+        
+    	//按行来构造数据，而非ObjectCreate的按列方式
+    	ArrayList rows=new ArrayList();
+        try{
+
+	        if("txt".equals(params.getProperty("file_format"))){
+	        	//txt file handling
+	            /**
+	             * 对于文本格式(file_format='txt')，支持分隔符(txt_type=token)和固定宽度(txt_type=fix)，
+	             * 分隔符(txt_token)支持tab(\t),space( ),comma(,),and others(xx)，连续分隔作为单个处理，
+	             * 固定宽度的需给出每个列的宽度定义(txt_fix_len)，不足用空格补齐 
+	             */
+	        	if(excelStream==null) throw new NDSException("must set inputstream");
+	        	BufferedReader  isr=new BufferedReader(new InputStreamReader(excelStream, "GBK"));
+	        	
+	        	boolean txtLineTypeIsToken= "token".equals(params.getProperty("txt_type","token"));
+	        	StringTokenizer fixedLength=new StringTokenizer( params.getProperty("txt_fix_len","20,5"),",");
+	        	String token=  params.getProperty("txt_token");
+	        	
+	        	Pattern tokenPattern=null;
+	        	
+	        	int[] fixedLengths=new int[columns.size()];
+	        	int[] startIdx=new int[columns.size()];
+	        	int[] endIdx=new int[columns.size()];
+	        	if(txtLineTypeIsToken){
+	        		//
+	        		if(Validator.isNull(token)) throw new NDSException("未设置分隔符");
+	        		tokenPattern= Pattern.compile(token);
+	        	}else{
+		        	int cnt=0;
+	        		 while(fixedLength.hasMoreTokens()){ 
+	        			 fixedLengths[cnt]=Tools.getInt(fixedLength.nextToken(), -1);
+	        			 cnt++;
+	        		 }
+	        		 startIdx[0]=0;
+	        		 endIdx[0]=fixedLengths[0];
+	        		 
+        			 for(int i=0;i<fixedLengths.length;i++){
+        				 if(fixedLengths[i] <1){
+        					 //nullable?
+        					 if(! ((Column)columns.get(i)).isNullable())
+        						 throw new NDSException("固定宽度列定义错误："+params.getProperty("txt_fix_len","20,5"));
+        				 }
+        				 if(i>0){
+        					 startIdx[i]=startIdx[i-1]+fixedLengths[i-1];
+        					 endIdx[i]=startIdx[i]+fixedLengths[i];
+        				 }
+        			 }
+	        	}
+	        	
+	        	
+	        	String line= isr.readLine();
+	        	int lcnt =0;
+	        	String colPart;
+	        	while(line!=null){
+	        		if(line.trim().length()>0){
+	        			DefaultWebEvent dwe=createRowModifyEvent();
+	        			
+		        		if(txtLineTypeIsToken){
+		        			//分隔符
+		        			String[] s=tokenPattern.split(line);
+		        			for(int i=0;i<colNames.size() && i< s.length;i++ ){
+		        				dwe.setParameter((String)colNames.get(i), s[i].trim());
+		        			}
+		        			// s element count may less than expected
+		        			for(int i=s.length;i<colNames.size();i++ )dwe.setParameter((String)colNames.get(i), "");
+		        			
+		        		}else{
+		        			//固定宽度
+		        			for(int i=0;i<fixedLengths.length;i++){
+		        				try{
+		        					colPart= line.substring(startIdx[i], endIdx[i]);
+		        				}catch(IndexOutOfBoundsException  e){
+		        					if(endIdx[i]>line.length()){
+		        						try{
+		        							colPart= line.substring(startIdx[i]);
+		        						}catch(IndexOutOfBoundsException  e2){
+		        							colPart="";
+		        						}
+		        					}else
+		        						colPart="";
+		        				}
+		        				dwe.setParameter((String)colNames.get(i), colPart.trim());
+		        			}
+		        		}
+		        		rows.add(dwe);
+		        		lcnt++;
+		        		dwe.setParameter("nds.row.index",String.valueOf(lcnt));
+	        		}
+	        		line= isr.readLine();
+	        	}
+	        	isr.close();
+	        	
+	        }else{
+	        	//xls file handling
+	            POIFSFileSystem fs ;
+	            // check input stream first, if not found, use srcFile name
+	            if ( this.excelStream !=null) fs= new POIFSFileSystem(excelStream);
+	            else fs=new POIFSFileSystem(new FileInputStream(srcFile));
+	
+	            HSSFWorkbook wb = new HSSFWorkbook(fs);
+	            HSSFSheet sheet = wb.getSheetAt(0);
+	            logger.debug("Last row num:"+  sheet.getLastRowNum());
+//	            String[][] colData= new String[columns.size()][1+sheet.getLastRowNum() -startRow];
+	            logger.debug("Create array["+columns.size()+"]["+ (sheet.getLastRowNum() -startRow)+"]" );
+	            for ( int i= startRow; i<= sheet.getLastRowNum();i++){
+	                HSSFRow row = sheet.getRow(i);
+	                if( row==null) continue;
+	                DefaultWebEvent dwe=createRowModifyEvent();
+	                dwe.setParameter("nds.row.index",String.valueOf(i));
+	                for( int j=0;j< colNames.size();j++){
+	                    col= (Column) directColumnOfData.get(j);
+	                    HSSFCell cell = row.getCell((short)j);
+	                    cv= getCellValue(i, cell, col);
+	                    dwe.setParameter((String)colNames.get(j), cv);
+	                }
+	                rows.add(dwe);
+	            }
+		
+		        
+	        }
+	       
+    		
+
+        }catch(Exception e){
+            logger.error("Error exporting to excel" , e);
+            throw new NDSException("在处理请求时出现异常："+ e.getLocalizedMessage() );
+        }
+        event.put("rows", rows);
+        return event;    	
+    }
+    private DefaultWebEvent createRowModifyEvent(){
+    	DefaultWebEvent e= new DefaultWebEvent("CommandEvent");
+    	return e;
+    	//e.setParameter("command", "ObjectModid")
+    }
+    /**
+     * 支持部分更新 partial_update=true 时，不做Create，而是 Update, Update的字段从update_columns参数里获取。
+     * 
+     * @return
+     * @throws NDSException
+     */
+    private DefaultWebEvent createEventObjCreate() throws NDSException{
+        DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
+       	event.setParameter("command", "ObjectCreate"); // default value, may override by out parameters
+        
 //        event.setParameter("nds.control.ejb.UserTransaction", "N"); set in jsp
         String key;
         for(Iterator it=params.keySet().iterator() ;it.hasNext();){

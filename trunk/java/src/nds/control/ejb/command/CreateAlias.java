@@ -148,8 +148,8 @@ public class CreateAlias extends Command{
 	    	// ¸üÐÂAK2
 	    	Column colAk2= pdtAliasTable.getAlternateKey2();
 	    	if(colAk2!=null && pdtTable.getAlternateKey2()!=null){
-	    		String sql= "UPDATE M_PRODUCT_ALIAS a SET "+ colAk2.getName()+"=(select replace(a.no, p.name,"+
-	    			pdtTable.getAlternateKey2().getName()+") from m_product p where p.id="+pdtId+") where a.m_product_id="+pdtId;
+	    		String sql= "UPDATE M_PRODUCT_ALIAS a SET "+ colAk2.getName()+"=(select replace(a.no, p.name,nvl(p."+
+	    			pdtTable.getAlternateKey2().getName()+",p.name )) from m_product p where p.id="+pdtId+") where a.m_product_id="+pdtId;
 	    		int cnt=conn.createStatement().executeUpdate(sql);
 	    		logger.debug("(cnt="+ cnt+"):"+sql);
 	    	}
