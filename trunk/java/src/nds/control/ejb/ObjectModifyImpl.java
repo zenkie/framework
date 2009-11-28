@@ -75,7 +75,7 @@ public class ObjectModifyImpl{
 				Column col= (Column)modifiableColumns.get(i);
 				String colName=col.getName();
 				if(col.getReferenceTable()!=null) colName+="__"+col.getReferenceTable().getAlternateKey().getName();
-				boolean isInEvent=event.hasParameter(col.getName());
+				boolean isInEvent=event.hasParameter(colName);
 				
 				if(!isInEvent) modifiableColumns.remove(i);
 			}

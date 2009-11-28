@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 import nds.control.event.DefaultWebEvent;
 import nds.control.util.ValueHolder;
-import nds.control.web.ClientControllerWebImpl;
+import nds.control.web.*;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.query.QueryUtils;
@@ -165,12 +165,18 @@ public class ImportExcel implements Runnable{
      * @return
      * @throws Exception
      */
-    public DefaultWebEvent createEvent () throws Exception{
+    public DefaultWebEvent createEvent (UserWebImpl user) throws Exception{
+    	DefaultWebEvent event;
     	if("true".equals(params.getProperty("partial_update"))){
-    		return createEventListUpdate();
+    		event= createEventListUpdate();
     	}else{
-    		return createEventObjCreate();
+    		event=createEventObjCreate();
     	}
+    	event.put("nds.query.querysession",user.getSession());
+    	event.put("JAVA.UTIL.LOCALE", user.getLocale());
+
+    	return event;
+    	
     }
     /**
      * BatchModify event, has parameter "update_columns" specify moidify columns
@@ -568,13 +574,14 @@ public class ImportExcel implements Runnable{
      *
      */
     public void run(){
-        try{
-             DefaultWebEvent event= createEvent();
+    	throw new NDSRuntimeException("deprecated, pls check");
+        /*try{
+             DefaultWebEvent event= createEvent(null);
              ValueHolder holder=controller.handleEvent(event);
 
         }catch(Exception e){
             logger.error("Error exporting to excel" , e);
-        }
+        }*/
 
     }
 }

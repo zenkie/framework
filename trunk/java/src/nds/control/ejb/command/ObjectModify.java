@@ -46,6 +46,7 @@ public class ObjectModify extends Command{
     * @throws Exception
     */
 	private ArrayList getModifiableColumns(DefaultWebEvent event, Table table) throws NDSException{
+		
 		ArrayList colList=null;
 		Object masks= event.getParameterValue("column_masks"); // JSONArray
 		if(masks!=null && masks instanceof JSONArray){
@@ -85,6 +86,7 @@ public class ObjectModify extends Command{
 	   * attribute to Boolean.TRUE in returned ValueHolder
 	   */	
 	public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
+		logger.debug(event.toDetailString());
 		boolean jsonObjectCreated=false;	
 		/**
   	 * 2005-11-15 增加了对status 字段的判断，如果status字段为2 则当前记录不允许修改。这种情况主要发生

@@ -62,6 +62,8 @@ public class ListUpdate extends Command {
 	  PairTable pt=new PairTable();
 	  int successCount=0;
 	  int recordLen= rows.size();
+	  Object qs=event.getParameterValue("nds.query.querysession");
+	  Object ls= event.getParameterValue("JAVA.UTIL.LOCALE");
 	  for(int i=0;i< rows.size();i++){
 		  DefaultWebEvent dwe= (DefaultWebEvent)rows.get(i);
 		  Object rowIndex= dwe.getParameterValue("nds.row.index");
@@ -70,6 +72,9 @@ public class ListUpdate extends Command {
 		  dwe.setParameter("operatorid",operatorId );
 		  dwe.setParameter("partial_update", "true");
 		  dwe.setParameter("ak", (String)dwe.getParameterValue(akName));
+		  dwe.put("nds.query.querysession",qs);
+		  dwe.put("JAVA.UTIL.LOCALE",ls);
+		  
 		  try{
 			  ValueHolder vh=helper.handleEventWithNewTransaction(dwe);
 			  if(Tools.getInt(vh.get("code"), 0)!=0){

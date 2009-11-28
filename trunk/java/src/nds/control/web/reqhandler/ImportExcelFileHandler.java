@@ -145,8 +145,8 @@ public class ImportExcelFileHandler extends RequestHandlerSupport {
                 String value= props.getProperty(name);
                 ei.setParameter(name, value);
             }
-            
-            DefaultWebEvent event=ei.createEvent();
+             
+            DefaultWebEvent event=ei.createEvent(user);
             event.setParameter("update_on_unique_constraints",  update_on_unique_constraints?"Y":"N");
 
             if(user !=null && user.getSession()!=null)
