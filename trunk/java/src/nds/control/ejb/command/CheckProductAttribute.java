@@ -81,6 +81,7 @@ public class CheckProductAttribute extends Command {
 	  	JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
 	  	Object tag= jo.opt("tag");
 	  	String product= jo.getString("product");
+	  	if(productUCase) product=product.toUpperCase();
 	  	int tableId= jo.getInt("tableId");
 	  	Table table= manager.getTable(tableId);
 	  	//if(uCase) product= product.toUpperCase();
