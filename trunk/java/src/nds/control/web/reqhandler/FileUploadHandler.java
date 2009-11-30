@@ -122,8 +122,12 @@ public class FileUploadHandler extends RequestHandlerSupport {
             	File.separator +  user.getClientDomain()+File.separator+ user.getUserName();
         	
             String absFileName= svrPath+File.separator+ fileItem.getName();
-            fileItem.write(new File(absFileName));
-            
+            try{
+            	fileItem.write(new File(absFileName));
+            }catch(java.io.FileNotFoundException fio){
+                (new File(svrPath)).mkdirs();
+                fileItem.write(new File(absFileName));
+            }
             jo.put("file", absFileName);
             jo.put("javax.servlet.http.HttpServletRequest",request);
 
