@@ -90,16 +90,19 @@ public class ExcelTemplateManager {
             HSSFSheet sheet = wb.createSheet(table.getName());
             HSSFRow row = sheet.createRow((short)0);
             HSSFCellStyle style=getDefaultStyle(wb);
-
+            boolean isASITable=( table instanceof nds.schema.AttributeDetailSupportTableImpl);
             ArrayList al= table.getAllColumns() ;
             int j=0;Column column;String desc;
             for ( int i=0;i< al.size();i++){
                 column= (Column) al.get(i);
                 if ( !column.isModifiable( Column.ADD )) continue;
                 desc= column.getDescription(Locale.CHINA);
-                if ( column.getReferenceTable() !=null){
+                /*if ( column.getReferenceTable() !=null){
                     desc += column.getReferenceTable().getAlternateKey().getDescription(Locale.CHINA) ;
-                }
+                }*/
+                if(isASITable && column.getName().equals("M_PRODUCT_ID")) desc="ÌõÂë";
+                if(isASITable && column.getName().equals("M_ATTRIBUTESETINSTANCE_ID")) desc="(Áô¿Õ)";
+                
                 String typeMark;
                 switch( column.getType()){
 	                case Column.NUMBER : typeMark="Êý×ÖÐÍ";break;
