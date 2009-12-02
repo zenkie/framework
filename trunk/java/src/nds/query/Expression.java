@@ -120,14 +120,19 @@ public class Expression implements SQLCombination, Serializable{
      */
     public static Expression parsePairTable(PairTable pt) throws QueryException{
     	 Expression expr=Expression.EMPTY_EXPRESSION;
-    	 Object key, value;
+    	 Object key; String value;
     	 ColumnLink clink;
     	 Expression fe;
     	 for(int i=0;i< pt.size();i++){
     	 	key=pt.getKey(i);
+    	 	value=pt.getValue(i).toString();
+    	 	if(Validator.isNull(value)) continue;
+    	 	
     	 	if(key instanceof ColumnLink) clink=(ColumnLink)key;
-    	 	else clink = new ColumnLink(key.toString());
-    	 	fe=new Expression(clink, pt.getValue(i).toString(), null);
+    	 	else{
+    	 		clink = new ColumnLink(key.toString());
+    	 	}
+    	 	fe=new Expression(clink, value, null);
     	 	expr=fe.combine(expr,Expression.SQL_AND,null);
     	 }    	
     	 return expr;

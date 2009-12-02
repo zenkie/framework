@@ -219,6 +219,9 @@ public class ExportExcel implements Runnable{
                     }
                 }
             }
+            for( i=0;i< colNames.length ; i++){
+           	 sheet.autoSizeColumn(i);
+            }
 
             // Write the output to a file
             FileOutputStream fileOut = new FileOutputStream(location + File.separator + fileName);

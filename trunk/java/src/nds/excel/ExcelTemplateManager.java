@@ -116,7 +116,8 @@ public class ExcelTemplateManager {
                 cell.setCellValue( desc);//+"("+ typeMark+")"
                 short leng= (short)(column.getLength() * 256 );
                 if ( desc.length()  * 256 * 2/* 2 byte chinese */ > leng) leng=(short)( desc.length()  * 256 * 2);
-                sheet.setColumnWidth((short)j,leng) ;
+                //sheet.setColumnWidth((short)j,leng) ;
+                sheet.autoSizeColumn((short)j) ;
                 j ++;
             }
 

@@ -52,7 +52,7 @@ public class ObjectUIConfig implements PortletConfig {
     		defaultTableUIConfig.tableParamName="table";
     		defaultTableUIConfig.idParamName="id";
     		defaultTableUIConfig.cssClass="objtb";
-    		defaultTableUIConfig.colsPerRow=3;
+    		defaultTableUIConfig.colsPerRow=4;//3; // change to 4 accroding to burgeon  
     		defaultTableUIConfig.defaultAction= ObjectUIConfig.ACTION_VIEW; // this is for QUERY_LIST, not for OBJECT_VIEW type
     		defaultTableUIConfig.isPublic=false;
     		defaultTableUIConfig.isShowRefTables=true;

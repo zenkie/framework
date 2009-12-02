@@ -89,7 +89,8 @@ public class ExportExcel extends Command {
 
          HSSFCellStyle numberCellStyle = wb.createCellStyle();
          numberCellStyle.setDataFormat(format.getFormat("General"));
-
+         
+         
          short i;
          // Create a row and put some cells in it. Rows are 0 based.
          short row=0;
@@ -212,7 +213,9 @@ public class ExportExcel extends Command {
                  }
              }
          }
-
+         for( i=0;i< colNames.length ; i++){
+        	 sheet.autoSizeColumn(i);
+         }
          // Write the output to a file
          FileOutputStream fileOut = new FileOutputStream(fullFileName);
          wb.write(fileOut);
