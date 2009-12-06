@@ -220,6 +220,14 @@ public class QueryEngine {
         }
 //        logger.debug("(count="+count+","+(int)((System.currentTimeMillis()-startTime)/1000)+" ms) "+sql);
         rs.close();
+
+        int startIdx=quest.getStartRowIndex();
+    	if(startIdx<0){
+    		startIdx=count - quest.getRange();
+    		if(startIdx<0) startIdx=0;
+        	((QueryRequestImpl)quest).setRange(startIdx,  quest.getRange());
+    	}
+    	
         // get detailed result of quest
         boolean isRangedSQL=false;
        // Where there's more than 100 rows to be skipped, we will use the most powerful sql engine

@@ -321,8 +321,9 @@ public class AjaxUtils {
 		
 		// range
         int startIdx=jo.optInt("start", 0);
-        if( startIdx < 0)
-            startIdx=0;
+        /*//support negative value now,meaning starting from last page
+         * if( startIdx < 0)
+            startIdx=0;*/
         int range= jo.optInt("range", QueryUtils.DEFAULT_RANGE);
 		query.setRange(startIdx, range);
 		// order

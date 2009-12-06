@@ -124,6 +124,9 @@ public class QueryResultImpl implements QueryResult , JSONString{
         //Move to start of index
         if( startIndex >0)
             rs.absolute(startIndex);
+        else if(startIndex<0){
+        	rs.absolute( (totalRowCount-range<0? 0:totalRowCount-range ));
+        }
         /*for (int i=0; i<startIndex; i++) {
             rs.next();
     }*/
@@ -138,6 +141,7 @@ public class QueryResultImpl implements QueryResult , JSONString{
         }
         cursor=-1;
         prepareFullRangeSubTotal(req);
+        //updateRequestStartIndex();
     }
     public QueryResultImpl(ResultSet rs, QueryRequest req, int totalRowCount)throws SQLException {
         manager= TableManager.getInstance();
@@ -161,7 +165,19 @@ public class QueryResultImpl implements QueryResult , JSONString{
         }
         cursor=-1;
         prepareFullRangeSubTotal(req);
-
+        //updateRequestStartIndex();
+    }
+    /**
+     *   if start index <0, meaning last page, we'll change 
+     */   
+    private void updateRequestStartIndex(){
+    	
+    	int startIdx=this.getQueryRequest().getStartRowIndex();
+    	if(startIdx<0){
+    		startIdx=this.getTotalRowCount() - this.getRowCount();
+    		if(startIdx<0) startIdx=0;
+    	}
+    	((QueryRequestImpl)this.getQueryRequest()).setRange(startIdx, this.getQueryRequest().getRange());
     }
     /**
      * Additional message that will describe this result. 

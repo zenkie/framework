@@ -314,7 +314,7 @@ public class ProcessObject extends Command {
 				rtArrayResults.put(rtRow);
 	  		}
 	  		}
-	  		//按照伯俊的要求进行修改 
+	  		//按照要求进行修改 
 	  		//如果全部都正确，并且明细表是nds.schema.AttributeDetailSupportTableImpl，并且支持当前界面做了新增动作
 	  		// 则不返回明细而直接要求刷新界面 （因为这些表都会合并条码）
 	  		// yfzhu 2009-12-1

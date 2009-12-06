@@ -900,8 +900,22 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
 //        return "SELECT "+ outSelect+" FROM ( SELECT ROWNUM row_num, "+ outSelect+" FROM ( "+
 //                sql+ " )) WHERE row_num BETWEEN "+(getStartRowIndex()+1)+" AND "+(getStartRowIndex()+getRange());
         String asql=this.replaceVariables(sql.toString());
-        return this.replaceVariables("SELECT "+ outSelect+" FROM ( SELECT ROWNUM row_num, "+ outSelect+" FROM ( "+
-        		asql+ " ) WHERE ROWNUM <= "+ (getStartRowIndex()+getRange()) + " ) WHERE row_num>="+ (getStartRowIndex()+1));
+        
+        // if start index <0 then, fetch last records
+        String bsql;
+        if( getStartRowIndex() <0){
+        	// FORMAT:
+        	// SELECT * FROM (SELECT ROWNUM rownum, column1, column2, upto columnN FROM DATA_TABLE)
+        	// WHERE rownum > ( SELECT (MAX(ROWNUM)-10) FROM DATA_TABLE);
+        	asql= nds.util.StringUtils.replace(asql, "SELECT ", "SELECT ROWNUM row_num, ",1);
+        	bsql=this.replaceVariables("SELECT "+ outSelect+" FROM ( "+
+            		asql+ " ) WHERE ROWNUM > (SELECT MAX(ROWNUM)-"+ getRange()+ getGrossSQL()+ ")") ;
+            return this.replaceVariables(bsql);
+        }else{
+        	bsql=this.replaceVariables("SELECT "+ outSelect+" FROM ( SELECT ROWNUM row_num, "+ outSelect+" FROM ( "+
+            		asql+ " ) WHERE ROWNUM <= "+ (getStartRowIndex()+getRange()) + " ) WHERE row_num>="+ (getStartRowIndex()+1));
+        }
+        return bsql;
 
     }
     /**
