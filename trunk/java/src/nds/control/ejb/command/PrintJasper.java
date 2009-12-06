@@ -54,7 +54,7 @@ public class PrintJasper extends Command{
 	 * 			"destfile" optional, if not exists, will using date to create new one
 	 * 			
 	 * 			"id" if for Object report, this is a must exist one
-	 * 			"expr" this is optional in List report, must not exist either.
+	 * 			"expr" this is optional in List report, must not exist.
 	 * @return 
 	 * 		"tag" 
 	 * 		"printfile" url of the file created, client will print it directly or show in (if tag="Preview") 
@@ -129,21 +129,36 @@ public class PrintJasper extends Command{
 	    				& Directory.EXPORT)==Directory.EXPORT) ){
 	    			throw new NDSException("@no-permission@");
 	    		}
-	    		QueryRequestImpl q= QueryEngine.getInstance().createRequest(event.getQuerySession());
-	    		q.setMainTable(table.getId());
-	    		q.addAllShowableColumnsToSelection(Column.PRINT_LIST, false);
-	    		String where=null;
-	    		if(nds.util.Validator.isNotNull(expr))
-	    			where=q.addParam( new Expression(expr));
-	    		
-	    		q.setOrderBy( new ColumnLink(params.getString("order_by")).getColumnIDs(), "true".equals(params.getString("order_asc")));
-	    		q.setRange(0,  Integer.MAX_VALUE);
-	    		String sql= q.toSQL();
-	    		logger.debug(sql);
-	    		params.put("sql", sql);
-	    		if(where!=null) params.put("where",where);
-	    		else params.put("where","1=1");
-	
+	    		// support user defined cxtab print via speical where clause  
+	    		if(!isCxtabJReport){
+		    		QueryRequestImpl q= QueryEngine.getInstance().createRequest(event.getQuerySession());
+		    		q.setMainTable(table.getId());
+		    		q.addAllShowableColumnsToSelection(Column.PRINT_LIST, false);
+		    		String where=null;
+		    		if(nds.util.Validator.isNotNull(expr))
+		    			where=q.addParam( new Expression(expr));
+		    		
+		    		q.setOrderBy( new ColumnLink(params.getString("order_by")).getColumnIDs(), "true".equals(params.getString("order_asc")));
+		    		q.setRange(0,  Integer.MAX_VALUE);
+		    		String sql= q.toSQL();
+		    		logger.debug(sql);
+		    		params.put("sql", sql);
+		    		parameters.put("sql",sql);
+		    		if(where!=null) {
+		    			params.put("where",where);
+		    			parameters.put("where",where);
+		    		}else{
+		    			params.put("where","1=1");
+		    			parameters.put("where","1=1");
+		    		}
+		    		
+	    		}else{
+	    			//developer should defined specified param using code
+	    			if(nds.util.Validator.isNotNull(expr))
+	    				parameters.put("where",expr);
+	    			else
+	    				parameters.put("where","1=1");
+	    		}
 	    		
 	    	}else{
 	        	parameters.put("objectid", new Integer(objectId));
