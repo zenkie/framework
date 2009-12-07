@@ -123,7 +123,7 @@ public class PrintJasper extends Command{
 	    	// for special handle
 	    	parameters.put("userid", String.valueOf(user.id));
 	    	parameters.put("ad_client_id", String.valueOf(user.adClientId));   
-	    	parameters.put("SUBREPORT_DIR", destFolder + java.io.File.separator);
+	    	parameters.put("SUBREPORT_DIR", conf.getProperty("export.root.nds","/aic/home")+"/../jreport/");
 	    	
 	    	if("L".equals(reportType)){
 	    		if(! ((nds.control.util.SecurityUtils.getPermission(table.getSecurityDirectory(), user.id.intValue())
