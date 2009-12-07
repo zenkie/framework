@@ -123,6 +123,7 @@ public class PrintJasper extends Command{
 	    	// for special handle
 	    	parameters.put("userid", String.valueOf(user.id));
 	    	parameters.put("ad_client_id", String.valueOf(user.adClientId));   
+	    	parameters.put("SUBREPORT_DIR", destFolder + java.io.File.separator);
 	    	
 	    	if("L".equals(reportType)){
 	    		if(! ((nds.control.util.SecurityUtils.getPermission(table.getSecurityDirectory(), user.id.intValue())
@@ -183,7 +184,7 @@ public class PrintJasper extends Command{
 	    	retData.put("tag", tag);
 	    	
 	    	conn=QueryEngine.getInstance().getConnection();
-    	
+	    	
     		// catch all errors so write to destfolder
 			JasperPrint jasperPrint = JasperFillManager.fillReport(report, parameters, conn);
     		if( "pdf".equalsIgnoreCase(fileType)){
@@ -226,7 +227,8 @@ public class PrintJasper extends Command{
     			
     		}else
     			throw new NDSException("Unsupported file type:"+ fileType);
-	    	holder.put("code","0");
+	    	if (!(new File(destFile).exists())) throw new NDSException("Fail to print (no ouput)");
+    		holder.put("code","0");
 	    	retData.put("printfile", fileName+"."+fileType);
 	    	holder.put("data",retData);
     	}catch(Throwable e){
