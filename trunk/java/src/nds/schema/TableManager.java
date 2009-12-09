@@ -480,7 +480,13 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     			Table parentTable=(Table) this.tableIDs.get(new Integer(table.getParentTableId()));
     			if(parentTable!=null){
     				// try every column, and stop at first column which reference to parent table or its views
-    				int realParentTableId=((Table) this.tableNames.get( parentTable.getRealTableName())).getId();
+    				int realParentTableId=-1;
+    				try{
+    					realParentTableId=((Table) this.tableNames.get( parentTable.getRealTableName())).getId();
+    				}catch(Throwable tccc){
+    					logger.error("found error for "+parentTable+", and its realtable name is "+parentTable.getRealTableName(),tccc);
+    					throw new nds.util.NDSRuntimeException("parent table error", tccc);
+    				}
     				parentColumnFound=false;
     				List cols= table.getAllColumns();
     				for(int j=0;j<cols.size();j++){
