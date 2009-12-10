@@ -273,13 +273,25 @@ public class SecurityUtils {
         }
     }
     /**
-     * @param sql used to construct DIR_FILTER 
+     * 2009-12-11 现在碰到这样一种情况：
+     *    配置人员在复制视图的时候，将A表的directory复制到了B表上
+     *    而AB表一般是同一个物理表的2个视图（即AB表是兄弟关系，而非原来考虑的头明细父子关系），
+     *    现在，如果A 表定义的directory  设置了查询条件一般也针对A表，如 A表的c字段的查询范围是某某，如何让B表条件
+     *    构造时变为 B表的c 字段（必定同名，如果没找到就报错）的查询范围是某某。
+     *    
+     *    以前在查询到这种情况时，会报告："Could not found relation ship from table " 
+    			+ dirTableName +" to sub table " + table
+				+ ", while these two tables have same security driectory." 现在要求自动识别并转换
+				
+     *    
+     * @param sql used to construct DIR_FILTER, stored in directory.sqlfilter, working on dirTable
      * @param desc sql description
-     * @param table the table that return expression will put on
-     * @param dirTableName DIR_TABLE
+     * @param table the table that return expression will put on, this one is what we want to query
+     * @param dirTableName DIR_TABLE 
      * @return Expression
      *  标准格式：exists (select ID from <DIR_TABLE> WHERE <RELATIONSHIP> AND
      *   <DIR_FILTER>)
+     *   
      */
     private static Expression constructExistsExpr(String sql, String desc, Table table, String dirTableName,QuerySession qsession) throws QueryException{
     	Expression expr=null;
@@ -295,17 +307,33 @@ public class SecurityUtils {
     	for(Iterator it= dirTable.getRefByTables().iterator();it.hasNext();){
     		rbt= (RefByTable) it.next();
     		if( rbt.getTableId() == table.getId() ){
+    			//父子关系
     			Column rbc=  manager.getColumn(rbt.getRefByColumnId());
     			ColumnLink cl= new ColumnLink(new int[]{dirTable.getPrimaryKey().getId()});
     			expr=new Expression(cl, "=" + table.getName()+"." + rbc.getName(), null);
-    			
     		}
     	}
-    	if(expr ==null) throw new QueryException("Could not found relation ship from table " 
-    			+ dirTableName +" to sub table " + table
-				+ ", while these two tables have same security driectory.");
-    	expr= expr.combine(dirFilter, SQLCombination.SQL_AND, MessagesHolder.getInstance().getMessage(qsession.getLocale(), "correspond-") 
+    	/* 2009-12-11 注释掉(yfzhu) 支持兄弟关系
+    	 * if(expr ==null) throw new QueryException("Could not found relation ship from table " 
+		+ dirTableName +" to sub table " + table
+		+ ", while these two tables have same security driectory.");*/
+    	if(expr==null){
+    		//兄弟表，发现还有这种情况：两张兄弟表在数据库里定义了视图，而不是在AD_TABLE里定义视图，所以对于PORTAL来说，
+    		//不知道兄弟关系的存在，我们只能默认:用户配置的权限字段，在dirTable上存在，应该也要在table上存在，如果不存在，
+    		//也应该在数据库里存在（有些人会定义视图时遗漏此字段，这时报错可以让开发人员知道）
+    		/**
+    		 * 重构expr, 因为expr里的dirTableName不是table，而此条件实际上就是要应用到table上去的
+    		 */
+    		//偷个懒，不做字段的逐个比对了，直接替换，替换的方式：前后都不能是字母
+    		String nsql=sql.replaceAll("\\b"+ dirTableName+"\\b", table.getName());
+    		logger.debug("brother relationship found:from "+ sql);
+    		logger.debug("replaced to "+ nsql);
+    		expr=new Expression(nsql);
+    		return expr;// return directly 
+    	}else{
+    		expr= expr.combine(dirFilter, SQLCombination.SQL_AND, MessagesHolder.getInstance().getMessage(qsession.getLocale(), "correspond-") 
     			+ dirTable.getDescription(qsession.getLocale())+" "+MessagesHolder.getInstance().getMessage(qsession.getLocale(), "-satisfy-")+ desc +")");
+    	}
     	QueryRequestImpl query=QueryEngine.getInstance().createRequest(qsession);
     	query.setMainTable(dirTable.getId());
     	query.addSelection(dirTable.getPrimaryKey().getId());
