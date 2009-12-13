@@ -19,7 +19,7 @@ public class ButtonMatchColorMaterial  extends ButtonCommandUI_Impl{
 	 * @return
 	 */
 	protected String getPopupType( HttpServletRequest request, Column column, int objectId){
-		return POPUP_TARGET_BLANK;
+		return POPUP_TARGET_LARGE_DIALOG;
 	}
 
 }
