@@ -93,6 +93,18 @@ public class QueryResultMetaDataImpl implements QueryResultMetaData {
         return selectionColumnCount;
     }
     /**
+     * Find column position in query select, start from 0
+     * @param column should be main table's column
+     * @return position index
+     */
+    public int findPositionInSelection(Column column){
+    	for(int i=0;i< columnLinks.length;i++){
+    		if(columnLinks[i].length()==1 && columnLinks[i].getLastColumn().equals(column))
+    			return i;
+    	}
+    	return -1;
+    }
+    /**
      * @param column starts from 1
      * @roseuid 3B8AFCFC0125
      */

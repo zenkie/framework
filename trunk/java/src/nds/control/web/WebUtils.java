@@ -51,6 +51,8 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import nds.security.Directory;
 import nds.security.NDSSecurityException;
@@ -719,5 +721,98 @@ public final class WebUtils {
  	          if(  conn !=null) try{  conn.close();}catch(Exception e3){}
  	      }
  	      return ret;
- 	}    
+ 	}
+ 	/**
+ 	 * remove those columns that be hidden according to specified display condition 
+ 	 * @param contains current record information, such as for object modify, addAllShowableColumnsToSelection(Column.MODIFY)
+ 	 * @param columns will remove hidden columns from it
+ 	 * @param displayConditions just the result 
+ 	 * @return columns being removed from <param>columns</param>, or null if no one found.
+ 	 */
+ 	public static List<Column> filterHiddenColumns(QueryResult result, List columns, JSONArray displayConditions) throws Exception{
+ 		if(result==null || displayConditions==null || displayConditions.length()==0) return null;
+ 		ArrayList cols=new ArrayList();
+ 		Table table=result.getQueryRequest().getMainTable();
+ 		boolean b;
+ 		for(int i=columns.size()-1;i>=0;i--){
+ 			Column col= (Column)columns.get(i);
+ 			if(col.getJSONProps()!=null){
+ 				int hc=col.getJSONProps().optInt("hide_condition",-1);
+ 				if(hc>0 && hc<displayConditions.length()){
+ 					Object o=displayConditions.get(hc);
+ 					if(o instanceof JSONObject){
+ 						String c=((JSONObject)o).getString("c");
+ 						String v=((JSONObject)o).getString("v");
+ 						Column cl=table.getColumn(c);
+ 						if(cl==null) throw new NDSException("error in hide_condition of "+ col+": "+c+" not find in table "+ table);
+ 						int pos =result.getMetaData().findPositionInSelection(cl);// starts from 0
+ 						if(pos==-1) throw new NDSException("error in hide_condition of "+ col+": "+c+" not find in object query selection list ");
+ 						
+ 						Object v2= result.getObject(pos+1);
+ 						String value;
+ 						boolean valueIsNull= (v2==null || Validator.isNull( String.valueOf(v2)));
+ 						if(valueIsNull)value="null";
+ 						else value=String.valueOf(v2);
+ 						
+ 						String[] vs=v.split(",");
+ 						b=false;
+ 						for(int j=0;j< vs.length;j++){
+ 							 boolean reverse=vs[j].startsWith("!");
+ 							 if(reverse)vs[j]= vs[j].substring(1);
+ 							 b= (vs[j].equals(value) && !reverse) || (!vs[j].equals(value) && reverse);
+ 						}
+ 					}else{
+ 						b=displayConditions.getBoolean(hc);
+ 					}
+					if(b){
+						//hide then
+						cols.add(col);
+						columns.remove(i);
+					}
+ 				}
+ 			}
+ 		}
+ 		return cols;
+ 	}
+ 	/**
+     * Load ad_table.props accroding to record info, props are reconstructed 
+     * @return null or valid one
+     */
+    public static JSONObject loadObjectPropsForClient(Table table, int objectId, QuerySession qsession) throws Exception{
+    	JSONObject jo=table.getJSONProps();
+    	if(jo==null) return null;
+    	JSONArray dc=jo.optJSONArray("display_condition");
+    	if(dc==null) return null;
+    	JSONObject ro=new JSONObject();
+    	JSONArray ja=new JSONArray();
+    	for(int i=0;i< dc.length();i++){
+    		Object io=dc.get(i);
+    		if(io instanceof String ){
+    			//sql
+    			String sql= QueryUtils.replaceVariables( (String)io, qsession);
+    			JSONObject vb=new JSONObject();
+    			vb.put("$OBJECTID$", String.valueOf(objectId));
+    			vb.put("$TABLEID$", String.valueOf(table.getId()));
+    			vb.put("$TABLE$", String.valueOf(table.getName()));
+    			sql=JSONUtils.replaceVariables(sql, vb);
+    			int cnt=Tools.getInt( QueryEngine.getInstance().doQueryOne(sql),0);
+   				ja.put((cnt >0));
+    		}else if(io instanceof JSONObject){
+    			//limit value group, contains "c" for column and "v" for value
+    			String c= ((JSONObject)io).getString("c");
+    			String v= ((JSONObject)io).getString("v");
+    			Column col= table.getColumn(c);
+    			if(col==null) throw new NDSException("c is not a valid column on table "+ table+":"+c);
+    			JSONObject jt=new JSONObject();
+    			jt.put("c",col.getId());
+    			jt.put("v",v);
+    			ja.put(jt);
+    		}else{
+    			//not supported
+    			throw new NDSException("Not supported type:"+ io.getClass()+" as "+ io+ " in "+ jo);
+    		}
+    	}
+    	ro.put("display_condition", ja);
+    	return ro;
+    } 	
 }

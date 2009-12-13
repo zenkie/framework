@@ -9,7 +9,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
-
+import nds.util.*;
+import nds.control.web.WebUtils;
 import nds.control.ejb.Command;
 import nds.control.ejb.DefaultWebEventHelper;
 import nds.control.ejb.MySQLObjectCreateImpl;
@@ -56,9 +57,16 @@ public class ObjectCreate extends Command{
       int tableId = Tools.getInt(event.getParameterValue("table"),-1 ) ;
       User usr=helper.getOperator(event);
       int userId= usr.id.intValue();
+      boolean isRoot= "root".equals(usr.name) ;
       Table table = manager.getTable(tableId) ;
       String tableName = table.getName();          // 得到表的名字
       String tableDesc = table.getDescription(Locale.CHINA) ;
+      QuerySession qsession=event.getQuerySession();
+      
+      Configurations conf= (Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
+
+      //用户修改的数据，在修改后他是否必须是仍然有权限修改的
+      boolean after_modify_check ="true".equals(conf.getProperty("object.modify.after_modify_check", "true")); 
       
       boolean isOutputJSONError=Tools.getYesNo(
     		  event.getParameterValue("output_json", true), false);
@@ -253,7 +261,15 @@ public class ObjectCreate extends Command{
                 	   //normal update and ac procedure
                 	   try{
                 		   stmt.executeUpdate();
+                		   
                 		   spr=helper.doTrigger("AC", table, oids[realPos], con);
+                		   // check write permission on that record, 若不校验界面上可生成无写权限访问的记录, 
+                		   //权限校验仅针对菜单项单据 yfzhu 2009-12-13, root晃过
+                		   if( !isRoot && !(table.isMenuObject()&& nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
+                				   table.getName(), oids[realPos], nds.security.Directory.WRITE, qsession))){
+                			   logger.debug("no permission to create a uneditable record on table="+ table+", id="+ oids[realPos]+" by "+ usr.name+" of id"+ usr.id);
+                			   throw new NDSEventException("@no-permission@");
+                		   }	   
                 	   }catch(SQLException sqlex){
                 		   //support for unique constraints confliction, and try update
                 		   //如果是Unique Index 错误，要找到存在的记录，做更新
@@ -288,12 +304,29 @@ public class ObjectCreate extends Command{
                 				   if(rsIdByUdx!=null) try{rsIdByUdx.close();}catch(Throwable txter){}
                 			   }
                 			   if(idByUdx!=-1){
+                				   // check write permission, 若不校验界面上可修改无写权限写的记录, 
+                        		   //权限校验仅针对菜单项单据 yfzhu 2009-12-13
+                        		   if(!isRoot && !(table.isMenuObject()&& nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
+                        				   table.getName(), idByUdx, nds.security.Directory.WRITE, qsession))){
+                        			   logger.debug("no permission to modify(by udx) a uneditable record on table="+ table+", id="+ idByUdx+" by "+ usr.name+" of id"+ usr.id);
+                        			   throw new NDSEventException("@no-permission@");
+                        		   }
                 				   setDataForUpdate(stmtUpdate,row,sqlDataIndexForUpdate,
                 						   sqlDataColumnTypesForUpdate,userId, idByUdx,shouldAddModifierIdToUpdateStatement);
                 				   int ucnt=stmtUpdate.executeUpdate();
                 				   //do am trigger on that row upated
                 				   spr=helper.doTrigger("AM", table, idByUdx, con);
                 				   oids[realPos]=idByUdx; // not the created one, but the old value
+                				   // 再校验一次权限，否则用户可以将自己有权限改的数据改成自己没有权限修改的数据。
+                				   // 例如，用户只能修改上海的单据，可是他将上海字段内容修改为成都了。
+                				   if(!isRoot  && after_modify_check){
+                            		   if( table.isMenuObject()&& !nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
+                            				   table.getName(), idByUdx, nds.security.Directory.WRITE, qsession)){
+                            			   logger.debug("no permission to modify a record to uneditable one on table="+ table+", id="+ idByUdx+" by "+ usr.name+" of id"+ usr.id);
+                            			   throw new NDSEventException("@no-permission@");
+                            		   }	   
+                					   
+                				   }
                 			   }
                 			   
                 		   }else{

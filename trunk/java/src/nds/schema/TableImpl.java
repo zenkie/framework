@@ -666,7 +666,7 @@ public class TableImpl implements Table {
         		if(col.getDisplaySetting().isUIController() ) continue;
         		int t=col.getDisplaySetting().getObjectType();
         		if(/*t==DisplaySetting.OBJ_CLOB || clob must be taken as common control(u_news.content)*/t==DisplaySetting.OBJ_FILE 
-        				|| t==DisplaySetting.OBJ_IMAGE || t==DisplaySetting.OBJ_XML)continue;
+        				|| t==DisplaySetting.OBJ_IMAGE /*|| t==DisplaySetting.OBJ_XML*/)continue;
         	}
         	for(j=0;j< columnMasks.length;j++){
         		if(  col.isMaskSet(columnMasks[j]) ) {

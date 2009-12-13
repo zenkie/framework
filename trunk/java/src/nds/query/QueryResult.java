@@ -93,7 +93,7 @@ public interface QueryResult extends Serializable {
     public String getString(int column, boolean needNBSP, boolean viewOnly) throws QueryException;
     /**
      * May return null, object are rawly retrieved from ResultSet
-     * @param column
+     * @param column starts from 1
      * @return
      * @since 2.0
      */

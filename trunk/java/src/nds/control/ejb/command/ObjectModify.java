@@ -20,10 +20,12 @@ import nds.control.ejb.ObjectModifyImpl;
 import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEventException;
 import nds.control.util.ValueHolder;
+import nds.control.web.WebUtils;
 import nds.mail.NotificationManager;
 import nds.query.*;
 import nds.schema.*;
 import nds.security.User;
+import nds.util.Configurations;
 import nds.util.NDSException;
 import nds.util.Tools;
 /**
@@ -100,7 +102,8 @@ public class ObjectModify extends Command{
    	}*/
     User usr= helper.getOperator(event);	
     int userId=usr.id.intValue();
-
+    boolean isRoot= "root".equals(usr.name) ;
+    
    	java.sql.Connection con=null;
        try{
        // 得到所要操作的表的名字
@@ -194,17 +197,28 @@ public class ObjectModify extends Command{
        }       
        
        //doNotification(event, table, hashMap,con);
-
-
        // call proc after modify
        // after modify, first doing triggers on the current table
        // then do trigger on parent table, if exists.
        SPResult spr=helper.doTrigger("AM", table, oids, con);
+
+       Configurations conf= (Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
+
+       //用户修改的数据，在修改后他是否必须是仍然有权限修改的
+       boolean after_modify_check ="true".equals(conf.getProperty("object.modify.after_modify_check", "true")); 
+       
+       if(!isRoot && after_modify_check){
+		   if( table.isMenuObject()&& !nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
+				   table.getName(), objectId, nds.security.Directory.WRITE, event.getQuerySession())){
+			   logger.debug("no permission to modify a record to uneditable one on table="+ table+", id="+ objectId+" by "+ usr.name+" of id"+ usr.id);
+			   throw new NDSEventException("@no-permission@");
+		   }
+       }
+       
        Table parent= helper.getParentTable( table,event);
  	   int[] poids= helper.getParentTablePKIDs(table,oids, con);
        logger.debug("parent of "+ table+ ":"+ parent+", poids="+ ( poids!=null? Tools.toString(poids): "null" ));
  	   //helper.checkTableRows(parent, poids, con, helper.PARENT_NOT_FOUND);
-
        //check parent table records exist and modifiable
  	   helper.checkTableRowsModifiable(parent, poids, con);
 

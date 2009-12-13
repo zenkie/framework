@@ -110,8 +110,8 @@ public class AjaxController {
 		this.noresult=true/false; default to false, when true, will set "query" instead of "result" in HttpServletRequest, this is used for /html/nds/query/search_result_sql.jsp
 		this.partialresult=true/false; default to false, when true, will load only first 5 columns value into returned json object.
 			this is used for /html/nds/query/search.jsp to return some data to ui.
-			µ呍ԃ}: ՚Ջˤµ¥´´½¨ʱ£¬̷̑µٖ·º󣬷µ»ّ¡אµٖ·хϢµģºjϵɋ£¬µ绰£¬µٖ· µɐƏ¢¸�£¬²¢ʨ׃µ½РӦˤɫ¿󗑗�¬ɏֵ
-			partialresult ՚  noresult=true ʱ±»ʶ±�	this.tag=<json> // opt, can be anything, and will return to client in result.data.tag
+			partialresult noresult=true 
+			his.tag=<json> // opt, can be anything, and will return to client in result.data.tag
 	}
 
 	 * @return QueryResult.toJSONString()
@@ -128,6 +128,11 @@ public class AjaxController {
 			locale=usr.getLocale();
 			logger.debug("query("+ jsonObj+")");
 			JSONObject jo= new JSONObject(jsonObj);
+
+			Table table= TableManager.getInstance().getTable(jo.getString("table"));
+			//������в�ѯ��Ȩ�� 20091213 yfzhu
+			usr.checkPermission(table.getSecurityDirectory(), nds.security.Directory.READ);
+			
 			QueryResult qr=null;
 			QueryRequest query=null;
 			query=AjaxUtils.parseQuery(jo, usr.getSession(), usr.getUserId(), usr.getLocale());

@@ -22,6 +22,8 @@
 package nds.query;
 
 import java.io.Serializable;
+
+import nds.schema.Column;
 /**
  */
 public interface QueryResultMetaData extends Serializable {
@@ -47,4 +49,11 @@ public interface QueryResultMetaData extends Serializable {
      * @return Column' ID
      */
     public int getColumnId(int column);
+    
+    /**
+     * Find column position in query select, start from 0
+     * @param column should be main table's column
+     * @return position index, -1 means not found
+     */
+    public int findPositionInSelection(Column column);    
 }

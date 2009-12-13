@@ -29,6 +29,7 @@ import nds.util.*;
  * 这一功能跟随 AliasSupportTable而补充
  * 
  * 支持AK2 (2009-11-20 yfzhu)
+ * 发现BUG，如果没有关联表的查询权限，无论填什么都报错 (2009-12-13 yfzhu)
  * @author yfzhu@agilecontrol.com
  */
 public class ObjectColumnObtain extends ColumnObtain{
@@ -39,6 +40,8 @@ public class ObjectColumnObtain extends ColumnObtain{
 
   public Vector getColumnValue(DefaultWebEvent event,Table table,Column col,int length) throws NDSException,RemoteException{
     DefaultWebEventHelper helper= new DefaultWebEventHelper();
+    
+    nds.security.User user= helper.getOperator(event);
     //logger.debug(" for column " + col.getName() + ":"+ event.toDetailString());
   	TableManager tm= helper.getTableManager();
     QueryEngine engine = QueryEngine.getInstance();
@@ -47,6 +50,12 @@ public class ObjectColumnObtain extends ColumnObtain{
       if(refTable==null){
           refTable = col.getObjectTable();
       }/* 得到关联表的名字 */
+      boolean hasReadPermission=
+    	 "root".equals(user.getName()) || 
+    	 (nds.control.util.SecurityUtils.getPermission(refTable.getSecurityDirectory(), user.getId().intValue()) & 1)==1;
+    	  
+      
+      
       String refTableName = refTable.getName();
       String refTablleDesc  = refTable.getDescription(Locale.CHINA) ;
 
@@ -115,8 +124,12 @@ public class ObjectColumnObtain extends ColumnObtain{
       ColumnCheckImpl checkImpl = new ColumnCheckImpl();
 
       //get read permission filter on ref table
-      Expression filter= helper.getSecurityFilter(refTableName, 1,helper.getInt((String)event.getParameterValue("operatorid"), -1) );
-
+      Expression filter=null;// helper.getSecurityFilter(refTableName, 1,user.getId().intValue() );
+      if(!hasReadPermission){
+    	  filter=(new Expression(null,"1<>1","NoPermission"));
+      }else{
+    	  filter=helper.getSecurityFilter(refTableName,1, user.getId().intValue());
+      }
       
       int refTableId= tm.getTable(refTableName).getId();
       String filterSql=null;
