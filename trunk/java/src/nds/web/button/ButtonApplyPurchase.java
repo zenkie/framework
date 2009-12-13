@@ -25,26 +25,18 @@ import nds.util.WebKeys;
  *
  */
 public class ButtonApplyPurchase extends ButtonCommandUI_Impl{
-	/**
-	 * 
-	 * @return true when user can do submit, and the mio's parent is unsubmitted
-	 */
-	protected boolean isValid(HttpServletRequest request, Column column, int objectId ){
-		UserWebImpl userWeb= null;
-		boolean b=false;
-		try{
-			int status= Tools.getInt(QueryEngine.getInstance().doQueryOne(
-					"select M_PRODUCT_ID from Y_MATERIAL_PLAN_ITEM where id="+ objectId), -1);
-			return  status==-1;
-		}catch(Throwable t){
-			logger.error("Could not check user permission on ButtonReclaim: column="+ column+", objectId="+objectId+
-					", user="+ ( userWeb!=null? userWeb.getUserId():-1), t);
-		}
-		return b;
-	}		
+	
 	protected String getHandleURL(HttpServletRequest request, Column column,int objectId){
 		String targetTable=null;
+		
 		try{
+			UserWebImpl userWeb=((UserWebImpl)WebUtils.getSessionContextManager(request.getSession(true)).getActor(nds.util.WebKeys.USER));
+			ArrayList params=new ArrayList();
+			params.add(new Integer(objectId));
+			params.add(new Integer(userWeb.getUserId()));
+			
+			QueryEngine.getInstance().executeStoredProcedure("Y_UPDATE_APPLYPURCHASE", params, false);
+			
 			String li= (String)QueryEngine.getInstance().doQueryOne(
 					"select a.MATERIAL_TYPE from Y_MATERIAL a,  Y_MATERIAL_PLAN_SITEM b where a.id=b.Y_MATERIAL_ID and b.id="+ objectId);
 			if("FAB".equals(li)) targetTable="Y_APPLYPURCHASE_FAB";
