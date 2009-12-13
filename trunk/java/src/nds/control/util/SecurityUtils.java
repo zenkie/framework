@@ -106,7 +106,7 @@ public class SecurityUtils {
      * @param tableName
      * @param objectIds
      * @param permission
-     * @param qsession
+     * @param qsessions
      * @param addtionalFilter in same format as table.getFilter()
      * @return
      * @throws Exception
