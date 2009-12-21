@@ -265,8 +265,8 @@ public class ObjectCreate extends Command{
                 		   spr=helper.doTrigger("AC", table, oids[realPos], con);
                 		   // check write permission on that record, 若不校验界面上可生成无写权限访问的记录, 
                 		   //权限校验仅针对菜单项单据 yfzhu 2009-12-13, root晃过
-                		   if( !isRoot && !(table.isMenuObject()&& nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
-                				   table.getName(), oids[realPos], nds.security.Directory.WRITE, qsession))){
+                		   if( !isRoot && table.isMenuObject()&& !nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
+                				   table.getName(), oids[realPos], nds.security.Directory.WRITE, qsession)){
                 			   logger.debug("no permission to create a uneditable record on table="+ table+", id="+ oids[realPos]+" by "+ usr.name+" of id"+ usr.id);
                 			   throw new NDSEventException("@no-permission@");
                 		   }	   
@@ -306,8 +306,8 @@ public class ObjectCreate extends Command{
                 			   if(idByUdx!=-1){
                 				   // check write permission, 若不校验界面上可修改无写权限写的记录, 
                         		   //权限校验仅针对菜单项单据 yfzhu 2009-12-13
-                        		   if(!isRoot && !(table.isMenuObject()&& nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
-                        				   table.getName(), idByUdx, nds.security.Directory.WRITE, qsession))){
+                        		   if(!isRoot && table.isMenuObject()&& !nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
+                        				   table.getName(), idByUdx, nds.security.Directory.WRITE, qsession)){
                         			   logger.debug("no permission to modify(by udx) a uneditable record on table="+ table+", id="+ idByUdx+" by "+ usr.name+" of id"+ usr.id);
                         			   throw new NDSEventException("@no-permission@");
                         		   }
@@ -319,8 +319,8 @@ public class ObjectCreate extends Command{
                 				   oids[realPos]=idByUdx; // not the created one, but the old value
                 				   // 再校验一次权限，否则用户可以将自己有权限改的数据改成自己没有权限修改的数据。
                 				   // 例如，用户只能修改上海的单据，可是他将上海字段内容修改为成都了。
-                				   if(!isRoot  && after_modify_check){
-                            		   if( table.isMenuObject()&& !nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
+                				   if(!isRoot  && after_modify_check && table.isMenuObject()){
+                            		   if( !nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
                             				   table.getName(), idByUdx, nds.security.Directory.WRITE, qsession)){
                             			   logger.debug("no permission to modify a record to uneditable one on table="+ table+", id="+ idByUdx+" by "+ usr.name+" of id"+ usr.id);
                             			   throw new NDSEventException("@no-permission@");

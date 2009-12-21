@@ -31,7 +31,8 @@ public class DBJSONXML extends Command {
 			param* - String, json 格式，须转换为xml string, 发送给oracle
 	 *      table*  - String, 主要工作的表，例如对于POS业务，table为M_RETAIL
 	 * 		action* - String, 动作名称
-	 *      permission* - "R" 表示只读, "W"表示写入（包含读权限，对主表的增删改，和提交相应单据的授权）
+	 * 		isclob  - 是否需要将参数转换为clob保存，默认为否
+	 *      permission* - "R" 表示只读, "W"表示写入（包含读权限，对主表的增删改）,"S"表示提交
 	 系统根据上述table,action,permission 构造存储函数名，规则：
 	       <table>_$<permission>_<action>(userId,jsonRequest)
 	       
@@ -62,6 +63,8 @@ public class DBJSONXML extends Command {
 	  	String action= jo.getString("action");
 	  	String permission= jo.getString("permission");
 	  	String param= jo.getString("param");
+	  	boolean isClob= jo.optBoolean("isclob",false);
+	  	
 	  	JSONObject paramJSON= new JSONObject(param);
 	  	
 	  	param= org.json.XML.toString(paramJSON);
@@ -75,9 +78,8 @@ public class DBJSONXML extends Command {
 		  	if("W".equalsIgnoreCase(permission)){
 		  		if(t.isActionEnabled(Table.ADD) || t.isActionEnabled(Table.MODIFY)|| t.isActionEnabled(Table.DELETE))
 		  			minPerm |=3;
-		  		if( t.isActionEnabled(Table.SUBMIT))
-		  			minPerm |= 5; 
-		  	}
+		  	}else if("S".equalsIgnoreCase(permission) &&  t.isActionEnabled(Table.SUBMIT))
+	  			minPerm |= 5; 
 		  	if( (perm & minPerm) !=minPerm){
 		  		logger.debug("perm="+ perm+",minPerm="+minPerm);
 		  		throw new NDSException("@no-permission@");
@@ -89,7 +91,10 @@ public class DBJSONXML extends Command {
 	  	logger.debug("Call "+ func+"("+usr.getId()+","+param+")");
 	  	ArrayList params= new ArrayList();
 	  	params.add(usr.getId());
-	  	params.add(param);
+	  	if(param.length()>32767/3 && !isClob)
+	  		logger.warning("param length("+ param.length() +") too big while not set as clob");
+
+	  	params.add( (isClob? new StringBuffer(param): param)); // when StringBuffer used, set as clob
 	  	
 	  	ArrayList res= new ArrayList();
 	  	res.add( java.sql.Clob.class);// Clob as return while java converts it to String

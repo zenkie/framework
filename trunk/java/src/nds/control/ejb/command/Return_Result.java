@@ -164,15 +164,19 @@ public ValueHolder execute(DefaultWebEvent event) throws RemoteException, NDSExc
             Expression paremExpr= query.getParamExpression();
             String paramExpStr=(paremExpr==null?"":paremExpr.toHTMLInputElement());
             String desc="";
-            if(returnType.equals("a")){
+
+            desc=query.getParamDesc(false); 
+            fo.setSql("IN("+ encode(query.toPKIDSQL(false))+")");
+            
+            /*if(returnType.equals("a")){
             	 desc=query.getParamDesc(false); 
             	 fo.setSql("IN("+ encode(query.toPKIDSQL(false))+")");
             }else{
             	 desc=query.getParamDesc(true);
             	 fo.setSql("IN("+ encode(query.toPKIDSQL(true))+")");
-            }
+            }*/
             fo.setDescription(desc);
-            fo.setSql("IN("+ encode(query.toPKIDSQL(true))+")");
+            //fo.setSql("IN("+ encode(query.toPKIDSQL(true))+")");
             fo.setExpression(paramExpStr);
             jsonxml.put("desc", desc);
             if(returnType.equals("a")){

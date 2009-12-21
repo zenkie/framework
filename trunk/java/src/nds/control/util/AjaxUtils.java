@@ -351,12 +351,17 @@ public class AjaxUtils {
         query.enableFullRangeSubTotal(jo.optBoolean("subtotal", false));
         return query;
 	}
+	
+	public static QueryRequestImpl parseRestQuery(JSONObject jo, QuerySession qsession, int userId, Locale locale) throws Exception{
+		return parseRestQuery(jo, qsession, userId,locale, new ArrayList());
+	}
 	/**
+	 *
 	 * 
 	 * @param jsonObj should be parsed to QueryRequestImpl, javascript object is like:
 
 参数：
-	table: 	对应表的ID
+	table: 	对应表的ID, or name
 	columns:[column_name,…] // 通过数组指定要检索的字段，字段必须起始于table指明的表，可以通过ColumnLink方式关联到外键对应的表上的记录，详见Portal关于字段的配置。column_name 为字符串
 	params:{
 		combine: “and” | “or” | “and not” | “or not”
@@ -377,21 +382,29 @@ public class AjaxUtils {
 			column: // 排序字段名称，可以是ColumnLink，字段不必在columns里出现
 			asc: <true>|<false> // 排序，true 为顺序，否则为逆序
 		}
-	
-	 * @return QueryResult.toJSONString()
+		 * @selections must be an empty one, will add selection columns in it
+		 * @return
+		 * 
 	 * @throws Exception
-	 */	
-	public static JSONObject doRestQuery(JSONObject jo, QuerySession qsession, int userId, Locale locale) throws Exception{
+	 */
+	private static QueryRequestImpl parseRestQuery(JSONObject jo, QuerySession qsession, int userId, Locale locale, ArrayList selections) throws Exception{
 		logger.debug(jo.toString());
 		QueryEngine engine =QueryEngine.getInstance();
 		QueryRequestImpl query = engine.createRequest(qsession);
 		
 		TableManager manager =TableManager.getInstance();
-		Table table= manager.getTable(jo.getInt("table"));
+		Table table;
+		int tableId=jo.optInt("table",-1);
+		if(tableId>-1)table=manager.getTable(tableId);
+		else table=manager.getTable(jo.optString("table"));
+
+		if(table==null) throw new NDSException("cound not find table "+ jo.optString("table"));
+		
 		query.setMainTable(table.getId());
 		
 		JSONArray columns= jo.optJSONArray("columns");
-		ArrayList selections= new ArrayList();//elements are Column
+		//ArrayList selections= new ArrayList();//elements are Column
+		
 		//Select
 		if(columns!=null){
 			for(int i=0;i<columns.length();i++){
@@ -459,12 +472,48 @@ public class AjaxUtils {
 			}
 			
 		}
+		return query;
+	}
+	/**
+	 * 
+	 * @param jsonObj should be parsed to QueryRequestImpl, javascript object is like:
+
+参数：
+	table: 	对应表的ID
+	columns:[column_name,…] // 通过数组指定要检索的字段，字段必须起始于table指明的表，可以通过ColumnLink方式关联到外键对应的表上的记录，详见Portal关于字段的配置。column_name 为字符串
+	params:{
+		combine: “and” | “or” | “and not” | “or not”
+		expr1: expression,
+		expr2 : expression
+	}，或者 {
+		expr: expression
+	}，expression 描述见下：
+		expression :{ 
+			column : column 名称或者ColumnLink，必须起始于table，忽略主表名称。
+			condition : 字符串设置对应字段的条件, 例如 20090901~20091021表示日期的范围，>10表示数字字段的范围，输入方式与PORTAL界面一致
+		} 通过expression设定某个字段满足某个条件，对于诸如exists类型的请求，可以设置column为空，在condition里直接输入exists(select x from y where z)类似的语句，注意主表在整体SQL语句构造时将被赋予全名称。
+	start: 从结果集合的哪一行开始获取记录（从0计算）
+	range: 最多获取start行开始的多少条记录
+	count: <true>| <false>, 是否计算结果集的总行数，将体现在返回结果的 count里
+	orderby:[ordercol,…] 数组，每个元素都为下文对象
+		ordercol:{
+			column: // 排序字段名称，可以是ColumnLink，字段不必在columns里出现
+			asc: <true>|<false> // 排序，true 为顺序，否则为逆序
+		}
+	
+	 * @return QueryResult.toJSONString()
+	 * @throws Exception
+	 */	
+	public static JSONObject doRestQuery(JSONObject jo, QuerySession qsession, int userId, Locale locale) throws Exception{
+		QueryEngine engine =QueryEngine.getInstance();
+		ArrayList selections=new ArrayList();
+		QueryRequestImpl query = parseRestQuery(jo,qsession,userId,locale, selections);
 		
 		boolean bCount= jo.optBoolean("count",false);
 		int count=-1;
 		if(bCount) count=Tools.getInt( engine.doQueryOne( query.toCountSQL()), -1);
 		String sql;
-		if(count >= 0 && count<=range){
+		if(count >= 0 && count<=query.getRange()){
 			sql= query.toSQL();
 		}else{
 			sql=query.toSQLWithRange();
@@ -532,6 +581,7 @@ public class AjaxUtils {
         return j;
         
 	}
+	
 	/**
 	 * 
 	 * @param jo {

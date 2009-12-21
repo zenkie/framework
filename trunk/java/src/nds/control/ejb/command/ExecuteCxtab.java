@@ -46,11 +46,10 @@ import com.Ostermiller.util.NameValuePair;;
 public class ExecuteCxtab extends Command {
 	 /** 
 	  * @param event contains JSONObject that has following properties:
-	 * 		"query*" - JSONObject.toString() which should be parsed 
+	 * 		"query*" - JSONObject.toString() which should be parsed
 	 * 		"cxtab*"		- name of ad_cxtab (AK,String) or id (PK, Integer)
-	 *		"table*"  - id of table that current cxtab working on
 	 *		"filetype"  - "xls" or "html", by default, html
-	 * 
+	 * 		"isrest" - if true, will take query as REST interface format 
 	 *		--- some parameters prefixed with "preps_" will set to pre-process of ad_cxtab
 	 *
 	 * @return  
@@ -71,24 +70,19 @@ public class ExecuteCxtab extends Command {
 		int userId=user.getId().intValue();
 		JSONObject jo= event.getJSONObject();
 		
-		int tableId= jo.getInt("table"); 
-		Table table=TableManager.getInstance().getTable(tableId);
-		String dir= table.getSecurityDirectory();
-		event.setParameter("directory",  dir);	
-	  	helper.checkDirectoryReadPermission(event, user);
-		
 	  	//default file type to html
 	  	String fileType= jo.getString("filetype");
 	  	//if(!"xls".equals(fileType)) fileType="htm";
+	  	boolean isRest= jo.optBoolean("isrest", false);
 	  	
 	  	List list;
 	  	String cxtabName= jo.getString("cxtab");
 	  	int cxtabId =Tools.getInt(cxtabName, -1);
 	  	if(cxtabId==-1){
-	  		list=engine.doQueryList("select c.ad_processqueue_id, q.name , c.isbackground,c.name,c.pre_procedure,c.AD_PI_COLUMN_ID from ad_cxtab c, ad_processqueue q where q.id= c.ad_processqueue_id and c.name="+ QueryUtils.TO_STRING(cxtabName),conn);
+	  		list=engine.doQueryList("select c.ad_processqueue_id, q.name , c.isbackground,c.name,c.pre_procedure,c.AD_PI_COLUMN_ID, ad_table_id from ad_cxtab c, ad_processqueue q where q.id= c.ad_processqueue_id and c.name="+ QueryUtils.TO_STRING(cxtabName),conn);
 	  		cxtabId=Tools.getInt( engine.doQueryOne("select id from ad_cxtab where ad_client_id="+ user.adClientId +" and c.name="+ QueryUtils.TO_STRING(cxtabName),conn), -1);
 	  	}else{
-	  		list=engine.doQueryList("select c.ad_processqueue_id, q.name , c.isbackground,c.name,c.pre_procedure,c.AD_PI_COLUMN_ID from ad_cxtab c, ad_processqueue q where q.id= c.ad_processqueue_id and c.id="+ cxtabName,conn);
+	  		list=engine.doQueryList("select c.ad_processqueue_id, q.name , c.isbackground,c.name,c.pre_procedure,c.AD_PI_COLUMN_ID, ad_table_id from ad_cxtab c, ad_processqueue q where q.id= c.ad_processqueue_id and c.id="+ cxtabName,conn);
 	  	}
 	  	
 	  	if(list.size()==0) throw new NDSException("@parameter-error@:(cxtab="+ cxtabName+")" );
@@ -100,6 +94,13 @@ public class ExecuteCxtab extends Command {
 	  	
 	  	String preProcedure=(String) ((List)list.get(0)).get(4);
 	  	int piColumnId=Tools.getInt( ((List)list.get(0)).get(5), -1);//AD_PI_COLUMN_ID
+
+		int tableId= Tools.getInt( ((List)list.get(0)).get(6), -1);//AD_TABLE_ID, ALWAYS NOT NULL
+		Table table=TableManager.getInstance().getTable(tableId);
+		String dir= table.getSecurityDirectory();
+		event.setParameter("directory",  dir);	
+	  	helper.checkDirectoryReadPermission(event, user);
+		
 	  	
 	  	// cxtab name must be name, not pk in process
 		JSONObject query=new JSONObject( jo.getString("query"));
@@ -152,7 +153,11 @@ public class ExecuteCxtab extends Command {
 		    	filterDesc=addJparams(params, map, cxtabId,csMap,event.getQuerySession(), userId,event.getLocale(), conn);
 			}
 		}else{
-			req=nds.control.util.AjaxUtils.parseQuery(query, event.getQuerySession(), userId, event.getLocale());
+			if(isRest){
+				logger.debug("parse as rest query");
+				req=nds.control.util.AjaxUtils.parseRestQuery(query, event.getQuerySession(), userId, event.getLocale());
+			}else
+				req=nds.control.util.AjaxUtils.parseQuery(query, event.getQuerySession(), userId, event.getLocale());
 		}
 	
 		

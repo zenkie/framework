@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Properties;
+import oracle.sql.CLOB;
+import java.io.Writer;
 
 import nds.db.DBManager;
 import nds.log.Logger;
@@ -17,6 +19,8 @@ import nds.query.*;
 import nds.query.SPResult;
 import nds.util.Tools;
 import nds.schema.*;
+import org.jboss.resource.adapter.jdbc.WrappedConnection;
+
 public class DatabaseManager implements DBManager{
     private static Logger logger= LoggerManager.getInstance().getLogger(DatabaseManager.class.getName());
     private  int logDuration =10;// IF query time (seconds) exceeds this value, it will be logged
@@ -47,7 +51,48 @@ public class DatabaseManager implements DBManager{
         this.minRangeSQLCount= Tools.getInt( props.getProperty("query.rangesqlcount", "1000"), 1000);
         isDebug= "develope".equals(props.getProperty("schema.mode", "production"));
     }
+    /*
+     * This method uses temporary clob to create the CLOB object.
+     */
+    public static CLOB getCLOB( StringBuffer clobData,oracle.jdbc.OracleConnection conn )
+                    throws SQLException {
+      CLOB tempClob = null;
 
+      try {
+        //  create a new temporary CLOB
+        tempClob = CLOB.createTemporary( conn, true, CLOB.DURATION_SESSION );
+
+        // Open the temporary CLOB in readwrite mode to enable writing
+        tempClob.open( CLOB.MODE_READWRITE );
+
+        // Get the output stream to write
+
+        Writer tempClobWriter = tempClob.setCharacterStream( 0L );
+
+        // Write the data into the temporary CLOB
+        tempClobWriter.write( clobData.toString() );
+
+        // Flush and close the stream
+        tempClobWriter.flush(  );
+        tempClobWriter.close(  );
+
+        // Close the temporary CLOB
+        tempClob.close(  );
+
+      } catch ( Exception exp ) {
+    	  logger.error("fail to getClob",exp);
+	         // Free CLOB object
+          tempClob.freeTemporary( );
+          // do something
+      }
+      return tempClob;      
+
+    }
+
+    /**
+     * @param params should contain:
+     * 
+     */
     public Collection executeFunction ( String fncName, Collection params, Collection results, Connection conn) throws QueryException {
       CallableStatement stmt = null;
       ArrayList returns = new ArrayList();
@@ -70,13 +115,13 @@ public class DatabaseManager implements DBManager{
         for( Iterator itresults=results.iterator(); itresults.hasNext();){
             k ++;
             Object result = itresults.next();
-            if( result == String.class){
+            if( result.equals( String.class)){
                 stmt.registerOutParameter(k, Types.VARCHAR);
-            }else if( result == Integer.class){
+            }else if( result.equals( Integer.class)){
                 stmt.registerOutParameter(k, Types.INTEGER);
-            }else if( result == Float.class){
+            }else if( result.equals(Float.class)){
                 stmt.registerOutParameter(k, Types.FLOAT);
-            }else if( result == java.sql.Clob.class){
+            }else if( result.equals(java.sql.Clob.class)){
                 stmt.registerOutParameter(k, Types.CLOB);
             }else{
             	logger.error("Found unsupported result type:"+ result+", pos="+ k);
@@ -87,11 +132,27 @@ public class DatabaseManager implements DBManager{
             k ++;
             Object param= itparams.next();
             if( param instanceof String){
+            	// found oracle trick, callable statement does not support 32k string converting to clob
+            	// and setClob must be called (yfzhu 2009-12-19) if function has clob as argument type
                 stmt.setString(k,(String)param);
             }else if( param instanceof Integer){
                 stmt.setInt(k,((Integer)param).intValue());
             }else if( param instanceof Float){
                 stmt.setFloat(k,((Float)param).floatValue());
+            }else if( param instanceof StringBuffer){// clob type convertion
+//            	 converting conn to oracle.jdbc.OracleConnection
+            	oracle.jdbc.OracleConnection oc=null;
+            	if(conn instanceof org.jboss.resource.adapter.jdbc.WrappedConnection){
+            		oc=(oracle.jdbc.OracleConnection)( (org.jboss.resource.adapter.jdbc.WrappedConnection)conn).getUnderlyingConnection();
+            		
+            	}else if(conn instanceof oracle.jdbc.OracleConnection){
+            		oc=(oracle.jdbc.OracleConnection)conn;
+            	}else{
+            		throw new SQLException("Not supported connection class:"+ conn.getClass().getName()+" (only oracle and jboss connection supported)");
+            	}
+            	stmt.setClob(k, getCLOB((StringBuffer)param,oc));
+            	logger.debug("oracle clob used for stmt");
+            	
             }else{
             	logger.error("Found unsupported type:"+ param+", pos="+ k);
                 throw new QueryException("Intenal Error: unsupported type:"+ param.getClass()+",value="+param);
@@ -119,7 +180,7 @@ public class DatabaseManager implements DBManager{
 //        logger.debug("("+(int)((System.currentTimeMillis()-startTime)/1000)+" ms) " + fncName);
         return returns;
       }catch(SQLException e){
-        logger.error("Error doing Stored Procedure:"+fncName+":"+ e.getMessage());
+        logger.error("Error doing Stored Procedure:"+fncName+":"+ e.getMessage(),e);
     	//throw new QueryException("Error doing Stored Procedure:"+spName, e);
         throw new QueryException(parseMainMessage(e));
       }finally{
@@ -167,6 +228,20 @@ public class DatabaseManager implements DBManager{
                 stmt.setInt(j,((Integer)param).intValue());
             }else if( param instanceof Float){
                 stmt.setFloat(j,((Float)param).floatValue());
+            }else if( param instanceof StringBuffer){// clob type convertion
+//            	 converting conn to oracle.jdbc.OracleConnection
+            	oracle.jdbc.OracleConnection oc=null;
+            	if(con instanceof org.jboss.resource.adapter.jdbc.WrappedConnection){
+            		oc=(oracle.jdbc.OracleConnection)( (org.jboss.resource.adapter.jdbc.WrappedConnection)con).getUnderlyingConnection();
+            		
+            	}else if(con instanceof oracle.jdbc.OracleConnection){
+            		oc=(oracle.jdbc.OracleConnection)con;
+            	}else{
+            		throw new SQLException("Not supported connection class:"+ con.getClass().getName()+" (only oracle and jboss connection supported)");
+            	}
+            	stmt.setClob(j, getCLOB((StringBuffer)param,oc));
+            	logger.debug("oracle clob used for stmt");
+            	
             }else{
                 throw new QueryException("Intenal Error: unsupported type:"+ param.getClass()+",value="+param);
             }
