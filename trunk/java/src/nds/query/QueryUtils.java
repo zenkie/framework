@@ -131,9 +131,11 @@ public final class QueryUtils {
 		 if(r>0)DEFAULT_DATE_RANGE=r;
 		 try{
 			 // format like 10,20,30,50,100
-			 int[] d=nds.util.StringUtils.parseIntArray("query.select.range",",");
-			 if(d.length>0&& d[0]>0)SELECT_RANGES=d;
-		 }catch(Throwable t){}
+			 int[] d=nds.util.StringUtils.parseIntArray( conf.getProperty("query.select.range"),",");
+			 if(d!=null && d.length>0&& d[0]>0)SELECT_RANGES=d;
+		 }catch(Throwable t){
+		 	logger.error("Fail to load 	query.select.range:"+conf.getProperty("query.select.range"), t);
+		 }
 	}
 
     /*static{
