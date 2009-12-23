@@ -132,7 +132,7 @@ public final class QueryUtils {
 		 try{
 			 // format like 10,20,30,50,100
 			 int[] d=nds.util.StringUtils.parseIntArray("query.select.range",",");
-			 SELECT_RANGES=d;
+			 if(d.length>0&& d[0]>0)SELECT_RANGES=d;
 		 }catch(Throwable t){}
 	}
 
