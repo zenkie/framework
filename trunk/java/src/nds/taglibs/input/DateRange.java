@@ -19,7 +19,7 @@ Date range selection, contains two visible input box and one hidden input
  */
 
 public class DateRange extends TagSupport {
-
+	
     private String name; // name of the text field
 
     private Map attributes; // attributes of the <input> element
@@ -49,11 +49,13 @@ public class DateRange extends TagSupport {
             String startDate=null, endDate=null;
             if(defaultRange){
             	/**
-            	 * One week range
+            	 * 
+				 * default to one week range, using portal.properties#query.date.range
+				 *  
             	 */
             	java.util.Calendar c= java.util.Calendar.getInstance();
             	c.setTimeInMillis(System.currentTimeMillis());
-            	c.add(java.util.Calendar.DAY_OF_MONTH, -7);
+            	c.add(java.util.Calendar.DAY_OF_MONTH, - QueryUtils.DEFAULT_DATE_RANGE );
             	startDate=  ((java.text.SimpleDateFormat)QueryUtils.dateNumberFormatter.get()).format(c.getTime());
             	endDate= ((java.text.SimpleDateFormat)QueryUtils.dateNumberFormatter.get()).format(new java.util.Date());
             }

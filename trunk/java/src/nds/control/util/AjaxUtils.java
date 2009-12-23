@@ -267,11 +267,11 @@ public class AjaxUtils {
 			    		}else{
 			    			// date number
 			            	/**
-			            	 * One week range
+			            	 * One week range can be updated by portal.properties#query.date.range
 			            	 */
 			            	java.util.Calendar c= java.util.Calendar.getInstance();
 			            	c.setTimeInMillis(System.currentTimeMillis());
-			            	c.add(java.util.Calendar.DAY_OF_MONTH, -7);
+			            	c.add(java.util.Calendar.DAY_OF_MONTH, - QueryUtils.DEFAULT_DATE_RANGE);
 			            	String startDate=  ((java.text.SimpleDateFormat)QueryUtils.dateNumberFormatter.get()).format(c.getTime());
 			            	String endDate=   ((java.text.SimpleDateFormat)QueryUtils.dateNumberFormatter.get()).format(new java.util.Date());
 			            	expr2= new Expression(null,table.getName() +"."+column.getName()+" between "+ startDate +" and "+ endDate,column.getDescription(locale)+ nds.util.MessagesHolder.getInstance().getMessage(locale, "in-one-week"));

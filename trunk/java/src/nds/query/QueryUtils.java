@@ -41,7 +41,7 @@ public final class QueryUtils {
 	private final static String GET_COLUMN_COMMENTS="select comments from ad_column where id=?";
 	private final static String GET_TABLE_COMMENTS="select comments from ad_table where id=?";
     private static final String GET_USER_ENV="select name, value from ad_user_attr where isactive='Y'";
- 
+    
     /**
      * As xxxFormat are not threadsafe, we wrapper all of them with ThreadLocal
      */
@@ -90,7 +90,11 @@ public final class QueryUtils {
        		return new DecimalFormat("###,###,###");}};
     public static ThreadLocal floatPrintFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
    		return new DecimalFormat("###,###,##0.00");}};
-
+   	
+   	/**
+   	 * default date query range, can be updated by portal.properties#query.date.range
+   	 */
+   	public static int DEFAULT_DATE_RANGE=7; 	
      /**
      * The max chars display in one column, if more chars to be shown,appending "..."
      */
@@ -100,7 +104,10 @@ public final class QueryUtils {
      */
     public final static int DEFAULT_RANGE=10;
     public final static int MAXIMUM_RANGE=100;
-    public final static int[] SELECT_RANGES = new int[]{10,20,30,50,100};
+    /**
+     * selction range, can be updated by portal.properties#query.select.range
+     */
+    public static int[] SELECT_RANGES = new int[]{10,20,30,50,100};
 //    public final static int MAXIMUM_RANGE=20;//100;
 //    public final static int[] SELECT_RANGES = new int[]{10,20};//,30,50,100};
     
@@ -120,6 +127,13 @@ public final class QueryUtils {
 		// for webclient.multiple=true, will try to figure out which client currently searching on
 		 nds.util.Configurations conf= (nds.util.Configurations)nds.control.web.WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
 		 isLeftSideMatchOnly= ! ("both".equals(conf.getProperty("query.wildcard.match","both")));
+		 int r= Tools.getInt("query.date.range", 7);
+		 if(r>0)DEFAULT_DATE_RANGE=r;
+		 try{
+			 // format like 10,20,30,50,100
+			 int[] d=nds.util.StringUtils.parseIntArray("query.select.range",",");
+			 SELECT_RANGES=d;
+		 }catch(Throwable t){}
 	}
 
     /*static{
