@@ -31,9 +31,10 @@ import org.apache.log4j.Level;
  * This version will copy attributes of objects such as table, column, limitvalue, into oracle 
  * event if object exists. 
  * 
- * Under construction (2008-06-03)
+ * 强行覆盖，如果存在，也是UPDATE 目标库所有的内容为源的内容
+ * 
  * @author yfzhu@agilecontrol.com
- * @since 3.0
+ * @since 4.1
  */
 public class SchemaImport2 {
 	private static Logger logger= LoggerManager.getInstance().getLogger(SchemaImport2.class.getName());
@@ -58,6 +59,11 @@ public class SchemaImport2 {
 	}
 	public void commit()throws Exception{
  		destSession.flush();
+ 		try{
+			afterTransfer();
+		}catch(Exception e){
+			logger.error("Fail to enable triggers:"+e);
+		} 		
 		if(trans!=null){
 			trans.commit();
 		}else
@@ -81,11 +87,6 @@ public class SchemaImport2 {
 	 * 
 	 */
 	public void destroy() throws Exception {
-		try{
-			afterTransfer();
-		}catch(Exception e){
-			logger.error("Fail to enable triggers:"+e);
-		}
 	
 		try{
 				if(destSession!=null && destSession.isOpen()) {
@@ -172,8 +173,7 @@ public class SchemaImport2 {
 	}
 
 	public void transferTable(String tableName) throws Exception{
-		//List al= srcSession.find("from AdTable a where a.Name='"+tableName.toUpperCase()+"'");
-		List al= srcSession.createQuery("from AdTable a where a.Name='"+tableName.toUpperCase()+"'").list();		
+		List al= srcSession.createQuery("from AdTable a where a.Name='"+tableName.toUpperCase()+"'").list();
 		if( al.size()>0){
 			transferTable( ((AdTable) al.get(0)).getId());
 		}else{
@@ -192,8 +192,7 @@ public class SchemaImport2 {
 	 * @throws Exception
 	 */
 	private Integer findDestObjectId(String className, String filter) throws Exception{
-		//List al= destSession.find("select a.Id from " + className+" a where "+ filter);
-		List al= destSession.createQuery("select a.Id from " + className+" a where "+ filter).list();		
+		List al= destSession.createQuery("select a.Id from " + className+" a where "+ filter).list();
 		if(al.size()>=1){
 			return new Integer(Tools.getInt(al.get(0), -1));
 		}
@@ -220,26 +219,29 @@ public class SchemaImport2 {
 		//check existance in dest table
 		
 		id=findDestObjectId("AdTable", "a.Name='"+ tb.getName()+"'");
-		if(id.intValue()!=-1){
+		if(id.intValue()==-1){
 			//logger.debug("Found table of name:"+ tb.getName()+", srcid="+ tableId+",dest="+ id);
-			return id; // return id in dest db
+			id=getDestinationTableSequence("ad_table"); // return id in dest db
 		}
 		outputMessage("Transfer table "+ tb.getName()+ " definition");
 		
-		tb.getAdAliastableSet().size();
-		tb.getAdRefbytableSet().size();
-		tb.getAdColumnSet().size();
+		//tb.getAdAliastableSet().size();
+//		tb.getAdRefbytableSet().size();
+//		tb.getAdColumnSet().size();
 		
 		srcSession.evict(tb);
-		tb.setId(getDestinationTableSequence("ad_table"));
-		destSession.save(tb);
-		//destSession.flush();
+		
+		//save refby table to mem
+		tb.setId(id);
+		destSession.saveOrUpdate(tb);
+		destSession.flush();
 		
 		// transfer category
 		tb.setAdTableCategoryId(transferTableCategory( tb.getAdTableCategoryId()));
 		//real table
 		tb.setRealtableId(transferTable(tb.getRealtableId()));
 		tb.setDirectoryId(transferDirectory(tb.getDirectoryId()));
+		tb.setParentTableId(transferTable(tb.getParentTableId()));
 		tb.setCreationDate( new java.util.Date());
 		tb.setModifiedDate( new java.util.Date());
 
@@ -308,20 +310,15 @@ public class SchemaImport2 {
 		
 		Integer id=findDestObjectId("AdColumn", "a.Name='"+ col.getName()+"'");
 		//check existance in dest
-		if(id.intValue()!=-1){
-			// 存在这样的情况: 字段同名，但类型不同，或者FK不同，系统应该提醒，这种情况发生在两个数据库的基础表已经被修改的情况，
-			// 例如，本次导入的c_crossorder 的 c_bpartner，一个具有将 name 设置为varchar型, 一个设置为char型（limitvaluegroup），
-			// 一个是下拉筐设计，一个是输入设计
-			//logger.debug("column "+ col.getName() + "(id="+ columnId+") found in dest session, with id="+ id);
-			warnIfColumnMissMatch(col, id);
-			return id;
+		if(id.intValue()==-1){
+			id=getDestinationTableSequence("ad_column");
 		}
 		
 		srcSession.evict(col);
-		col.setId(getDestinationTableSequence("ad_column"));
+		col.setId(id);
 		//table, confirm the table id is updated before insert to db
 		col.setAdTableId(transferTable( col.getAdTableId()));
-		destSession.save(col);
+		destSession.saveOrUpdate(col);
 		//fk
 		col.setRefColumnId(transferColumn(col.getRefColumnId()));
 		// limit value group
@@ -329,6 +326,7 @@ public class SchemaImport2 {
 		col.setCreationDate( new java.util.Date());
 		col.setModifiedDate( new java.util.Date());
 		destSession.saveOrUpdate(col);
+		destSession.flush();
 		return col.getId();
 	}
 	private Integer transferRefByTable(Integer refByTableId)throws Exception{
@@ -340,13 +338,13 @@ public class SchemaImport2 {
 				transferTable(o.getAdRefbyTableId())+" and a.AdRefbyColumnId="+
 				transferColumn(o.getAdRefbyColumnId()));
 		//		check existance in dest
-		if(id.intValue()!=-1) return id;
+		if(id.intValue()==-1) id=getDestinationTableSequence("ad_refbytable");
 		
 
 		srcSession.evict(o);
-		o.setId(getDestinationTableSequence("ad_refbytable"));
-		destSession.save(o);
-		//destSession.flush();
+		o.setId(id);
+		destSession.saveOrUpdate(o);
+		destSession.flush();
 
 		
 		o.setAdTableId(transferTable(o.getAdTableId()));
@@ -365,23 +363,30 @@ public class SchemaImport2 {
 		AdLimitValueGroup o= dao.load(lmgId, srcSession);
 		Integer id=findDestObjectId("AdLimitValueGroup", "a.Name='"+ o.getName()+"'");
 		//check existance in dest
-		if(id.intValue()!=-1 )return id;
-		o.getAdLimitValueSet().size();
+		if(id.intValue()==-1 ){
+			id=getDestinationTableSequence("AD_LIMITVALUE_GROUP");
+		}else{
+			//remove all values in dest session
+			destSession.createQuery("delete AdLimitValue a where a.AdLimitValueGroupId="+id).executeUpdate();
+			
+		}
+		
 		
 		srcSession.evict(o);
-		o.setId(getDestinationTableSequence("AD_LIMITVALUE_GROUP"));
+		o.setId(id);
 		o.setCreationDate( new java.util.Date());
 		o.setModifiedDate( new java.util.Date());
 		
-		destSession.save(o);
-		//destSession.flush();
-
+		destSession.saveOrUpdate(o);
+		destSession.flush();
+		
+		o= dao.load(lmgId, srcSession);
 		// value
 		for(Iterator it= o.getAdLimitValueSet().iterator();it.hasNext();){
 			transferLimitValue(o.getId(), ((AdLimitValue)it.next()).getId());
 		}
 		
-		return o.getId();		
+		return id;		
 	}
 	private Integer transferLimitValue(Integer destLimitValueGroupId, Integer lmId) throws Exception{
 		if(lmId ==null) return null;
@@ -394,8 +399,8 @@ public class SchemaImport2 {
 		o.setCreationDate( new java.util.Date());
 		o.setModifiedDate( new java.util.Date());
 		
-		destSession.save(o);
-		//destSession.flush();
+		destSession.saveOrUpdate(o);
+		destSession.flush();
 		
 		return o.getId();		
 	}
@@ -413,16 +418,16 @@ public class SchemaImport2 {
 			if(src.getAdTableId()!=null || destId!=null){
 				this.outputMessage("Warn: directory with name '"+ src.getName()+"' mismatch between src and dest.");
 			}
-			return; 
+			return;
 		}
 		// both are not null
 		// check table names
-		AdTableDAO dao= AdTableDAO.getInstance();
+		/*AdTableDAO dao= AdTableDAO.getInstance();
 		AdTable destTable= dao.load( dest.getAdTableId(), destSession);
 		AdTable srcTable = dao.load(src.getAdTableId(), srcSession);
 		if(!srcTable.getName().equalsIgnoreCase(destTable.getName())){
 			this.outputMessage("Warn: directory with name '"+ src.getName()+"' not designate same table. (src="+ srcTable.getName()+",dest="+ destTable.getName()+")");
-		}
+		}*/
 	}
 	private Integer transferDirectory(Integer dirId)throws Exception{
 		if(dirId ==null) return null;
@@ -435,12 +440,11 @@ public class SchemaImport2 {
 		//logger.debug("dst dir="+ id);
 
 		//check existance in dest
-		if(id.intValue()!=-1 ){
-			warnIfDirectoryMissMatch(o,id);
-			return id;
+		if(id.intValue()==-1 ){
+			id=getDestinationTableSequence("DIRECTORY");
 		}
 		srcSession.evict(o);
-		o.setId(getDestinationTableSequence("DIRECTORY"));
+		o.setId(id);
 		o.setAdTableCategoryId(transferTableCategory(o.getAdTableCategoryId()));
 		o.setAdTableId(transferTable(o.getAdTableId()));
 		o.setCreationDate( new java.util.Date());
@@ -448,8 +452,8 @@ public class SchemaImport2 {
 		/*org.apache.log4j.Logger lg= org.apache.log4j.Logger.getLogger("org.hibernate");
 		Level lv= lg.getLevel();
 		lg.setLevel(Level.DEBUG);*/
-		destSession.save(o);
-		//destSession.flush();
+		destSession.saveOrUpdate(o);
+		destSession.flush();
 		//lg.setLevel(lv);
 		return o.getId();		
 		
@@ -463,20 +467,20 @@ public class SchemaImport2 {
 		Integer id=findDestObjectId("AdTableCategory", "a.Name='"+ o.getName()+"'");
 		
 		//check existance in dest
-		if(id.intValue()!=-1 ){
+		if(id.intValue()==-1 ){
 			//logger.debug("Found tablecategory of name:"+ o.getName()+", srcid="+ categoryId+",dest="+ id);
-			return id;
+			id=getDestinationTableSequence("AD_TABLECATEGORY");
 		}
 		srcSession.evict(o);
-		o.setId(getDestinationTableSequence("AD_TABLECATEGORY"));
+		o.setId(id);
 		o.setCreationDate( new java.util.Date());
 		o.setModifiedDate( new java.util.Date());
 		o.setAdTableSet(null);
-		
-		destSession.save(o);
+		o.setAdSubSystemId(transferSubSystem(o.getAdSubSystemId()));
+		destSession.saveOrUpdate(o);
 		// so the destination session will no longer refer to the tables
 		//destSession.evict(o);
-		//destSession.flush();
+		destSession.flush();
 		return o.getId();		
 		
 	}
@@ -489,22 +493,22 @@ public class SchemaImport2 {
 		Integer id=findDestObjectId("AdSubSystem", "a.Name='"+ o.getName()+"'");
 		
 		//check existance in dest
-		if(id.intValue()!=-1 ){
+		if(id.intValue()==-1 ){
 			//logger.debug("Found tablecategory of name:"+ o.getName()+", srcid="+ categoryId+",dest="+ id);
-			return id;
+			id=getDestinationTableSequence("AD_SUBSYSTEM");
 		}
 		srcSession.evict(o);
-		o.setId(getDestinationTableSequence("AD_SUBSYSTEM"));
+		o.setId(id);
 		o.setCreationDate( new java.util.Date());
 		o.setModifiedDate( new java.util.Date());
 		
-		destSession.save(o);
+		destSession.saveOrUpdate(o);
 		// so the destination session will no longer refer to the tables
 		//destSession.evict(o);
 		//destSession.flush();
 		return o.getId();		
 		
-	}	
+	}		
 	private Integer transferAliasTable(Integer aliasTableId)throws Exception{
 		if(aliasTableId ==null) return null;
 		AdAliastableDAO dao= AdAliastableDAO.getInstance();
@@ -513,14 +517,14 @@ public class SchemaImport2 {
 		AdAliastable o= dao.load(aliasTableId, srcSession);
 		Integer id=findDestObjectId("AdAliastable", "a.Name='"+ o.getName()+"'");
 		//check existance in dest
-		if(id.intValue()!=-1 ){
-			return id;
+		if(id.intValue()==-1 ){
+			id=getDestinationTableSequence("AD_ALIASTABLE");
 		}
 		srcSession.evict(o);
-		o.setId(getDestinationTableSequence("AD_ALIASTABLE"));
+		o.setId(id);
 		
-		destSession.save(o);
-		//destSession.flush();
+		destSession.saveOrUpdate(o);
+		destSession.flush();
 		// real table
 		o.setRealtableId(transferTable(o.getRealtableId()));
 		o.setCreationDate( new java.util.Date());
@@ -536,7 +540,7 @@ public class SchemaImport2 {
 		writer.write("connection autocommit="+con.getAutoCommit()+ StringUtils.LINE_SEPARATOR);
 		con.setAutoCommit(false);
 		String hsql= "/act/upload/a";
-		SchemaImport2 si=new SchemaImport2();
+		SchemaImport si=new SchemaImport();
 		try{
 		si.init(url,hsql , writer, con);
 		si.transferTable("groups");
