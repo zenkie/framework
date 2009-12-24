@@ -127,7 +127,7 @@ public final class QueryUtils {
 		// for webclient.multiple=true, will try to figure out which client currently searching on
 		 nds.util.Configurations conf= (nds.util.Configurations)nds.control.web.WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
 		 isLeftSideMatchOnly= ! ("both".equals(conf.getProperty("query.wildcard.match","both")));
-		 int r= Tools.getInt("query.date.range", 7);
+		 int r= Tools.getInt(conf.getProperty("query.date.range"), 7);
 		 if(r>0)DEFAULT_DATE_RANGE=r;
 		 try{
 			 // format like 10,20,30,50,100
