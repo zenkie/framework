@@ -12,7 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.*;
 import bsh.EvalError;
-import bsh.Interpreter;
+import bsh.Interpreter; 
 /**
  * Using script to justify what class should be used for specified column
  * 脚本在 ad_script 中存储，脚本名称必须是 [table].[column].alerter

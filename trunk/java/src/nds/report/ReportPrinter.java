@@ -183,5 +183,47 @@ public class ReportPrinter {
 		// let client return immediately, so run in background
 		controller.handleEventBackground(event);
 	}
-	
+	/**
+	 * 根据入库单生成条码打印文本文件，文件每一行有关于款号和条码的丰富信息，数量按条码展开成多行, 按款，色，码排序
+	 * @param sql, 要求最后一行必须是当前行条码的打印的数量
+	 * @return 生成的文件名,在当前用户的导出文件夹里
+	 * @throws Exception
+	 */
+	public String createBarTender(String sql,UserWebImpl user) throws Exception{
+		List al=QueryEngine.getInstance().doQueryList(sql);
+		
+		StringBuffer sb=new StringBuffer();
+		StringBuffer line;
+		int cnt=0;
+		if(al.size()>0) cnt= ((List)al.get(0)).size();
+		for(int i=0;i< al.size();i++){
+			List ln=((List)al.get(i));
+			line=new StringBuffer();
+			
+			line.append(ln.get(0)==null?"":ln.get(0).toString());
+			for(int j=1;j<cnt-1;j++){
+				line.append(",").append(ln.get(j)==null?"":ln.get(j).toString());  
+			}
+			int linecnt= Tools.getInt(ln.get(cnt-1), 1); 
+			for(int j=0;j<linecnt;j++ ){
+				sb.append(line).append(StringUtils.LINE_SEPARATOR);
+			}
+		}
+		
+		String fileName= "barcode_"+
+			((java.text.DateFormat)QueryUtils.dateNumberFormatter.get()).format(new Date())+
+			"_"+nds.util.Sequences.getNextID("barcode")+".txt";
+		
+		Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+
+		String path=conf.getProperty("export.root.nds","/act.nea/home")+File.separator+user.getClientDomain()
+			+File.separator+ user.getUserName();
+		File f=new File(path);
+		f.mkdirs();
+		
+		Tools.writeFile(path+File.separator+fileName, sb.toString(),"UTF-8");
+		logger.debug("write barcode file:"+ path+File.separator+fileName);
+		
+		return fileName;
+	}
 }
