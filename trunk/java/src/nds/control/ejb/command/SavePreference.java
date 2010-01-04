@@ -62,7 +62,7 @@ public class SavePreference extends Command {
    * @param values name is preference name, value is preference value
    * @param cacheable
    */
-  private void setPreferenceValues(int userId, String module, Properties values) throws NDSException{
+  public static void setPreferenceValues(int userId, String module, Properties values) throws NDSException{
   	Connection con=null;
       PreparedStatement pstmt=null ,pstmt2=null, pstmt3=null;
       String p=null;String name=null, value= null;
@@ -75,7 +75,6 @@ public class SavePreference extends Command {
           for(Iterator it= values.keySet().iterator();it.hasNext();){
           	name=(String) it.next();
           	value= values.getProperty(name);
-          	logger.debug("for name="+ name+", value="+ value);
           	if(Validator.isNull(value)){
           		// try delete, since no data 
           		//try{
@@ -102,7 +101,6 @@ public class SavePreference extends Command {
           	}
           }
   	}catch(Exception e){
-  		logger.error("Could not save preference: userid="+ userId+", module="+ module, e);
   		throw new NDSException("Could not save preferences", e);
   	}finally{
           try{ if(pstmt !=null)pstmt.close() ;}catch(Exception e2){}

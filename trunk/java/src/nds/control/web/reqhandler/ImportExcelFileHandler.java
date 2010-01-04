@@ -128,8 +128,19 @@ public class ImportExcelFileHandler extends RequestHandlerSupport {
             String formRequest=props.getProperty("formRequest");
             if(formRequest!=null) request.setAttribute("formRequest", formRequest);
             
-            logger.debug(nds.util.Tools.toString(props));
             int tableId= Tools.getInt(props.getProperty("table"), -1);
+
+            /*logger.debug(Tools.toString(props));
+            if("true".equals(props.getProperty("partial_update"))){
+            	nds.control.ejb.command.SavePreference.setPreferenceValues(user.getUserId(),
+            			"imp.upd."+TableManager.getInstance().getTable(tableId).getName().toLowerCase(),props);
+            	
+            }else{
+            	nds.control.ejb.command.SavePreference.setPreferenceValues(user.getUserId(),
+            			"imp.ins."+TableManager.getInstance().getTable(tableId).getName().toLowerCase(),props);
+            	
+            }*/
+
             //logger.debug("table id="+ tableId) ;
             ei.setMainTable(tableId );
             ei.setStartRow(Tools.getInt(props.getProperty("startRow"), 1)) ;

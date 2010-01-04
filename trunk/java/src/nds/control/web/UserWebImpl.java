@@ -1426,6 +1426,15 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
     	return getPreferenceValues(module, cacheable, false);
     }
     
+    /**
+     * Save module prefereces, will remove all previous module settings first. 
+     * @param module
+     * @param props
+     * @throws Exception
+     */
+    public void savePreferenceValues(String module, Properties props) throws Exception{
+    	nds.control.ejb.command.SavePreference.setPreferenceValues(this.id, module,props);
+    }
     
     private class VisitTable{
     	public int tableId;

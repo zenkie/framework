@@ -119,13 +119,16 @@ public class GetFile implements BinaryHandler{
                 os.close();
                 is.close();
                 if(deleteFile){
+                	// 改成10分钟后删除, 借助外部检查程序
+                	
+                	/*
                 	try{
                 		if(!file.delete()){
                 			logger.debug("Fail to delete file:"+ file.getAbsolutePath());
                 		}
                 	}catch(Throwable t){
                 		logger.error("Fail to delete file "+ file.getAbsolutePath()+":"+ t);
-                	}
+                	}*/
                 }
                 return;
             }else

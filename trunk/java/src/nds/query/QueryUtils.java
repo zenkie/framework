@@ -80,10 +80,16 @@ public final class QueryUtils {
     	SimpleDateFormat a=new SimpleDateFormat("yyyyMMdd");
     	a.setLenient(false);
     	return a;}};
-    public static ThreadLocal timeFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
-    	SimpleDateFormat a=new SimpleDateFormat("yyyy/MM/dd HH:mm");
+    public static ThreadLocal dateTimeNumberFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+    	SimpleDateFormat a=new SimpleDateFormat("yyyyMMdd HH:mm:ss");
     	a.setLenient(false);
     	return a;}};
+
+	public static ThreadLocal timeFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+		SimpleDateFormat a=new SimpleDateFormat("yyyy/MM/dd HH:mm");
+		a.setLenient(false);
+		return a;}};
+		
     public static ThreadLocal floatFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
 		return new DecimalFormat("#0.00");}};
     public static ThreadLocal intPrintFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
@@ -959,7 +965,14 @@ public final class QueryUtils {
               	else
               		returnDate= new java.sql.Date( ((SimpleDateFormat)dateNumberFormatter.get()).parse(str).getTime());// try YYYMMDD also
               }else{
-              	returnDate = new java.sql.Date( ((SimpleDateFormat)dateTimeSecondsFormatter.get()).parse(str).getTime());
+            	  if(str.indexOf("/")>-1)
+            		  returnDate = new java.sql.Date( ((SimpleDateFormat)dateTimeSecondsFormatter.get()).parse(str).getTime());
+            	  else{
+            		  if(str.indexOf(":")>-1)
+            			  returnDate = new java.sql.Date( ((SimpleDateFormat)dateTimeNumberFormatter.get()).parse(str).getTime());
+            		  else
+            			  returnDate = new java.sql.Date( ((SimpleDateFormat)dateNumberFormatter.get()).parse(str).getTime());
+            	  }	  
               }
           } catch(java.text.ParseException e) {
               logger.debug("Not a valid date format:"+ str);

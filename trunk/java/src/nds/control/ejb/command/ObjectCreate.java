@@ -545,7 +545,9 @@ public class ObjectCreate extends Command{
 				  pstmt.setString(i+1,(String)v );
 				  break;
 			  case Column.DATE:
-				  pstmt.setTimestamp(i+1,new java.sql.Timestamp(((java.sql.Date)v).getTime()));
+				  if(v==null)pstmt.setNull(	i+1,java.sql.Types.TIMESTAMP);
+ 				  else pstmt.setTimestamp(i+1,new java.sql.Timestamp(((java.sql.Date)v).getTime()));
+				  
 				  break;
 			  default:
 		       	 throw new NDSException("Unexpected column type:"+ columnTypes[i]);			  
