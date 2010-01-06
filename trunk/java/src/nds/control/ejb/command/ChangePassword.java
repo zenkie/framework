@@ -94,7 +94,7 @@ public class ChangePassword extends Command {
 		throw new NDSException("无法修改用户到门户安全系统!"+ msg);
 	}
 	ValueHolder holder= new ValueHolder();
-	holder.put("message", "密码修改成功!");
+	holder.put("message", "密码修改成功! 注意POS上的相应密码将在数据同步后才会更新");
 	holder.put("code","0");
 	return holder;
   }
