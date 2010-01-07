@@ -5,6 +5,8 @@ import java.util.ArrayList;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nds.control.web.UserWebImpl;
+import nds.control.web.WebUtils;
 import nds.query.QueryEngine;
 import nds.schema.Column;
 import nds.util.WebKeys;
@@ -14,6 +16,8 @@ public class ButtonLeaDetail extends ButtonCommandUI_Impl{
 		Connection conn=null;
 		StringBuffer sb = new StringBuffer();
 		try{
+			UserWebImpl userWeb=(UserWebImpl) WebUtils.getSessionContextManager(request.getSession(true)).getActor(nds.util.WebKeys.USER);
+
 			QueryEngine engine=QueryEngine.getInstance();
 			conn= engine.getConnection();
    			ArrayList params=new ArrayList();
