@@ -227,7 +227,7 @@ public class ImportExcel implements Runnable{
     	ArrayList rows=new ArrayList();
         try{
 
-	        if("txt".equals(params.getProperty("file_format"))){
+	        if(!"xls".equals(params.getProperty("file_format"))){
 	        	//txt file handling
 	            /**
 	             * 对于文本格式(file_format='txt')，支持分隔符(txt_type=token)和固定宽度(txt_type=fix)，
@@ -411,7 +411,7 @@ public class ImportExcel implements Runnable{
         
         try{
         
-	        if("txt".equals(params.getProperty("file_format"))){
+	        if(!"xls".equals(params.getProperty("file_format"))){
 	        	//txt file handling
 	            /**
 	             * 对于文本格式(file_format='txt')，支持分隔符(txt_type=token)和固定宽度(txt_type=fix)，

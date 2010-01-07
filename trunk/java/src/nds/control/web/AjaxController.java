@@ -48,6 +48,7 @@ public class AjaxController {
 	 */
 	public String handle(String  jsonObj) throws Exception{
 		Locale locale= nds.schema.TableManager.getInstance().getDefaultLocale();
+		long currentTime= System.currentTimeMillis();
 		try{
 			WebContext ctx = WebContextFactory.get();
 			HttpServletRequest request = ctx.getHttpServletRequest();
@@ -70,6 +71,8 @@ public class AjaxController {
 	        locale= usr.getLocale();
 	        String ret=AjaxUtils.handle(jo, usr.getSession(),usr.getUserId(), locale).toJSONString();
 	        logger.debug(ret);
+        	logger.debug("Duration:"+ (System.currentTimeMillis()-currentTime)/1000.0+" s");
+	        
 			return ret;
 		}catch(Throwable t){
 			logger.error("failed",t);

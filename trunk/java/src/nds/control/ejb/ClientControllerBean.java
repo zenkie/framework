@@ -96,6 +96,8 @@ public class ClientControllerBean implements SessionBean,ClientController {
      */
     public ValueHolder handleEvent(NDSEvent ese) throws NDSException {
         //logger.debug(ese.toString());
+    	long currentTime= System.currentTimeMillis();
+    	int timeLogId=-1;
     	boolean doCreateUserTrans=true;
     	UserTransaction ut=null;
         try{
@@ -103,6 +105,7 @@ public class ClientControllerBean implements SessionBean,ClientController {
                 // in this case, the bean is not work as a session bean,  just a normal class
                 // so we will create a user transaction ourselves.
             	if(ese instanceof DefaultWebEvent){
+            		timeLogId=nds.util.TimeLog.requestTimeLog((String)((DefaultWebEvent)ese).getParameterValue("command"));
             		doCreateUserTrans=Tools.getYesNo(((DefaultWebEvent)ese).getParameterValue("nds.control.ejb.UserTransaction"), true);
             		if(doCreateUserTrans){
                 		//should check whether command using interal transaction or not
@@ -118,6 +121,16 @@ public class ClientControllerBean implements SessionBean,ClientController {
             }
             ValueHolder holder= (sm.handleEvent(ese));
             if(ut !=null) ut.commit();
+        	
+            if(ese instanceof DefaultWebEvent){
+            	DefaultWebEvent de=(DefaultWebEvent)ese;
+            	String cmd=(String)de.getParameterValue("command");
+            	logger.debug("Duration("+ cmd+"):"+ (System.currentTimeMillis()-currentTime)/1000.0+" s ( since event creation:"+
+            			(System.currentTimeMillis()-((DefaultWebEvent)ese).getCreationDate().getTime())/1000.0+" s");
+            	
+            	nds.util.TimeLog.endTimeLog(timeLogId);
+            }
+
             return holder;
         }catch( Throwable ee){
             if( ese instanceof DefaultWebEvent)

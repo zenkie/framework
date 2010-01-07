@@ -81,6 +81,7 @@ public class ImportExcelFileHandler extends RequestHandlerSupport {
 //             Parse the request
             List /* FileItem */ fileItems = upload.parseRequest(request);
             
+            
             Iterator iter = fileItems.iterator();
 
             while (iter.hasNext()) {
@@ -122,6 +123,7 @@ public class ImportExcelFileHandler extends RequestHandlerSupport {
             // 如果存在table, objectid, 并且 table 是明细表，则认为objectid就是父表的ID，将确认父表必须为允许修改的状态
         	checkParentTableWritePermission(props);
         	
+        	logger.debug(Tools.toString(props));
         	
             //if request contains formRequest, direct to that page if error found
             //see MainServlet for details of this variable usage
