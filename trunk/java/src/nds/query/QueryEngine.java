@@ -245,7 +245,7 @@ public class QueryEngine {
         rs= stmt.executeQuery(sql);
 
         QueryResultImpl qr=new QueryResultImpl(rs,quest, count, isRangedSQL);
-        int duration=(int)((System.currentTimeMillis()-startTime)/1000);
+        double duration=(double)((System.currentTimeMillis()-startTime)/1000.0);
         if (duration >= logDuration ) logger.info("("+duration+" s) "+sql);
         else logger.debug("("+duration+" s) "+sql);
         return qr;
@@ -323,7 +323,7 @@ public class QueryEngine {
 	        long startTime=System.currentTimeMillis();
 	        stmt= con.createStatement( );
 	        rs= stmt.executeQuery(sql);
-	        int duration=(int)((System.currentTimeMillis()-startTime)/1000);
+	        double duration=(int)((System.currentTimeMillis()-startTime)/1000.0);
 	        if (duration > logDuration) logger.info("("+duration+" s) "+sql);
 			else logger.debug("("+duration+" s) "+sql);
 	        if(rs.next()) return rs.getObject(1);
@@ -379,7 +379,7 @@ public class QueryEngine {
     	        long startTime=System.currentTimeMillis();
     	        stmt= con.createStatement( );
     	        rs= stmt.executeQuery(sql);
-    	        int duration=(int)((System.currentTimeMillis()-startTime)/1000);
+    	        double duration=(int)((System.currentTimeMillis()-startTime)/1000.0);
     	        if (duration > logDuration) logger.info("("+duration+" s) "+sql);
     			else logger.debug("("+duration+" s) "+sql);
     	        int colCount= rs.getMetaData().getColumnCount();
@@ -427,7 +427,7 @@ public class QueryEngine {
         con=getConnection();
         stmt= con.createStatement( );
         rs= stmt.executeQuery(sql);
-        int duration=(int)((System.currentTimeMillis()-startTime)/1000);
+        double duration=(double)((System.currentTimeMillis()-startTime)/1000.0);
         if (duration > logDuration) logger.info("("+duration+" s) "+sql);
 		else logger.debug("("+duration+" s) "+sql);
         if( cached ){
@@ -467,7 +467,15 @@ public class QueryEngine {
     }
 
     public SPResult executeStoredProcedure(String spName, Collection params, boolean hasReturnValue, Connection con) throws QueryException{
-        return controller.executeStoredProcedure(spName,params,hasReturnValue, con);
+        long startTime=System.currentTimeMillis();
+
+        SPResult p= controller.executeStoredProcedure(spName,params,hasReturnValue, con);
+        
+        double duration=(int)((System.currentTimeMillis()-startTime)/1000.0);
+        if (duration > logDuration) logger.info("("+duration+" s) "+spName);
+		else logger.debug("("+duration+" s) "+spName);
+        
+        return p;
 
     }
     public int getSequence( String tableName, Connection conn) throws QueryException {
@@ -520,7 +528,16 @@ public class QueryEngine {
 
     }
     public Collection executeFunction ( String fncName, Collection params, Collection results,Connection conn) throws QueryException {
-        return controller.executeFunction(fncName,params, results,conn);
+        long startTime=System.currentTimeMillis();
+
+        Collection p=controller.executeFunction(fncName,params, results,conn);
+        
+        double duration=(int)((System.currentTimeMillis()-startTime)/1000.0);
+        if (duration > logDuration) logger.info("("+duration+" s) "+fncName);
+		else logger.debug("("+duration+" s) "+fncName);
+        
+        return p;
+        
     }
 
     public Connection getConnection() throws QueryException {
