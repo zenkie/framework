@@ -386,24 +386,34 @@ public class ProcessObject extends Command {
 		  		qr.put("init_query", true);
 		  		qr.put("dir_perm", q.optInt("dir_perm",1));
 		  		qr.put("fixedColumns", q.optString("fixedColumns"));
-		  		StringBuffer sb=new StringBuffer(" IN (-1");
+		  		StringBuffer sb=new StringBuffer(" IN (");
+		  		boolean isNoData=true;   
 		  		for(int i=0;i< rtArrayResults.length();i++){
 		  			rtRow= rtArrayResults.getJSONObject(i);
 		  			String action= rtRow.getString("action");
 		  			int oid= rtRow.getInt("objId");
 		  			if (oid !=-1 && ("A".equals(action ) || "M".equals(action)) &&  Validator.isNull(rtRow.optString("msg"))){
 		  				// this is successful added or modified row
-		  				sb.append(",").append(oid);
+		  				if(isNoData)sb.append(oid);
+		  				else sb.append(",").append(oid);
+		  				isNoData=false;
 		  			}
 		  		}
+		  		if(isNoData)sb.append("-1");
 		  		sb.append(")");
-		  		
+		  		QueryResult res=null;
 		  		Expression expr=new Expression(new ColumnLink(new int[]{qTable.getPrimaryKey().getId()}), sb.toString(), null);
 		  		qr.put("param_expr",expr );
 		  		qr.put("start",0);
 		  		qr.put("range", Integer.MAX_VALUE);
 		  		logger.debug(qr.toString());
-		  		QueryResult res=QueryEngine.getInstance().doQuery(AjaxUtils.parseQuery(qr, event.getQuerySession(),usr.getId().intValue(),locale ));
+			  	QueryRequestImpl quest=	AjaxUtils.parseQuery(qr, event.getQuerySession(),usr.getId().intValue(),locale )	;		  		
+		  		if(!isNoData){
+			  		
+			  		res=QueryEngine.getInstance().doQuery(quest);
+		  		}else{
+		  			res=QueryEngine.getInstance().doDummyQuery(quest, "no data");
+		  		}
 		  		// convert button
 		  		if(ctx!=null){
 			  		HttpServletRequest request = ctx.getHttpServletRequest();
