@@ -859,6 +859,7 @@ public class DefaultWebEventHelper {
              * 由于条码新旧转换需求，统一在此进行更新，is_pdt_table 是在TableManager#initMProductTables设置的
              */
             if("AC".equalsIgnoreCase(action) && table.getJSONProps()!=null && table.getJSONProps().optBoolean("is_pdt_convert",false)){
+            	long startTime=System.currentTimeMillis();
             	String sql="UPDATE "+ table.getRealTableName()+" p"+ 
             		" SET (M_PRODUCT_ID,M_ATTRIBUTESETINSTANCE_ID)=(SELECT n.M_PRODUCT_ID,n.M_ATTRIBUTESETINSTANCE_ID "+
             		" FROM M_PDT_ALIAS_CON c, M_PRODUCT_ALIAS n, M_PRODUCT_ALIAS o "+
@@ -881,6 +882,8 @@ public class DefaultWebEventHelper {
             			try{pstmt.close();}catch(Throwable tx){}
             		}
             	}
+            	double duration=(int)((System.currentTimeMillis()-startTime)/1000.0);
+        		logger.debug("("+duration+" s) is_pdt_convert on "+ table+" AC");            	
             	
             }
             
