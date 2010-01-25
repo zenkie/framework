@@ -22,7 +22,7 @@ public class ButtonExtDetail extends ButtonCommandUI_Impl{
 			conn= engine.getConnection();
    			ArrayList params=new ArrayList();
    			params.add(objectId);
-                        params.add(userWeb.getUserId());
+            params.add(userWeb.getUserId());
 			QueryEngine.getInstance().executeStoredProcedure("HR_INSERT_EXTAPPLY", params, false);
 			sb.append(WebKeys.WEB_CONTEXT_ROOT).
 			append(WebKeys.NDS_URI+ "/object/object.jsp?table=HR_EXTAPPLY&&fixedcolumns=&id="+objectId);
