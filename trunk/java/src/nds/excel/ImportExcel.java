@@ -398,7 +398,7 @@ public class ImportExcel implements Runnable{
         for( int i=0;i< columns.size();i++){
             col=(Column) columns.get(i);
             colNames.add(getColumnName(col));
-            if(multiplyNum>1 && col.getName().contains("QTY") && 
+            if(multiplyNum!=1 && col.getName().contains("QTY") && 
             		col.getType()== Column.NUMBER && multiplyColumnIndex==-1){
             	multiplyColumnIndex=i;
             }
