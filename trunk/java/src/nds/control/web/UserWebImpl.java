@@ -712,6 +712,15 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
     	return value;
     }
     /**
+     * Override user option
+     * @param paramName
+     * @param value
+     */
+    public void setUserOption(String paramName, String value){
+    	options.put(paramName,value);
+    }
+    
+    /**
      * Load user settings from ad_option table
      * @throws Exception
      */
