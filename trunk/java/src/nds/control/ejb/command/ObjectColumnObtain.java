@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
+import org.json.JSONObject;
+
 import nds.control.check.ColumnCheckImpl;
 import nds.control.ejb.DefaultWebEventHelper;
 import nds.control.event.DefaultWebEvent;
@@ -210,7 +212,7 @@ public class ObjectColumnObtain extends ColumnObtain{
       	  logger.debug("object obtain sql= "+ sqlStr);
           pstmt=conn.prepareStatement(sqlStr.toString());
       	  if(isFastSave){
-      		  String fsSQL=getFastSaveSQL(refTable,event,user);
+      		  String fsSQL=getFastSaveSQL(refTable,col,event,user);
       		  logger.debug("fast save sql= "+ fsSQL);
       		  fsPstmt= conn.prepareStatement(fsSQL);
       	  }
@@ -477,10 +479,11 @@ public class ObjectColumnObtain extends ColumnObtain{
   }
   /**
    * SQL for fast save, only ak is input from ui
-   * @param table
+   * @param table reference table, has "fast_save" property set
+   * @param rcol the column to work on, has reference table refers to <param>table</param>
    * @return sql 
    */
-  private String getFastSaveSQL(Table table, DefaultWebEvent event,nds.security.User user ){
+  private String getFastSaveSQL(Table table,Column rcol, DefaultWebEvent event,nds.security.User user ) throws Exception{
 	  StringBuffer sb=new StringBuffer();
 	  sb.append("insert into ").append(table.getRealTableName()).append(" ").
 	  	append(table.getName()).append("(ID,").append(table.getAlternateKey().getName());
@@ -492,6 +495,22 @@ public class ObjectColumnObtain extends ColumnObtain{
 	  for(int i=0;i<cols.size();i++){
 		  Column col= (Column) cols.get(i);
 		  if(col.isAlternateKey()|| col.isVirtual())continue;
+		  if(col.getJSONProps()!=null ){
+			  JSONObject jo= col.getJSONProps().optJSONObject("fast_save_dv");
+			  if(jo!=null){
+				  //fetch defaul value for that column
+				  for(Iterator it=jo.keys();it.hasNext();){
+					  String key= (String)it.next();
+					  Object value= jo.get(key);
+					  sb.append(",").append(key);
+					  if(value instanceof String)
+						  s2.append(",").append(QueryUtils.TO_STRING((String)value));
+					  else
+						  s2.append(",").append(value);
+				  }
+				  continue;
+			  }
+		  }
 		  if("operate".equals(col.getObtainManner())){
 			  sb.append(",").append(col.getName());
 			  s2.append(",").append(user.id);
