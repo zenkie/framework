@@ -5,7 +5,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Locale;
 import java.util.*;
 
 import nds.control.check.ColumnCheckImpl;
@@ -13,10 +12,7 @@ import nds.control.ejb.DefaultWebEventHelper;
 import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEventException;
 import nds.query.*;
-import nds.query.QueryEngine;
-import nds.query.QueryRequestImpl;
 import nds.schema.*;
-import nds.util.NDSException;
 import nds.util.*;
 
 /**
@@ -34,12 +30,14 @@ import nds.util.*;
  */
 public class ObjectColumnObtain extends ColumnObtain{
 //  int length;
+	private Locale locale;
   public ObjectColumnObtain() {
 //      this.length = length;
   }
 
   public Vector getColumnValue(DefaultWebEvent event,Table table,Column col,int length) throws NDSException,RemoteException{
     DefaultWebEventHelper helper= new DefaultWebEventHelper();
+    locale= event.getLocale();
     
     nds.security.User user= helper.getOperator(event);
     //logger.debug(" for column " + col.getName() + ":"+ event.toDetailString());
@@ -201,6 +199,8 @@ public class ObjectColumnObtain extends ColumnObtain{
     		  parentFkColumn=tm.getParentFKColumn(col.getTable());
     	  }
       }      
+      PreparedStatement fsPstmt=null;
+      boolean isFastSave=(refTable.getJSONProps()!=null && refTable.getJSONProps().optBoolean("fast_save"));
       PreparedStatement pstmt=null;
       ResultSet result=null;
       boolean isUpperCase = akColumn.isUpperCase();
@@ -209,7 +209,11 @@ public class ObjectColumnObtain extends ColumnObtain{
       try{
       	  logger.debug("object obtain sql= "+ sqlStr);
           pstmt=conn.prepareStatement(sqlStr.toString());
-
+      	  if(isFastSave){
+      		  String fsSQL=getFastSaveSQL(refTable,event,user);
+      		  logger.debug("fast save sql= "+ fsSQL);
+      		  fsPstmt= conn.prepareStatement(fsSQL);
+      	  }
           if(isAliasSupportTable){
         	 aliasTable=tm.getTable(((AliasSupportTable)refTable).getAliasTable());// m_product_alias
           	String pkAssocColumn= ((AliasSupportTable)refTable).getAssociatedColumnInAliasTable(); // m_product_id, this is in m_product_alias
@@ -282,11 +286,17 @@ public class ObjectColumnObtain extends ColumnObtain{
                   			  if(result.next() ){
                   				  resultInt[i] = result.getBigDecimal(1);
                   			  }else{
-                  				  if(this.isBestEffort ){
-		                              this.setRowInvalid(i,objectStr[i]+" ("+refTablleDesc+")@not-exists-or-invalid@" );
-		                              resultInt[i]=new BigDecimal(-1);
-		                          }else 
-		                          	throw new NDSEventException("@line@ "+(i+1)+": "+objectStr[i]+"("+refTablleDesc+")@not-exists-or-invalid@");
+                  				  //add support for ad_table( fast_save), will save if not found 2010.2.9 yfzhu
+                  				  if(isFastSave){
+                  					  resultInt[i]=new BigDecimal( fastSaveNewValue(refTable,objectStr[i], i,fsPstmt));
+                  					  
+                  				  }else{
+	                  				  if(this.isBestEffort ){
+			                              this.setRowInvalid(i,objectStr[i]+" ("+refTablleDesc+")@not-exists-or-invalid@" );
+			                              resultInt[i]=new BigDecimal(-1);
+			                          }else 
+			                          	throw new NDSEventException("@line@ "+(i+1)+": "+objectStr[i]+"("+refTablleDesc+")@not-exists-or-invalid@");
+                  				  }
                   			  }
                   		  }
 		                  
@@ -336,7 +346,7 @@ public class ObjectColumnObtain extends ColumnObtain{
       }finally{
           if( pstmt !=null) try{ pstmt.close();}catch(Exception e3){}
           if( aliasPstmt !=null) try{ aliasPstmt.close();}catch(Exception e3){}
-          
+          if(fsPstmt!=null)try{ fsPstmt.close();}catch(Exception e3){}
       }
       vec.add(resultInt);
       return vec;
@@ -465,7 +475,77 @@ public class ObjectColumnObtain extends ColumnObtain{
     return aId;
     
   }
-  
+  /**
+   * SQL for fast save, only ak is input from ui
+   * @param table
+   * @return sql 
+   */
+  private String getFastSaveSQL(Table table, DefaultWebEvent event,nds.security.User user ){
+	  StringBuffer sb=new StringBuffer();
+	  sb.append("insert into ").append(table.getRealTableName()).append(" ").
+	  	append(table.getName()).append("(ID,").append(table.getAlternateKey().getName());
+
+	  StringBuffer s2=new StringBuffer("?,?");
+	  
+	  //columns that has default value, and AK will be saved
+	  ArrayList cols=table.getAllColumns();
+	  for(int i=0;i<cols.size();i++){
+		  Column col= (Column) cols.get(i);
+		  if(col.isAlternateKey()|| col.isVirtual())continue;
+		  if("operate".equals(col.getObtainManner())){
+			  sb.append(",").append(col.getName());
+			  s2.append(",").append(user.id);
+			  
+		  }else if("sysdate".equals(col.getObtainManner())){
+			  sb.append(",").append(col.getName());
+			  s2.append(",sysdate");
+		  }else{
+		  
+			  String dv= col.getDefaultValue(true);
+			  if (dv==null) continue;
+			  dv=event.getStringWithNoVariables(dv);
+			  /*if(col.getType()!=Column.STRING){
+				  throw new NDSRuntimeException("found default value for none-string column:"+ col);
+			  }*/
+			  if(nds.util.Validator.isNotNull(dv)){
+				  sb.append(",").append(col.getName());
+				  s2.append(",");
+				  if( col.getType()== Column.STRING){
+					  s2.append(QueryUtils.TO_STRING(dv));
+				  }else{
+					  s2.append(dv);
+				  }
+			  }
+		  }
+	  }
+	  sb.append(") values (").append(s2).append(")");
+	  return sb.toString();
+  }
+  /**
+   * 
+   * @param table the table that will be added new record
+   * @param value record ak value 
+   * @param userId 
+   * @param rowIdx row index in array, will notify user the row index if error found
+   * @return record id created
+   * @throws Exception
+   */
+  private int fastSaveNewValue(Table table, String value,int rowIdx,PreparedStatement pstmt)throws Exception{
+	  try{
+		  int id= QueryEngine.getInstance().getSequence(table.getName(), conn);
+		  pstmt.setInt(1,id);
+		  pstmt.setString(2, value);
+		  pstmt.executeUpdate();
+		  return id;
+	  }catch(Exception e){
+		  if(this.isBestEffort ){
+              this.setRowInvalid(rowIdx,value+":"+ e.getMessage() );
+              return -1;
+          }else 
+          	throw new NDSEventException("@line@ "+(rowIdx+1)+": "+
+          			value+"("+table.getDescription(locale)+")@exception@:"+ e.getMessage());
+	  }
+  }
   /**
    * Fetch default value from <default-value> in definition xml.
    * The default value may be a variable, such like $AD_Client_ID
