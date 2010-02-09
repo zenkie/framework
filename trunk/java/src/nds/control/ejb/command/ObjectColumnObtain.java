@@ -494,15 +494,18 @@ public class ObjectColumnObtain extends ColumnObtain{
 	  ArrayList cols=table.getAllColumns();
 	  for(int i=0;i<cols.size();i++){
 		  Column col= (Column) cols.get(i);
+		  logger.debug("col:"+ col);
 		  if(col.isAlternateKey()|| col.isVirtual())continue;
 		  if(col.getJSONProps()!=null ){
 			  JSONObject jo= col.getJSONProps().optJSONObject("fast_save_dv");
 			  if(jo!=null){
+				  logger.debug("fast_save_dv:"+ jo);
 				  //fetch defaul value for that column
 				  for(Iterator it=jo.keys();it.hasNext();){
 					  String key= (String)it.next();
 					  Object value= jo.get(key);
 					  sb.append(",").append(key);
+					  logger.debug("fast_save_dv:"+key+","+value );
 					  if(value instanceof String)
 						  s2.append(",").append(QueryUtils.TO_STRING((String)value));
 					  else
