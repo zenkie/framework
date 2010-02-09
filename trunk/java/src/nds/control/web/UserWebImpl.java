@@ -712,7 +712,7 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
     	return value;
     }
     /**
-     * Override user option
+     * Override user option,so can set in program level beside db
      * @param paramName
      * @param value
      */
