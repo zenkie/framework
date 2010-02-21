@@ -309,7 +309,9 @@ public class DBSchemaLoader {
             	Set lvs=avg.getAdLimitValueSet();
             	for(Iterator it2=lvs.iterator();it2.hasNext();){
             		AdLimitValue alv= (AdLimitValue) it2.next();
-            		pt.put(alv.getValue(), alv.getDescription());
+            		//2010.02.21 only isactive one will be loaded yfzhu
+            		if("Y".equalsIgnoreCase(alv.getIsActive()))
+            				pt.put(alv.getValue(), alv.getDescription());
             	}
 			}            
             if(pt!=null){
