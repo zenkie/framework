@@ -40,10 +40,27 @@ import com.Ostermiller.util.NameValuePair;;
  * Create crosstab runner process instance, including following parameters:
  * 	select filter (where clause)
  *  ad_cxtab template
+ *  
+ *  Use portal.properties#cxtab.concurrent.max to avoid too many immediate running cxtab jobs 
  * 
  * @author yfzhu@agilecontrol.com 
  */
 public class ExecuteCxtab extends Command {
+	/**
+	 * Record current running job count
+	 */
+	private static int runningJobCount=0;
+	/**
+	 * Last time runningJobCount is equal to max threshold
+	 */
+	private static long lastMaxJobCountReachedTime=-1;
+	public static int getRunningJobCount(){
+		return runningJobCount;
+	}
+	public static void resetRunningJobCount(){
+		lastMaxJobCountReachedTime=-1;
+		runningJobCount=0;
+	}
 	 /** 
 	  * @param event contains JSONObject that has following properties:
 	 * 		"query*" - JSONObject.toString() which should be parsed
@@ -90,6 +107,19 @@ public class ExecuteCxtab extends Command {
 	  	String queueName=(String) ((List)list.get(0)).get(1);
 	  	boolean isBg= Tools.getYesNo(((List)list.get(0)).get(2),true);
 	  	
+	 // At most portal.properties#cxtab.concurrent.max pinstance can run, -1 means no limitation
+	  	int maxJobCount=-1;
+  		if(!isBg){
+		  	Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+	  		maxJobCount=Tools.getInt( conf.getProperty("cxtab.concurrent.max"),-1);
+	  		if(maxJobCount >0 && runningJobCount>=maxJobCount){
+	  			throw new NDSException( MessagesHolder.getInstance().
+	  					translateMessage("@cxtab-too-many-jobs-running@",event.getLocale()).replaceAll("0",
+	  							((SimpleDateFormat)QueryUtils.smallTimeFormatter.get()).format(
+	  									new java.util.Date(lastMaxJobCountReachedTime))
+	  							));
+	  		}
+  		}
 	  	cxtabName=(String) ((List)list.get(0)).get(3);
 	  	
 	  	String preProcedure=(String) ((List)list.get(0)).get(4);
@@ -196,8 +226,19 @@ public class ExecuteCxtab extends Command {
 	    	hd.put("code","0");
 	    	returnObj.put("message", MessagesHolder.getInstance().translateMessage("@cxtab-task-generated@",event.getLocale()));
 	  	}else{
+	  		
 	  		//run now
-	  		hd=ProcessUtils.executeImmediateADProcessInstance(piId , userId, false);
+	  		try{
+	  			
+		  		runningJobCount++;
+		  		if(maxJobCount>-1 && maxJobCount==runningJobCount){
+		  			lastMaxJobCountReachedTime=System.currentTimeMillis();//record, so when time is too long, admin should get in to check 
+		  		}
+	  			hd=ProcessUtils.executeImmediateADProcessInstance(piId , userId, false);
+	  		}finally{
+	  			runningJobCount--;
+	  			lastMaxJobCountReachedTime=-1;//reset
+	  		}
 	  		//and tell client to fetch file from 
 	  		//returnObj.put("url", "/servlets/binserv/GetFile?show=Y&filename="+ URLEncoder.encode(filename+"."+ fileType,"UTF-8"));
 	  		
