@@ -113,7 +113,7 @@ public class DefaultWebEventHelper {
      */
     public void checkOperatorIsAdmin( DefaultWebEvent event ) throws NDSException, RemoteException {
         User usr= this.getOperator(event);
-        if( usr.getIsAdmin() != 1) {
+        if( !usr.isAdmin() ) {
             throw new NDSSecurityException("@must-be-admin-to-execute-this-command@.");
         }
     }

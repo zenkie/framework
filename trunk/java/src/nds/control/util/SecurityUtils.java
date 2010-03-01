@@ -49,9 +49,9 @@ public class SecurityUtils {
     private static Logger logger= LoggerManager.getInstance().getLogger(SecurityUtils.class.getName());
     private static final String GET_SECURITY_FILTER="select sqlfilter, filterdesc,t.name from groupperm, directory, ad_table t where (t.id=directory.ad_table_id) and  groupid in (select groupid from groupuser where userid=? ) and directoryid in (select id from directory where upper(name)=?) and bitand(permission,?)+0=? and directory.id=directoryid";
     private final static String GET_PERMISSION="select GetUserPermission(?,?) from dual";
-    private final static String GET_USER_BY_NAME_AND_CLIENT="select u.id, u.name, u.isactive,u.ad_client_id, u.ad_org_id, u.language, c.name from users u, ad_client c where u.name=? and u.ad_client_id=c.id and c.domain=?";
-    private final static String GET_USER_BY_EMAIL_AND_CLIENT="select u.id, u.name, u.isactive,u.ad_client_id, u.ad_org_id, u.language, c.name from users u, ad_client c where u.email=? and u.ad_client_id=c.id and c.domain=?";
-    private final static String GET_USER_BY_ID="select u.name,c.domain,u.isactive, u.description, u.ad_client_id, u.ad_org_id, u.language, c.name  from users u,ad_client c where u.ID=? and c.id=u.ad_client_id";
+    private final static String GET_USER_BY_NAME_AND_CLIENT="select u.id, u.name, u.isactive,u.ad_client_id, u.ad_org_id, u.language, c.name, u.isadmin from users u, ad_client c where u.name=? and u.ad_client_id=c.id and c.domain=?";
+    private final static String GET_USER_BY_EMAIL_AND_CLIENT="select u.id, u.name, u.isactive,u.ad_client_id, u.ad_org_id, u.language, c.name ,u.isadmin from users u, ad_client c where u.email=? and u.ad_client_id=c.id and c.domain=?";
+    private final static String GET_USER_BY_ID="select u.name,c.domain,u.isactive, u.description, u.ad_client_id, u.ad_org_id, u.language, c.name,u.isadmin  from users u,ad_client c where u.ID=? and c.id=u.ad_client_id";
  
     /**
     @roseuid 3BF38E580012
@@ -383,6 +383,7 @@ public class SecurityUtils {
 	    		usr.adOrgId =rs.getInt(5);
 	    		usr.locale = getLocale( rs.getString(6) );
 	    		usr.clientDomainName= rs.getString(7);
+	    		usr.setIsAdmin(rs.getInt(8));
 	    	}
     	}catch(Exception e){
     		logger.error("Could not fetch user according to userNameOrEmail="+ userNameOrEmail+
@@ -416,6 +417,7 @@ public class SecurityUtils {
 	    		usr.adOrgId = rs.getInt(6);
 	    		usr.locale = getLocale( rs.getString(7) );
 	    		usr.clientDomainName= rs.getString(8);
+	    		usr.setIsAdmin(rs.getInt(9));
 	    	}
     	}/*catch(Exception e){
     		logger.error("Could not fetch user according to user id="+ userId, e);

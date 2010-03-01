@@ -98,7 +98,7 @@ public class LoginHandler extends StateHandlerSupport {
         vd.put("name", username);
         vd.put("id", usr.getId());
         vd.put("description", usr.getDescription());
-        vd.put("isadmin", ""+usr.getIsAdmin());
+        vd.put("isadmin", ""+usr.isAdmin());
         vd.put("remote_address",remoteAddr);
 
         // notify models to be update

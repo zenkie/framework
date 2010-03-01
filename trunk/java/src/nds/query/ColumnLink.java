@@ -5,14 +5,17 @@ import nds.schema.Column;
 import nds.schema.TableManager;
 import nds.util.Tools;
 import java.util.*;
+import org.json.*;
 
 /**
  * 结构是这样的：
  * 每个Column都是上一个Column所指明的referenceTable的某一列
  */
-public class ColumnLink implements java.io.Serializable {
+public class ColumnLink implements java.io.Serializable, JSONString {
     private transient Column[] columns;//not thread safe, but fast. columns should at least have 2 element
     private transient int hashCode;
+    private String description;
+    private Object tag;
 
     /**
      *
@@ -23,6 +26,7 @@ public class ColumnLink implements java.io.Serializable {
     public ColumnLink(String[] columnNames)throws QueryException {
         setup(columnNames);
     }
+   
     /**
      * Append a column to column link
      * @param col must be column in last column's referenced table
@@ -62,11 +66,12 @@ public class ColumnLink implements java.io.Serializable {
      * 
      * @param columns format : table.column,column2,column3
      * First column should has table name prefixed with "."
-     * Later all columns should seperatated by comman ";" and no table name set
+     * Later all columns should seperatated by comman ";" or ":" and no table name set
+     * comments: ";" is not permitted in html 4.0 spec as input id or name while ":" is allowed
      * @throws QueryException
      */
     public ColumnLink(String columns) throws QueryException {
-    	StringTokenizer st= new StringTokenizer(columns,";");
+    	StringTokenizer st= new StringTokenizer(columns,";:");
     	ArrayList al=new ArrayList();
     	while(st.hasMoreTokens()){
     		al.add(st.nextToken());
@@ -150,17 +155,20 @@ public class ColumnLink implements java.io.Serializable {
 
     }
     public String getDescription(java.util.Locale locale){
-        String s="";
-        if( TableManager.getInstance().getDefaultLocale().hashCode()==locale.hashCode()){
-	        for(int i=0;i< columns.length;i++) {
-	            s +=columns[i].getDescription(locale);
+        if(description==null){
+	    	String s="";
+	        if( TableManager.getInstance().getDefaultLocale().hashCode()==locale.hashCode()){
+		        for(int i=0;i< columns.length;i++) {
+		            s +=columns[i].getDescription(locale);
+		        }
+	        }else{
+		        for(int i=0;i< columns.length;i++) {
+		            s +=(i>0?".":"")+columns[i].getDescription(locale);
+		        }
 	        }
-        }else{
-	        for(int i=0;i< columns.length;i++) {
-	            s +=(i>0?".":"")+columns[i].getDescription(locale);
-	        }
+	        description=s;
         }
-        return s;
+        return description;
     }
     /**
      * smple link is : 12,13,14. the reverse one will be 14,13,12
@@ -171,6 +179,24 @@ public class ColumnLink implements java.io.Serializable {
     	for(int i=0;i<cl.length;i++)
     		cl[i]= columns[cl.length-1-i].getId();
     	return new ColumnLink(cl);
+    }
+    /**
+     * For name or id as in html since ";" is not allowed in html 4.0 spec
+     * Format like: [table].[column1]:[column2]
+     * Note current implimentation can not allow column name contains ";" or ":" 
+     * You can use this string to recontruct ColumnLink
+     * @return
+     */
+    public String toHTMLString(){
+    	if (columns.length==0) return "";
+    	
+        StringBuffer  s=new StringBuffer();
+        s.append( columns[0].getTable().getName()).append(".").append(columns[0].getName());
+        for(int i=1;i< columns.length;i++) {
+            s.append(":").append(columns[i].getName());
+        }
+        return s.toString();    	
+    
     }
     /**
      * Format like : [table].[column1];[column2]
@@ -213,4 +239,35 @@ public class ColumnLink implements java.io.Serializable {
     public static ColumnLink createLink(Column col) throws QueryException{
     	return new ColumnLink(new int[]{col.getId()});
     }
-    }
+	
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	public Object getTag() {
+		return tag;
+	}
+	/**
+	 * Can set anything here for tag, one use case is set boolean value for order by columns
+	 * @param tag
+	 */
+	public void setTag(Object tag) {
+		this.tag = tag;
+	}
+	public String toJSONString()  {
+		try{
+			JSONObject jo=new JSONObject();
+			jo.put("c",toString());
+			jo.put("d", this.getDescription(TableManager.getInstance().getDefaultLocale()));
+			if(this.tag!=null)jo.put("t", tag);
+			return jo.toString();
+		}catch(Throwable t){
+			return "";
+		}
+	}
+	public static ColumnLink parseJSONObject(JSONObject jo) throws QueryException{
+		ColumnLink cl=new ColumnLink( jo.optString("c"));
+		cl.setDescription(jo.optString("d"));
+		cl.setTag(jo.opt("t"));
+		return cl;
+	}
+}

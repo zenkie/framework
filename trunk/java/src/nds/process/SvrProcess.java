@@ -333,6 +333,7 @@ public abstract class SvrProcess implements ProcessCall {
 		try{
 			subject=nds.util.MessagesHolder.getInstance().translateMessage(subject,TableManager.getInstance().getDefaultLocale());
 			content=nds.util.MessagesHolder.getInstance().translateMessage(content,TableManager.getInstance().getDefaultLocale());
+			if(fileLink==null) fileLink="";
 			ArrayList params=new ArrayList();
 			params.add(new Integer( this.getAD_User_ID()));// user
 			params.add(subject);// subject

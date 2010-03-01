@@ -8,11 +8,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -30,7 +26,7 @@ import nds.schema.DisplaySetting;
 import nds.schema.Table;
 import nds.schema.TableManager;
 import nds.util.*;
-
+import nds.web.config.*;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.directwebremoting.WebContextFactory;
 import org.json.JSONArray;
@@ -160,24 +156,56 @@ public class AjaxUtils {
 		TableManager manager =TableManager.getInstance();
 		Table table= manager.getTable(jo.getString("table"));
 		query.setMainTable(table.getId());
-		
-		Object masks= jo.get("column_masks");
-		int[] cmasks;
-		
-		if(masks instanceof JSONArray){
-			cmasks= new int[((JSONArray)masks).length()];
-			for(int i=0;i<cmasks.length;i++){
-				cmasks[i]= ((JSONArray)masks).getInt(i);
+		/**
+		 * Support both column_masks and qlcid(QueryListConfig.id), and column_masks has higher priority
+		 * 2010-2-27 yfzhu
+		 */
+		int qlcId=jo.optInt("qlcid",-2);// -1 means meta default qlc, so -2 means not set qlc
+		QueryListConfig qlc=null;
+		Object masks= jo.opt("column_masks");
+		if(masks!=null){
+			int[] cmasks;
+			
+			if(masks instanceof JSONArray){
+				cmasks= new int[((JSONArray)masks).length()];
+				for(int i=0;i<cmasks.length;i++){
+					cmasks[i]= ((JSONArray)masks).getInt(i);
+				}
+			}else{
+				cmasks= new int[1];
+				cmasks[0]= Tools.getInt(masks, -1);
 			}
+			logger.debug( Tools.toString(cmasks)+", jo:"+ masks+", masks class:"+ masks.getClass());
+			//Select
+			query.addSelection(table.getPrimaryKey().getId());
+			query.addColumnsToSelection(cmasks, jo.optBoolean("column_include_uicontroller",false));
 		}else{
-			cmasks= new int[1];
-			cmasks[0]= Tools.getInt(masks, -1);
+			//try loading from QueryListConfig
+			if(qlcId==-1){
+				qlc= QueryListConfigManager.getInstance().getMetaDefault(table.getId());
+			}else if(qlcId>-1){
+				qlc= QueryListConfigManager.getInstance().getQueryListConfig(qlcId);
+			}else{
+				// not set
+				throw new NDSException("Neither column_masks nor qlcid is found in query object:"+ jo);
+			}
+			logger.debug("qlcid:"+ qlcId);
+			query.addSelection(table.getPrimaryKey().getId());
+			List<ColumnLink> selections=qlc.getSelections();
+			for(ColumnLink c:selections){
+				int[] cids=c.getColumnIDs();
+				if(c.getLastColumn().getReferenceTable()!=null){
+					//show ak, hide id
+					int[] rids= new int[cids.length+1];
+					
+		    		System.arraycopy(cids, 0, rids, 0, cids.length);
+		    		rids[rids.length-1]= c.getLastColumn().getReferenceTable().getAlternateKey().getId();
+		    		
+					query.addSelection(rids, true, c.getDescription(locale));
+				}else
+					query.addSelection(cids, false, c.getDescription(locale));
+			}
 		}
-		logger.debug( Tools.toString(cmasks)+", jo:"+ masks+", masks class:"+ masks.getClass());
-		//Select
-		query.addSelection(table.getPrimaryKey().getId());
-		query.addColumnsToSelection(cmasks, jo.optBoolean("column_include_uicontroller",false));
-		
 		// Where
 		Expression expr=null,expr2;
 		String cs;
@@ -234,13 +262,19 @@ public class AjaxUtils {
 		}
 		
 		//check param_str, this is set by user in query form
-		cs= jo.optString("param_str");
-		if ( Validator.isNotNull(cs)){
+		cs= jo.optString("param_str");// column name in format like "tab"+tabIdx+"_param/"+i+"/columns"
+		String cs2=jo.optString("param_str2");  //column in format as ColumnLink
+		if ( Validator.isNotNull(cs)  ){
 			expr2=parseQueryString(cs, locale);
 			//logger.debug("param_str:"+ expr2.toString());
 			if(expr2!=null && !expr2.isEmpty())expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
 			//logger.debug("after param_str"+expr );
+		} if( Validator.isNotNull(cs2)){
+			expr2=parseQueryStringInColumnLink(cs2, locale);
+			logger.debug("param_str:"+ expr2.toString());
+			if(expr2!=null && !expr2.isEmpty())expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
 		}else{
+			
 		/**
 		 *  system will try to load recent one week data if "param_str" is not set (this will cover 
 		 *  the one week range) and "fixedColumns" not set (this occurs when item table is shown)
@@ -334,17 +368,20 @@ public class AjaxUtils {
         }else{
         	// so "order_columns" take previliage over "orderby"
     		JSONArray orderby= jo.optJSONArray("orderby");
-    		if(orderby!=null)
-    		for(int i=0;i<orderby.length();i++){
-    			JSONObject od= orderby.getJSONObject(i);
-    			try{
-    				ColumnLink cl= new ColumnLink(table.getName()+"."+ od.getString("column"));
-    				query.addOrderBy( cl.getColumnIDs(), od.optBoolean("asc",true));
-    			}catch(Throwable t){
-    				logger.error("fail to parse column link:"+ table.getName()+"."+ od.optString("column"), t);
-    				throw new NDSException("order by column error:"+ od.optString("column"));
-    			}
-    			
+    		if(orderby!=null){
+	    		for(int i=0;i<orderby.length();i++){
+	    			JSONObject od= orderby.getJSONObject(i);
+	    			try{
+	    				ColumnLink cl= new ColumnLink(table.getName()+"."+ od.getString("column"));
+	    				query.addOrderBy( cl.getColumnIDs(), od.optBoolean("asc",true));
+	    			}catch(Throwable t){
+	    				logger.error("fail to parse column link:"+ table.getName()+"."+ od.optString("column"), t);
+	    				throw new NDSException("order by column error:"+ od.optString("column"));
+	    			}
+	    			
+	    		}
+    		}else{
+    			//load 
     		}
         	
         }
@@ -639,7 +676,24 @@ public class AjaxUtils {
     		}
     	}
     	return rawCondition;
-    }    
+    }
+    
+    /**
+     * Parse string to Expression, in contrast to #parseQueryString, column inputs are named as ColumnLink
+     * @param params in format like URL.queryString, should not be null
+     * @return Expression for QueryRequest construction
+     */
+    private static Expression parseQueryStringInColumnLink(String params,Locale locale) throws Exception{
+    	CGIParser parser= new CGIParser(params,"UTF-8");
+    	java.util.Enumeration e=parser.getParameterNames();
+    	HashMap map=new HashMap();
+    	while(e.hasMoreElements()){
+    		String key= (String)e.nextElement();
+    		map.put(key, parser.getParameter(key)); // we do not handle string[] here
+    	}
+    	return QueryUtils.parseConditionInColumnLink(map, locale);
+    }
+    
     /**
      * Parse string to Expression
      * @param params in format like URL.queryString, should not be null

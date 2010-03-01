@@ -334,7 +334,9 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     	initAutoCompleteTables();
     	initAK2();
     	initMProductTables();
-        
+
+    	//query list configurations
+    	nds.web.config.QueryListConfigManager.getInstance().clearAll();
     }
     /**
      * AK2 设置在表的jsonprops里，将修改table/column的有关定义

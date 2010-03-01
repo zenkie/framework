@@ -37,7 +37,7 @@ public class User {
   public int isEnabled;
   public boolean isActive;
   public int isEmployee;
-  public int isAdmin;
+  public boolean isAdmin;
   public String description;
   public String clientDomain; // ad_client_id.domain
   public int adClientId;
@@ -93,11 +93,11 @@ public void setClientDomain(String clientDomain) {
   public void setIsEmployee(int isEmployee) {
     this.isEmployee = isEmployee;
   }
-  public int getIsAdmin() {
+  public boolean isAdmin() {
     return isAdmin;
   }
   public void setIsAdmin(int isAdmin) {
-    this.isAdmin = isAdmin;
+    this.isAdmin = (isAdmin==1);
   }
   public String getDescription() {
     return description;

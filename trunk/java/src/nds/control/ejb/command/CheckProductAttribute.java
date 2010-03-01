@@ -119,7 +119,7 @@ public class CheckProductAttribute extends Command {
   			+" from m_product_alias p, "+
 				"m_product m, m_attributesetinstance a where (p.no=? "+
 				(aliasAk2==null?"":" or p."+aliasAk2.getName()+"=?" )
-				+" ) and p.ad_client_id=? and m.id=p.m_product_id and a.id(+)=p.M_ATTRIBUTESETINSTANCE_ID"; 
+				+" ) and p.isactive='Y' and m.isactive='Y' and p.ad_client_id=? and m.id=p.m_product_id and a.id(+)=p.M_ATTRIBUTESETINSTANCE_ID"; 
 						
   			pstmt= conn.prepareStatement(sql);
   			int i=1;
@@ -158,7 +158,7 @@ public class CheckProductAttribute extends Command {
   		if(productId ==-1){
   		  	pstmt= conn.prepareStatement("select id, name, value, m_attributeset_id, pricelist from m_product where (name=? "+
 				(pdtAk2==null?"":" or "+pdtAk2.getName()+"=?" )
-				+") and ad_client_id=?");
+				+") and isactive='Y' and ad_client_id=?");
   		  	int i=1;
   		  	pstmt.setString(i++, (productUCase? product.toUpperCase():product));
   		  	if(pdtAk2!=null)pstmt.setString(i++, (pdtAk2.isUpperCase()? product.toUpperCase():product));

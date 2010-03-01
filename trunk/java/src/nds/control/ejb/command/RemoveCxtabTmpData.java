@@ -72,9 +72,11 @@ public class RemoveCxtabTmpData extends Command {
 		Column col= nds.schema.TableManager.getInstance().getColumn(piColumnId);
 		if(tb!=null && col!=null){
 
+			/* modifiyed at 2010-2-25 according to jackrain, no longer check write permission */
+			/*
 			// check user write permission on this table
 			event.put("directory", tb.getSecurityDirectory());
-			helper.checkDirectoryWritePermission(event, usr);
+			helper.checkDirectoryWritePermission(event, usr);*/
 
 			String sql="DELETE FROM "+ tb.getRealTableName()+ " WHERE "+ col.getName()+
 				"="+  adPiId+ (tb.isAdClientIsolated()?" AND AD_CLIENT_ID="+usr.adClientId: "");

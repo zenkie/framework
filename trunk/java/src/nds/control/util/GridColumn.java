@@ -5,6 +5,7 @@
 package nds.control.util;
 import org.json.*;
 import nds.schema.*;
+import nds.query.*;
 import nds.util.PairTable;
 
 import java.util.Locale;
@@ -17,7 +18,8 @@ public class GridColumn implements JSONString{
 	private String name;
 	private String description;
 	private boolean isVisible; // fk column will be invisible, while fk.ak will be visible.
-	private Column col;
+	private Column col;			
+	private ColumnLink columnLink; //v2 for GridColumn 
 	private int type; // Column.Date|NUMBER|STRING	
 	private int rTableId;
 	private int objIdPos;
@@ -40,6 +42,7 @@ public class GridColumn implements JSONString{
 		jo.put("description",description);
 		jo.put("isVisible", isVisible);
 		jo.put("columnId",col==null? -1: col.getId());
+		if(columnLink!=null)jo.put("clink", columnLink.toHTMLString());
 		jo.put("isNullable", col==null?true:col.isNullable());
 		if(	col!=null && col.isValueLimited()){
 			jo.put("isValueLimited",true);
@@ -83,9 +86,11 @@ public class GridColumn implements JSONString{
 	public void setUploadWhenModify(boolean isUploadWhenModify) {
 		this.isUploadWhenModify = isUploadWhenModify;
 	}
+	
 	public int getObjIdPos() {
 		return objIdPos;
 	}
+	
 	public void setObjIdPos(int objIdPos) {
 		this.objIdPos = objIdPos;
 	}
@@ -136,5 +141,11 @@ public class GridColumn implements JSONString{
 	}
 	public void setHideInEditMode(boolean hideInEditMode) {
 		this.hideInEditMode = hideInEditMode;
+	}
+	public ColumnLink getColumnLink() {
+		return columnLink;
+	}
+	public void setColumnLink(ColumnLink columnLink) {
+		this.columnLink = columnLink;
 	}
 }

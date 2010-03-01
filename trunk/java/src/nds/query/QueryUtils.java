@@ -1257,7 +1257,64 @@ public final class QueryUtils {
             return parseConditionWithTab(paramMap, tabCount, locale);
 
  	}
- 	
+ 	/**
+     * User can set their query condition in HTML form. 
+     * @param req key: String (ColumnLink), value: String, inputs from ui
+     * @param locale Locale for expression description
+     * @return Expression for query conditions set by user using query form
+     * @throws QueryException
+     */
+ 	public static Expression parseConditionInColumnLink(Map req, Locale locale) throws NDSException{
+ 		Expression exprAll=null, expr=null, expr2=null;
+        TableManager manager=TableManager.getInstance();
+        int tableId= Tools.getInt(req.get("table"), -1);
+        
+        int qlcid= Tools.getInt(req.get("qlcid"), -2);
+        if(qlcid==-2) throw new QueryException("qlcid not found in req");
+        List<ColumnLink> al;
+        if( qlcid!=-1) al= nds.web.config.QueryListConfigManager.getInstance().getQueryListConfig(qlcid).getConditions();
+        else al=nds.web.config.QueryListConfigManager.getInstance().getMetaDefault(tableId).getConditions();
+        
+        String param, paramSQL ,cs;
+        for(int i=0;i< al.size();i++){
+        	ColumnLink clink=al.get(i);
+        	param= clink.toHTMLString(); 
+        	cs=(String)req.get(param);
+        	paramSQL=(String)req.get( param+"/sql");
+        	expr2=null;
+        	if( Validator.isNotNull(paramSQL)){
+                // sql entered, in two format:
+                // 1. in ( id1, id2,...)
+                // 2. in (select table.id from xxx,xxx where xxx)
+                // will add following format:
+                // columnID  $sql
+
+                // ids has reference table' AK column, remove it
+                expr2=new Expression(clink, paramSQL, "("+ clink.getDescription(locale) 
+                		+ MessagesHolder.getInstance().getMessage(locale,"-satisfy-")+  cs +")" ); // param contains description
+        		
+        	}else{
+        		if(  Validator.isNotNull(cs)) {
+                    // mind that GUI may send colum of values
+                    Column lastColumn=clink.getLastColumn();
+                    if(lastColumn !=null && lastColumn.getValues(locale) !=null) {
+                        try{
+                            if( (new Integer(cs.trim()).intValue()) ==EXCLUDE_VALUE) {
+                                continue;
+                        }}catch(NumberFormatException enfe){}
+                    }
+                    //query.addParam(ids,cs);
+                    expr2=new Expression(clink, cs, null);
+                }
+        	}
+        	if ( expr2 !=null){
+                //logger.debug("Expr2=" + expr2);
+                if(expr==null) expr=expr2;
+                else expr=new Expression(expr,expr2, SQLCombination.SQL_AND ,null);
+            }
+        }
+        return expr;
+ 	}
     /**
      * @param req map for request parameters, key: String, value: String[]
      * 

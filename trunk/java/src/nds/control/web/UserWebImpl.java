@@ -15,7 +15,8 @@ import java.util.Properties;
 import java.util.Vector;
 import org.json.*;
 import javax.servlet.http.HttpSession;
-
+import nds.web.config.QueryListConfig;
+import nds.web.config.QueryListConfigManager;
 import nds.control.event.NDSEventException;
 import nds.control.util.DirectoryCache;
 import nds.control.util.SecurityUtils;
@@ -29,7 +30,7 @@ import nds.security.NDSSecurityException;
 import nds.security.Permissions;
 import nds.security.User;
 import nds.util.*;
-/**
+/**i
  * It will registed into ModelManager as a ModelUpdateListener,
  * listens on update event with model type named JNDINames.USER_EJBHOME
  */
@@ -75,7 +76,8 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
     private String clientDomain=""; // ad_client.domain
     private String clientDomainName="Guest";
     private String sessionId;
-    private int isSMS=-1; // -1 for unknown, 1 for true, 0 for false 
+    private int isSMS=-1; // -1 for unknown, 1 for true, 0 for false
+    private boolean isAdmin;// from users.isadmin==1
     private Locale locale; // from session info
     private DirectoryCache directoryCache; // contains both directory expression cache and preference value cache
     //2.0
@@ -120,6 +122,7 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
         		isActive = user.isActive();
         		clientDomainName= user.getClientDomainName();
                 qsession = QueryUtils.createQuerySession(id,"null", locale);
+                isAdmin= user.isAdmin;
                 if(isActive) loggedIn=true;
         	}
         }catch(Throwable t){
@@ -206,6 +209,10 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
     public void setProperty(String name, Object obj){
     	props.put(name, obj);
     }
+    public boolean isAdmin(){
+    	return isAdmin;
+    }
+     
     /**
      * Check user can genereate sms report by himself
      * Some table support sms report, if user can generate sms report, he can 
@@ -421,6 +428,7 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
                 clientDomainName=usr.getClientDomainName();
                 desc=getDetailDescription(id, name, clientDomain);
                 hostIP=(String)value.get("remote_address");
+                isAdmin=usr.isAdmin(); 
                 /*name=(String) value.get("name");
                 hostIP=(String)value.get("remote_address");
                 clientDomain= (String)value.get("domain");
@@ -554,6 +562,7 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
         return pf;
 
     }*/
+    
     /**
      * Check user's permission on specified object
      * @param tableName the table name of the object
@@ -1329,6 +1338,14 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
      * Invalidate preferences in cache. Useful when preferences changed
      * @param module
      */
+    public void invalidatePreference(String module,String name){
+    	String cacheKey="p_"+module+"_"+name;
+    	directoryCache.removeCachedObject(cacheKey);
+    }
+    /**
+     * Invalidate preferences in cache. Useful when preferences changed
+     * @param module
+     */
     public void invalidatePreferences(String module){
     	String cacheKey="p_"+module;
     	directoryCache.removeCachedObject(cacheKey);
@@ -1443,6 +1460,37 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
      */
     public void savePreferenceValues(String module, Properties props) throws Exception{
     	nds.control.ejb.command.SavePreference.setPreferenceValues(this.id, module,props);
+    }
+    /**
+     * Get default one according to user and system preference.
+     * First will load user preference setting if he has one, if not found, will load
+     * from system default one.
+     * 
+     * user setting will be in "ad_user_pref"."qlc".tableid
+     * 
+     * Shoudl consider user may has one default config that was deleted by administrator 
+     * @param tableId
+     * @return nerver be null
+     */
+    public QueryListConfig getDefaultQueryListConf(int tableId) throws Exception{
+    	QueryListConfig qlc=null;
+    	QueryListConfigManager qlcm=QueryListConfigManager.getInstance();
+    	Table table=TableManager.getInstance().getTable(tableId);
+    	//user setting
+    	String v=this.getPreferenceValue("qlc", table.getName(),true);
+    	if(v!=null){
+    		int qlcId= Tools.getInt(v,-1);
+    		if(qlcId!=-1){
+    			qlc=qlcm.getQueryListConfig(qlcId); 
+    		}
+    	}
+    	//default setting
+    	if(qlc==null){
+    		qlc=qlcm.getDefaultQueryListConfig(tableId);
+    		if(qlc==null) qlc=qlcm.getMetaDefault(tableId);
+    	}
+    	return qlc;
+    	
     }
     
     private class VisitTable{
