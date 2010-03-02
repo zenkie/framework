@@ -162,6 +162,12 @@ public class AjaxUtils {
 		 */
 		int qlcId=jo.optInt("qlcid",-2);// -1 means meta default qlc, so -2 means not set qlc
 		QueryListConfig qlc=null;
+		//try loading from QueryListConfig
+		if(qlcId==-1){
+			qlc= QueryListConfigManager.getInstance().getMetaDefault(table.getId());
+		}else if(qlcId>-1){
+			qlc= QueryListConfigManager.getInstance().getQueryListConfig(qlcId);
+		}		
 		Object masks= jo.opt("column_masks");
 		if(masks!=null){
 			int[] cmasks;
@@ -181,15 +187,10 @@ public class AjaxUtils {
 			query.addColumnsToSelection(cmasks, jo.optBoolean("column_include_uicontroller",false));
 		}else{
 			//try loading from QueryListConfig
-			if(qlcId==-1){
-				qlc= QueryListConfigManager.getInstance().getMetaDefault(table.getId());
-			}else if(qlcId>-1){
-				qlc= QueryListConfigManager.getInstance().getQueryListConfig(qlcId);
-			}else{
+			if(qlc==null){
 				// not set
 				throw new NDSException("Neither column_masks nor qlcid is found in query object:"+ jo);
 			}
-			logger.debug("qlcid:"+ qlcId);
 			query.addSelection(table.getPrimaryKey().getId());
 			List<ColumnLink> selections=qlc.getSelections();
 			for(ColumnLink c:selections){
@@ -271,7 +272,7 @@ public class AjaxUtils {
 			//logger.debug("after param_str"+expr );
 		} if( Validator.isNotNull(cs2)){
 			expr2=parseQueryStringInColumnLink(cs2, locale);
-			logger.debug("param_str:"+ expr2.toString());
+			logger.debug("param_str2:"+ expr2.toString());
 			if(expr2!=null && !expr2.isEmpty())expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
 		}else{
 			
@@ -381,7 +382,28 @@ public class AjaxUtils {
 	    			
 	    		}
     		}else{
-    			//load 
+    			//orders from ui
+    			orderby= jo.optJSONArray("orders");//elements can be converted to ColumnLink
+    			if(orderby!=null){
+    				for(int i=0;i<orderby.length();i++){
+    	    			JSONObject od= orderby.getJSONObject(i);
+    	    			try{
+    	    				ColumnLink cl= ColumnLink.parseJSONObject(od);
+    	    				query.addOrderBy( cl.getColumnIDs(), !Boolean.FALSE.equals(cl.getTag()));
+    	    			}catch(Throwable t){
+    	    				logger.error("fail to parse column link:"+od , t);
+    	    				throw new NDSException("fail to parse column link:"+od);
+    	    			}
+    	    			
+    	    		}
+    			}else{
+	    			//load for qlc
+	    			if(qlc!=null){
+	    				for(ColumnLink c:qlc.getOrderBys()){
+	    					query.addOrderBy(c.getColumnIDs(), !Boolean.FALSE.equals(c.getTag()));
+	    				}
+	    			}
+    			}
     		}
         	
         }

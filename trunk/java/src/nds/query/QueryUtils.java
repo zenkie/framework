@@ -1297,11 +1297,17 @@ public final class QueryUtils {
         		if(  Validator.isNotNull(cs)) {
                     // mind that GUI may send colum of values
                     Column lastColumn=clink.getLastColumn();
-                    if(lastColumn !=null && lastColumn.getValues(locale) !=null) {
+                    if( lastColumn.getValues(locale) !=null) {
                         try{
                             if( (new Integer(cs.trim()).intValue()) ==EXCLUDE_VALUE) {
                                 continue;
                         }}catch(NumberFormatException enfe){}
+                    }
+                    if(lastColumn.getReferenceTable()!=null){
+                    	//query on reference table, so input is ak value of reference table
+                    	//reconstruct one
+                    	clink=new ColumnLink(clink.getColumnIDs());
+                    	clink.addColumn(lastColumn.getReferenceTable().getAlternateKey());
                     }
                     //query.addParam(ids,cs);
                     expr2=new Expression(clink, cs, null);

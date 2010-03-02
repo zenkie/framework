@@ -62,6 +62,7 @@ public class ColumnLink implements java.io.Serializable, JSONString {
     public int length(){
     	return columns.length;
     }
+    
     /**
      * 
      * @param columns format : table.column,column2,column3
@@ -188,14 +189,15 @@ public class ColumnLink implements java.io.Serializable, JSONString {
      * @return
      */
     public String toHTMLString(){
-    	if (columns.length==0) return "";
+    	return toString();
+    	/*if (columns.length==0) return "";
     	
         StringBuffer  s=new StringBuffer();
         s.append( columns[0].getTable().getName()).append(".").append(columns[0].getName());
         for(int i=1;i< columns.length;i++) {
             s.append(":").append(columns[i].getName());
         }
-        return s.toString();    	
+        return s.toString();*/    	
     
     }
     /**
