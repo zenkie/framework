@@ -12,7 +12,7 @@ import nds.util.*;
 import nds.control.event.DefaultWebEvent;
 import nds.control.util.AjaxUtils;
 import nds.control.util.Result;
-import nds.control.util.ValueHolder;
+import nds.control.util.ValueHolder; 
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -141,8 +141,9 @@ public class AjaxController {
 			query=AjaxUtils.parseQuery(jo, usr.getSession(), usr.getUserId(), usr.getLocale());
 			boolean  noresult= jo.optBoolean("noresult",false);
 			if(!noresult){
-				if(Validator.isNull(jo.optString("param_str")) && query.getMainTable().isBig() &&
-						Validator.isNull(jo.optString("fixedcolumns"))	
+				if(query.getMainTable().isBig() && 
+					(Validator.isNull(jo.optString("param_str")) && Validator.isNull(jo.optString("param_str2")))
+						&& Validator.isNull(jo.optString("fixedcolumns"))	
 					){
 					// table is big, while client does not specify parameter for search
 					qr=QueryEngine.getInstance().doDummyQuery(query, 
