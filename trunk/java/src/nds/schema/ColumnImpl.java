@@ -230,6 +230,7 @@ Specify SET NULL if you want db to convert dependent foreign key values to NULL.
 		}
 		return jType;
 	}
+    
     /**
      * Statistics size of the column, which can be used for length setting in list layout 
      * @return -1 if no setting

@@ -270,7 +270,7 @@ public class AjaxUtils {
 			//logger.debug("param_str:"+ expr2.toString());
 			if(expr2!=null && !expr2.isEmpty())expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
 			//logger.debug("after param_str"+expr );
-		} if( Validator.isNotNull(cs2)){
+		} else if( Validator.isNotNull(cs2)){
 			expr2=parseQueryStringInColumnLink(cs2, locale);
 			logger.debug("param_str2:"+ expr2.toString());
 			if(expr2!=null && !expr2.isEmpty())expr=expr2.combine(expr, SQLCombination.SQL_AND,null);

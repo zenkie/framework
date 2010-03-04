@@ -674,10 +674,11 @@ public final class WebUtils {
  	     
  	      if( col.getFilter()!=null ){
  	    	  if(col.isFilteredByWildcard()){
- 	    		  logger.error("when getting id of "+ col+" with ak="+  objectStr+", found col is filtered by wildcard, which is not supported!!!!!!!!!!!!!");
- 	    		  throw new NDSException("Internal error, not support wildcard filter for "+ col);
- 	    	  }
-	      		sqlStr.append(" AND ("+ col.getFilter()+")"); 
+ 	    		  logger.warn("when getting id of "+ col+" with ak="+  objectStr+", found col is filtered by wildcard, omit this filter since ui should controled");
+ 	    		  //yfzhu 2010-3-4 not add additional check here, ui should forbid wildcard filter columns(fk one) from input
+ 	    		  //throw new NDSException("Internal error, not support wildcard filter for "+ col);
+ 	    	  }else
+ 	    	  sqlStr.append(" AND ("+ col.getFilter()+")"); 
  	      }      
  	      java.sql.Connection conn= QueryEngine.getInstance().getConnection();
  	      PreparedStatement pstmt=null;

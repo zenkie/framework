@@ -474,6 +474,14 @@ select count(*) from <table> where id=<id> and $filter, 当count=1时，显示button,
      */
     public List getReferenceColumnsInWildcardFilter();
     /**
+     * 通常情况下，允许修改的字段都接受手工公输入，例外：
+     * 当前字段是FK字段，同时又是作为其他字段的 WildcardFilter的校验项。这样的字段必须通过
+     * 查找定位，而不能手输入，从而保证正确性
+     * @return false 如果不能接受手工输入，注意这里不校验是否允许修改。仅仅对允许修改，且getReferenceTable=true
+     * 的字段进行当前校验。
+     */
+    //public boolean acceptKeyInput(); 
+    /**
      * 当此字段名称含有";"分号时，表示此字段为级联字段（跳跃了不止一次）这时可以通过
      * #getColumnLink 获得相应的链接
      * @return true if name contains ";"
