@@ -276,7 +276,8 @@ public class JReport {
 	}    
 	/**
 	 * 
-	 * @param fileXMLPath ad_cxtab.attr2, xml file path
+	 * @param fileXMLPath ad_cxtab.attr2, xml file path, if relative(not started from "/"), 
+	 * will relative to portal.properties#dir.jreport
 	 * @param conn
 	 * @return
 	 * @throws Exception
@@ -284,6 +285,13 @@ public class JReport {
 	public static JasperReport getJasperReport(String fileXMLPath) throws Exception{
 		JasperReport jasperReport=null;
 		
+		if(!fileXMLPath.startsWith("/") ){
+			//relative to portal.properties#dir.jreport
+	        Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+			String jreportDir=conf.getProperty("dir.jreport","/act.nea/jreport");
+			fileXMLPath=jreportDir+File.separator+fileXMLPath;
+			logger.debug("jreport file path:"+fileXMLPath);
+		}
 		File reportXMLFile=new File(fileXMLPath);
 		
 		if( reportXMLFile.exists()){    		
