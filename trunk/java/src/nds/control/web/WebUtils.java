@@ -729,6 +729,8 @@ public final class WebUtils {
  	 * @param columns will remove hidden columns from it
  	 * @param displayConditions just the result 
  	 * @return columns being removed from <param>columns</param>, or null if no one found.
+ 	 * @deprecated not used yet
+ 	 * 
  	 */
  	public static List<Column> filterHiddenColumns(QueryResult result, List columns, JSONArray displayConditions) throws Exception{
  		if(result==null || displayConditions==null || displayConditions.length()==0) return null;
@@ -792,9 +794,9 @@ public final class WebUtils {
     			//sql
     			String sql= QueryUtils.replaceVariables( (String)io, qsession);
     			JSONObject vb=new JSONObject();
-    			vb.put("$OBJECTID$", String.valueOf(objectId));
-    			vb.put("$TABLEID$", String.valueOf(table.getId()));
-    			vb.put("$TABLE$", String.valueOf(table.getName()));
+    			vb.put("OBJECTID", String.valueOf(objectId));
+    			vb.put("TABLEID", String.valueOf(table.getId()));
+    			vb.put("TABLE", String.valueOf(table.getName()));
     			sql=JSONUtils.replaceVariables(sql, vb);
     			int cnt=Tools.getInt( QueryEngine.getInstance().doQueryOne(sql),0);
    				ja.put((cnt >0));

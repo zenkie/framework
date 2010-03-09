@@ -469,30 +469,12 @@ public class TableQueryModel {
             	
             	//<span id="<%=namespace%>cbt_<%=column.getId()%>"  onaction="<%=fkQueryModel.getButtonClickEventScript()%>"><img border=0 width=16 height=16 align=absmiddle src='<%=fkQueryModel.getImageURL()%>' title='<%= PortletUtils.getMessage(pageContext, "open-new-page-to-search" ,null)%>'></span>
             	//desc ="<span id='"+ imageCalendar+"' onaction=\"javascript:showCalendar('"+imageCalendar+"',false,'"+inputBoxName+"',null,null,true);\"><img width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></span><script>createButton(document.getElementById(\""+imageCalendar+"\"));</script>";
-                desc ="&nbsp;<a onclick=\"event.cancelBubble=true;\" href=\"javascript:showCalendar('"+imageCalendar+"',false,'"+inputBoxName+"',null,null,true);\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>";
+            	
+            	/*  must has class named as coolButton here as javascript use this class to locate buttons and hide/show/fix column*/
+                desc ="&nbsp;<a class=\"coolButton\" onclick=\"event.cancelBubble=true;\" href=\"javascript:showCalendar('"+imageCalendar+"',false,'"+inputBoxName+"',null,null,true);\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>";
         	}
         }
-        /*    switch (type) {
-	        case Column.STRING :
-	            //desc="<img src='"+WebKeys.NDS_URI+"/images/char.gif' width=16 height=18 align=absmiddle title='"+ MessagesHolder.getInstance().getMessage(locale, "string-format2")+ (maxLength>0?","+MessagesHolder.getInstance().getMessage(locale, "format-length")  +":"+maxLength:"")+ "'>";
-	            break;
-	        case Column.NUMBER :
-	            //desc="<img src='"+WebKeys.NDS_URI+"/images/num.gif' width=16 height=18 align=absmiddle title='" + MessagesHolder.getInstance().getMessage(locale, "number-format2") + (maxLength>0?","+MessagesHolder.getInstance().getMessage(locale, "format-length")  +":"+maxLength:"")+ "'>";
-	            break;
-	        case Column.DATENUMBER :
-	        case Column.DATE :
-	            break;
-	            if(inputBoxName==null)desc="<img src='"+WebKeys.NDS_URI+"/images/date.gif' width=16 height=18 align=absmiddle title='"+MessagesHolder.getInstance().getMessage(locale, "date-format2") + "' >";
-	            else{
-	            	imageCalendar="imageCalendar"+ nds.util.Sequences.getNextID("TableQueryModel");
-	                desc ="<a onclick=\"event.cancelBubble=true;\" href=\"javascript:showCalendar('"+imageCalendar+"',false,'"+inputBoxName+"',null);\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/date.gif' border='0' align='absmiddle' title='"+MessagesHolder.getInstance().getMessage(locale, "date-format3")+"'></a>";
-	            }
-	
-	            break;
-	        default :
-	            //desc="N/A";
-	        break;
-        }*/
+        
         return desc;
 
     }
