@@ -247,6 +247,24 @@ public class AjaxUtils {
 				expr2=(acceptorColumn==null?null:QueryUtils.getDropdownFilter(acceptorColumn,mustBeActive));
 				if(expr2!=null)expr=expr2.combine(expr, SQLCombination.SQL_AND,null); 
 			}
+		}else{
+			//security param
+			// directory perm
+			int dirPerm= jo.optInt("dir_perm", nds.security.Directory.READ);
+			expr2 =SecurityUtils.getSecurityFilter(table.getName(), dirPerm, userId, qsession);
+			
+			if(expr2!=null && !expr2.isEmpty()){
+	        	expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
+	        }
+			if(dirPerm==nds.security.Directory.WRITE){
+				// try filter status column for only status=1 rows
+				Column column= table.getColumn("status");
+		    	if ( column!=null){
+		    		ColumnLink cl=new ColumnLink(new int[]{column.getId()});
+		    		expr2= new Expression(cl,"=1",nds.util.MessagesHolder.getInstance().getMessage(locale, "not-submit"));
+		        	expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
+		    	}
+			}			
 		}
 			
 		
