@@ -75,7 +75,7 @@ import nds.util.SysLogger;
 import nds.portal.auth.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
+import java.security.*;
 
 /**
  * 
@@ -436,8 +436,8 @@ public class LoginAction extends Action {
 		    		
 		    	}else{
 		    	if(serverValidCode!=null && (serverValidCode.equalsIgnoreCase(userValidCode))){
-		    		// so server memory space saved.
-		    		ses.removeAttribute("nds.control.web.ValidateMServlet");
+		    		// so server memory space saved. used later
+		    		//ses.removeAttribute("nds.control.web.ValidateMServlet");
 		    		//logger.debug("verify code ok");
 		    		//Thread.dumpStack();
 		    		//logger.debug(nds.util.Tools.toString(req));
@@ -577,6 +577,7 @@ public class LoginAction extends Action {
 		}		
 		return true;
 	}
+	private int usbkeyMethod=1;// 1: ahyy, 2: feitian
 	/**
 	 * Will set erroro to SessionErrors if found error
 	 * @param req
@@ -586,50 +587,145 @@ public class LoginAction extends Action {
 		if(shouldCheckUSBKey==0){
 			nds.util.Configurations conf=(nds.util.Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
 			shouldCheckUSBKey = "true".equalsIgnoreCase(conf.getProperty("login.usbcheck", "false"))?1:2;
+			String method=conf.getProperty("login.auth.method", "ahyy");
+			if("feitian".equals(method)) usbkeyMethod=2;
+			else if("ahyy".equals(method)) usbkeyMethod=1;
+			else throw new nds.util.NDSRuntimeException("unsupported login.auth.method="+method);
 		}
 		if(shouldCheckUSBKey==1){
-			//check usb key, and user email must be set in company  
-			String remoteAddress=req.getRemoteAddr();			
-			String login= req.getParameter("login");
-			String keycode= req.getParameter("keycode");
-			String usrKey= null;
-			Connection conn=null;
-			PreparedStatement pstmt=null;
-			ResultSet rs=null;
-			try{
-				conn= nds.query.QueryEngine.getInstance().getConnection();
-				pstmt= conn.prepareStatement("select emailverify from users where email=?");
-				pstmt.setString(1, login);
-				rs= pstmt.executeQuery();
-				if(rs.next()){
-					usrKey=rs.getString(1);
-					if(rs.wasNull()) usrKey=null;
-				}
-				if(usrKey!=null){
-					if(nds.util.Validator.isNull(keycode)){
-						SessionErrors.add(req, "USBKEY_NEED");
-						SysLogger.getInstance().error("SEC","login",login,remoteAddress,"usbcode not found in browser" ,-1);
-						return false;
-					}
-					if(!usrKey.equals(keycode)){
-						SessionErrors.add(req, "USBKEY_ERROR");
-						SysLogger.getInstance().error("SEC","login",login,remoteAddress,"usbcode not found in browser" ,-1);
-						return false;
-					}
-				}
-			}catch(Throwable t){
-				SessionErrors.add(req, "SERVER_ERROR");
-				SysLogger.getInstance().error("SEC","login",login,remoteAddress,"Fail:"+t ,-1);
-				return false;
-			}finally{
-				try{if(rs!=null) rs.close();}catch(Throwable t){}
-				try{if(pstmt!=null) pstmt.close();}catch(Throwable t){}
-				try{if(conn!=null) conn.close();}catch(Throwable t){}
+			//这里有两种实现：安徽药招模式和飞天诚信模式
+			
+			switch(usbkeyMethod){
+			case 2:
+				return authFeitianMethod(req);
+			case 1:
+				return authAhyyMethod(req);
+			default:
+				throw new nds.util.NDSRuntimeException("unsupported login.auth.method="+usbkeyMethod);
 			}
+			
 		}
 		return true;
 	}
+/**
+ * * 飞天诚信模式系统安全配置内容如下：
+login.usbcheck=true
+login.auth.method=feitian
+login.auth.except.addr=$WAN_ADDR$
 
+
+login.usbcheck=true 时将校验client.auth.method的内容，识别为feitian时有后续规则校验。
+WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，不必进行USBKEY认证。
+
+实现方法：
+修改LOGIN.JSP/INDEX.JSP，如果当前登录网站匹配$WAN_ADDR$，不检测USBKEY。
+若不匹配，则检测USBKEY存在性。
+若USBKEY存在，则根据用户输入的验证码(4位随机码)作为需要挑战码，用USBKEY的密钥进行加密（此密钥也保存在服务器USERS.EMAILVERIFY中），将加密结果作为keycode传到服务器。服务器从USERS.EMAILVERIFY获取密钥，从session中通过"nds.control.web.ValidateMServlet" 属性获取验证码，用密钥对验证码进行HMAC_MD5加密，与客户端传入的 keycode 比对，如果成功，表示USBKEY身份认证通过，继续后续的密码认证。否则失败退出。
+
+如果客户端网址匹配$WAN_ADDR$，将不检测USBKEY
+ * @param req
+ * @return
+ */
+	private boolean authFeitianMethod(HttpServletRequest req){
+		nds.util.Configurations conf=(nds.util.Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+		String exceptAddr=conf.getProperty("login.auth.except.addr");
+		String remoteAddress=req.getRemoteAddr();
+		
+		String login= req.getParameter("login");
+		String keycode= req.getParameter("keycode");
+		String serverValidCode=(String) req.getSession().getAttribute("nds.control.web.ValidateMServlet");
+		
+		String usrKey= null;
+		Connection conn=null;
+		PreparedStatement pstmt=null;
+		ResultSet rs=null;
+		try{
+			java.net.URL url = new java.net.URL(req.getRequestURL().toString());
+			boolean isIntranet=url.getHost().equals(exceptAddr);
+			if(isIntranet) return true;
+
+			conn= nds.query.QueryEngine.getInstance().getConnection();
+			pstmt= conn.prepareStatement("select emailverify from users where email=?");
+			pstmt.setString(1, login);
+			rs= pstmt.executeQuery();
+			if(rs.next()){
+				usrKey=rs.getString(1);
+				if(rs.wasNull()) usrKey=null;
+			}
+			if(usrKey!=null){
+				if(nds.util.Validator.isNull(keycode)){
+					SessionErrors.add(req, "USBKEY_NEED");
+					SysLogger.getInstance().error("SEC","login",login,remoteAddress,"usbcode not found in browser" ,-1);
+
+					return false;
+				}
+
+				HMAC_MD5 hm = new HMAC_MD5(usrKey.getBytes());
+				hm.addData(serverValidCode.getBytes());
+				
+				hm.sign();
+				
+				String realKeycode= hm.toString();
+				if(!realKeycode.equals(keycode)){
+					logger.debug("realKeycode="+realKeycode+", keycode="+keycode+", serverValidCode="+serverValidCode+",usrKey="+usrKey);
+					SessionErrors.add(req, "USBKEY_ERROR");
+					SysLogger.getInstance().error("SEC","login",login,remoteAddress,"usbcode error in browser" ,-1);
+					return false;
+				}
+			}
+		}catch(Throwable t){
+			SessionErrors.add(req, "SERVER_ERROR");
+			SysLogger.getInstance().error("SEC","login",login,remoteAddress,"Fail:"+t ,-1);
+			return false;
+		}finally{
+			try{if(rs!=null) rs.close();}catch(Throwable t){}
+			try{if(pstmt!=null) pstmt.close();}catch(Throwable t){}
+			try{if(conn!=null) conn.close();}catch(Throwable t){}
+		}	
+		return true;
+	}
+	private boolean authAhyyMethod(HttpServletRequest req){
+
+		//check usb key, and user email must be set in company  
+		String remoteAddress=req.getRemoteAddr();			
+		String login= req.getParameter("login");
+		String keycode= req.getParameter("keycode");
+		String usrKey= null;
+		Connection conn=null;
+		PreparedStatement pstmt=null;
+		ResultSet rs=null;
+		try{
+			conn= nds.query.QueryEngine.getInstance().getConnection();
+			pstmt= conn.prepareStatement("select emailverify from users where email=?");
+			pstmt.setString(1, login);
+			rs= pstmt.executeQuery();
+			if(rs.next()){
+				usrKey=rs.getString(1);
+				if(rs.wasNull()) usrKey=null;
+			}
+			if(usrKey!=null){
+				if(nds.util.Validator.isNull(keycode)){
+					SessionErrors.add(req, "USBKEY_NEED");
+					SysLogger.getInstance().error("SEC","login",login,remoteAddress,"usbcode not found in browser" ,-1);
+					return false;
+				}
+				if(!usrKey.equals(keycode)){
+					SessionErrors.add(req, "USBKEY_ERROR");
+					SysLogger.getInstance().error("SEC","login",login,remoteAddress,"usbcode not found in browser" ,-1);
+					return false;
+				}
+			}
+		}catch(Throwable t){
+			SessionErrors.add(req, "SERVER_ERROR");
+			SysLogger.getInstance().error("SEC","login",login,remoteAddress,"Fail:"+t ,-1);
+			return false;
+		}finally{
+			try{if(rs!=null) rs.close();}catch(Throwable t){}
+			try{if(pstmt!=null) pstmt.close();}catch(Throwable t){}
+			try{if(conn!=null) conn.close();}catch(Throwable t){}
+		}	
+		return true;
+	}
 	private static int shouldCheckUSBKey=0; // 0 not init, 1 check, 2 do not check, this is controlled by portal.properties#login.usbcheck
 	
 	protected void login(HttpServletRequest req, HttpServletResponse res)
@@ -733,4 +829,193 @@ public class LoginAction extends Action {
 		}		
 		return authResult;
 	}	
+}
+
+class HMAC_MD5
+{
+	
+	/**
+	* Digest to be returned upon completion of the HMAC_MD5.
+	*/
+	private byte digest[];
+
+	/**
+	* Inner Padding.
+	*/
+	private byte kIpad[];
+
+	/**
+	* Outer Padding.
+	*/
+	private byte kOpad[];
+
+	/**
+	* Outer and general purpose MD5 object.
+	*/
+	private MessageDigest md5;
+	/**
+	* Inner MD5 object.
+	*/
+	private MessageDigest innerMD5;
+
+	/**
+	* Constructor
+	* @throws NoSuchAlgorithmException if the MD5 implementation can't be found.
+	* If this occurs or you need a faster implementation see www.bouncycastle.org
+	* for something much better.
+	*/
+	public HMAC_MD5(byte key[]) throws NoSuchAlgorithmException
+	{
+		md5 = MessageDigest.getInstance("MD5");
+		innerMD5 = MessageDigest.getInstance("MD5");
+		int kLen = key.length;
+
+		// if key is longer than 64 bytes reset it to key=MD5(key)
+		if (kLen > 64)
+		{
+			md5.update(key);
+			key = md5.digest();
+		}
+
+		kIpad = new byte[64];	// inner padding - key XORd with ipad
+
+		kOpad = new byte[64];	// outer padding - key XORd with opad
+
+		// start out by storing key in pads
+		System.arraycopy(key, 0, kIpad, 0, kLen);
+		System.arraycopy(key, 0, kOpad, 0, kLen);
+
+		// XOR key with ipad and opad values
+		for (int i = 0; i < 64; i++)
+		{
+			kIpad[i] ^= 0x36;
+			kOpad[i] ^= 0x5c;
+		}
+
+		clear();	// Initialize the first digest.
+	}
+
+
+	/**
+	* Clear the HMAC_MD5 object.
+	*/
+	public void clear()
+	{
+		innerMD5.reset();
+		innerMD5.update(kIpad);	// Intialize the inner pad.
+
+		digest = null;				// mark the digest as incomplete.
+	}
+
+	/**
+	* HMAC_MD5 function.
+	*
+	* @param text Text to process
+	*
+	* @param key Key to use for HMAC hash.
+	*
+	* @return hash
+	*/
+	public void addData(byte text[])
+	{
+		addData(text, 0, text.length);
+	}
+
+	/**
+	* HMAC_MD5 function.
+	*
+	* @param text Text to process
+	*
+	* @param textStart	Start position of text in text buffer.
+	* @param textLen Length of text to use from text buffer.
+	* @param key Key to use for HMAC hash.
+	*
+	* @return hash
+	*/
+	public void addData(byte text[], int textStart, int textLen)
+	{
+		innerMD5.update(text, textStart, textLen);	// then text of datagram.
+	}
+
+	public byte [] sign()
+	{
+		md5.reset();
+
+		/*
+		* the HMAC_MD5 transform looks like:
+		*
+		* MD5(K XOR opad, MD5(K XOR ipad, text))
+		*
+		* where K is an n byte key
+		* ipad is the byte 0x36 repeated 64 times
+		* opad is the byte 0x5c repeated 64 times
+		* and text is the data being protected
+		*/
+
+		// Perform inner MD5
+
+		digest = innerMD5.digest();				// finish up 1st pass.
+
+		 // Perform outer MD5
+
+		md5.reset();								// Init md5 for 2nd pass.
+		md5.update(kOpad);							// Use outer pad.
+		md5.update(digest);							// Use results of first pass.
+		digest = md5.digest();						// Final result.
+
+		return digest;
+	}
+
+	/**
+	* Validate a signature against the current digest.
+	* Compares the hash against the signature.
+	*
+	* @param signature
+	*
+	* @return True if the signature matches the calculated hash.
+	*/
+	public boolean verify(byte signature[])
+	{
+		// The digest may not have been calculated.  If it's null, force a calculation.
+		if (digest == null)
+			sign();
+
+		int sigLen = signature.length;
+		int digLen = digest.length;
+
+		if (sigLen != digLen)
+			return false;	// Different lengths, not a good sign.
+
+		for (int i = 0; i < sigLen; i++)
+			if (signature[i] != digest[i])
+				return false;	// Mismatch. Misfortune.
+
+		return true;	// Signatures matched. Perseverance furthers.
+	}
+
+	/**
+	*  Return the digest as a HEX string.
+	*
+	* @return a hex representation of the MD5 digest.
+	*/
+	public String toString()
+	{
+		// If not already calculated, do so.
+		if (digest == null)
+			sign();
+
+		StringBuffer r = new StringBuffer();
+		final String hex = "0123456789ABCDEF";
+		byte b[] = digest;
+
+		for (int i = 0; i < 16; i++)
+		{
+			int c = ((b[i]) >>> 4) & 0xf;
+			r.append(hex.charAt(c));
+			c = ((int)b[i] & 0xf);
+			r.append(hex.charAt(c));
+		}
+
+		return r.toString();
+	}
 }
