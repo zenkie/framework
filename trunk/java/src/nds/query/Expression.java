@@ -260,10 +260,10 @@ public class Expression implements SQLCombination, Serializable{
         return this.condition;
     }
     /**
-     * @return true if isLeaf() && getColumnLink()==null
+     * @return true if isLeaf() && getCondition()==null
      */
     public boolean isEmpty(){
-        return (isLeaf() && getColumnLink()==null && Validator.isNull(this.getCondition()));
+        return (isLeaf() &&  Validator.isNull(this.getCondition()));
     }
     /**
      * Combine this expression (as left one) with another expression.

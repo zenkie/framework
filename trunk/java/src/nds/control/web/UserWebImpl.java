@@ -645,7 +645,7 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
             try {
 
                 perm = SecurityUtils.getPermission(dirName, id);
-                logger.debug("perm for "+id +" on "+dirName+":"+ perm);
+                //logger.debug("perm for "+id +" on "+dirName+":"+ perm);
                 // save to cache for future faster load
                 directoryCache.set(dirName, perm);
 //                logger.debug("Load permission from SecurityManager:"+ perm);
