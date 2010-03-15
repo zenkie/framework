@@ -296,7 +296,6 @@ public class DBSchemaLoader {
             col.setErrorMessage(column.getErrmsg());
             col.setRegExpresion(column.getRegexpression()); // this must be later than setDisplaySetting
             col.setValueInterpreter(column.getInterpreter());
-            col.setFilter(column.getFilter());
             
             String sum= (String)column.getSummethod();
             if( !Validator.isNull(sum) && !"0".equalsIgnoreCase(sum)){
@@ -319,6 +318,9 @@ public class DBSchemaLoader {
             	col.setValues(avg.getName(), pt);
             }
             if(loadingComments) col.setComment(column.getComments());
+            //after displaysetting
+            col.setFilter(column.getFilter());
+            
     		String p=column.getProps();
     		if(nds.util.Validator.isNotNull(p)){
     			/*

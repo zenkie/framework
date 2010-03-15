@@ -128,7 +128,7 @@ public class ObjectColumnObtain extends ColumnObtain{
       if(!hasReadPermission){
     	  filter=(new Expression(null,"1<>1","NoPermission"));
       }else{
-    	  filter=helper.getSecurityFilter(refTableName,1, user.getId().intValue());
+    	  filter=helper.getSecurityFilter(refTableName,1, user.getId().intValue(), event.getQuerySession());
       }
       
       int refTableId= tm.getTable(refTableName).getId();
@@ -406,7 +406,7 @@ public class ObjectColumnObtain extends ColumnObtain{
   	String pkAssocColumn= ((AliasSupportTable)refTable).getAssociatedColumnInAliasTable(); // m_product_id, this is in m_product_alias
     PairTable assocColumns=((AliasSupportTable)refTable).getOtherAssociatedColumnsInAliasTable();// m_attributesetinstance_id
     //get read permission filter on alias table
-    Expression aliasTableFilter= helper.getSecurityFilter(aliasTable.getName(), 1,helper.getInt((String)event.getParameterValue("operatorid"), -1) );
+    Expression aliasTableFilter= helper.getSecurityFilter(aliasTable.getName(), 1,helper.getInt((String)event.getParameterValue("operatorid"), -1), event.getQuerySession() );
     
     String aliasTableFilterSql=null;
     // refTableName must not be real table, but column filter may use the alias table as reference   

@@ -39,16 +39,10 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
     private static final int CACHE_MAXIMUM_SIZE=30;// 30 elements cached for one session
     private final static String CHECK_CUBE="SELECT 1 FROM AD_CUBE_USER CU,AD_CUBE C WHERE C.AD_TABLE_ID=? AND CU.AD_CUBE_ID=C.ID AND CU.AD_USER_ID=? AND ROWNUM<2";
     private final static String GET_CUBE="SELECT C.ID, C.NAME FROM AD_CUBE_USER CU,AD_CUBE C WHERE C.AD_TABLE_ID=? AND CU.AD_CUBE_ID=C.ID AND CU.AD_USER_ID=?";
-    //private static final String GET_PREFERS="select description, value from usersetting where userId=? and module=?";
     /**
      * module in usersetting table
      */
     private final static String OPTION_MODULE="ad_option"; 
-//    private static final String GET_PREFER="select value from usersetting where id=?";
-//    private static final String GET_PREFER_DEFAULT ="select id from usersetting where userId=? and module=? and mdefault=1";
-//    private static final String GET_PREFER_BY_DESC="select value from usersetting where userId=? and module=? and description=?";
-
-    private static final String GET_SECURITY_FILTER="select sqlfilter, filterdesc,t.name from groupperm, directory, ad_table t where (t.id=directory.ad_table_id) and  groupid in (select groupid from groupuser where userid=? ) and directoryid in (select id from directory where upper(name)=?) and bitand(permission,?)+0=? and directory.id=directoryid";
     
     // VISIT TABLE HANDLING
     private static final String GET_VISIT_TABLES="select ad_table_id from (select ad_table_id,LASTVISITDATE from pref_visit_log where userId=? order by LASTVISITDATE desc) where rownum<11 order by LASTVISITDATE asc";

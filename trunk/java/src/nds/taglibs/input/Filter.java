@@ -1,6 +1,8 @@
 
 package nds.taglibs.input;
 
+import nds.log.Logger;
+import nds.log.LoggerManager;
 import nds.portlet.util.PortletUtils;
 import nds.util.*;
 
@@ -11,8 +13,13 @@ import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspTagException;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.TagSupport;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import nds.query.*;
 import nds.schema.*;
+
 /**
  *	用于构建Filter 对象的输入框
  * 
@@ -29,7 +36,8 @@ title="Find" src="/html/nds/images/filter.gif"/></span>
  */
 
 public class Filter extends TagSupport {
-
+	private static Logger logger= LoggerManager.getInstance().getLogger((Filter.class.getName()));
+    
     private String name; // name of the text field
 
     private Map attributes; // attributes of the <input> element
@@ -87,6 +95,34 @@ public class Filter extends TagSupport {
             	out.print(">"+(nds.util.Validator.isNotNull(desc)?Util.quote(desc):"")+"</textarea>" );
             }
             /**
+             * Add 2010-3-15 to support filter for xml type column
+             */
+            Column searchOnColumn=column;
+            
+            String options=null;  
+            
+            //2010-3-15 added support for wildcardfilter
+            if(searchOnColumn.isFilteredByWildcard()){
+				int tableId= searchOnColumn.getTable().getId();
+				JSONObject jo=new JSONObject();
+				org.json.JSONArray ja=new JSONArray();
+				org.json.JSONArray jap=new JSONArray();
+				
+				jo.put("ta", true);// currently we only support titlt area wildcard filter columns
+				
+				//{ta:true|false, rc:[<columnId>,<columnId>...], prc:[<columnId>,<columnId>...]}
+				List al=searchOnColumn.getReferenceColumnsInWildcardFilter();
+				for(int i=0;i< al.size();i++){
+					Column col=(Column)al.get(i);
+					if(col.getTable().getId()== tableId)ja.put(col.getId());
+					else jap.put(col.getId());
+				}
+				jo.put("rc", ja);
+				jo.put("prc",jap);
+				options= jo.toString().replaceAll("\"", "&quot;");
+			}   
+            //System.out.println("searchOnColumn="+searchOnColumn+",isFilteredByWildcard="+searchOnColumn.isFilteredByWildcard()+", options="+ options);
+            /**
 包含以下信息：
 “type”: 当前xml 的用途，目前仅支持 filter 类型
 “tablesrc”: 表的来源，”F” – 固定值，从 “table” 参数上获取；”V” – 变化值，从”tableinput” 指明的input 的输入项目获取; 缺省为“F”
@@ -136,7 +172,7 @@ public class Filter extends TagSupport {
             }
             imageurl=nds.util.Validator.isNotNull(desc)?"clear.gif":"filterobj.gif";
             popflag=nds.util.Validator.isNotNull(desc)?"clear":"popup";         
-			out.print("<span class='coolButton' id=\""+Util.quote(id)+"_link\" title="+popflag+" onaction=\""+checkScript+toggle+ action+", '"+this.id+"');\"><img id='"+this.id+"_img' border=0 width=16 height=16 align=absmiddle src='/html/nds/images/"+imageurl+"'></span>");
+			out.print("<span class='coolButton' id=\""+Util.quote(id)+"_link\" title="+popflag+" onaction=\""+checkScript+toggle+ action+", '"+this.id+"'"+(options==null?"":","+options)+");\"><img id='"+this.id+"_img' border=0 width=16 height=16 align=absmiddle src='/html/nds/images/"+imageurl+"'></span>");
             out.print("<script>createButton(document.getElementById('"+ Util.quote(id) +"_link'));</script>");           
         } catch (Exception ex) {
             throw new JspTagException(ex.getMessage());

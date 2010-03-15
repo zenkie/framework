@@ -796,7 +796,8 @@ Specify SET NULL if you want db to convert dependent foreign key values to NULL.
      */
     public void setFilter(String filter){
     	this.filter=filter;
-    	if(nds.util.Validator.isNotNull(filter)&& this.getReferenceTable()!=null 
+    	if(nds.util.Validator.isNotNull(filter)&& (this.getReferenceTable()!=null 
+    			|| this.getDisplaySetting().getObjectType()==DisplaySetting.OBJ_XML ) 
     			&&(filter.indexOf('@')>-1 )){ //|| filter.indexOf('$')>-1
     		
     		this.isFilteredByWildcard=true;

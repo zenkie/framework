@@ -10,35 +10,17 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Enumeration;
-import java.util.Iterator;
+import java.util.*;
 import java.util.Locale;
 
 import nds.control.web.SecurityManagerWebImpl;
 import nds.control.web.WebUtils;
 import nds.log.Logger;
 import nds.log.LoggerManager;
-import nds.query.ColumnLink;
-import nds.query.Expression;
-import nds.query.QueryEngine;
-import nds.query.QueryException;
-import nds.query.QueryRequestImpl;
-import nds.query.QueryResult;
-import nds.query.QuerySession;
-import nds.query.SQLCombination;
-import nds.schema.Column;
-import nds.schema.RefByTable;
-import nds.schema.Table;
-import nds.schema.TableManager;
-import nds.security.Directory;
-import nds.security.User;
-import nds.util.MessagesHolder;
-import nds.util.NDSException;
-import nds.util.NDSRuntimeException;
-import nds.util.StringHashtable;
-import nds.util.TimeLog;
-import nds.util.Tools;
-import nds.util.Validator;
-import nds.util.WebKeys;
+import nds.query.*;
+import nds.security.*;
+import nds.schema.*;
+import nds.util.*;
 
 /**
  * 
@@ -47,12 +29,13 @@ import nds.util.WebKeys;
 
 public class SecurityUtils {
     private static Logger logger= LoggerManager.getInstance().getLogger(SecurityUtils.class.getName());
-    private static final String GET_SECURITY_FILTER="select sqlfilter, filterdesc,t.name from groupperm, directory, ad_table t where (t.id=directory.ad_table_id) and  groupid in (select groupid from groupuser where userid=? ) and directoryid in (select id from directory where upper(name)=?) and bitand(permission,?)+0=? and directory.id=directoryid";
+    private static final String GET_SECURITY_FILTER="select sqlfilter, filterdesc,t.name,SEC_FKFILTER_IDS from groupperm, directory, ad_table t where (t.id=directory.ad_table_id) and  groupid in (select groupid from groupuser where userid=? ) and directoryid in (select id from directory where upper(name)=?) and bitand(permission,?)+0=? and directory.id=directoryid";
     private final static String GET_PERMISSION="select GetUserPermission(?,?) from dual";
     private final static String GET_USER_BY_NAME_AND_CLIENT="select u.id, u.name, u.isactive,u.ad_client_id, u.ad_org_id, u.language, c.name, u.isadmin from users u, ad_client c where u.name=? and u.ad_client_id=c.id and c.domain=?";
     private final static String GET_USER_BY_EMAIL_AND_CLIENT="select u.id, u.name, u.isactive,u.ad_client_id, u.ad_org_id, u.language, c.name ,u.isadmin from users u, ad_client c where u.email=? and u.ad_client_id=c.id and c.domain=?";
     private final static String GET_USER_BY_ID="select u.name,c.domain,u.isactive, u.description, u.ad_client_id, u.ad_org_id, u.language, c.name,u.isadmin  from users u,ad_client c where u.ID=? and c.id=u.ad_client_id";
- 
+    
+    
     /**
     @roseuid 3BF38E580012
     */
@@ -200,6 +183,7 @@ public class SecurityUtils {
      * 
      * 设计时应注意：directory 中的tablename 必须是数据库中真实的table 或 view
      * @param permission, 1 for read, 3 for write, 5 for submit, 9 for audit, combine, so 7 for read/write/submit
+     * @param qs if null, will not construct 'exists' expression (for DefaultWebEventHelper use only)
      * @return empty exprssion if not found, nerver return null!
      *
      */
@@ -216,14 +200,15 @@ public class SecurityUtils {
             pstmt.setInt(4, permission);
             rs= pstmt.executeQuery();
             
-            StringHashtable st=new StringHashtable(10, 4000); // the maximum sql length is 2000, limited by db
-            String sql,desc,tn;
+            StringHashtable st=new StringHashtable(10, 8000); 
+            String sql,desc,tn, fkfilterIds;
             while( rs.next()){
                 sql= rs.getString(1);
                 desc= rs.getString(2);
                 tn= rs.getString(3);
-                if ( sql !=null && sql.length() > 1){
-                    st.put(sql, new String[]{desc, tn});
+                fkfilterIds=rs.getString(4);
+                if ( Validator.isNotNull(sql) ||  Validator.isNotNull(fkfilterIds) ){
+                    st.put(sql+"#"+fkfilterIds, new String[]{desc, tn,sql,fkfilterIds});
 //                    logger.debug("found sql:" + sql +", with desc=" + desc);
                 }else{
                 	//has at least one group which allows current user to work on all data
@@ -243,15 +228,43 @@ public class SecurityUtils {
                 Enumeration enu= st.keys();// key is just value
                 Expression expr1, expr=null;
                 while( enu.hasMoreElements() ){
-                    sql=(String) enu.nextElement(); // the sqlfilter is xml=Expression.toString() with CDATA indeed.
-                    String[] v=(String[]) st.get(sql);
+                    String key=(String) enu.nextElement();
+                    String[] v=(String[]) st.get(key);
                     desc=v[0];
                     tn= v[1];
+                	sql=v[2]; // the sqlfilter is xml=Expression.toString() with CDATA indeed.
+                	fkfilterIds=v[3];
                     //expr1= new Expression(cl, sql,desc);
-                    if( tableName.equalsIgnoreCase(tn)|| nds.util.Validator.isNull(tn)) 
-                    	expr1=new Expression(sql); // xml
-                    else
-                    	expr1=constructExistsExpr(sql, desc, table, tn, qs);
+                    if( tableName.equalsIgnoreCase(tn)|| nds.util.Validator.isNull(tn)){ 
+                    	if(Validator.isNotNull(sql))
+                    		expr1=new Expression(sql); // xml
+                    	else expr1=null;
+                    	
+                		//combine expr1 with this one (SQL_AND)
+                		Expression e= loadFkFilters(table.getId(),fkfilterIds,qs);
+                		
+                		if(e!=null && !e.isEmpty())
+                			expr1=e.combine(expr1,SQLCombination.SQL_AND,null);
+                		
+                    }else{
+                    	//add fkfilter
+                    	//combine expr1 with this one (SQL_AND)
+                		Expression e= loadFkFilters(table.getId(),fkfilterIds,qs);
+                    	if(qs==null){
+                    		//this method will called by DefaultWebEventHelper, which 
+                    		//has no value for qs, so just let it be without constructing
+                    		//'exists' expression
+                    		expr1=e;
+                    	}else{
+                    		expr1=constructExistsExpr(sql, desc, table, tn, qs);
+                    		if(expr1==null || expr1.isEmpty())
+                    			expr1=e;
+                    		else
+                    			expr1=expr1.combine(e,SQLCombination.SQL_AND,null);
+                    	}
+               			
+                		
+                    }
                     if(expr1!=null && !expr1.isEmpty()){
                     	if( expr==null) expr= expr1;
                     	else expr= expr.combine(expr1,SQLCombination.SQL_OR, null); // or relationship
@@ -271,6 +284,52 @@ public class SecurityUtils {
             if( pstmt !=null) try{pstmt.close();}catch(Exception e2){}
             if( con!=null) try{con.close();}catch(Exception e3){}
         }
+    }
+    /**
+     * Load all sqlfilter as Expression of sec_fkfilter whose id in list of <param> fkFitlerIds</param>
+     * @param fkFilterIds 'id1,id2,..,' id of sec_fkfilter
+     * @return 
+     * @throws QueryException
+     */
+    public static Expression loadFkFilters(int tableId,String fkFilterIds,QuerySession qsession) throws QueryException,SQLException{
+    	if(Validator.isNull(fkFilterIds)) return Expression.EMPTY_EXPRESSION;
+    	//will use s.COLUMNS_APPLIED to find out which column of current table should apply the filter 
+    	List al=QueryEngine.getInstance().doQueryList("select s.sqlfilter, s.COLUMNS_APPLIED,s.DESCRIPTION  from sec_fkfilter s, table(split_str("+
+    				QueryUtils.TO_STRING(fkFilterIds.trim())+",',')) t where t.column_value=s.id");
+    	TableManager manager=TableManager.getInstance();
+    	Expression expr1,expr=null;
+    	for(int i=0;i<al.size();i++){
+    		List o=(List)al.get(i);
+    		java.sql.Clob s= (java.sql.Clob)o.get(0);
+    		String sqlFilter= s.getSubString(1, (int) s.length());
+    		Expression sqlExpr= new Expression(sqlFilter); 
+    		s= (java.sql.Clob)o.get(1);
+    		String columns= s.getSubString(1, (int) s.length());
+    		String desc= (String)o.get(2);
+    		//which column
+    		Filter f=new Filter(columns);
+    		List cls=QueryEngine.getInstance().doQueryList("select distinct id from ad_column where ad_table_id="+ tableId+" and id "+f.getSql());
+    		for(int j=0;j<cls.size();j++){
+    			int cid= Tools.getInt(cls.get(j),-1);
+    			Column c= manager.getColumn(cid);
+    			if(c==null){
+    				logger.error("find invalid column id="+cls.get(j)+ " in fkFilter id list( "+ fkFilterIds+") for table id="+tableId);
+    				continue;
+    			}
+    			
+    	    	QueryRequestImpl query=QueryEngine.getInstance().createRequest(qsession);
+    	    	query.setMainTable(c.getReferenceTable().getId());
+    	    	query.addSelection(c.getReferenceTable().getPrimaryKey().getId());
+    	    	query.addParam(sqlExpr);
+    	    	String exSQL=query.toSQL();
+
+    			expr1=new Expression(new ColumnLink(new int[]{cid}), "in ("+exSQL+")", c.getDescription(manager.getDefaultLocale())+":"+ desc  );
+    			logger.debug(expr1.toString());
+    			expr=expr1.combine(expr,SQLCombination.SQL_AND, null);
+    		}
+    		
+    	}
+    	return expr;
     }
     /**
      * 2009-12-11 现在碰到这样一种情况：

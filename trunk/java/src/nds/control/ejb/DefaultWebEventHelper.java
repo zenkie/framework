@@ -25,6 +25,7 @@ import nds.control.event.NDSObjectNotFoundException;
 import nds.control.util.AuditUtils;
 import nds.control.util.DirectoryCache;
 import nds.control.util.EJBUtils;
+import nds.control.util.SecurityUtils;
 import nds.control.util.ValueHolder;
 import nds.log.Logger;
 import nds.log.LoggerManager;
@@ -1163,7 +1164,7 @@ public class DefaultWebEventHelper {
      * @param permission, 1 for read, 3 for write, 5 for submit, 9 for audit, combine, so 7 for read/write/submit
      * @param userId the user's id
      */
-    public Expression getSecurityFilter(String tableName, int permission, int userId)throws QueryException{
+    public Expression getSecurityFilter(String tableName, int permission, int userId,QuerySession qs)throws QueryException{
         tableName= tableName.toUpperCase();
         /*if( userId == 0) {
             // root
@@ -1176,7 +1177,7 @@ public class DefaultWebEventHelper {
         sf =(Expression) directoryCache.getCachedObject(key);
         if( sf == null) {
             try {
-                sf = getSecurityFilter0(tableName, permission, userId);
+                sf = getSecurityFilter0(tableName, permission, userId,qs);
                 // save to cache for future faster load
                 directoryCache.addCachedObject(key, sf);
             } catch(Exception e) {
@@ -1214,8 +1215,16 @@ public class DefaultWebEventHelper {
      * @return empty exprssion if not found, nerver return null!
      *
      */
-    private Expression getSecurityFilter0(String tableName, int permission, int userId) throws Exception{
-        Connection con= null;
+    private Expression getSecurityFilter0(String tableName, int permission, int userId,QuerySession qs) throws Exception{
+        /**
+         * yfzhu modified 2010-3-14 move to SecurityUtils#getSecurityFilter method, as they match
+         * 
+         */
+    	if(true){
+    		
+    		return SecurityUtils.getSecurityFilter(tableName, permission, userId, qs);
+    	}
+    	Connection con= null;
         ResultSet rs=null;
         PreparedStatement pstmt=null;
         try{
