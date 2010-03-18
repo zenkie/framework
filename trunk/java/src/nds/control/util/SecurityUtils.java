@@ -287,6 +287,7 @@ public class SecurityUtils {
     }
     /**
      * Load all sqlfilter as Expression of sec_fkfilter whose id in list of <param> fkFitlerIds</param>
+     * @param tableId table which should have those expressions specified by fkFilterIds as filter for sql construction 
      * @param fkFilterIds 'id1,id2,..,' id of sec_fkfilter
      * @return 
      * @throws QueryException
@@ -302,27 +303,31 @@ public class SecurityUtils {
     		List o=(List)al.get(i);
     		java.sql.Clob s= (java.sql.Clob)o.get(0);
     		String sqlFilter= s.getSubString(1, (int) s.length());
-    		Expression sqlExpr= new Expression(sqlFilter); 
+    		Filter filter=new Filter(sqlFilter);
+    		Expression sqlExpr=filter.getExprObject(); // this is work on table specified by sec_fkfilter.ad_table_id
     		s= (java.sql.Clob)o.get(1);
     		String columns= s.getSubString(1, (int) s.length());
     		String desc= (String)o.get(2);
     		//which column
-    		Filter f=new Filter(columns);
+    		Filter f=new Filter(columns); // this will get a list of column on which that sqlExpr will apply, including those columns of table specified by tableId
     		List cls=QueryEngine.getInstance().doQueryList("select distinct id from ad_column where ad_table_id="+ tableId+" and id "+f.getSql());
     		for(int j=0;j<cls.size();j++){
+    			//we only need the columns on tableId, and can use sqlExpr as expression to do filter
     			int cid= Tools.getInt(cls.get(j),-1);
     			Column c= manager.getColumn(cid);
     			if(c==null){
     				logger.error("find invalid column id="+cls.get(j)+ " in fkFilter id list( "+ fkFilterIds+") for table id="+tableId);
     				continue;
     			}
-    			
+    			logger.debug("column="+c);
     	    	QueryRequestImpl query=QueryEngine.getInstance().createRequest(qsession);
     	    	query.setMainTable(c.getReferenceTable().getId());
     	    	query.addSelection(c.getReferenceTable().getPrimaryKey().getId());
+    	    	
+    	    	logger.debug(sqlExpr.toString());
     	    	query.addParam(sqlExpr);
     	    	String exSQL=query.toSQL();
-
+    	    	logger.debug("sql:"+ exSQL);
     			expr1=new Expression(new ColumnLink(new int[]{cid}), "in ("+exSQL+")", c.getDescription(manager.getDefaultLocale())+":"+ desc  );
     			logger.debug(expr1.toString());
     			expr=expr1.combine(expr,SQLCombination.SQL_AND, null);
