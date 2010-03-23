@@ -263,10 +263,21 @@ public class ObjectColumnObtain extends ColumnObtain{
 		                			  if( v==null || v.size()==0) throw new NDSException("Internal error:"+ col+" need values from "+ rc+" while not found ("+ rc+" should locate before "+ col);
 		                			  
 		                		  }
-		                		  // rc should always be fk column, so data is Number
-		                		  BigDecimal[] d=(BigDecimal[]) v.elementAt(0);
-		                		  logger.debug(" value for "+ rc + ":"+d[i]);
-		                		  pstmt.setBigDecimal(++cidx,d[i]);
+		                		  // rc may be fk column, or limit value
+		                		  if(v.elementAt(0) instanceof BigDecimal[]){
+		                			  BigDecimal[] d=(BigDecimal[]) v.elementAt(0);
+		                			  logger.debug(" value for "+ rc + ":"+d[i]);
+		                			  pstmt.setBigDecimal(++cidx,d[i]);
+		                		  }else if (v.elementAt(0) instanceof String[]){
+		                			  String[] d=(String[]) v.elementAt(0);
+			                		  logger.debug(" value for "+ rc + ":"+d[i]);
+			                		  pstmt.setString(++cidx,d[i]);
+		                		  }else{
+		                			  logger.debug("Take as object since not supported as type:"+v.elementAt(0).getClass());
+		                			  Object[] d=(Object[]) v.elementAt(0);
+			                		  logger.debug(" value for "+ rc + ":"+d[i]);
+			                		  pstmt.setObject(++cidx,d[i]);
+		                		  }
 		                	  }
 		                  }
 		                  
