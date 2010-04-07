@@ -9,12 +9,27 @@ import java.io.PrintStream;
 import java.util.*;
 import org.python.util.PythonInterpreter;
 import org.python.core.*; 
+import nds.util.*;
+import nds.control.web.*;
 /**
  * 
  * @author yfzhu@agilecontrol.com
  */
 
 public class PythonScriptUtils {
+	 
+	private static Properties pOverride=null;
+	static{
+		
+        Configurations conf=(Configurations)WebUtils.getServletContextManager().getActor(WebKeys.CONFIGURATIONS);
+        pOverride=conf.getConfigurations("python").getProperties();
+        
+        //this is for JythonObjectFactory
+        PySystemState.initialize(PySystemState.getBaseProperties(), pOverride, null);
+        PySystemState sys = new PySystemState();
+        Py.setFrame(new PyFrame(null, sys.__dict__, sys.__dict__, null));
+	}
+	
 	/**
 	 * Run process instance
 	 * @param fileName python file name, or module name
@@ -23,6 +38,7 @@ public class PythonScriptUtils {
 	 * @throws Exception
 	 */
 	public static String runProcess(String fileName, int pInstanceId)throws Exception{
+		
 		JythonObjectFactory factory = new JythonObjectFactory(
 				nds.process.ProcessRunner.class, fileName, fileName);
 		nds.process.ProcessRunner pr=(nds.process.ProcessRunner)factory.createObject();
@@ -72,6 +88,7 @@ public class PythonScriptUtils {
         // Create an interpreter instance with a null inputstream,
         // the capture out/err stream, non-interactive
         PythonInterpreter psh = new PythonInterpreter( );
+        psh.initialize(PySystemState.getBaseProperties(), pOverride, null);
         if(params!=null){
         	for(Iterator it=params.keySet().iterator();it.hasNext();){
         		String key=(String) it.next();
