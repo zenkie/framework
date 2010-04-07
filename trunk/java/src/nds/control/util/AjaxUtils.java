@@ -283,12 +283,12 @@ public class AjaxUtils {
 		//check param_str, this is set by user in query form
 		cs= jo.optString("param_str");// column name in format like "tab"+tabIdx+"_param/"+i+"/columns"
 		String cs2=jo.optString("param_str2");  //column in format as ColumnLink
-		if ( Validator.isNotNull(cs)  ){
+		if ( jo.has("param_str")  ){
 			expr2=parseQueryString(cs, locale);
 			//logger.debug("param_str:"+ expr2.toString());
 			if(expr2!=null && !expr2.isEmpty())expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
 			//logger.debug("after param_str"+expr );
-		} else if( Validator.isNotNull(cs2)){
+		} else if( jo.has("param_str2")){
 			expr2=parseQueryStringInColumnLink(cs2, locale);
 			logger.debug("param_str2:"+ expr2.toString());
 			if(expr2!=null && !expr2.isEmpty())expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
@@ -724,6 +724,7 @@ public class AjaxUtils {
      * @return Expression for QueryRequest construction
      */
     private static Expression parseQueryStringInColumnLink(String params,Locale locale) throws Exception{
+    	if(Validator.isNull(params)) return Expression.EMPTY_EXPRESSION;
     	CGIParser parser= new CGIParser(params,"UTF-8");
     	java.util.Enumeration e=parser.getParameterNames();
     	HashMap map=new HashMap();
