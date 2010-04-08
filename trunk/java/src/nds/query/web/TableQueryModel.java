@@ -306,6 +306,7 @@ public class TableQueryModel {
     		 */
     		css.append(" readonly");
     	}
+    	if(!column.isNullable()) css.append(" nl");
     	return css.toString();
     }
     /**
