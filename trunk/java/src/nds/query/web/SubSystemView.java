@@ -161,7 +161,7 @@ public class SubSystemView {
     	return false;
 	}
 	/**
-	 * if contains one category, will return true;
+	 * if contains one category (and at least one table is menu object), will return true;
 	 * @param request
 	 * @param subSystemId
 	 * @return

@@ -161,7 +161,7 @@ public class BatchUpdate  extends Command{
         		int objectId=rs.getInt(1);
         		totalRowsFound++;
         		// check user write permission on this object
-        		if(nds.control.util.SecurityUtils.hasObjectPermission(userId, user.name, table.getName(), objectId, nds.security.Directory.WRITE, event.getQuerySession())){
+        		if(nds.control.util.SecurityUtils.hasObjectPermission(conn,userId, user.name, table.getName(), objectId, nds.security.Directory.WRITE, event.getQuerySession())){
         			totalRowsPermitted++;
         			//do update
             		sql=new StringBuffer(sb.toString());

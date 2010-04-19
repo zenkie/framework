@@ -26,6 +26,7 @@ public class ObjectCreateImpl{
     private DefaultWebEvent event;
     private Table table;
     private int length;
+    private List<Column> uic;//User Input Columns (mask x1xx),elements are Column
     /**
      * @param hashColValue key: Column name in uppercase, value:List of values for that column to be inserted into db, element's type can be Decimal/String/Integer/Data
      * @param event
@@ -37,6 +38,7 @@ public class ObjectCreateImpl{
     	this.event= event;
     	this.table=table;
     	this.length = length;
+    	this.uic= getUserInputColumns();
     }
     public void setInvalidRows(HashMap rows){
         invalidRows=rows;
@@ -259,7 +261,42 @@ public class ObjectCreateImpl{
            data.add(row);
        }
        return data;
-    } 
+    }
+    /**
+     * @return elements are Column, which has mask like x1xxxxxxxx
+     */
+    private List<Column> getUserInputColumns(){
+    	ArrayList editColumnList = table.getAllColumns() ;
+    	ArrayList<Column> uic=new ArrayList<Column>();
+    	Column column;
+        
+    	for(int j=0;j<editColumnList.size();j++ ){
+    		column = (Column)editColumnList.get(j);
+            if(!column.isMaskSet(Column.MASK_CREATE_EDIT))continue;
+            uic.add(column);
+    	}
+    	return uic;
+    }
+    /**
+     * Row input info, excluding column such as ad_client, modifierid, which are not set by user himself
+     * @param rowIdx index in original table
+     * @return string that will show in return text infor
+     */
+    public String getRowOrigInfo(int rowIdx){
+    	StringBuffer sb=new StringBuffer();
+    	for(int i=0;i<uic.size();i++ ){
+    		Column col= uic.get(i);
+    		String name= col.getName();
+    		if(col.getReferenceTable()!=null){
+    			name= name+"__"+ col.getReferenceTable().getAlternateKey().getName();
+    		}
+    		String cinfo=event.getParameterValues(name)[rowIdx];
+    		if(cinfo==null) cinfo="";
+    		if(i>0)sb.append(",");
+    		sb.append(cinfo);
+    	}
+        return sb.toString();
+    }
     public String getPreparedStatementSQL(){
     	StringBuffer sql = new StringBuffer("INSERT INTO "+table.getRealTableName()+" (");
     	ArrayList cols = table.getAllColumns() ;

@@ -70,6 +70,10 @@ public class ColumnValueImpl implements ColumnValue{
      
      String tableName = table.getName() ;
      Vector value = new Vector();
+     //支持sheetNo字段包含其他字段的内容作为一部分，例如：商品编号需要包含大类，小类信息，则写法为：
+     //@DIM1_ID;CODE@-@DIM2_ID;CODE@-$serial4
+     //move sheetNo column to last position, so can fetch other columns' value as parameter
+     //ArrayList ite=new ArrayList();
      Iterator ite = colList.iterator();
      PairTable fixedColumns=DefaultWebEventHelper.getFixedColumns(event);
      logger.debug("fixed columns=" + fixedColumns);

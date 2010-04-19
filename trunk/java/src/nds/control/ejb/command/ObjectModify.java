@@ -208,7 +208,7 @@ public class ObjectModify extends Command{
        boolean after_modify_check ="true".equals(conf.getProperty("object.modify.after_modify_check", "true")); 
        
        if(!isRoot && after_modify_check && table.isMenuObject()){
-		   if( !nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
+		   if( !nds.control.util.SecurityUtils.hasObjectPermission(con,userId, usr.name, 
 				   table.getName(), objectId, nds.security.Directory.WRITE, event.getQuerySession())){
 			   logger.debug("no permission to modify a record to uneditable one on table="+ table+", id="+ objectId+" by "+ usr.name+" of id"+ usr.id);
 			   throw new NDSEventException("@no-permission@");

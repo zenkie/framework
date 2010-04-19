@@ -34,6 +34,10 @@ import org.json.*;
  * Do object creation
  */
 public class ObjectCreate extends Command{
+	public ObjectCreate(){
+		Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+		showOriginalRowInfo="true".equals(conf.getProperty("object.create.show.original.row", "false"));
+	}
 	/**
      * Whether this command use internal transaction control. For normal command, transaction is controled by
      * caller, yet for some special ones, the command will control transaction seperativly, that is, the command
@@ -43,6 +47,10 @@ public class ObjectCreate extends Command{
     public boolean internalTransaction(){
     	return true;
     }	
+    /**
+     * 纤丝鸟的需求 
+     */
+    private boolean showOriginalRowInfo=false;
   /**
    * Support update for object create when param "update_on_unique_constraints" is set to "Y" (default is "N")
    * 	"output_json" - "y"|"n"(default) json array to contain error info
@@ -265,7 +273,7 @@ public class ObjectCreate extends Command{
                 		   spr=helper.doTrigger("AC", table, oids[realPos], con);
                 		   // check write permission on that record, 若不校验界面上可生成无写权限访问的记录, 
                 		   //权限校验仅针对菜单项单据 yfzhu 2009-12-13, root晃过
-                		   if( !isRoot && table.isMenuObject()&& !nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
+                		   if( !isRoot && table.isMenuObject()&& !nds.control.util.SecurityUtils.hasObjectPermission(con,userId, usr.name, 
                 				   table.getName(), oids[realPos], nds.security.Directory.WRITE, qsession)){
                 			   logger.debug("no permission to create a uneditable record on table="+ table+", id="+ oids[realPos]+" by "+ usr.name+" of id"+ usr.id);
                 			   throw new NDSEventException("@no-permission@");
@@ -306,7 +314,7 @@ public class ObjectCreate extends Command{
                 			   if(idByUdx!=-1){
                 				   // check write permission, 若不校验界面上可修改无写权限写的记录, 
                         		   //权限校验仅针对菜单项单据 yfzhu 2009-12-13
-                        		   if(!isRoot && table.isMenuObject()&& !nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
+                        		   if(!isRoot && table.isMenuObject()&& !nds.control.util.SecurityUtils.hasObjectPermission(con,userId, usr.name, 
                         				   table.getName(), idByUdx, nds.security.Directory.WRITE, qsession)){
                         			   logger.debug("no permission to modify(by udx) a uneditable record on table="+ table+", id="+ idByUdx+" by "+ usr.name+" of id"+ usr.id);
                         			   throw new NDSEventException("@no-permission@");
@@ -320,7 +328,7 @@ public class ObjectCreate extends Command{
                 				   // 再校验一次权限，否则用户可以将自己有权限改的数据改成自己没有权限修改的数据。
                 				   // 例如，用户只能修改上海的单据，可是他将上海字段内容修改为成都了。
                 				   if(!isRoot  && after_modify_check && table.isMenuObject()){
-                            		   if( !nds.control.util.SecurityUtils.hasObjectPermission(userId, usr.name, 
+                            		   if( !nds.control.util.SecurityUtils.hasObjectPermission(con,userId, usr.name, 
                             				   table.getName(), idByUdx, nds.security.Directory.WRITE, qsession)){
                             			   logger.debug("no permission to modify a record to uneditable one on table="+ table+", id="+ idByUdx+" by "+ usr.name+" of id"+ usr.id);
                             			   throw new NDSEventException("@no-permission@");
@@ -421,7 +429,12 @@ public class ObjectCreate extends Command{
 	                		   job.put("errmsg",s);
 	                		   ja.put(job);
 	                	   }else{
-		                	   sb.append("@line@:"+ (i+startRow)+ ": "+ s+ "\r\n");
+	                		   if(showOriginalRowInfo){
+	                			   //按纤丝鸟要求，返回所有输入的列,2010-3-25
+	                			   sb.append("@line@:"+ (i+startRow)+ ": "+ s+" ("+
+	                					   createImpl.getRowOrigInfo(i) +")\r\n");
+	                		   }else
+	                			   sb.append("@line@:"+ (i+startRow)+ ": "+ s+ "\r\n");
 	                	   }
 	                   }
 	                   

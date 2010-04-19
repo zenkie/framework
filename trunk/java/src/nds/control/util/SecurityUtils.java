@@ -121,7 +121,8 @@ public class SecurityUtils {
     	logger.debug(query.toSQL());
     	return result.getTotalRowCount() ==  objectIds.length ;
     	
-    }	
+    }
+
     /**
      * Check user's permission on specified object
      * @param tableName the table name of the object
@@ -130,7 +131,7 @@ public class SecurityUtils {
      * @return true if current user has that permission on the object
      * @throws Exception
      */
-    public static boolean hasObjectPermission(int userId, String userName, String tableName, 
+    public static boolean hasObjectPermission(Connection conn, int userId, String userName, String tableName, 
     		int objectId, int permission, QuerySession qsession) throws QueryException, RemoteException{
     	//if( "root".equals(userName) ) return true; //root
     	TableManager manager=TableManager.getInstance();
@@ -158,9 +159,23 @@ public class SecurityUtils {
         	expr= expr.combine(exprw,  expr.SQL_AND, " AND ") ;
     	}
     	query.addParam(expr);
-    	QueryResult result= engine.doQuery(query);
+    	
+    	QueryResult result= (conn==null?engine.doQuery(query): engine.doQuery(query, conn));
     	logger.debug(query.toSQL());
     	return result.getTotalRowCount()> 0 ;
+    	
+    }	
+    /**
+     * Check user's permission on specified object
+     * @param tableName the table name of the object
+     * @param objectId  the pk id of the table
+     * @param permission nds.security.Directory.READ/WRITE/AUDIT
+     * @return true if current user has that permission on the object
+     * @throws Exception
+     */
+    public static boolean hasObjectPermission(int userId, String userName, String tableName, 
+    		int objectId, int permission, QuerySession qsession) throws QueryException, RemoteException{
+    	return hasObjectPermission(null, userId,userName,tableName,objectId,permission,qsession);
     	
     }	
     /**
@@ -199,7 +214,6 @@ public class SecurityUtils {
             pstmt.setInt(3, permission);
             pstmt.setInt(4, permission);
             rs= pstmt.executeQuery();
-            
             StringHashtable st=new StringHashtable(10, 8000); 
             String sql,desc,tn, fkfilterIds;
             while( rs.next()){
@@ -209,7 +223,7 @@ public class SecurityUtils {
                 fkfilterIds=rs.getString(4);
                 if ( Validator.isNotNull(sql) ||  Validator.isNotNull(fkfilterIds) ){
                     st.put(sql+"#"+fkfilterIds, new String[]{desc, tn,sql,fkfilterIds});
-//                    logger.debug("found sql:" + sql +", with desc=" + desc);
+                    logger.debug("found sql:" + sql +", with desc=" + desc);
                 }else{
                 	//has at least one group which allows current user to work on all data
                 	st.clear();
@@ -234,6 +248,7 @@ public class SecurityUtils {
                     tn= v[1];
                 	sql=v[2]; // the sqlfilter is xml=Expression.toString() with CDATA indeed.
                 	fkfilterIds=v[3];
+                	//logger.debug("desc="+ desc+", tn="+tn+", sql="+ sql+", fkfilterIds="+fkfilterIds);
                     //expr1= new Expression(cl, sql,desc);
                     if( tableName.equalsIgnoreCase(tn)|| nds.util.Validator.isNull(tn)){ 
                     	if(Validator.isNotNull(sql))
@@ -270,6 +285,9 @@ public class SecurityUtils {
                     	else expr= expr.combine(expr1,SQLCombination.SQL_OR, null); // or relationship
                     }
                     logger.debug("expr="+ expr);
+                }
+                if(expr==null){
+                	expr=Expression.EMPTY_EXPRESSION;
                 }
                 return expr;
             }else{

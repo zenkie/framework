@@ -90,14 +90,14 @@ public class CreateCxtabRunnerProcessInstance extends Command {
 	  		throw new NDSException("Internal Error: process 'nds.process.CxtabRunner' is not found");
 	  	
 		// check process read permission
-		if(!SecurityUtils.hasObjectPermission(userId, user.getName(),
+		if(!SecurityUtils.hasObjectPermission(conn,userId, user.getName(),
 				"AD_PROCESS",pid, Directory.READ,event.getQuerySession())) 
 			throw new NDSException("@no-permission@(AD_PROCESS)");
 	  	
 	    int queueId=Tools.getInt(engine.doQueryOne("select id from ad_processqueue where ad_client_id="+ 
 	    		user.adClientId+" and name="+QueryUtils.TO_STRING(ad_processqueue_name)+" and isactive='Y'",conn),-1);
 		// check process queue read permission
-		if(!SecurityUtils.hasObjectPermission(userId, user.getName(),
+		if(!SecurityUtils.hasObjectPermission(conn,userId, user.getName(),
 				"AD_PROCESSQUEUE",queueId, Directory.READ,event.getQuerySession())) 
 			throw new NDSException("@no-permission@(AD_PROCESSQUEUE)");
 	    

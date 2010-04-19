@@ -50,6 +50,7 @@ public class ShtNoColumnObtain extends ColumnObtain{
           }else{
               try{
             	//check event data first, if found, retrieve directly yfzhu 2009-11-10
+            	//this occurs when using rest interface (order no is input from ecshop  
             	if(value!=null && value.length>i && Validator.isNotNull(value[i])){
             		sheetNoSeq[i] = value[i];
             	}else{
