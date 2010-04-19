@@ -161,8 +161,9 @@ public class SecurityUtils {
     	query.addParam(expr);
     	
     	QueryResult result= (conn==null?engine.doQuery(query): engine.doQuery(query, conn));
-    	logger.debug(query.toSQL());
-    	return result.getTotalRowCount()> 0 ;
+    	int cnt=result.getTotalRowCount();
+    	logger.debug( "(cnt="+ cnt+"): "+query.toSQL());
+    	return cnt> 0 ;
     	
     }	
     /**
