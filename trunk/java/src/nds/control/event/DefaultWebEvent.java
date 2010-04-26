@@ -310,7 +310,7 @@ public class DefaultWebEvent implements  NDSEvent {
     		Column akColumn=table.getAlternateKey();
     		switch(akColumn.getType()){
     		case Column.STRING:
-    			sv= QueryUtils.TO_STRING(String.valueOf(v));
+    			sv= QueryUtils.TO_STRING(akColumn.isUpperCase()?  String.valueOf(v).toUpperCase(): String.valueOf(v));
     			break;
     		case Column.DATENUMBER:
     		case Column.NUMBER:
@@ -364,7 +364,7 @@ public class DefaultWebEvent implements  NDSEvent {
     		Column akColumn=table.getAlternateKey();
     		switch(akColumn.getType()){
     		case Column.STRING:
-    			sv= QueryUtils.TO_STRING(String.valueOf(v));
+    			sv= QueryUtils.TO_STRING(akColumn.isUpperCase()?  String.valueOf(v).toUpperCase(): String.valueOf(v));
     			break;
     		case Column.DATENUMBER:
     		case Column.NUMBER:

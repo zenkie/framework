@@ -34,6 +34,8 @@ public class ImportExcel implements Runnable{
     private String srcFile;
     private int tableId;
     private int startRow;// logical, start from 0
+    private int startColumn; //start from 0
+    private int skipChars; //start from 0, skip first chars in the beginning of the line
     private boolean sendEmail;
     /**
      * 对于文本格式(file_format='txt')，支持分隔符(txt_type=token)和固定宽度(txt_type=fix)，
@@ -59,6 +61,19 @@ public class ImportExcel implements Runnable{
      */
     public void setStartRow(int lineNo){
         startRow= lineNo -1;
+    }
+    /**
+     * @param col start from 1
+     */
+    public void setStartColumn(int col){
+        startColumn= col -1;
+    }
+    /**
+     * Skip some chars in the beginning of text line (fixed length) 
+     * @param startSkipChars start from 0
+     */
+    public void setStartSkip(int startSkipChars){
+    	skipChars=startSkipChars;
     }
     public void setMainTable(int tableId){
         this.tableId= tableId;
@@ -253,7 +268,7 @@ public class ImportExcel implements Runnable{
 	        	}else{
 		        	int cnt=0;
 	        		 while(fixedLength.hasMoreTokens()){ 
-	        			 fixedLengths[cnt]=Tools.getInt(fixedLength.nextToken(), -1);
+	        			 fixedLengths[cnt]=Tools.getInt(fixedLength.nextToken(), 0);
 	        			 cnt++;
 	        		 }
 	        		 startIdx[0]=0;
@@ -282,22 +297,24 @@ public class ImportExcel implements Runnable{
 	        			
 		        		if(txtLineTypeIsToken){
 		        			//分隔符
-		        			String[] s=tokenPattern.split(line);
-		        			for(int i=0;i<colNames.size() && i< s.length;i++ ){
-		        				dwe.setParameter((String)colNames.get(i), s[i].trim());
+		        			String[] s=tokenPattern.split(line); //=起始忽略的列+实际对应的字段列
+		        			for(int i=0;i<colNames.size() && i< s.length-startColumn;i++ ){
+		        				//skip start columns, if not 0
+		        				dwe.setParameter((String)colNames.get(i), s[i+startColumn].trim());
 		        			}
 		        			// s element count may less than expected
-		        			for(int i=s.length;i<colNames.size();i++ )dwe.setParameter((String)colNames.get(i), "");
+		        			for(int i=s.length-startColumn;i<colNames.size();i++ )
+		        				dwe.setParameter((String)colNames.get(i), "");
 		        			
 		        		}else{
-		        			//固定宽度
+		        			//固定宽度，前skipChars个字符是要删除的,故字符获取的起始索引是skipChars
 		        			for(int i=0;i<fixedLengths.length;i++){
 		        				try{
-		        					colPart= line.substring(startIdx[i], endIdx[i]);
+		        					colPart= line.substring(startIdx[i]+skipChars, endIdx[i]+skipChars);
 		        				}catch(IndexOutOfBoundsException  e){
 		        					if(endIdx[i]>line.length()){
 		        						try{
-		        							colPart= line.substring(startIdx[i]);
+		        							colPart= line.substring(startIdx[i]+skipChars);
 		        						}catch(IndexOutOfBoundsException  e2){
 		        							colPart="";
 		        						}
@@ -334,7 +351,7 @@ public class ImportExcel implements Runnable{
 	                dwe.setParameter("nds.row.index",String.valueOf(i));
 	                for( int j=0;j< colNames.size();j++){
 	                    col= (Column) directColumnOfData.get(j);
-	                    HSSFCell cell = row.getCell((short)j);
+	                    HSSFCell cell = row.getCell((short)(j+startColumn)); //列从startColumn开始
 	                    cv= getCellValue(i, cell, col);
 	                    dwe.setParameter((String)colNames.get(j), cv);
 	                }
@@ -437,7 +454,7 @@ public class ImportExcel implements Runnable{
 	        	}else{
 		        	int cnt=0;
 	        		 while(fixedLength.hasMoreTokens()){ 
-	        			 fixedLengths[cnt]=Tools.getInt(fixedLength.nextToken(), -1);
+	        			 fixedLengths[cnt]=Tools.getInt(fixedLength.nextToken(), 0);
 	        			 cnt++;
 	        		 }
 	        		 startIdx[0]=0;
@@ -465,22 +482,22 @@ public class ImportExcel implements Runnable{
 	        		if(line.trim().length()>0){
 		        		if(txtLineTypeIsToken){
 		        			//分隔符
-		        			String[] s=tokenPattern.split(line);
-		        			for(int i=0;i<colData.length && i< s.length;i++ ){
-		        				colData[i].add(s[i].trim());
+		        			String[] s=tokenPattern.split(line); //前startColumn个列是忽略的
+		        			for(int i=0;i<colData.length && i< s.length-startColumn;i++ ){
+		        				colData[i].add(s[i+startColumn].trim());
 		        			}
 		        			// s element count may less than expected
-		        			for(int i=s.length;i<colData.length;i++ )colData[i].add("");
+		        			for(int i=s.length-startColumn;i<colData.length;i++ )colData[i].add("");
 		        			
 		        		}else{
-		        			//固定宽度
+		        			//固定宽度，前skipChars个字符是要删除的,故字符获取的起始索引是skipChars
 		        			for(int i=0;i<fixedLengths.length;i++){
 		        				try{
-		        					colPart= line.substring(startIdx[i], endIdx[i]);
+		        					colPart= line.substring(startIdx[i]+skipChars, endIdx[i]+skipChars);
 		        				}catch(IndexOutOfBoundsException  e){
 		        					if(endIdx[i]>line.length()){
 		        						try{
-		        							colPart= line.substring(startIdx[i]);
+		        							colPart= line.substring(startIdx[i]+skipChars);
 		        						}catch(IndexOutOfBoundsException  e2){
 		        							colPart="";
 		        						}
@@ -519,7 +536,7 @@ public class ImportExcel implements Runnable{
 	                if( row==null) continue;
 	                for( int j=0;j< directColumnOfData.size();j++){
 	                    col= (Column) directColumnOfData.get(j);
-	                    HSSFCell cell = row.getCell((short)j);
+	                    HSSFCell cell = row.getCell((short)(j+startColumn));
 	                    cv= getCellValue(i, cell, col);
 	                    colData[j][i-startRow]= cv;
 	                }

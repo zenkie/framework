@@ -146,6 +146,8 @@ public class ImportExcelFileHandler extends RequestHandlerSupport {
             //logger.debug("table id="+ tableId) ;
             ei.setMainTable(tableId );
             ei.setStartRow(Tools.getInt(props.getProperty("startRow"), 1)) ;
+            ei.setStartColumn(Tools.getInt(props.getProperty("startColumn"), 1)) ;
+            ei.setStartSkip(Tools.getInt(props.getProperty("startSkip"), 0)) ;
             boolean bgRun="true".equalsIgnoreCase(""+props.getProperty("bgrun"));
             
             boolean update_on_unique_constraints="true".equalsIgnoreCase(""+props.getProperty("update_on_unique_constraints"));
