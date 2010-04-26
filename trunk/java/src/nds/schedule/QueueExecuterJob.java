@@ -19,10 +19,11 @@ import javax.transaction.UserTransaction;
 import nds.process.*;
 /**
  * 在参数中获取对应的JobQueue，依序执行队列中的每个任务，创建SvrProcess (根据AD_Process) 和ProcessInfo(根据AD_PInstance 和AD_PInstance_Para)，然后执行SvrProcess
+ * 将任务定义为Stateful，避免同时运行多个实例
  * @author yfzhu@agilecontrol.com
  */
 
-public class QueueExecuterJob implements InterruptableJob {
+public class QueueExecuterJob implements InterruptableJob,StatefulJob {
 	protected Logger logger= LoggerManager.getInstance().getLogger(getClass().getName());
 	
 	protected boolean interrupted = false;
