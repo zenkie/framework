@@ -61,7 +61,9 @@ public class ListSubmit extends Command{
         	 boolean statusExists=(table.getColumn("status")!=null);
         	 b=SecurityUtils.hasPermissionOnAll(user.getId().intValue(), user.getName(), 
   				table.getName(), itemidStr, Directory.SUBMIT, event.getQuerySession(), 
-  				(statusExists? table.getName()+".status<>2":null));
+  				(statusExists? table.getName()+".status=1":null));
+        	 	// bugs found: status must be 1 when submit
+  				//(statusExists? table.getName()+".status<>2":null));
          }catch(Exception e){
          	logger.error("Fail",e);
          	throw new NDSException("@error-in-permission-check@:"+ e.getMessage(), e);
@@ -81,6 +83,8 @@ public class ListSubmit extends Command{
   	         	 // submit one by one
 	  	         for(int i = 0;i<itemidStr.length ;i++){
 	  	             int itemid = Tools.getInt(itemidStr[i],-1) ;
+	  	             //
+	  	             
 	  	             SPResult r=helper.auditOrSubmitObject(table,itemid,operaorID.intValue(),event);
 	  	             if (r.getCode() !=0) {
 	  	                 res += r.getMessage()+ "<br>";
