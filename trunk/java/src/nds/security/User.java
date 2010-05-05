@@ -45,6 +45,9 @@ public class User {
   public java.util.Locale locale;
   public String clientDomainName;
   public String email; // 
+
+  private int securityGrade;
+  
   public Integer getId() {
     return id;
   }
@@ -119,6 +122,12 @@ public boolean isActive() {
  */
 public void setActive(boolean isActive) {
 	this.isActive = isActive;
+}
+public int getSecurityGrade() {
+	return securityGrade;
+}
+public void setSecurityGrade(int securityGrade) {
+	this.securityGrade = securityGrade;
 }
 
 }

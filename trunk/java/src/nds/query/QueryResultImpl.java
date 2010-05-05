@@ -270,6 +270,7 @@ public class QueryResultImpl implements QueryResult , JSONString{
             ArrayList al=new ArrayList();
             if(column  <1 || column  > displayColumnIndices.length) {
                 logger.debug( "Column index "+column+" out of bound [1,"+displayColumnIndices.length+"].");
+                //Thread.dumpStack();
                 if( needNBSP ){
                     return "&nbsp;";
                 }else return "";
@@ -445,6 +446,7 @@ public class QueryResultImpl implements QueryResult , JSONString{
         if(column  <1 || column  > displayColumnIndices.length) {
             //nmdemo bugs found
             logger.error( "Column index "+column+" out of bound [1,"+displayColumnIndices.length+"].");
+            //Thread.dumpStack();
             return null;
             //throw new QueryException( "Column index "+column+" out of bound [1,"+displayColumnIndices.length+"].");
         }
@@ -459,6 +461,7 @@ public class QueryResultImpl implements QueryResult , JSONString{
         if(column  <1 || column  > displayColumnIndices.length) {
             //nmdemo bugs found
             logger.debug( "Column index "+column+" out of bound [1,"+displayColumnIndices.length+"].");
+            //Thread.dumpStack();
             if( needNBSP ){
                 return StringUtils.NBSP;
             }else return "";
@@ -576,6 +579,7 @@ public class QueryResultImpl implements QueryResult , JSONString{
         if(column  <1 || column  > displayColumnIndices.length) {
             //nmdemo bugs found, and no throw now
             logger.debug( "Column index "+column+" out of bound [1,"+displayColumnIndices.length+"].");
+            //Thread.dumpStack();
             return -1;
 //            throw new QueryException( "Column index "+column+" out of bound [1,"+displayColumnIndices.length+"].");
         }
@@ -680,6 +684,7 @@ public class QueryResultImpl implements QueryResult , JSONString{
             ArrayList al=new ArrayList();
             if(column  <1 || column  > displayColumnIndices.length) {
                 logger.debug( "Column index "+column+" out of bound [1,"+displayColumnIndices.length+"].");
+                //Thread.dumpStack();
                 if( needNBSP ){
                     return StringUtils.NBSP;
                 }else return "";

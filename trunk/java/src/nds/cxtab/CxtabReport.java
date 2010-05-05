@@ -56,6 +56,11 @@ public class CxtabReport {
 	private int processInstanceId; // ad_pinstance.id. This will be needed when doing cube exporting
 	private ArrayList factDescs;
 	
+	private int recordsCount;// how many records read from db to construct this report
+	
+	private int dimCount=0; // dimension count, for sqlite table creation
+	private int meaCount=0; // measure count, for sqlite table creation
+	
 	/**
 	 * This will be needed when doing cube exporting
 	 * @param d
@@ -68,7 +73,8 @@ public class CxtabReport {
 	 *
 	 */
 	public String create(Connection conn) throws Exception{
-		
+			long startTime=System.currentTimeMillis();
+			
 			String file;	
 			// prepare file
 	        Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
@@ -98,6 +104,15 @@ public class CxtabReport {
 		    	file=this.fileName+ ".htm";
 		    	htmlFactory.writeHtmlFile(filePath+File.separator+file,jxrs ,props);
 		    	if(this.cxtabId==250)logger.debug(jxrs.toDetailString());
+		    }else if("cbx".equalsIgnoreCase(fileType)){
+		    	//sqlite file for later analize in client
+				QueryRequest query=this.prepareReport(conn,true, false,true); // generate sql only
+				File f= new File(filePath);
+				if(!f.exists())f.mkdirs();
+
+				file=this.fileName+ ".cbx";
+		    	this.writeSQLiteFile(filePath+File.separator+file,query, conn);
+		    	
 		    }else{
 		    	//cube
 				QueryRequest query=this.prepareReport(conn,true, false,true); // generate sql only
@@ -109,7 +124,10 @@ public class CxtabReport {
 		    }
 		    // create description file for report
 		    createDescriptionFile(filePath+File.separator+file);
-			 
+			
+	  		//log running time
+	  		logRunningTime(cxtabId, userId, (int)(System.currentTimeMillis()-startTime),recordsCount, conn);
+		    
 		    return file;
 	    		    
 	}
@@ -332,7 +350,8 @@ public class CxtabReport {
 		}finally{
 			if(rs!=null)try{ rs.close();}catch(Throwable t){}
 	        int duration=(int)((System.currentTimeMillis()-startTime)/1000);
-	        String sqlInfo="["+user.getNameWithDomain()+"]"+"("+duration+" s) "+factTable.getDescription(user.locale)+":"+sql;
+	        String sqlInfo="["+user.getNameWithDomain()+"]"+"("+duration+" s) "+factTable.getDescription(user.locale)+":"+filePath +" "+ processInstanceId+",size:"+ (f.length()/1024.0/1024.0)+"MB";
+
 	        if (duration > 10) logger.info(sqlInfo );
 			else logger.debug(sqlInfo);
 		}	
@@ -368,7 +387,97 @@ public class CxtabReport {
 			throw new NDSException("@cube-creation-failed@:CXB"+ this.processInstanceId);
 		}
         int duration=(int)((System.currentTimeMillis()-startTime)/1000);
-        String sqlInfo="["+user.getNameWithDomain()+"]"+"("+duration+" s) "+factTable.getDescription(user.locale)+":"+pcube +" "+ processInstanceId;
+        String sqlInfo="["+user.getNameWithDomain()+"]"+"("+duration+" s) "+factTable.getDescription(user.locale)+":"+filePath +" "+ processInstanceId+",size:"+ (f.length()/1024.0/1024.0)+"MB";
+        if (duration > 10) logger.info(sqlInfo );
+		else logger.debug(sqlInfo);
+	}	
+	/**
+	 * 生成SQLITE 文件供PC端分析，未完成
+	 * 
+	 * @param filePath the absolute path with file name
+	 * @param query the group by query
+	 */
+	private void writeSQLiteFile(String filePath, QueryRequest query, Connection conn) throws Exception{
+		
+		startTime=System.currentTimeMillis();
+		
+		ArrayList vec=new ArrayList();
+		vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(sql)+" where name='filter' and ad_pinstance_id="+processInstanceId );
+		vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(filePath)+" where name='filename' and ad_pinstance_id="+processInstanceId );
+		QueryEngine.getInstance().doUpdate(vec, conn);
+		
+		// 生成下载文件，包含：一个数据表，一个定义表
+        Connection connection = null;  
+        ResultSet resultSet = null, rs=null;  
+        Statement stat = null;  
+        PreparedStatement pstmt=null;
+        //create table sql
+        StringBuffer ctb=new StringBuffer("create table cxtabdata(");
+        StringBuffer isb=new StringBuffer("insert into cxtabdata values(");
+        for(int i=0;i<this.dimCount;i++) {
+        	ctb.append("d").append(i).append(",");
+        	isb.append("?,");
+        }
+        for(int i=0;i<this.meaCount-1;i++){
+        	ctb.append("s").append(i).append(",");
+        	isb.append("?,");
+        }
+        ctb.append("s").append(this.meaCount-1).append(")");
+        isb.append("?)");
+        
+        try {  
+            Class.forName("org.sqlite.JDBC");  
+            connection = DriverManager  
+                    .getConnection("jdbc:sqlite:"+ filePath);  
+            stat = connection.createStatement();
+            stat.executeUpdate("drop table if exists cxtabdef");
+            stat.executeUpdate("create table cxtabdef(props text)");
+            
+            stat.executeUpdate("drop table if exists cxtabdata");
+            stat.executeUpdate(ctb.toString());
+            stat.close();
+            pstmt = connection.prepareStatement("insert into cxtabdef values(?)");//prepare insert into sqlite
+            //create json object
+            
+            /**
+             * @todo not finished，忽然感觉到即便推到PC机器上进行运算，大数量的报表仍然不能快速完成运算
+             * 按照客户要求定制一次性报表可能才是正道。
+             * 
+             */
+            
+            pstmt.close();
+            pstmt = connection.prepareStatement(isb.toString());//prepare insert into sqlite
+            int colcnt= this.dimCount+ this.meaCount;
+            rs= conn.createStatement().executeQuery(sql); //load from oracle
+            int c=0;
+            // batch mode 
+            connection.setAutoCommit(false);
+            while(rs.next()){
+            	for(int i=1;i<=colcnt;i++) pstmt.setObject(i, rs.getObject(i));
+            	pstmt.addBatch();
+            	c++;
+            	if(c==10000){//commit every 10000 line
+            		pstmt.executeBatch();
+            		connection.commit();
+            		c=0;
+            	}
+            }
+            pstmt.executeBatch();
+    		connection.commit();
+            
+        } finally {  
+            try {rs.close();  }catch(Throwable t){}  
+            try {pstmt.close();  }catch(Throwable t){}
+            try {connection.close();  }catch(Throwable t){}
+        }  
+		
+		// confirm cube file created
+		File f=new File(filePath);
+		if(!f.exists()){
+			throw new NDSException("@cube-creation-failed@:CXB"+ this.processInstanceId);
+		}
+        int duration=(int)((System.currentTimeMillis()-startTime)/1000);
+        String sqlInfo="["+user.getNameWithDomain()+"]"+"("+duration+" s) "+factTable.getDescription(user.locale)+":"+filePath +" "+ processInstanceId+",size:"+ (f.length()/1024.0/1024.0)+"MB";
         if (duration > 10) logger.info(sqlInfo );
 		else logger.debug(sqlInfo);
 	}	
@@ -411,9 +520,10 @@ public class CxtabReport {
 				"select id from ad_cxtab where name="+QueryUtils.TO_STRING(cxtabName)+
 				" and ad_client_id=(select ad_client_id from users where id="+userId+")", conn), -1);
 		
-		List ed= engine.doQueryList("select ad_table_id,name from ad_cxtab where id="+ cxtabId, conn);
+		List ed= engine.doQueryList("select ad_table_id,name,maxrows from ad_cxtab where id="+ cxtabId, conn);
 		int factTableId= Tools.getInt(((List)ed.get(0)).get(0),-1);
 		String cxtabDesc=(String) ((List)ed.get(0)).get(1);
+		int maxRows= Tools.getInt(((List)ed.get(0)).get(2),-1);
 		/*int factTableId= Tools.getInt(engine.doQueryOne(
 				"select ad_table_id from ad_cxtab where id="+ cxtabId, conn), -1);*/
 		factTable= manager.getTable(factTableId);
@@ -440,7 +550,7 @@ public class CxtabReport {
 		
 		Locale locale= user.locale;
 		logger.debug("Locale for "+ user.getNameWithDomain()+"(id="+ userId+") is "+ locale);
-		QuerySession qsession= QueryUtils.createQuerySession(userId, "", user.locale);
+		QuerySession qsession= QueryUtils.createQuerySession(userId, user.getSecurityGrade(),"", user.locale);
 		QueryRequestImpl query=engine.createRequest(qsession);
 		query.setMainTable(factTableId,true, cxtabFilter);
 
@@ -510,19 +620,24 @@ public class CxtabReport {
         }
         logger.debug("sexpr="+sexpr);
         query.addParam(sexpr);
-
-		List measures=  engine.doQueryList("select ad_column_id, function_, userfact, description, VALUEFORMAT,valuename, param1,param2,param2 from ad_cxtab_fact where ad_cxtab_id="+
+        
+		List measures=  engine.doQueryList("select ad_column_id, function_, userfact, description,sgrade, VALUEFORMAT,valuename, param1,param2,param2 from ad_cxtab_fact where ad_cxtab_id="+
 				cxtabId+" and isactive='Y' order by orderno asc",conn);
         //和平均有关的函数，包括avg, var,stdev，都不能让数据库进行group by 操作
         //而计数，最大，最小，累计等，可以先使用数据库完成有关group by运算
 		//注意计算列 (以等号开头)的将不参与前期运算
         ArrayList facts=new ArrayList();
         factDescs=new ArrayList();
-        
+        int userSecurityGrade= user.getSecurityGrade();
         boolean isDBGroupByEnabled=true;
         boolean mustBeDBGroupBy=false;
         for(int i=0;i< measures.size();i++){
         	List mea= (List)measures.get(i);
+        	int sgrade= Tools.getInt( mea.get(4),0);
+        	if(sgrade>userSecurityGrade){
+        		//current user should not see this column
+        		continue;
+        	}
         	String userFact= (String)mea.get(2);
         	if(Validator.isNotNull(userFact)){
         		if( userFact.startsWith("=")) continue;
@@ -545,13 +660,28 @@ public class CxtabReport {
         		}else{
         			isDBGroupByEnabled=false;
         		}
+        		
+        		
         	}
         }
+        // check record limit
+    	String cntSQL= query.toCountSQL();
+    	recordsCount= Tools.getInt(engine.doQueryOne(cntSQL, conn),-1);
+    	if(maxRows >0 && recordsCount > maxRows )throw new NDSException("@report-rows-exeed-limit@("+recordsCount +">"+ maxRows+")");
+        
         //if(isDBGroupByEnabled || sqlOnly){ // yfzhu marked up here 2009/4/14 since isDBGroupByEnabled=false, we should not do group by then 
         if(isDBGroupByEnabled){
+            if(facts.size()==0) throw new NDSException("No fact valid for current report, check sum fields and their security grade");
         	sql= query.toGroupBySQL(facts );
+        	
+        	this.dimCount =query.getSelectionCount();
+        	this.meaCount= facts.size();
         }else{
         	if(mustBeDBGroupBy) throw new NDSException("Cxtab configuration error, found user fact(db group by function) and invalid db group by function (e.g. avg) in the same time");
+        	
+        	this.dimCount= query.getSelectionCount();
+        	this.meaCount =measures.size();
+        	
         	for(int i=0;i< measures.size();i++){
             	List mea= (List)measures.get(i);
             	// may not have user fact 
@@ -561,7 +691,9 @@ public class CxtabReport {
            		else query.addSelection("1", "1") ;
             }
         	sql= query.toSQL();
+        	 
         }
+        
         /**
          * Handle sql for those contained limit value (should translate db value to description tha readable)
          */
@@ -748,6 +880,7 @@ public class CxtabReport {
 			}finally{
 				if(rs!=null)try{ rs.close();}catch(Throwable t){}
 		        int duration=(int)((System.currentTimeMillis()-startTime)/1000);
+		        
 		        String sqlInfo="["+user.getNameWithDomain()+"]"+"("+duration+" s) "+factTable.getDescription(user.locale)+":"+sql;
 		        if (duration > 10) logger.info(sqlInfo );
 				else logger.debug(sqlInfo);
@@ -843,5 +976,39 @@ public class CxtabReport {
 	public void setFilterDesc(String s){
 		this.filterDesc=s;
 	}
-	
+	/**
+	 * Log report running time
+	 * @param cxtabId
+	 * @param userId
+	 * @param duration miliseconds
+	 * @param conn
+	 * @throws Exception
+	 */
+	public static void logRunningTime(int cxtabId, int userId, int duration, int recordCnt, Connection conn) throws Exception{
+		int seconds=(int)(duration / 1000);
+		PreparedStatement pstmtm= conn.prepareStatement("merge into ad_cxtab_stat g using(select ? ad_cxtab_id, id user_ID, ad_client_id,ad_org_id from users where id=?  )b on(b.ad_cxtab_id=g.ad_cxtab_id and b.user_id=g.user_id)"+
+				" when matched then update set g.cnt=g.cnt+1, g.tot_time=g.tot_time+?,g.tot_rows=g.tot_rows+?,g.max_time=GREATEST(g.max_time,?), g.max_rows=GREATEST(g.max_rows,?), last_duration=?,last_rows=?, last_time=sysdate "+
+				" when not matched then insert (g.id, g.ad_client_id, g.ad_org_id, g.user_id,g.ad_cxtab_id,cnt,tot_time,tot_rows,max_time,max_rows,last_duration,last_rows,last_time)"+
+				" values( get_sequences('ad_cxtab_stat'), b.ad_client_id, b.ad_org_id, b.user_ID,  b.ad_cxtab_id, 1, ?,?,?,?,?,?,sysdate)");
+  		try{
+  			int i=0;
+  			pstmtm.setInt(++i,cxtabId);
+  			pstmtm.setInt(++i,userId);
+  			pstmtm.setInt( ++i,seconds);
+  			pstmtm.setInt( ++i,recordCnt);
+  			pstmtm.setInt( ++i,seconds);
+  			pstmtm.setInt( ++i,recordCnt);
+  			pstmtm.setInt( ++i,seconds);
+  			pstmtm.setInt( ++i,recordCnt);
+  			pstmtm.setInt( ++i,seconds);
+  			pstmtm.setInt( ++i,recordCnt);
+  			pstmtm.setInt( ++i,seconds);
+  			pstmtm.setInt( ++i,recordCnt);
+  			pstmtm.setInt( ++i,seconds);
+  			pstmtm.setInt( ++i,recordCnt);
+  			pstmtm.executeUpdate();
+  		}finally{
+  			try{pstmtm.close();}catch(Throwable tx){}
+  		}		
+	}
 }

@@ -27,6 +27,8 @@ public class ObjectCreateImpl{
     private Table table;
     private int length;
     private List<Column> uic;//User Input Columns (mask x1xx),elements are Column
+    
+    private ArrayList editColumnList;
     /**
      * @param hashColValue key: Column name in uppercase, value:List of values for that column to be inserted into db, element's type can be Decimal/String/Integer/Data
      * @param event
@@ -38,6 +40,7 @@ public class ObjectCreateImpl{
     	this.event= event;
     	this.table=table;
     	this.length = length;
+    	this.editColumnList=this.prepareModifiableColumns(); 
     	this.uic= getUserInputColumns();
     }
     public void setInvalidRows(HashMap rows){
@@ -59,7 +62,7 @@ public class ObjectCreateImpl{
      * @return elements are Column.NUMBER, Column.DATENUMBER,column.STRING,column.DATE 
      */
     public int[] getColumnTypes(){
-    	ArrayList cols = table.getAllColumns() ;
+    	ArrayList cols = editColumnList ;
     	ArrayList types=new ArrayList();
     	for(int i=0;i<cols.size();i++){
     		Column column = (Column)cols.get(i);
@@ -80,7 +83,7 @@ public class ObjectCreateImpl{
      */
    public String getPreparedStatementSQLForUpdate(){
 	   ArrayList modifiableColumns=new ArrayList();
-	   ArrayList al=table.getAllColumns();
+	   ArrayList al=editColumnList;
 	   for(int i=0;i<al.size();i++){
 		   Column col=(Column)al.get(i);
 		   if(col.isMaskSet(Column.MASK_CREATE_EDIT ) && col.isMaskSet(Column.MASK_MODIFY_EDIT)){
@@ -124,7 +127,7 @@ public class ObjectCreateImpl{
     */
    public int[] getSQLDataColumnTypesForUpdate(){
 	   ArrayList types=new ArrayList();
-	   ArrayList al=table.getAllColumns();
+	   ArrayList al=editColumnList;
 	   for(int i=0;i<al.size();i++){
 		   Column col=(Column)al.get(i);
 		   if(col.isMaskSet(Column.MASK_CREATE_EDIT ) && col.isMaskSet(Column.MASK_MODIFY_EDIT)){
@@ -143,7 +146,7 @@ public class ObjectCreateImpl{
     */
    public int[] getSQLDataIndexForUpdate(){
 	   ArrayList modifiableColumns=new ArrayList();
-	   ArrayList al=table.getAllColumns();
+	   ArrayList al=editColumnList;
 	   for(int i=0;i<al.size();i++){
 		   Column col=(Column)al.get(i);
 		   if(col.isMaskSet(Column.MASK_CREATE_EDIT ) && col.isMaskSet(Column.MASK_MODIFY_EDIT)){
@@ -152,7 +155,6 @@ public class ObjectCreateImpl{
 	   }
 
        Column column;
-       ArrayList editColumnList = table.getAllColumns() ;
        ArrayList idxs=new ArrayList();
        
        for(int i=0;i< modifiableColumns.size();i++){
@@ -212,7 +214,6 @@ public class ObjectCreateImpl{
    public int[] getSQLDataIndexForUdx(){
        List udxCols= TableManager.getInstance().getUniqueIndexColumns(table);
        Column column;
-       ArrayList editColumnList = table.getAllColumns() ;
        ArrayList idxs=new ArrayList();
        
        for(int i=0;i< udxCols.size();i++){
@@ -230,7 +231,26 @@ public class ObjectCreateImpl{
        for(int i=0;i< idxs.size();i++) ts[i] = ((Integer)idxs.get(i)).intValue();
        return ts;
    }
-   
+   public ArrayList getModifiableColumns(){
+		return editColumnList;
+	}
+   /**
+    * This is only for creation list, that is all columns minus those that current user 
+    * has no permission to read (column's security grade is greater that user's sgrade)
+    * @return elements are Column
+    */
+   private ArrayList prepareModifiableColumns(){
+	   QuerySession qs= event.getQuerySession();
+	   int sg=(qs==null?0: qs.getSecurityGrade());
+	   if(sg==0) return table.getAllColumns() ;
+	   ArrayList al=new ArrayList();
+	   ArrayList ac = table.getAllColumns() ;
+	   for(int i=0;i<ac.size();i++){
+		   Column c=(Column)ac.get(i);
+		   if(c.getSecurityGrade()<=sg) al.add(c);
+	   }
+	   return al;
+   }
     /**
      * 
      * @return elements are List contains column value(type is set in repective position in #getColumnTypes)
@@ -241,7 +261,6 @@ public class ObjectCreateImpl{
         String tableName = table.getRealTableName() ;
         Column column;
         String columnName = null;
-        ArrayList editColumnList = table.getAllColumns() ;
         ArrayList data = new ArrayList();
         for(int i = 0;i<length;i++){
             if( invalidRows!=null && invalidRows.containsKey(new Integer(i))){
@@ -266,7 +285,6 @@ public class ObjectCreateImpl{
      * @return elements are Column, which has mask like x1xxxxxxxx
      */
     private List<Column> getUserInputColumns(){
-    	ArrayList editColumnList = table.getAllColumns() ;
     	ArrayList<Column> uic=new ArrayList<Column>();
     	Column column;
         
@@ -299,7 +317,7 @@ public class ObjectCreateImpl{
     }
     public String getPreparedStatementSQL(){
     	StringBuffer sql = new StringBuffer("INSERT INTO "+table.getRealTableName()+" (");
-    	ArrayList cols = table.getAllColumns() ;
+    	ArrayList cols = editColumnList ;
     	StringBuffer value=new StringBuffer();
         for(int i=0;i<cols.size();i++){
             Column column = (Column)cols.get(i);
@@ -327,7 +345,7 @@ public class ObjectCreateImpl{
     public int[] getASIRelateColumnsPosInStatement(){
     	int[] positions=new int[]{-1,-1,-1};
     	int j=1; // setXXX in PreparedStatement using column index starting form 1
-    	ArrayList cols = table.getAllColumns() ;
+    	ArrayList cols = editColumnList ;
         for(int i=0;i<cols.size();i++){
             Column column = (Column)cols.get(i);
             String columnName = column.getName();

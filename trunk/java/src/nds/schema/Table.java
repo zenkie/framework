@@ -73,10 +73,21 @@ public interface Table extends Serializable  {
      * refer to Column.isMaskSet for mask information. 
      * @param columnMasks elements shoule be 0-9
      * @param includeUIController if false, will not add column that getDisplaySetting().isUIController()==true
-     * @return elements are array
+     * @return elements are Column
      * @since 3.0
      */
     public ArrayList getColumns(int[] columnMasks, boolean includeUIController);
+    /**
+	 Get columns which has any of the bit masks set in specified positions.
+     * For instance, getColumns([0,3]) will return columns which
+     * is showable when creation form <b>OR</b> modifiable in update form.
+     * refer to Column.isMaskSet for mask information. 
+     * @param columnMasks elements shoule be 0-9
+     * @param includeUIController if false, will not add column that getDisplaySetting().isUIController()==true
+     * @param securityGrade return column's security grade should not be greater than this one
+     * @return elements are Column
+     */
+    public ArrayList getColumns(int[] columnMasks, boolean includeUIController, int securityGrade);
     /**
      * 
      * @param showAction either Column.QUERY_SUBLIST or Column.Modify

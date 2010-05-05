@@ -30,6 +30,10 @@ public class QueryListConfig  implements JSONString{
 	private List<ColumnLink> orderBys;
 	private PairTable lengends;
 	
+	private int selectionsMaxSecurityGrade=0;
+	private int conditionsMaxSecurityGrade=0;
+	private int orderBysMaxSecurityGrade=0;
+	
 	public QueryListConfig(){}
 	public QueryListConfig(String json)throws JSONException,QueryException {
 		this(new JSONObject(json));
@@ -44,6 +48,8 @@ public class QueryListConfig  implements JSONString{
 		for(int i=0;i< ja.length();i++){
 			try{	
 				ColumnLink cl=ColumnLink.parseJSONObject(ja.getJSONObject(i));
+				if(cl.getLastColumn().getSecurityGrade() >selectionsMaxSecurityGrade )
+					selectionsMaxSecurityGrade=cl.getLastColumn().getSecurityGrade();
 				selections.add(cl);
 			}catch(Throwable t){
 				logger.error("fail to load column link as selection:"+ ja.getJSONObject(i), t);
@@ -54,6 +60,8 @@ public class QueryListConfig  implements JSONString{
 		for(int i=0;i< ja.length();i++){
 			try{	
 				ColumnLink cl=ColumnLink.parseJSONObject(ja.getJSONObject(i));
+				if(cl.getLastColumn().getSecurityGrade() >conditionsMaxSecurityGrade )
+					conditionsMaxSecurityGrade=cl.getLastColumn().getSecurityGrade();
 				conditions.add(cl);
 			}catch(Throwable t){
 				logger.error("fail to load column link as condition:"+ ja.getJSONObject(i), t);
@@ -64,6 +72,8 @@ public class QueryListConfig  implements JSONString{
 		for(int i=0;i< ja.length();i++){
 			try{	
 				ColumnLink cl=ColumnLink.parseJSONObject(ja.getJSONObject(i));
+				if(cl.getLastColumn().getSecurityGrade() >orderBysMaxSecurityGrade )
+					orderBysMaxSecurityGrade=cl.getLastColumn().getSecurityGrade();
 				orderBys.add(cl);
 			}catch(Throwable t){
 				logger.error("fail to load column link as orderby:"+ ja.getJSONObject(i),t);
@@ -138,6 +148,37 @@ public class QueryListConfig  implements JSONString{
 	}
 	public List<ColumnLink> getConditions() {
 		return conditions;
+	}
+	private ArrayList<ColumnLink> filterOnSecurityGrade(List<ColumnLink> c, int securityGrade){
+		ArrayList<ColumnLink> al=new ArrayList<ColumnLink>();  
+		for(int i=0;i< c.size();i++){
+			ColumnLink cl= c.get(i);
+			if(cl.getLastColumn().getSecurityGrade()<= securityGrade) al.add(cl);
+		}
+		return al;
+	}
+	/**
+	 * Only columns whose securityGrade is equal or less than securityGrade will return
+	 * @param securityGrade 
+	 * @return
+	 */
+	public List<ColumnLink> getConditions(int securityGrade) {
+		if(securityGrade>= this.conditionsMaxSecurityGrade)
+			return conditions;
+		return filterOnSecurityGrade(conditions, securityGrade);
+		
+	}
+	public List<ColumnLink> getOrderBys(int securityGrade) {
+		if(securityGrade>= this.orderBysMaxSecurityGrade)
+			return orderBys;
+		return filterOnSecurityGrade(orderBys, securityGrade);
+		
+	}
+	public List<ColumnLink> getSelections(int securityGrade) {
+		if(securityGrade>= this.selectionsMaxSecurityGrade)
+			return selections;
+		return filterOnSecurityGrade(selections, securityGrade);
+		
 	}
 	public void setConditions(List<ColumnLink> conditions) {
 		this.conditions = conditions;

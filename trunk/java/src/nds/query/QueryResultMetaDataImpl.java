@@ -39,7 +39,7 @@ public class QueryResultMetaDataImpl implements QueryResultMetaData {
     //private String[] columnLinks; // display column links @see Table.getRowURL()
     private ColumnLink[] columnLinks;
     private int[] columnIds;
-    private int maintableAKPosInSelection;
+    private int maintableAKPosInSelection=-1;
     /**
      * @roseuid 3B8541F6030B
      */

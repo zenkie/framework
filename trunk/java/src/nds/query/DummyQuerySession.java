@@ -120,6 +120,19 @@ public class DummyQuerySession implements  QuerySession {
     public void removeAttribute(String name){
     	
     }
+    /**
+     * Security grade is for column level security control. QuerySession is associated 
+     * with user, which contains security grade property. 
+     * 
+     * User should only get access to columns that have security level lower than him.
+     *  
+     * @return security grade of current session(user)
+     */
+    public int getSecurityGrade(){
+    	return 0;
+    }
+    
+    
     public String toDebugString(){
     	return "dummy";
     }

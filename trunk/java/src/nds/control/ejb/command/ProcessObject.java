@@ -213,7 +213,7 @@ public class ProcessObject extends Command {
   	  				fixedColumns= pt.toParseString(null);
   				}
   			//}
-	  	  	nds.control.util.EditableGridMetadata gm=new nds.control.util.EditableGridMetadata(table, locale,null,
+	  	  	nds.control.util.EditableGridMetadata gm=new nds.control.util.EditableGridMetadata(table, locale,usr.getSecurityGrade(),
 	  	  		nds.control.util.EditableGridMetadata.ITEM_COLUMN_MASKS);
 	  	  	template.setParameter("table", String.valueOf(tableId));
 	  	  	if(fixedColumns!=null)template.setParameter("fixedcolumns", fixedColumns);

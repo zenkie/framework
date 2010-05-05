@@ -48,6 +48,7 @@ public class ExecuteJReport extends Command {
   public ValueHolder execute(DefaultWebEvent event) throws RemoteException, NDSException {
 	Connection conn=null;
   	PreparedStatement pstmt=null;
+	long startTime=System.currentTimeMillis();
   	
   	QueryEngine engine= QueryEngine.getInstance();
     
@@ -172,7 +173,7 @@ public class ExecuteJReport extends Command {
 	  	}else{
 	  		//run now
 	  		hd=ProcessUtils.executeImmediateADProcessInstance(piId , userId, false);
-	  		
+
 	  		/**
 	  		 * For htm type, will direct to print page, for xls, direct download
 	  		 */

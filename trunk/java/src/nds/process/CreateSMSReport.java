@@ -87,7 +87,7 @@ public class CreateSMSReport extends SvrProcess
 					// have to generate sql for each user
 					while(rs.next()){
 						uid= rs.getInt(1);
-						sql= QueryUtils.replaceVariables(query, QueryUtils.createQuerySession(uid, "", locale));
+						sql= QueryUtils.replaceVariables(query, QueryUtils.createQuerySession(uid,user.getSecurityGrade(), "", locale));
 						rpt= getReportContent(sql, conn);
 						createReportRecord(user, uid,conn, locale, rpt );
 					}
@@ -103,7 +103,7 @@ public class CreateSMSReport extends SvrProcess
 				}
 			}else{
 				// create report for owner
-				sql= QueryUtils.replaceVariables(query, QueryUtils.createQuerySession(userId, "", locale));
+				sql= QueryUtils.replaceVariables(query, QueryUtils.createQuerySession(userId,user.getSecurityGrade(), "", locale));
 				rpt= getReportContent(sql, conn);
 				createReportRecord(user, userId,conn,locale,rpt );
 			}

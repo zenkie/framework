@@ -36,6 +36,26 @@ public class EditableGridMetadata {
 	private Table table;
 	private ArrayList columns;// elements are GridColumn
 	private int[] masks;  
+	
+	/**
+	 * 
+	 * @param table the main table whose records are shown in the grid
+	 * @param locale used for construct column header
+	 * @param secirutyGrade column which has securityGrade value greater than this param should be omitted
+	 * @param masks Columns which has any of the bit masks set in specified positions.
+     * For instance, getColumns([0,3]) will return columns which
+     * is showable when creation form <b>OR</b> modifiable in update form.
+     * refer to Column.isMaskSet for mask information. Elements shoule be 0-9
+     * Note following columns will not be loaded:
+     * 		displaytype in {'xml','file','image'}
+	 */ 
+	public EditableGridMetadata(Table table, Locale locale, int securityGrade, int[] masks){
+		this.table=table;
+		this.columns=new ArrayList();
+		this.masks= masks;
+		ArrayList cls=table.getColumns(masks,false,securityGrade ); // nerver load displaytype in {'xml','file','image'}
+		setup(locale,null,cls, securityGrade);
+	}
 	/**
 	 * 
 	 * @param table the main table whose records are shown in the grid
@@ -54,7 +74,7 @@ public class EditableGridMetadata {
 		this.columns=new ArrayList();
 		this.masks= masks;
 		ArrayList cls=table.getColumns(masks,false ); // nerver load displaytype in {'xml','file','image'}
-		setup(locale,userWeb,cls);
+		setup(locale,userWeb,cls, (userWeb==null?0: userWeb.getSecurityGrade()));
 	}
 	/**
 	 * 
@@ -67,9 +87,16 @@ public class EditableGridMetadata {
 		this.table=table;
 		this.columns=new ArrayList();
 		
-		setup(locale,userWeb,cols);
+		setup(locale,userWeb,cols, userWeb==null?0:userWeb.getSecurityGrade());
 	}
-	private void setup( Locale locale, UserWebImpl userWeb, List cls){
+	/**
+	 * 
+	 * @param locale
+	 * @param userWeb maybe null
+	 * @param cls
+	 * @param securityGrade omit those columns whose securityGrade greater than this one
+	 */
+	private void setup( Locale locale, UserWebImpl userWeb, List cls, int securityGrade){
 		Properties prefs=null;
 		try{
 			if(userWeb!=null)prefs=userWeb.getPreferenceValues("template."+table.getName().toLowerCase(),false,true);
@@ -106,6 +133,8 @@ public class EditableGridMetadata {
 					throw new nds.util.NDSRuntimeException("Fail to setup clink:"+ col);
 				}
 			}
+			//omit column that user has no permission to read
+			if(col.getSecurityGrade()> securityGrade) continue;
 			
 			if(prefs!=null && userWeb!=null){
 				defaultValue=userWeb.replaceVariables(prefs.getProperty(col.getName(), 

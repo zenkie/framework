@@ -705,20 +705,24 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
             String alias;
             if(i >0)
                 sql.append(",");
-            if( c.getColumns().length > 1) {
-                // has alias for table
-                alias=(String)rtables.get(c.getColumnLinkExcludeLastColumn());
-                if(alias ==null)
-                    throw new Error("Internal error: table alias not found for selection:"+c);
-				sql.append(alias+"."+c.getLastColumn().getName()+" b"+i);
-            } else {
-                if(c.getLastColumn().isVirtual()== false) {
-                	alias=mainTable.getName();
-                	sql.append(alias+"."+c.getLastColumn().getName()+" b"+i);
-                }else{
-                	sql.append("("+c.getLastColumn().getName()+") b"+i);
-                }
-
+            if( this.getSession().getSecurityGrade()< c.getLastColumn().getSecurityGrade()){
+            	sql.append("null b"+i);
+            }else{
+	            if( c.getColumns().length > 1) {
+	                // has alias for table
+	                alias=(String)rtables.get(c.getColumnLinkExcludeLastColumn());
+	                if(alias ==null)
+	                    throw new Error("Internal error: table alias not found for selection:"+c);
+					sql.append(alias+"."+c.getLastColumn().getName()+" b"+i);
+	            } else {
+	                if(c.getLastColumn().isVirtual()== false) {
+	                	alias=mainTable.getName();
+	                	sql.append(alias+"."+c.getLastColumn().getName()+" b"+i);
+	                }else{
+	                	sql.append("("+c.getLastColumn().getName()+") b"+i);
+	                }
+	
+	            }
             }
         }
 
@@ -787,21 +791,25 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
             String alias;
             if(i >0)
                 sql.append(",");
-            if( c.getColumns().length > 1) {
-                // has alias for table
-                alias=(String)rtables.get(c.getColumnLinkExcludeLastColumn());
-                if(alias ==null)
-                    throw new Error("Internal error: table alias not found for selection:"+c);
-				sql.append(alias+"."+c.getLastColumn().getName()+" b"+i);
-            } else {
-                if(c.getLastColumn().isVirtual()== false) {
-                	alias=mainTable.getName();
-                	sql.append(alias+"."+c.getLastColumn().getName());
-                }else{
-                	sql.append(c.getLastColumn().getName());
-                }
-
-            }
+            if( this.getSession().getSecurityGrade()< c.getLastColumn().getSecurityGrade()){
+            	sql.append("null b"+i);
+            }else{
+	            if( c.getColumns().length > 1) {
+	                // has alias for table
+	                alias=(String)rtables.get(c.getColumnLinkExcludeLastColumn());
+	                if(alias ==null)
+	                    throw new Error("Internal error: table alias not found for selection:"+c);
+					sql.append(alias+"."+c.getLastColumn().getName()+" b"+i);
+	            } else {
+	                if(c.getLastColumn().isVirtual()== false) {
+	                	alias=mainTable.getName();
+	                	sql.append(alias+"."+c.getLastColumn().getName());
+	                }else{
+	                	sql.append(c.getLastColumn().getName());
+	                }
+	
+	            }
+        	}
         }
         // }##### added above
 
@@ -1020,6 +1028,9 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
             if(j >0)
                 sql.append(",");
             j++;
+            if( this.getSession().getSecurityGrade()< c.getLastColumn().getSecurityGrade()){
+            	sql.append("null");
+            }else{
             if( c.getColumns().length > 1) {
                 // has alias for table
                 alias=(String)rtables.get(c.getColumnLinkExcludeLastColumn());
@@ -1034,6 +1045,7 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
                 	sql.append(c.getLastColumn().getName());
                 }
 
+            }
             }
         }
         sql.append(" FROM ");
@@ -1102,6 +1114,9 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
                 outSelect.append(",");
             }
             j++;
+            if( this.getSession().getSecurityGrade()< c.getLastColumn().getSecurityGrade()){
+            	sql.append("null b"+i);
+            }else{
             if( c.getColumns().length > 1) {
                 // has alias for table
                 alias=(String)rtables.get(c.getColumnLinkExcludeLastColumn());
@@ -1118,6 +1133,7 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
 
                 }
                 outSelect.append("b"+i);
+            }
             }
         }
 
@@ -1196,32 +1212,36 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
             if(i>0 ){
                 sql.append(",");
             }
-            if( c.getColumns().length > 1) {
-                // has alias for table
-                alias=(String)rtables.get(c.getColumnLinkExcludeLastColumn());
-                if(alias ==null)
-                    throw new Error("Internal error: table alias not found for selection:"+c);
-                // toFullRangeSubTotalSQL special handling
-                selCol= c.getLastColumn();
-                if (selCol.getSubTotalMethod() !=null){
-                    sql.append( selCol.getSubTotalMethod()+ "("+
-                                alias+"."+selCol.getName()+ ")" );
-
-                }else sql.append("null");
-//                sql.append(alias+"."+c.getLastColumn().getName()+" b"+i);
-            } else {
-                selCol= c.getLastColumn();
-                if (selCol.getSubTotalMethod() !=null){
-
-                    if(selCol.isVirtual()== false) {
-                        alias=mainTable.getName();
-                        sql.append( selCol.getSubTotalMethod()+ "("+
-                                    alias+"."+selCol.getName()+ ")" );
-                    }else{
-                        sql.append( selCol.getSubTotalMethod()+ "("+
-                                    selCol.getName()+ ")" );
-                    }
-                }else sql.append("null");
+            if( this.getSession().getSecurityGrade()< c.getLastColumn().getSecurityGrade()){
+            	sql.append("null");
+            }else{
+	            if( c.getColumns().length > 1) {
+	                // has alias for table
+	                alias=(String)rtables.get(c.getColumnLinkExcludeLastColumn());
+	                if(alias ==null)
+	                    throw new Error("Internal error: table alias not found for selection:"+c);
+	                // toFullRangeSubTotalSQL special handling
+	                selCol= c.getLastColumn();
+	                if (selCol.getSubTotalMethod() !=null){
+	                    sql.append( selCol.getSubTotalMethod()+ "("+
+	                                alias+"."+selCol.getName()+ ")" );
+	
+	                }else sql.append("null");
+	//                sql.append(alias+"."+c.getLastColumn().getName()+" b"+i);
+	            } else {
+	                selCol= c.getLastColumn();
+	                if (selCol.getSubTotalMethod() !=null){
+	
+	                    if(selCol.isVirtual()== false) {
+	                        alias=mainTable.getName();
+	                        sql.append( selCol.getSubTotalMethod()+ "("+
+	                                    alias+"."+selCol.getName()+ ")" );
+	                    }else{
+	                        sql.append( selCol.getSubTotalMethod()+ "("+
+	                                    selCol.getName()+ ")" );
+	                    }
+	                }else sql.append("null");
+	            }
             }
         }
 

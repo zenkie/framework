@@ -26,7 +26,7 @@ import nds.security.User;
  *  
  */
 public class SaveCxtabJson extends Command {
-	private final static String INSERT_MEASURE="insert into ad_cxtab_fact (id, ad_client_id,ad_cxtab_id,ad_column_id, description, function_,userfact, valueformat,valuename, orderno, ownerid, modifierid,creationdate,modifieddate,isactive) values (get_sequences('ad_cxtab_fact'),?,?,?,?,?,?,?,?,?,?,?,sysdate,sysdate, 'Y')";
+	private final static String INSERT_MEASURE="insert into ad_cxtab_fact (id, ad_client_id,ad_cxtab_id,ad_column_id, description, function_,userfact, valueformat,valuename, orderno, ownerid, modifierid,creationdate,modifieddate,isactive,sgrade) values (get_sequences('ad_cxtab_fact'),?,?,?,?,?,?,?,?,?,?,?,sysdate,sysdate, 'Y',?)";
 	private final static String INSERT_DIMENSION="insert into ad_cxtab_dimension (id, ad_client_id,ad_cxtab_id,columnlink, description, position_,orderno, ownerid, modifierid,creationdate,modifieddate,isactive,hidehtml) values " +
 		"(get_sequences('ad_cxtab_dimension'),?,?,?,?,?,?,?,?,sysdate,sysdate, 'Y',?)";
 	private final static String DELETE_DIMENSION="delete from ad_cxtab_dimension where ad_cxtab_id=?";
@@ -252,6 +252,8 @@ public class SaveCxtabJson extends Command {
 		  		pstmt.setInt( 9, (i+1)*10);
 		  		pstmt.setInt(10, user.id.intValue());
 		  		pstmt.setInt(11, user.id.intValue());
+		  		//sgrade
+		  		pstmt.setInt(12,mea.optInt("sgrade", 0));
 		  		pstmt.executeUpdate();
 		  	}
 	  		ro.put("code", 0);

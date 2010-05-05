@@ -225,7 +225,7 @@ public class ProcessOrder extends Command {
 	  		  	  	template.setParameter("table", String.valueOf(tableId));
 	  		  	  	if(fixedColumns!=null)template.setParameter("fixedcolumns", fixedColumns);
 
-	  		  	  	nds.control.util.EditableGridMetadata gm=new nds.control.util.EditableGridMetadata(table, locale,null,
+	  		  	  	nds.control.util.EditableGridMetadata gm=new nds.control.util.EditableGridMetadata(table, locale,usr.getSecurityGrade(),
 	  			  	  		nds.control.util.EditableGridMetadata.ITEM_COLUMN_MASKS);
 	  		  	  	
 	  		  	  	//add

@@ -118,7 +118,7 @@ public class UpdateGridData extends Command {
 	  		for(int i=0;i< masks.length;i++)masks[i]= column_masks.getInt(i);
 	  	}
 	  	logger.debug("masks:"+ nds.util.Tools.toString(masks));
-	  	nds.control.util.EditableGridMetadata gm=new nds.control.util.EditableGridMetadata(table, locale,null,
+	  	nds.control.util.EditableGridMetadata gm=new nds.control.util.EditableGridMetadata(table, locale,usr.getSecurityGrade(),
   	  		masks);
   	  	template.setParameter("table", String.valueOf(table.getId()));
   	  	template.setParameter("fixedcolumns", jo.optString("fixedColumns"));

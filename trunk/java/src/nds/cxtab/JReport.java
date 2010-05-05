@@ -208,6 +208,8 @@ public class JReport {
     		
 //    		 create description file for report
 		    createDescriptionFile(destFolder+File.separator+ this.fileName+"."+ this.fileType );
+	  		//log running time
+	  		nds.cxtab.CxtabReport.logRunningTime(cxtabId, userId, (int)(System.currentTimeMillis()-startTime), 0,conn);
 		    
 		    return  this.fileName+"."+ this.fileType;
 	    		    
@@ -338,7 +340,7 @@ public class JReport {
 		
 		Locale locale= user.locale;
 		logger.debug("Locale for "+ user.getNameWithDomain()+"(id="+ userId+") is "+ locale);
-		QuerySession qsession= QueryUtils.createQuerySession(userId, "", user.locale);
+		QuerySession qsession= QueryUtils.createQuerySession(userId,user.getSecurityGrade(), "", user.locale);
 		QueryRequestImpl query=engine.createRequest(qsession);
 		query.setMainTable(factTableId,true, cxtabFilter);
 

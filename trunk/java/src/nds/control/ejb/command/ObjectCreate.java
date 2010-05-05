@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
+
 import nds.util.*;
 import nds.control.web.WebUtils;
 import nds.control.ejb.Command;
@@ -51,6 +52,24 @@ public class ObjectCreate extends Command{
      * 纤丝鸟的需求 
      */
     private boolean showOriginalRowInfo=false;
+
+    /**
+     * This is only for creation list, that is all columns minus those that current user 
+     * has no permission to read (column's security grade is greater that user's sgrade)
+     * @return elements are Column
+     */
+    private ArrayList prepareModifiableColumns(DefaultWebEvent event, Table table){
+ 	   QuerySession qs= event.getQuerySession();
+ 	   int sg=(qs==null?0: qs.getSecurityGrade());
+ 	   if(sg==0) return table.getAllColumns() ;
+ 	   ArrayList al=new ArrayList();
+ 	   ArrayList ac = table.getAllColumns() ;
+ 	   for(int i=0;i<ac.size();i++){
+ 		   Column c=(Column)ac.get(i);
+ 		   if(c.getSecurityGrade()<=sg) al.add(c);
+ 	   }
+ 	   return al;
+    }    
   /**
    * Support update for object create when param "update_on_unique_constraints" is set to "Y" (default is "N")
    * 	"output_json" - "y"|"n"(default) json array to contain error info
@@ -127,7 +146,7 @@ public class ObjectCreate extends Command{
        	   con= helper.getConnection(event);
        	   if(bestEffort)con.setAutoCommit(false);
 
-           ArrayList colArray = table.getAllColumns();  // 得到表的所有列名
+           ArrayList colArray = this.prepareModifiableColumns(event, table);  // 得到表的所有列名
 
            /*if( tableName.toLowerCase().lastIndexOf("item")== tableName.length()-4){
               sheetTable= manager.getTable(tableName.substring(0,tableName.length()-4 ));

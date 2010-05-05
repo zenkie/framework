@@ -658,10 +658,26 @@ public class TableImpl implements Table {
      * @since 3.0
      */
     public ArrayList getColumns(int[] columnMasks ,boolean includeUIControllerAndSpecialDisplayType){
+    	return getColumns(columnMasks,includeUIControllerAndSpecialDisplayType,0 );
+    }
+    /**
+     * Get columns which has any of the bit masks set in specified positions.
+     * For instance, getColumns([0,3]) will return columns which
+     * is showable when creation form <b>OR</b> modifiable in update form.
+     * refer to Column.isMaskSet for mask information. 
+     * @param columnMasks elements shoule be 0-9
+     * @param includeUIControllerAndSpecialDisplayType if false, will not add column that getDisplaySetting().isUIController()==true
+     *  and displaytype in {'xml','file','image'}
+     * @param securityGrade return column's security grade should not be greater than this one
+     * @return elements are array
+     * @since 3.0
+     */
+    public ArrayList getColumns(int[] columnMasks ,boolean includeUIControllerAndSpecialDisplayType, int securityGrade){
     	ArrayList cls=new ArrayList();
     	int j;
     	for(int i=0;i<columns.size();i++ ){
         	Column col=(Column)columns.get(i);
+        	if(col.getSecurityGrade()> securityGrade) continue;
         	if(!includeUIControllerAndSpecialDisplayType){
         		if(col.getDisplaySetting().isUIController() ) continue;
         		int t=col.getDisplaySetting().getObjectType();

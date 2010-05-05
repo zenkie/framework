@@ -41,6 +41,14 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
 	 */
 	private int piTransactionTimeout= 60*60*24*10; // default to 10 days
 	
+	/**
+	 * if not null, only allowed queue will run, so we can specifiy some queue only run on special
+	 * host in cluster mode.
+	 * 
+	 * Store names of the queues
+	 */
+	private String[] allowedQueues;
+	
 	public void destroy() {
         try {
             Scheduler scheduler = schedulerFactory.getScheduler();
@@ -59,6 +67,35 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
 			throw new ObjectNotFoundException(e.getMessage(), e);
 		}
 	}
+	/**
+	 * name of the queue that allowed to run in this host. this is specified by 
+	 * portal.properties#process.queue.allow=DEFAULT,DOC
+	 * If this parameter is not set, then all queues are allowed to run
+	 * @return
+	 */
+	public String[] getAllowedQueues(){
+		return allowedQueues;
+	}
+	/**
+	 * Check if specified queue is allowed to run on current host.
+	 * @param queueName ignore case 
+	 * @return
+	 */
+	public boolean isQueueAllowed(String queueName){
+		// check queue name in allowedQueues list
+		boolean isAllowed=false;
+		if(allowedQueues!=null){
+			for(int k=0;k<allowedQueues.length;k++){
+				if(queueName.equalsIgnoreCase(allowedQueues[k])){
+					isAllowed=true;
+					break;
+				}
+			}
+		}else isAllowed=true;
+				
+		return isAllowed;
+		
+	}
 	public void init(Director dir) {
     }
 	/**
@@ -72,6 +109,12 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
         try{
         	int i= Tools.getInt(conf.get("process.transaction.timeout"),-1);
         	if(i>0) piTransactionTimeout= i*60;
+        	
+        	String aq=conf.getProperty("process.queue.allow");
+        	if(aq!=null)allowedQueues=aq.split(","); 
+        	
+        	logger.debug("process.queue.allow="+aq);
+        	
         	schedulerFactory = new StdSchedulerFactory();
         	schedulerFactory.initialize(conf.getConfigurations("schedule").getProperties());
         	Scheduler scheduler = schedulerFactory.getScheduler();
@@ -82,6 +125,7 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
         	logger.error("Fail to inialize JobManager", e);
         }
     }
+    
     /**
      * Find ad_pinstance according to the ad_process classname or procedure name, and the record_no , owner
      * @param recordNo
@@ -259,6 +303,10 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
 				
 				queueId= rs.getInt(4);
 				queueName= rs.getString(5);
+				// check queue name in allowedQueues list
+				
+				if(!isQueueAllowed(queueName)) continue;
+				
 				try{
 					// one failed queue should not affect the whole loading process
 					loadQueueJob(triggerName, cron,queueName,jobClass, queueId);

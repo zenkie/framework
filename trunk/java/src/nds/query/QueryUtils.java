@@ -20,9 +20,11 @@ import bsh.Interpreter;
 
 import nds.control.check.ColumnCheckImpl;
 import nds.control.event.NDSEventException;
+import nds.control.util.SecurityUtils;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.schema.*;
+import nds.security.User;
 import nds.util.MessagesHolder;
 import nds.util.NDSException;
 import nds.util.PairTable;
@@ -1181,14 +1183,24 @@ public final class QueryUtils {
 		//
 		return out.toString();
 	}	//	TO_STRING
-
 	/**
      * Load session attributes for later query filter
      * @param userId user id
      * @param qid the query session id
      * @since 2.0
      */
-    public static QuerySession createQuerySession(int userId, String qid, Locale locale) throws Exception{
+    /*public static QuerySession createQuerySession(int userId, String qid, Locale locale) throws Exception{
+    	User user= SecurityUtils.getUser(userId);
+    	return createQuerySession(userId, user.getSecurityGrade(), qid, locale);
+    }*/
+	/**
+     * Load session attributes for later query filter
+     * @param userId user id
+     * @param securityGrade user's sgrade value, means for user's security grade
+     * @param qid the query session id
+     * @since 2.0
+     */
+    public static QuerySession createQuerySession(int userId, int securityGrade,String qid, Locale locale) throws Exception{
     	QuerySessionImpl qsession=new QuerySessionImpl(qid);
     	Connection con= null;
         ResultSet rs=null, rs2=null;

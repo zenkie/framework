@@ -115,10 +115,10 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
         		clientDomain=user.getClientDomain();
         		isActive = user.isActive();
         		clientDomainName= user.getClientDomainName();
-                qsession = QueryUtils.createQuerySession(id,"null", locale);
+                qsession = QueryUtils.createQuerySession(id,user.getSecurityGrade(), "null", locale);
                 isAdmin= user.isAdmin;
                 if(isActive) loggedIn=true;
-        	}
+        	}  
         }catch(Throwable t){
         	logger.error("Fail to get guest account (id=1)");
         }
@@ -206,7 +206,14 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
     public boolean isAdmin(){
     	return isAdmin;
     }
-     
+    /**
+     * 
+     * @return users.sgrade value, the higher the value, the more powerful of current 
+     * user to view classified data, default value is 0
+     */
+    public int getSecurityGrade(){
+    	return qsession==null?0:qsession.getSecurityGrade();
+    }
     /**
      * Check user can genereate sms report by himself
      * Some table support sms report, if user can generate sms report, he can 
@@ -431,7 +438,7 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
                 this.setLoggedIn(true);
                 
                 //load session attributes
-                qsession = QueryUtils.createQuerySession(id,sessionId, locale);
+                qsession = QueryUtils.createQuerySession(id,usr.getSecurityGrade(),sessionId, locale);
                 
                 //load user setting from ad_option
                 loadUserOptions();

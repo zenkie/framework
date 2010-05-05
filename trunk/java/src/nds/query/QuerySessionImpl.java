@@ -21,6 +21,7 @@ import nds.util.*;
 public class QuerySessionImpl implements  QuerySession {
 	private long creationTime =System.currentTimeMillis();
 	private String id;
+	private int securityGrade;
 	private Locale locale=TableManager.getInstance().getDefaultLocale();
 	private Map attributes = new HashMap(3);
 	
@@ -143,6 +144,22 @@ public class QuerySessionImpl implements  QuerySession {
     {
         this.attributes=attributes;
     }  
+    /**
+     * Security grade is for column level security control. QuerySession is associated 
+     * with user, which contains security grade property. 
+     * 
+     * User should only get access to columns that have security level lower than him.
+     *  
+     * @return security grade of current session(user)
+     */
+    public int getSecurityGrade(){
+    	return securityGrade;
+    }
+    
+    public void setSecurityGrade(int secgrade){
+    	this.securityGrade=secgrade;
+    }
+    
     public String toDebugString(){
     	return nds.util.Tools.toString(attributes);
     }

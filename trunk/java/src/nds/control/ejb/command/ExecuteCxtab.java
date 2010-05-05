@@ -81,7 +81,6 @@ public class ExecuteCxtab extends Command {
   	QueryEngine engine= QueryEngine.getInstance();
     
 	conn= engine.getConnection();
-
 	try{
 		User user=helper.getOperator(event);
 		int userId=user.getId().intValue();
@@ -107,7 +106,7 @@ public class ExecuteCxtab extends Command {
 	  	String queueName=(String) ((List)list.get(0)).get(1);
 	  	boolean isBg= Tools.getYesNo(((List)list.get(0)).get(2),true);
 	  	
-	 // At most portal.properties#cxtab.concurrent.max pinstance can run, -1 means no limitation
+	  	// At most portal.properties#cxtab.concurrent.max pinstance can run, -1 means no limitation
 	  	int maxJobCount=-1;
   		if(!isBg){
 		  	Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
@@ -235,10 +234,12 @@ public class ExecuteCxtab extends Command {
 		  			lastMaxJobCountReachedTime=System.currentTimeMillis();//record, so when time is too long, admin should get in to check 
 		  		}
 	  			hd=ProcessUtils.executeImmediateADProcessInstance(piId , userId, false);
+	  			
 	  		}finally{
 	  			runningJobCount--;
 	  			lastMaxJobCountReachedTime=-1;//reset
 	  		}
+	  		
 	  		//and tell client to fetch file from 
 	  		//returnObj.put("url", "/servlets/binserv/GetFile?show=Y&filename="+ URLEncoder.encode(filename+"."+ fileType,"UTF-8"));
 	  		

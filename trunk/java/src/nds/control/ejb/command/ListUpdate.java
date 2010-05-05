@@ -12,7 +12,6 @@ import nds.control.ejb.Command;
 import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEventException;
 import nds.control.util.AjaxUtils;
-import nds.control.util.EditableGridMetadata;
 import nds.control.util.ValueHolder;
 import nds.query.*;
 import nds.schema.*;

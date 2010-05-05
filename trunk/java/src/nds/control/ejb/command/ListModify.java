@@ -23,7 +23,7 @@ import nds.schema.TableManager;
 import nds.util.NDSException;
 import nds.util.Tools;
 /**
- * @deprecated
+ * @deprecated since not support binding value sql update at 2010-4
  * @author yfzhu
  */
 public class ListModify extends Command{
@@ -90,12 +90,7 @@ public class ListModify extends Command{
 
        int realCount= sqlVector.size();
 
-       //##################### added by yfzhu for dispatching to shop
-       if ( table.getDispatchType() != table.DISPATCH_NONE &&
-                table.isActionEnabled(Table.SUBMIT)==false && table.isActionEnabled(Table.AUDIT)==false){
-           MySQLListModifyImpl myc= new MySQLListModifyImpl();
-           sqlVector.addAll(myc.getSqlArray(hashMap,event,table,recordLen));
-       }
+
 
        int count = engine.doUpdate(sqlVector, con);
 

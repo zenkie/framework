@@ -112,6 +112,13 @@ public class ObjectModifyImpl{
 			}
 		}
 		addCommonModifiableColumns();
+		//omit those columns that user has no permission to read
+		QuerySession qs= event.getQuerySession();
+		int sg=(qs==null?0: qs.getSecurityGrade());
+		for(int i=modifiableColumns.size()-1;i>=0;i--){
+			Column col= (Column)modifiableColumns.get(i);
+			if(col.getSecurityGrade()>sg) modifiableColumns.remove(i);
+		}
 	}	
 	/**
      * Columns types for elements in {@link #getSQLData()}, the last column must be PK 
@@ -227,7 +234,7 @@ public class ObjectModifyImpl{
    /**
     * Add columns "modifierid", "modifieddate" if arrayList not has them
     * and table has them
-    *@deprecated
+    *
     */
     public static void addCommonModifiableColumns(ArrayList arrayList, Table table){
     		boolean shouldAdd_ModifierId=true ;

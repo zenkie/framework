@@ -192,7 +192,7 @@ public class AjaxUtils {
 				throw new NDSException("Neither column_masks nor qlcid is found in query object:"+ jo);
 			}
 			query.addSelection(table.getPrimaryKey().getId());
-			List<ColumnLink> selections=qlc.getSelections();
+			List<ColumnLink> selections=qlc.getSelections(qsession.getSecurityGrade());
 			for(ColumnLink c:selections){
 				int[] cids=c.getColumnIDs();
 				if(c.getLastColumn().getReferenceTable()!=null){
@@ -417,7 +417,7 @@ public class AjaxUtils {
     			}else{
 	    			//load for qlc
 	    			if(qlc!=null){
-	    				for(ColumnLink c:qlc.getOrderBys()){
+	    				for(ColumnLink c:qlc.getOrderBys(qsession.getSecurityGrade())){
 	    					query.addOrderBy(c.getColumnIDs(), !Boolean.FALSE.equals(c.getTag()));
 	    				}
 	    			}

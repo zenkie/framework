@@ -92,7 +92,7 @@ public class CxtabGetSQL extends Command{
 		
 		Locale locale= user.locale;
 		logger.debug("Locale for "+ user.getNameWithDomain()+"(id="+ user.id+") is "+ locale);
-		QuerySession qsession= QueryUtils.createQuerySession(user.id.intValue(), "", user.locale);
+		QuerySession qsession= QueryUtils.createQuerySession(user.id.intValue(),user.getSecurityGrade(), "", user.locale);
 		QueryRequestImpl query=engine.createRequest(qsession);
 		query.setMainTable(factTableId,true, cxtabFilter);
 

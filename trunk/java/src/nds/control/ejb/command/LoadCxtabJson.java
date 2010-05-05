@@ -88,7 +88,7 @@ public class LoadCxtabJson extends Command {
 	  		}
 	  	}
   		String colName;
-	  	al= engine.doQueryList("select ad_column_id, description, function_, userfact, VALUEFORMAT, valuename from ad_cxtab_fact where ad_cxtab_id="+ cxtabId+" order by orderno asc");
+	  	al= engine.doQueryList("select ad_column_id, description, function_, userfact, VALUEFORMAT, valuename,sgrade from ad_cxtab_fact where ad_cxtab_id="+ cxtabId+" order by orderno asc");
 	  	for(int i=0;i< al.size();i++){
 	  		List d= (List) al.get(i);
 	  		int colId = Tools.getInt( d.get(0), -1);
@@ -112,6 +112,7 @@ public class LoadCxtabJson extends Command {
   			m.put("userfact", (String) d.get(3));
   			m.put("valueformat", (String) d.get(4));
   			m.put("valuename", (String) d.get(5));
+  			m.put("sgrade", Tools.getInt( d.get(6), 0));
   			measures.put(measures.length(), m);
 	  	}
 	  	JSONObject ro=new JSONObject();

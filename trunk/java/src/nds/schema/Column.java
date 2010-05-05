@@ -519,6 +519,16 @@ select count(*) from <table> where id=<id> and $filter, µ±count=1 ±£¨œ‘ æbutton,
      */
     public boolean isAutoComplete();
     /**
+     * Security grade is for column level security control. the default value is zero. 
+     * 
+     * User should only get access to columns that have security level lower than him.
+     * 
+     * Designer should use column json props to set this value.
+     *  
+     * @return security grade of the column
+     */
+    public int getSecurityGrade();
+    /**
      * When getReferenceColumn returns not null value, this value will be valid.
 The ON DELETE clause lets you determine how DB automatically maintains referential integrity if you remove a referenced primary or unique key value. If you omit this clause, then Oracle does not allow you to delete referenced key values in the parent table that have dependent rows in the child table.
 Specify CASCADE if you want db to remove dependent foreign key values. 

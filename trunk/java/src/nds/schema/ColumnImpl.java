@@ -90,6 +90,7 @@ public class ColumnImpl implements Column {
     private Properties props=null;// parsed from regExpression(json type)
     private boolean isAutoComplete=false;
     private JSONObject jsonProps=null;
+    private int securityGrade;
     /**
      * 
      * @param id
@@ -937,6 +938,18 @@ Specify SET NULL if you want db to convert dependent foreign key values to NULL.
     	return isUpperCase;
     }
     /**
+     * Security grade is for column level security control. the default value is zero. 
+     * 
+     * User should only get access to columns that have security level lower than him.
+     * 
+     * Designer should use column json props to set this value.
+     *  
+     * @return security grade of the column
+     */
+    public int getSecurityGrade(){
+    	return securityGrade;
+    }
+    /**
      * Load only nessisary property that UI needed for column check
      * @param locale
      * @return
@@ -1011,5 +1024,8 @@ Specify SET NULL if you want db to convert dependent foreign key values to NULL.
     }
     public void setJSONProps(JSONObject jo){
     	this.jsonProps= jo;
+    	// update security grade info
+    	if(jo!=null)
+    		this.securityGrade = jo.optInt("sgrade",0);
     }
 }
