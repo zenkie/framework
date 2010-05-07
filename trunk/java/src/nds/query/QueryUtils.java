@@ -1207,6 +1207,7 @@ public final class QueryUtils {
         Statement pstmt=null, stmt2=null;
         TableManager tm= TableManager.getInstance();
         ((QuerySessionImpl)qsession).setLocale(locale);
+        qsession.setSecurityGrade(securityGrade);
         try{
             con=QueryEngine.getInstance().getConnection();
             pstmt= con.createStatement();

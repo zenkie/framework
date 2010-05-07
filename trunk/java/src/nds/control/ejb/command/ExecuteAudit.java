@@ -101,6 +101,11 @@ public class ExecuteAudit extends Command {
 	        		if(table.getColumn("status")!=null)
 	        			con.createStatement().executeUpdate("update "+ table.getRealTableName()+" set status=1 where id="+ objectid);
 					SPResult result =helper.submitObject(table, objectid, userId, event);
+					if(result.getCode()!=0){
+						//2010-05-05 add to last comments
+						con.createStatement().executeUpdate("update au_phaseinstance set LAST_COMMENTS=LAST_COMMENTS ||"+ 
+								QueryUtils.TO_STRING(result.getMessage())+" where id=(select au_pi_id from "+ table.getRealTableName()+" where id="+ objectid+")");
+					}
 		        	message.append("("+ vh.get("docno")+")@audit-info@:"+ vh.get("message")+". @submit-info@:"+ result.getMessage()+"<br>");
 				}else{
 					message.append("("+ vh.get("docno")+")@audit-info@:"+ vh.get("message")+"<br>");

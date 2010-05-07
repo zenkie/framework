@@ -66,7 +66,7 @@ public class DefaultWebEventHelper {
 
     public static final String PARAM_SQL_CONNECTION="java.sql.Connection";
     
-    private static final String GET_USER="select u.name, u.passwordhash, u.isenabled, u.isemployee,u.isadmin, u.description, c.domain, u.ad_client_id, u.ad_org_id, u.LANGUAGE from users u, ad_client c where u.id=? and c.id=u.ad_client_id";
+    private static final String GET_USER="select u.name, u.passwordhash, u.isenabled, u.isemployee,u.isadmin, u.description, c.domain, u.ad_client_id, u.ad_org_id, u.LANGUAGE,u.sgrade from users u, ad_client c where u.id=? and c.id=u.ad_client_id";
     private static String GET_PERMISSION="select GetUserPermission(?,?) from dual";
     private static String GET_DIRECTORY="select id from directory where name=?";
     private StateMachine machine; 
@@ -510,6 +510,7 @@ public class DefaultWebEventHelper {
                 usr.adClientId = rs.getInt(8);
                 usr.adOrgId = rs.getInt(9);
                 usr.locale= StringUtils.fromLanguageId(rs.getString(10));
+                usr.setSecurityGrade(rs.getInt(11));
                 usr.setId(new Integer(operatorId));
                 
                 usr.setName(name);
