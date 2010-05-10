@@ -15,6 +15,7 @@ import nds.control.util.ValueHolder;
 import nds.mail.MailMsg;
 import nds.mail.NotificationManager;
 import nds.query.QueryEngine;
+import nds.query.QueryUtils;
 import nds.schema.Table;
 import nds.schema.TableManager;
 import nds.security.User;
@@ -90,6 +91,10 @@ public class ObjectDelete extends Command{
        }
        realCount=1;*/
        
+       /**
+        * Lock first
+        */
+       QueryUtils.lockRecord(table, objectid, con);
        helper.doTrigger("BD", table, objectid, con);
        Table parent= helper.getParentTable(table,event);
        int[] poids= helper.getParentTablePKIDs( table, new int[]{objectid}, con);

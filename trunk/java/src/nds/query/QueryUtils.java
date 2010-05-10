@@ -1499,5 +1499,26 @@ public final class QueryUtils {
         System.arraycopy(data, 0, c, 0, data.length -1);
         return c;
     }
-    
+    /**
+     * Try to lock record for update, will try select xxx for update
+     * @param table
+     * @param objectId
+     * @throws NDSException
+     */
+    public static void lockRecord(Table table, int objectId, Connection con) throws NDSException{
+    	try{
+			String sql="select id from "+ table.getRealTableName()+
+				" "+ table.getName()+" where id="+ objectId+" for update nowait";
+			logger.debug(sql);
+			con.createStatement().execute(sql );
+			
+		}catch(Throwable t){
+			//ORA-02014: 不能从具有 DISTINCT, GROUP BY 等的视图选择 UPDATE FOR
+			if(t.getMessage().contains("ORA-00054")){
+				//logger.error("fail to lock "+ table+ " with id="+ objectId,t);
+				throw new NDSException("@fail-to-lock-table@(TABLE="+
+						table.getDescription(TableManager.getInstance().getDefaultLocale())+",ID="+objectId+")");
+			}
+		}
+    }
 }

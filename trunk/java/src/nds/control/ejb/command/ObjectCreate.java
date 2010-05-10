@@ -146,6 +146,23 @@ public class ObjectCreate extends Command{
        	   con= helper.getConnection(event);
        	   if(bestEffort)con.setAutoCommit(false);
 
+       	   //lock parent record specified by fixedcolumns first, must below bestEffort, since data should be locked
+       	   String fc=(String)event.getParameterValue("fixedcolumns");
+       	   if(fc!=null ){
+		       	PairTable fixedColumns=PairTable.parseIntTable(fc, null);
+				for( Iterator it=fixedColumns.keys();it.hasNext();){
+		        	Integer key=(Integer) it.next();
+		            Column col=manager.getColumn( key.intValue());
+		            if(col.getReferenceTable()!=null){
+		            	//lock col.rt with pk id
+		            	int ptoId= Tools.getInt(fixedColumns.get(key),-1);
+		            	if( ptoId!=-1){
+		            		QueryUtils.lockRecord(col.getTable(), ptoId, con);
+		            	}
+		            }
+		        }
+       	   }
+       	   
            ArrayList colArray = this.prepareModifiableColumns(event, table);  // 得到表的所有列名
 
            /*if( tableName.toLowerCase().lastIndexOf("item")== tableName.length()-4){
