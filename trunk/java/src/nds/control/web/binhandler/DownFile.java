@@ -85,7 +85,7 @@ public class DownFile implements BinaryHandler{
             	logger.debug("Downloading "+ file.getAbsolutePath());
             	
            		response.setContentType(DOWNLOAD_TYPE);
-           		response.setHeader("Content-Disposition","attachment;filename=\""+URLEncoder.encode(filePath,"UTF-8")+"\"");
+           		response.setHeader("Content-Disposition","attachment;filename=\""+URLEncoder.encode(file.getName(),"UTF-8")+"\"");
 
                 
                 FileInputStream is=new FileInputStream(file);

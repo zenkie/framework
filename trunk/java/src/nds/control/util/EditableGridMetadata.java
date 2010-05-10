@@ -73,7 +73,7 @@ public class EditableGridMetadata {
 		this.table=table;
 		this.columns=new ArrayList();
 		this.masks= masks;
-		ArrayList cls=table.getColumns(masks,false ); // nerver load displaytype in {'xml','file','image'}
+		ArrayList cls=table.getColumns(masks,false,(userWeb==null?0: userWeb.getSecurityGrade()) ); // nerver load displaytype in {'xml','file','image'}
 		setup(locale,userWeb,cls, (userWeb==null?0: userWeb.getSecurityGrade()));
 	}
 	/**
@@ -93,7 +93,7 @@ public class EditableGridMetadata {
 	 * 
 	 * @param locale
 	 * @param userWeb maybe null
-	 * @param cls
+	 * @param cls elements are Column or ColumnLink
 	 * @param securityGrade omit those columns whose securityGrade greater than this one
 	 */
 	private void setup( Locale locale, UserWebImpl userWeb, List cls, int securityGrade){

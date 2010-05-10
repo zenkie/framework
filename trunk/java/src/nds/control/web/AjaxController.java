@@ -70,7 +70,7 @@ public class AjaxController {
 	        UserWebImpl usr=(UserWebImpl)scmanager.getActor(WebKeys.USER);
 	        locale= usr.getLocale();
 	        String ret=AjaxUtils.handle(jo, usr.getSession(),usr.getUserId(), locale).toJSONString();
-	        logger.debug(ret);
+	        //logger.debug(ret);
         	logger.debug("Duration:"+ (System.currentTimeMillis()-currentTime)/1000.0+" s");
 	        
 			return ret;

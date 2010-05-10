@@ -499,13 +499,20 @@ public class ProcessObject extends Command {
 		return e;
 	  }
   private DefaultWebEvent createEvent(JSONArray row, ArrayList colNames, DefaultWebEvent template ) throws JSONException{
-  	DefaultWebEvent e=(DefaultWebEvent)template.clone();
-  	for(int i=0;i< colNames.size();i++){
-  		Object o=  row.get(i+1);
-  		if(o!=null && o instanceof String) o= ((String)o).trim();
-  		e.put( (String)colNames.get(i),o); // since row(0) is always row index
-  	}
-	e.put("JSONROW", row);// this could be used by some special command, such as B_V2_PRJ_TOKEModify
-  	return e;
+	  try{
+		  DefaultWebEvent e=(DefaultWebEvent)template.clone();
+	  		for(int i=0;i< colNames.size();i++){
+		  		Object o=  row.get(i+1);
+		  		if(o!=null && o instanceof String) o= ((String)o).trim();
+		  		e.put( (String)colNames.get(i),o); // since row(0) is always row index
+	  		}
+	  		e.put("JSONROW", row);// this could be used by some special command, such as B_V2_PRJ_TOKEModify
+	  	return e;
+	  }catch(org.json.JSONException t){
+		  logger.error("Fail to create event :"+ t.getMessage()+
+				  ", row:"+ row.join(",")+";colunm names:"+ Tools.toString(colNames,","), t);
+		  
+		  throw t;
+	  }
   }
 }
