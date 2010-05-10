@@ -93,7 +93,7 @@ public class GetObject extends Command {
 		if(mo.getInt("count")>0){
 			JSONArray data=mo.optJSONArray("rows").getJSONArray(0);
 				
-			ArrayList al=table.getColumns(masks, false);
+			ArrayList al=table.getColumns(masks, false, usr.getSecurityGrade());
 			for(int d=0;d<al.size();d++){
 				restResult.put( ((Column)al.get(d)).getName() , data.get(d));
 			}
@@ -140,7 +140,7 @@ public class GetObject extends Command {
 	  				if(j.getInt("count")>0){
 	  					JSONArray data=j.optJSONArray("rows").getJSONArray(0);
 	  					
-	  					ArrayList al=manager.getTable(rbt.getTableId()).getColumns(masks, false);
+	  					ArrayList al=manager.getTable(rbt.getTableId()).getColumns(masks, false,usr.getSecurityGrade());
 	  					for(int d=0;d<al.size();d++){
 	  						so.put( ((Column)al.get(d)).getName() , data.get(d));
 	  					}

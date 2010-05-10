@@ -62,8 +62,10 @@ public class ObjectModify extends Command{
 					throw new NDSException("Fail to parse array of "+ masks.toString(), t);
 				}
 			}
+			int sgrade= 0;
+			if(event.getQuerySession()!=null ) sgrade= event.getQuerySession().getSecurityGrade();
 			
-			ArrayList al= table.getColumns(new int[]{Column.MASK_MODIFY_EDIT}, false);
+			ArrayList al= table.getColumns(new int[]{Column.MASK_MODIFY_EDIT}, false,sgrade);
 			for(int i=al.size()-1;i>=0;i--){
 				Column col= (Column)al.get(i);
 				boolean isInMasks=false;

@@ -438,7 +438,7 @@ public class WebClient {
 		
 		if(result.getRowCount()>0){
 			result.next();
-			ArrayList columns= table.getColumns(columnMasks,false);
+			ArrayList columns= table.getColumns(columnMasks,false,0);
 			for(int i=0;i<columns.size();i++){
 				Column column=(Column) columns.get(i);
 				map.put(column.getName().toLowerCase(), result.getObject(i+1));

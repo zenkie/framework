@@ -102,12 +102,12 @@ public class TableQueryModel {
         ArrayList showColumns= mainTable.getShowableColumns(actionType);
         createColumns(showColumns, showNullIndicator,locale);
     }
-    public TableQueryModel(int tableId,int[] columnMasks,boolean showNullIndicator,boolean isHtml,Locale locale) throws Exception {
+    public TableQueryModel(int tableId,int[] columnMasks,boolean showNullIndicator,boolean isHtml,Locale locale,int securityGrade) throws Exception {
         manager= TableManager.getInstance();
         mainTable=manager.getTable(tableId);
         this.showInHtml= isHtml;
         queryColumns=new HashMap();
-        createColumns(mainTable.getColumns(columnMasks, false), showNullIndicator,locale);
+        createColumns(mainTable.getColumns(columnMasks, false,securityGrade), showNullIndicator,locale);
         
     }
     public TableQueryModel(int tableId,ArrayList columns,boolean showNullIndicator,boolean isHtml,Locale locale) throws Exception {

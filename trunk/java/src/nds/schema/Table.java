@@ -76,7 +76,7 @@ public interface Table extends Serializable  {
      * @return elements are Column
      * @since 3.0
      */
-    public ArrayList getColumns(int[] columnMasks, boolean includeUIController);
+    //public ArrayList getColumns(int[] columnMasks, boolean includeUIController);
     /**
 	 Get columns which has any of the bit masks set in specified positions.
      * For instance, getColumns([0,3]) will return columns which

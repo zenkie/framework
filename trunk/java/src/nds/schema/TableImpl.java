@@ -242,7 +242,7 @@ public class TableImpl implements Table {
     	if(columnMask != Column.MASK_QUERY_LIST) return null;
     	
     	if(lengendQueryList==null){
-	    	ArrayList cols= this.getColumns(new int[]{columnMask}, false);
+	    	ArrayList cols= this.getColumns(new int[]{columnMask}, false,0);
 	    	for(int i=0;i<cols.size();i++){
 	    		Column col=(Column ) cols.get(i);
 	    		nds.web.alert.ColumnAlerter ca=(nds.web.alert.ColumnAlerter)col.getUIAlerter();
@@ -657,9 +657,9 @@ public class TableImpl implements Table {
      * @return elements are array
      * @since 3.0
      */
-    public ArrayList getColumns(int[] columnMasks ,boolean includeUIControllerAndSpecialDisplayType){
+    /*public ArrayList getColumns(int[] columnMasks ,boolean includeUIControllerAndSpecialDisplayType){
     	return getColumns(columnMasks,includeUIControllerAndSpecialDisplayType,0 );
-    }
+    }*/
     /**
      * Get columns which has any of the bit masks set in specified positions.
      * For instance, getColumns([0,3]) will return columns which

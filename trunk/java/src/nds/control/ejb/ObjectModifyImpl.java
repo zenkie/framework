@@ -70,7 +70,8 @@ public class ObjectModifyImpl{
 			 * Only columns set in event will get updated, just like sql update "set" clause
 			 * This used mainly for REST request
 			 */
-			modifiableColumns= table.getColumns(new int[]{Column.MASK_MODIFY_EDIT}, false);
+			
+			modifiableColumns= table.getColumns(new int[]{Column.MASK_MODIFY_EDIT}, false, event.getSecurityGrade());
 			for(int i=modifiableColumns.size()-1;i>=0;i--){
 				Column col= (Column)modifiableColumns.get(i);
 				String colName=col.getName();
@@ -93,7 +94,7 @@ public class ObjectModifyImpl{
 					}
 				}
 				
-				modifiableColumns= table.getColumns(new int[]{Column.MASK_MODIFY_EDIT}, false);
+				modifiableColumns= table.getColumns(new int[]{Column.MASK_MODIFY_EDIT}, false,event.getSecurityGrade());
 				for(int i=modifiableColumns.size()-1;i>=0;i--){
 					Column col= (Column)modifiableColumns.get(i);
 					boolean isInMasks=false;

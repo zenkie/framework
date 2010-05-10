@@ -101,7 +101,7 @@ public class QueryListConfigManager{
     	qlc.setConditions(cls);
     	//selections
     	cls=new ArrayList<ColumnLink>();
-    	al=table.getColumns(new int[]{Column.MASK_QUERY_LIST},false );
+    	al=table.getColumns(new int[]{Column.MASK_QUERY_LIST},false, 0 ); //default sgrade
     	for(int i=0;i<al.size();i++){
     		Column col=(Column) al.get(i);
     		ColumnLink cl=new ColumnLink(new int[]{col.getId()});

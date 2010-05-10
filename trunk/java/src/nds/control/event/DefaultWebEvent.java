@@ -77,6 +77,7 @@ public class DefaultWebEvent implements  NDSEvent {
         this.eventName=eventName;
         creationDate=new Date();
     }
+    
     /**
      * 
      * @param eventName
@@ -105,6 +106,15 @@ public class DefaultWebEvent implements  NDSEvent {
     	e.data.putAll(this.data);
     	e.maxNonEmptyArraySize= this.maxNonEmptyArraySize;
     	return e;
+    }
+    /**
+     * If no QuerySession find in event, return 0, else get that value from QuerySession   
+     * @return
+     */
+    public int getSecurityGrade(){
+    	QuerySession qs= this.getQuerySession();
+    	if(qs!=null) return qs.getSecurityGrade();
+    	return 0;
     }
     /**
      * This is usually called in DefaultRquestHanlder

@@ -505,7 +505,10 @@ public class AjaxUtils {
 			}else{
 				columnMasks= new int[]{6};// single object view
 			}
-			ArrayList cols= table.getColumns(columnMasks, false);
+			int sgrade=0;
+			if(qsession!=null)sgrade= qsession.getSecurityGrade();
+			else sgrade= nds.control.util.SecurityUtils.getUser(userId).getSecurityGrade();
+			ArrayList cols= table.getColumns(columnMasks, false, sgrade);
 			for(int i=0;i<cols.size();i++){
 				Column col= (Column)cols.get(i);
 				query.addSelection(col.getId());

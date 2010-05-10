@@ -337,7 +337,7 @@ public class ProcessOrder extends Command {
 	  DefaultWebEvent e=(DefaultWebEvent)template.clone();
 	  e.setParameter("command","ObjectCreate");
 	  e.setParameter("best_effort","false"); //one transaction
-	  ArrayList cols=table.getColumns(new int[]{1}, false);
+	  ArrayList cols=table.getColumns(new int[]{1}, false,template.getSecurityGrade());
 	  for(int i=0;i< cols.size();i++){
 		  Column column=(Column)cols.get(i);
 		  String colName= column.getName();

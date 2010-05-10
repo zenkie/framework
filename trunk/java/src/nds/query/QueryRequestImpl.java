@@ -307,7 +307,8 @@ public abstract class QueryRequestImpl implements QueryRequest {
     	if( mainTable ==null)
             throw new QueryException("MainTable must be set before calling this");
     	if(columnMasks==null || columnMasks.length==0) return;
-    	 ArrayList columns=mainTable.getColumns(columnMasks,includeUIController );
+    	 ArrayList columns=mainTable.getColumns(columnMasks,includeUIController, 
+    			 (session==null?0:session.getSecurityGrade()) );
     	 for(int i=0;i<columns.size() ;i++) {
             Column col= (Column) columns.get(i);
             if( col.getReferenceTable() !=null) {

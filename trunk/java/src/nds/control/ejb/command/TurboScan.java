@@ -103,7 +103,7 @@ public class TurboScan extends Command {
   	  	
   	  	
   	  	
-	  	List cols= table.getColumns(new int[]{Column.MASK_CREATE_EDIT}, false) ;
+	  	List cols= table.getColumns(new int[]{Column.MASK_CREATE_EDIT}, false,usr.getSecurityGrade()) ;
   		String cname;
 	  	for(int i=0;i< cols.size();i++){
 	  		Column cl= (Column)cols.get(i);
