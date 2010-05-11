@@ -1533,7 +1533,7 @@ public final class QueryUtils {
     	try{
     		conn.setAutoCommit(false);
     		lockRecord(table, objectId, conn);
-    	}finally{
+    	}finally{ 
     		try{
     			conn.rollback();
     		}catch(Throwable t){}
