@@ -165,13 +165,12 @@ public abstract class WebActionImpl implements WebAction{
 				// recontruct query to xml format
 				qs= org.json.XML.toString(query);
 				logger.debug("query:"+qs);
-				/*int qtid= query.optInt("table", -1);
+				int qtid= query.optInt("table", -1);
 				int oid= query.optInt("id", -1);
 				if(qtid!=-1 && oid!=-1 ){
-					conn.createStatement().execute("update "+ 
-							TableManager.getInstance().getTable(qtid).getRealTableName()+
-							" set id=id where id="+ oid);
-				}*/
+					//try lock it
+					QueryUtils.lockRecord(TableManager.getInstance().getTable(qtid), oid,conn);
+				}
 
 			}else
 				qs="";
@@ -179,6 +178,7 @@ public abstract class WebActionImpl implements WebAction{
 			ArrayList p=new ArrayList();
 			p.add(userId);
 			p.add(qs);
+			
 			SPResult ret=QueryEngine.getInstance().executeStoredProcedure(this.getScript(), p, true, conn);
 			map.put("code",ret.getCode());
 			map.put("message",ret.getMessage());

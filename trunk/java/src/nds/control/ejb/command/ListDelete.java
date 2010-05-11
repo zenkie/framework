@@ -10,6 +10,7 @@ import nds.control.event.DefaultWebEvent;
 import nds.control.util.SecurityUtils;
 import nds.control.util.ValueHolder;
 import nds.query.QueryEngine;
+import nds.query.QueryUtils;
 import nds.schema.Table;
 import nds.schema.TableManager;
 import nds.security.Directory;
@@ -58,6 +59,7 @@ public class ListDelete extends Command{
        //举例：  m_v_inout 被提交生成了 m_v_2_inout, 而用户仍可以对m_v_inoutitem表
        //中的内容进行修改。这是不允许的。
        helper.checkTableRows(parent, poids, con, helper.PARENT_NOT_FOUND);
+       
        ValueHolder v = new ValueHolder();
        
        // 由于界面上无法控制所有的对象都具有相同层次的权限，故需要在此进行权限认证
@@ -128,6 +130,9 @@ public class ListDelete extends Command{
           Vector vec = new Vector();
           String sql = "";
           QueryEngine engine =QueryEngine.getInstance();
+          
+          QueryUtils.lockRecord(table,itemid,con);
+          
           if ( checkStatus){
           	int status=Tools.getInt(engine.doQueryOne("select status from "+ table.getRealTableName()+ " where id="+ itemid, con),-1);
           	if(status==JNDINames.STATUS_SUBMIT || status==JNDINames.STATUS_AUDITING){
