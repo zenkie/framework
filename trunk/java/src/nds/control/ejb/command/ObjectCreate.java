@@ -157,7 +157,7 @@ public class ObjectCreate extends Command{
 		            	//lock col.rt with pk id
 		            	int ptoId= Tools.getInt(fixedColumns.get(key),-1);
 		            	if( ptoId!=-1){
-		            		QueryUtils.lockRecord(col.getTable(), ptoId, con);
+		            		QueryUtils.lockRecord(col.getReferenceTable(), ptoId, con);
 		            	}
 		            }
 		        }

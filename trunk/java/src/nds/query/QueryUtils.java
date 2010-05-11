@@ -1521,4 +1521,25 @@ public final class QueryUtils {
 			}
 		}
     }
+    /**
+     * 与lockRecord不同的是，connection 将被强制Commit
+     * Try to lock record for update, will try select xxx for update
+     * @param table
+     * @param objectId
+     * @throws NDSException
+     */
+    public static void lockRecord(Table table, int objectId) throws NDSException,SQLException{
+    	Connection conn= QueryEngine.getInstance().getConnection();
+    	try{
+    		conn.setAutoCommit(false);
+    		lockRecord(table, objectId, conn);
+    	}finally{
+    		try{
+    			conn.rollback();
+    		}catch(Throwable t){}
+    		try{
+    			conn.close();
+    		}catch(Throwable t){}
+    	}
+    }
 }

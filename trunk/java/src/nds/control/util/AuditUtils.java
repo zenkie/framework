@@ -423,14 +423,14 @@ public class AuditUtils {
 	 * @return message of assignment, code should always be 0, since any error should be thrown out
 	 * @throws Exception if any error occurs
 	 */
-	public static ValueHolder doCancelAssign(int phaseInstanceId,int userId) throws Exception{
+	public static ValueHolder doCancelAssign(int phaseInstanceId,int userId,Connection conn) throws Exception{
 		ValueHolder vh=new ValueHolder();
 		QueryEngine engine= QueryEngine.getInstance();
 		// 	check instance state, the permit num
 		ArrayList params=new ArrayList();
 		params.add(new Integer(phaseInstanceId));
 		params.add(new Integer(userId));
-		SPResult res= engine.executeStoredProcedure("au_phaseinstance_cancel_assign", params, true );
+		SPResult res= engine.executeStoredProcedure("au_phaseinstance_cancel_assign", params, true ,conn);
 		if(res.getCode()!=0) throw new NDSException("@exception@:"+ res.getMessage());
 		vh.put("message", res.getMessage());
 		vh.put("code", "0");
@@ -446,7 +446,7 @@ public class AuditUtils {
 	 * @return message of assignment, code should always be 0, since any error should be thrown out
 	 * @throws Exception if any error occurs
 	 */
-	public static ValueHolder doAssign(int phaseInstanceId,int userId, int assigneeId) throws Exception{
+	public static ValueHolder doAssign(int phaseInstanceId,int userId, int assigneeId, Connection conn) throws Exception{
 		ValueHolder vh=new ValueHolder();
 		QueryEngine engine= QueryEngine.getInstance();
 		// 	check instance state, the permit num
@@ -455,7 +455,7 @@ public class AuditUtils {
 		params.add(new Integer(userId));
 		params.add(new Integer(assigneeId));
 		params.add(new Integer(getMaxAssignCount()));
-		SPResult res= engine.executeStoredProcedure("au_phaseinstance_assign", params, true );
+		SPResult res= engine.executeStoredProcedure("au_phaseinstance_assign", params, true,conn);
 		if(res.getCode()!=0) throw new NDSException("@exception@:"+ res.getMessage());
 		vh.put("message", res.getMessage());
 		vh.put("code", "0");
@@ -544,10 +544,9 @@ public class AuditUtils {
 	 	 "docno" document no that handled
 	 * @throws Exception
 	 */
-	public static ValueHolder doAudit(int phaseInstanceId, int userId,boolean accept, String comments) throws Exception{
+	public static ValueHolder doAudit(int phaseInstanceId, int userId,boolean accept, String comments, Connection conn) throws Exception{
 		ValueHolder vh=new ValueHolder();
 		QueryEngine engine= QueryEngine.getInstance();
-		Connection conn= engine.getConnection();
 		try{
 		Statement stmt= conn.createStatement();
 		// this update may affect more than one records
@@ -607,7 +606,7 @@ public class AuditUtils {
 		vh.put("docno", docno);
 		return vh;
 		}finally{
-			try{conn.close();}catch(Throwable t){}
+			//try{conn.close();}catch(Throwable t){} connection is created from outside now 2010-5-11
 		}
 	}
 	

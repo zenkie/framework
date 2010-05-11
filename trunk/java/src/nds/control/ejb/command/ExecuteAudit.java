@@ -83,19 +83,23 @@ public class ExecuteAudit extends Command {
 	        throw new NDSEventException("@choose-menu@");
 	    }
 	    
+		con= engine.getConnection();
 	    String res = "", s; int errCount=0;
 	    int[] ids= new int[objectStr.length];
 	    StringBuffer message =new StringBuffer();
 	    if( action == ACTION_ACCEPT || action == ACTION_REJECT){
 	    	// accept or reject process
-	    	con= engine.getConnection();
+	    	
 		    for(int i=0;i<ids.length;i++){
-	    		ValueHolder vh=AuditUtils.doAudit((Integer.parseInt(objectStr[i])),userId,accept,comments);
+		    	
+	    		ValueHolder vh=AuditUtils.doAudit((Integer.parseInt(objectStr[i])),userId,accept,comments,con);
 	    		if( "A".equals(vh.get("state"))){
 					// wholely accepted, so do object submit, if needed
 					Table table=(Table) vh.get("table");
 					int objectid=( (Integer) vh.get("objectid")).intValue();
 					logger.debug("Submit " + table.getName()+ " no="+ vh.get("docno"));
+		    		
+					//QueryUtils.lockRecord(table, objectid, con);
 		    		
 	        		// 	set status of object to 1 if that column exists
 	        		if(table.getColumn("status")!=null)
@@ -113,12 +117,12 @@ public class ExecuteAudit extends Command {
 		    }
 	    }else if (action== ACTION_ASSIGN ){
 	    	for(int i=0;i< ids.length;i++){
-	    		ValueHolder vh=AuditUtils.doAssign((Integer.parseInt(objectStr[i])),userId, assigneeId);
+	    		ValueHolder vh=AuditUtils.doAssign((Integer.parseInt(objectStr[i])),userId, assigneeId,con);
 	    	}
 	    	message.append("@complete@");
-	    }else if(action == ACTION_CANCEL_ASSIGN){
+	    }else if(action == ACTION_CANCEL_ASSIGN){ 
 	    	for(int i=0;i< ids.length;i++){
-	    		ValueHolder vh=AuditUtils.doCancelAssign((Integer.parseInt(objectStr[i])),userId);
+	    		ValueHolder vh=AuditUtils.doCancelAssign((Integer.parseInt(objectStr[i])),userId,con);
 	    	}
 	    	message.append("@complete@");
 	    }
