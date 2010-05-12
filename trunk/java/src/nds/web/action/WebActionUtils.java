@@ -35,7 +35,16 @@ public class WebActionUtils {
 			String filter= (String)act.get(j++);
 			String actionType= (String)act.get(j++);
 			String content= (String)act.get(j++);
-			String scripts= (String)act.get(j++);
+			
+			String scripts=null;
+			Object sc=act.get(j++);
+			//support clob
+			if(sc instanceof java.sql.Clob) {
+				scripts=((java.sql.Clob)sc).getSubString(1, (int) ((java.sql.Clob)sc).length());
+        	}else{
+        		scripts=(String)sc;
+        	}
+			//String scripts= (String)act.get(j++);
 			String urlTarget= (String)act.get(j++);
 			String saveObjType= (String)act.get(j++);
 			String comments= (String)act.get(j++);
@@ -135,7 +144,16 @@ public class WebActionUtils {
 		String filter= (String)act.get(j++);
 		String actionType= (String)act.get(j++);
 		String content= (String)act.get(j++);
-		String scripts= (String)act.get(j++);
+		
+		String scripts=null;
+		Object sc=act.get(j++);
+		//support clob
+		if(sc instanceof java.sql.Clob) {
+			scripts=((java.sql.Clob)sc).getSubString(1, (int) ((java.sql.Clob)sc).length());
+    	}else{
+    		scripts=(String)sc;
+    	}
+		
 		String urlTarget= (String)act.get(j++);
 		String saveObjType= (String)act.get(j++);
 		String comments= (String)act.get(j++);

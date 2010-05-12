@@ -27,6 +27,8 @@ public class FairManager {
 	 */
 	private int[] thumbWidths;
 	
+	private String dimCategoryColumnName="m_dim7_id"; // AD_PARAM#portal.fair.category
+	
 	private String pdtFolderStr; //E:/portal422/server/default/deploy/nds.war/pdt
 	private FairManager(){}
 	
@@ -46,7 +48,12 @@ public class FairManager {
         Configurations conf= (Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
         String thumbnails=conf.getProperty("fair.thumbnails", "");
         thumbWidths=nds.query.QueryUtils.parseIntArray(thumbnails);
-        
+        try{
+        String cc=(String)QueryEngine.getInstance().doQueryOne("select value from ad_param where name='portal.category.column'");
+        if(Validator.isNotNull(cc)) dimCategoryColumnName=cc;
+        }catch(Throwable t){
+        	logger.error("fail to load portal.category.column from ad_param table", t);
+        }
         // path to thumbnail files
         String webRoot=conf.getProperty("web.root","E:/portal422/server/default/deploy/nds.war/html/nds");
         File pdtFolder= new File(webRoot);
@@ -167,7 +174,7 @@ public class FairManager {
 		int cnt;
 		int categoryId;
 		try {
-			List al = QueryEngine.getInstance().doQueryList("select a.id, a.attribname, count(distinct b.id) from m_dim a, m_product b, b_fairitem c where c.b_fair_id="+ fairId+ " and b.id=c.m_product_id and a.id(+)= b.M_DIM3_ID group by a.id, a.attribname order by a.attribname");
+			List al = QueryEngine.getInstance().doQueryList("select a.id, a.attribname, count(distinct b.id) from m_dim a, m_product b, b_fairitem c where c.b_fair_id="+ fairId+ " and b.id=c.m_product_id and a.id(+)= b."+dimCategoryColumnName+" group by a.id, a.attribname order by a.attribname");
 			for (int i = 0; i < al.size(); i++) {
 				pci = new ProductCategoryItem();
 				List item = (List) al.get(i);

@@ -53,7 +53,12 @@ public class ImageUtils {
 		 String pse=origFileName.substring(idx);
 		 for(int i=0;i< widths.length;i++){
 			 double sx = (double) widths[i] / origWidth;
-			 if(sx>1)throw new java.lang.IllegalArgumentException("Found thumbnail width ("+widths[i]+") greater than original image width "+origWidth);
+			 int wid=widths[i];
+			 if(sx>1) {
+				 //keep original one
+				 wid=origWidth;
+				 sx=1;//throw new java.lang.IllegalArgumentException("Found thumbnail width ("+widths[i]+") greater than original image width "+origWidth);
+			 }
 			 int height= (int)(origHeight * sx);
 			 String saveToFileStr=destFolder+ File.separator+ ps+"_"+ (i+1)+ pse;
 			 File saveFile=new File(saveToFileStr);
