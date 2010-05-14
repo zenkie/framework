@@ -55,7 +55,7 @@ public class Attach implements BinaryHandler{
 	        response.setContentType(ct+"; charset=GBK");
 	        response.setContentLength((int)att.getSize());
 	        //if(ct.indexOf("text/")>-1|| ct.indexOf("image")>-1)
-	        response.setHeader("Content-Disposition","inline;filename=\""+fileName+"\"");
+	        response.setHeader("Content-Disposition","inline;filename=\""+att.getOrigFileName()+"\"");
 		
 			InputStream is=attm.getAttachmentData(att);
 			ServletOutputStream os = response.getOutputStream();

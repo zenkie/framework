@@ -261,6 +261,8 @@ public class AttachmentManager implements nds.util.ServletContextActor,java.io.S
 
             props.setProperty( versionNumber+".author", author );
             if( att.getExtension() !=null) props.setProperty("ext", props.getProperty("ext",att.getExtension()) );
+            props.setProperty(versionNumber+".filename", att.getOrigFileName());
+            
             putAttachmentProperties( att, props );
             return newfile;
         }
@@ -369,6 +371,8 @@ public class AttachmentManager implements nds.util.ServletContextActor,java.io.S
 
             att.setSize( f.length() );
             att.setLastModified( new Date(f.lastModified()) );
+            att.setOrigFileName(props.getProperty(version+".filename"));
+            
         }catch(java.io.FileNotFoundException fne){
         	logger.error(fne.getMessage());
         	return null;

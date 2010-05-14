@@ -106,6 +106,10 @@ public class UploadFileHandler extends RequestHandlerSupport {
             		att.setAuthor(user.getUserName());
             		att.setVersion(0);
             		att.setExtension(attm.getFileExtension(fileName));
+            		att.setOrigFileName(fileName);
+            	}else{
+            		//add att new file name
+            		att.setOrigFileName(fileName);
             	}
             	File f=attm.putAttachmentData(att, in);
             	

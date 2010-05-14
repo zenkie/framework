@@ -11,7 +11,7 @@ import java.util.*;
  Verioned attachment with author specified. 
 */
 public class Attachment {
-    private String m_fileName;
+    private String m_fileName; //this will be file name is filesystem 
     private String m_parentName;
     private int    m_status = CREATED;
     private String       m_name;
@@ -24,7 +24,9 @@ public class Attachment {
     public static final int CREATED       = 0;
     public static final int UPLOADING     = 1;
     public static final int COMPLETE      = 2;
-
+    
+    private String origFileName; // uploaded file name
+    
     public Attachment( String parentDir, String fileName)
     {
         m_name= parentDir+"/"+fileName ;
@@ -159,5 +161,13 @@ public class Attachment {
     {
         return m_author;
     }
+
+	public String getOrigFileName() {
+		return origFileName;
+	}
+
+	public void setOrigFileName(String origFileName) {
+		this.origFileName = origFileName;
+	}
 	
 }
