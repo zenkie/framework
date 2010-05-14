@@ -684,6 +684,11 @@ public class CxtabReport {
         	
         	for(int i=0;i< measures.size();i++){
             	List mea= (List)measures.get(i);
+            	int sgrade= Tools.getInt( mea.get(4),0);
+            	if(sgrade>userSecurityGrade){
+            		//current user should not see this column
+            		continue;
+            	}
             	// may not have user fact 
            		int colId= Tools.getInt(mea.get(0),-1);
            		Column col= TableManager.getInstance().getColumn(colId);
