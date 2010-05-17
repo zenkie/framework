@@ -1,5 +1,5 @@
 package nds.util;
-import java.io.FilenameFilter;
+import java.io.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -185,7 +185,49 @@ public class FileUtils {
 
         }
     }
-
+    /**
+     * Delete files, no error even if file not deleted
+     * @param daysBack
+     * @param dirWay main directory
+     * @param includeSub will loop over sub dir (recursively) or not 
+     * @return count of files delete
+     */
+    public static int deleteFilesOlderThanNdays(int daysBack, String dirWay, boolean includeSub) {
+    	final long purgeTime = System.currentTimeMillis() - (daysBack * 24 * 60 * 60 * 1000);
+    	FileFilter filter = new FileFilter() { 
+    		public boolean accept(File f) { 
+    			return f.isFile() && f.lastModified() < purgeTime; 
+    		} 
+    	}; 
+    	
+    	FileFilter dirFilter = new FileFilter() { 
+    		public boolean accept(File file) { 
+    			return file.isDirectory(); 
+    		} 
+    	};
+    	
+    	File directory = new File(dirWay);  
+        
+    	return deleteFiles(directory,filter,dirFilter,includeSub);
+    }
+    private static int deleteFiles(File directory,FileFilter fileFilter ,FileFilter dirFilter, boolean inlcudeSub){
+    	int cnt=0;
+    	if(directory.exists()){  
+            File[] listFiles = directory.listFiles(fileFilter);              
+            for(File listFile : listFiles) {  
+            	cnt+= (listFile.delete()? 1:0);
+            }
+            if(inlcudeSub){
+	            File[] dirs= directory.listFiles(dirFilter);
+	            for(File dir : dirs) {  
+	            	cnt+=deleteFiles(dir,fileFilter,dirFilter,inlcudeSub);
+	            }
+            }
+        } else {  
+            logger.warn("Files were not deleted, directory " + directory.getPath() + " does'nt exist!");  
+        }  
+    	return cnt;
+    }
     /**
      * @param path file/directory to be deleted
      * @return true if deletion was OK
