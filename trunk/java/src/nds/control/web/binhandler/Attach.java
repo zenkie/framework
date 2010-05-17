@@ -55,8 +55,30 @@ public class Attach implements BinaryHandler{
 	        response.setContentType(ct+"; charset=GBK");
 	        response.setContentLength((int)att.getSize());
 	        //if(ct.indexOf("text/")>-1|| ct.indexOf("image")>-1)
-	        response.setHeader("Content-Disposition","inline;filename=\""+att.getOrigFileName()+"\"");
-		
+	        /*
+	         * 其实按照RFC2231的定义，多语言编码的Content-Disposition应该这么定义：
+
+Content-Disposition: attachment; filename*="utf8''%E4%B8%AD%E6%96%87%20%E6%96%87%E4%BB%B6%E5%90%8D.txt"
+
+即：
+
+    * filename后面的等号之前要加 *
+    * filename的值用单引号分成三段，分别是字符集(utf8)、语言(空)和urlencode过的文件名。
+    * 最好加上双引号，否则文件名中空格后面的部分在Firefox中显示不出来
+    * 注意urlencode的结果与php的urlencode函数结果不太相同，php的urlencode会把空格替换成+，而这里需要替换成%20
+	         * 
+	         */
+	        //this is for firefox
+	        int bt=WebUtils.getBrowserType(request);
+	        if(bt==0){
+	        	//ie
+	        	response.setHeader("Content-Disposition","inline;filename=\""+
+	        			StringUtils.replace(java.net.URLEncoder.encode( att.getOrigFileName(),"UTF-8"), "+", "%20")+"\"");
+	        }else{
+	        	//ff
+	        	response.setHeader("Content-Disposition","inline;filename*=\"utf8''"+
+	        			StringUtils.replace(java.net.URLEncoder.encode( att.getOrigFileName(),"UTF-8"), "+", "%20")+"\"");
+	        }
 			InputStream is=attm.getAttachmentData(att);
 			ServletOutputStream os = response.getOutputStream();
 	            byte[] b = new byte[8192];

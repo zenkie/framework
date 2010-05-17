@@ -818,4 +818,20 @@ public final class WebUtils {
     	ro.put("display_condition", ja);
     	return ro;
     } 	
+    /**
+     * 
+     * @param req
+     * @return 0 - ie, 1 - ff, 2 - others
+     */
+    public static int getBrowserType (HttpServletRequest req)
+    {
+       String s = req.getHeader("user-agent");
+       if (s == null)
+          return 2;
+       if (s.indexOf("MSIE") > -1)
+          return 0;
+       else if (s.indexOf("Firefox") > -1)
+          return 1;
+       return 2;	
+    }    
 }

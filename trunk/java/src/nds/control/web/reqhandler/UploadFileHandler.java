@@ -87,6 +87,15 @@ public class UploadFileHandler extends RequestHandlerSupport {
                     } else {
                         in=item.getInputStream();
                         fileName= item.getName();
+                        //remove file path
+                        if(fileName!=null){
+                        	int pos= fileName.lastIndexOf("\\");
+                        	if(pos>0)
+                        		fileName= fileName.substring(pos+1 );
+                        	pos= fileName.lastIndexOf("/");
+                        	if(pos>0)
+                        		fileName= fileName.substring(pos+1 );
+                        }
                     }
             }
             if(in !=null &&  Tools.getBoolean(event.getParameterValue("upload"), false)==true){
