@@ -46,6 +46,7 @@ public class UpdateGridData extends Command {
 				this.command="UpdateGridData";
 				this.table="c_order"
 				this.fixeColumns= "113=33&133=2131"
+				this.qlcid=13 // 201-05-17 add support for portal list update
 				this.addList=new Array();
 				this.modifyList=new Array();
 				this.deleteList=new Array();
@@ -110,6 +111,8 @@ public class UpdateGridData extends Command {
   	try{
   		String tableName= jo.getString("table");
 	  	Table table= manager.getTable(tableName);
+	  	
+	  	
 	  	int[] masks=null;
 	  	JSONArray column_masks=jo.optJSONArray("column_masks");
 	  	if(column_masks==null)masks=nds.control.util.EditableGridMetadata.ITEM_COLUMN_MASKS;
@@ -159,15 +162,38 @@ public class UpdateGridData extends Command {
   		
   		//modify
   		al= jo.getJSONArray("modifyList");
-  		colNames=gm.getColumnsWhenModify();
+	  	//qlcid take precedence over column_masks for ObjectModify
+  		//when qlcid is set, will do partial_update
+  		int qlcid=jo.optInt("qlcid", -1);
+  		boolean partialUpdate= false;
+  		if(qlcid!=-1){
+  			nds.web.config.QueryListConfig qlc=nds.web.config.QueryListConfigManager.getInstance().getQueryListConfig(qlcid);
+  			List<ColumnLink> cls=qlc.getSelections(usr.getSecurityGrade());
+  			colNames=new ArrayList();
+  			colNames.add("ID");
+  			for(int i=0;i<cls.size();i++){
+  				ColumnLink cl=cls.get(i);
+  				if(cl.length()==1 && cl.getColumns()[0].isMaskSet(Column.MASK_MODIFY_EDIT))
+  					colNames.add(cl.getColumns()[0].getName());
+  			}
+  			partialUpdate=true;
+  			//logger.debug("qlcid="+ qlcid+", cols="+nds.util.Tools.toString(colNames, ","));
+  		}else{
+  			colNames=gm.getColumnsWhenModify();
+  		}
+  		
+  		
   		for(int i=0;i< al.length();i++){
   			// these proecesses will cause whole process rolls back if any error occur
   			objectData=  al.getJSONArray(i);
 			//rowIdx= objectData.getInt(0);
-  			evt= createEvent(objectData,colNames, template);
+  			if(partialUpdate)evt= createPartialUpdateEvent(objectData,colNames, template);
+  			else evt= createEvent(objectData,colNames, template);
   			evt.setParameter("command",tableName+"Modify");
-			objectId =Tools.getInt(evt.getParameterValue("id"),-1);;
+			objectId =Tools.getInt(evt.getParameterValue("id"),-1);
   			jsonObjectCreated=false;
+  			
+			if(partialUpdate) evt.setParameter("partial_update", "true");
 			
   			try{
   				vh=helper.handleEventWithNewTransaction(evt);
@@ -271,9 +297,14 @@ public class UpdateGridData extends Command {
 	  		JSONObject q=jo.getJSONObject("queryRequest");
 	  		JSONObject qr=new JSONObject();
 	  		qr.put("table", q.getString("table"));
-	  		qr.put("column_masks", q.get("column_masks"));
+	  		//column_masks or qlcid
+	  		if(q.opt("qlcid")!=null)
+	  			qr.put("qlcid", q.get("qlcid"));
+	  		if(q.opt("column_masks")!=null)
+	  			qr.put("column_masks", q.get("column_masks"));
+	  		
 	  		qr.put("column_include_uicontroller", q.optBoolean("column_include_uicontroller",false));
-	  		qr.put("init_query", true);
+	  		qr.put("init_query", q.optBoolean("init_query",true));
 	  		qr.put("dir_perm", q.optInt("dir_perm",1));
 	  		qr.put("fixedColumns", q.optString("fixedColumns"));
 	  		StringBuffer sb=new StringBuffer(" IN (-1");
@@ -311,7 +342,33 @@ public class UpdateGridData extends Command {
 	holder.put("data",returnObj );
 	return holder;
   }
-  
+  /**
+   * 
+   * @param row
+   * @param colNames elements are String ad_column.dbname
+   * @param template
+   * @return
+   * @throws JSONException
+   */
+  private DefaultWebEvent createPartialUpdateEvent(JSONArray row, ArrayList colNames, DefaultWebEvent template ) throws JSONException{
+  	DefaultWebEvent e=(DefaultWebEvent)template.clone();
+  	Object value;
+  	for(int i=0;i< colNames.size();i++){
+  		value=     row.get(i+3); //skip first 3
+  		if(JSONObject.NULL.equals(value)) value=null;
+  		e.put( (String)colNames.get(i),value); // since row(0) is always row index 
+  	}
+	e.put("JSONROW", row);// this could be used by some special command, such as B_V2_PRJ_TOKEModify
+  	return e;
+  }
+  /**
+   * 
+   * @param row
+   * @param colNames elements are String ad_column.dbname
+   * @param template
+   * @return
+   * @throws JSONException
+   */
   private DefaultWebEvent createEvent(JSONArray row, ArrayList colNames, DefaultWebEvent template ) throws JSONException{
   	DefaultWebEvent e=(DefaultWebEvent)template.clone();
   	Object value;
