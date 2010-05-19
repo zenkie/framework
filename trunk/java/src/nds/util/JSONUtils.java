@@ -5,12 +5,12 @@
 package nds.util;
 
 import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.text.*;
 import java.util.*;
 
 import nds.query.QuerySession;
 
+import org.apache.wsrp4j.log.Logger;
 import org.json.*;
 /**
  * Utils for JSON object handling
@@ -89,6 +89,57 @@ public class JSONUtils {
 			je.put(pt.getValue(i));
 			ja.put(je);
 		}
+		return ja;
+	}
+
+	/**
+	 * Convert java array to json array, if <param>cl</param> is multi-dimensional array
+	 * the converted json array will also be that.
+	 * @param cl
+	 * @param formats for each column of the collection row, how to format them, may be null for special
+	 * column, meaning just origianl data
+	 * @return JSONObject.NULL if <param>cl</param> is null
+	 * @throws JSONException
+	 */
+	public static Object toJSONArray(Collection cl, Format[] formats) throws JSONException{
+		if(cl==null) return JSONObject.NULL;
+		JSONArray ja=new JSONArray();
+		DateFormat dateFormatter =(DateFormat)nds.query.QueryUtils.dateTimeSecondsFormatter.get();// new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		int pos=0;
+		for(Iterator it=cl.iterator();it.hasNext();){
+			Object ele= it.next();
+			if(ele!=null){
+				if( ele instanceof Collection){
+					ele= toJSONArray((Collection)ele,formats);
+				}else if(ele.getClass().isArray()){
+					if(ele instanceof Object[]){
+						Object[] objs=(Object[])ele;
+						ele= toJSONArray( Arrays.asList(objs),formats  );
+					}else{
+						// elements are Primitive, such as int, char, boolean
+						ArrayList al=new ArrayList();
+						for(int i=0;i< Array.getLength(ele);i++){
+							al.add(Array.get(ele, i));
+						}
+						ele= toJSONArray(al,formats);
+					}
+				}else{
+					// convert date type object to String
+					if(ele instanceof Date) ele= dateFormatter.format((Date)ele);
+					else{
+						try{
+							if(formats[pos] !=null) ele=formats[pos].format(ele);
+						}catch(IllegalArgumentException  t){
+							System.err.println("Fail to format "+ ele + "("+ ele.getClass()+") on pos "+ pos+ " of formatter:"+ formats[pos]+":"+ t);
+							//throw t;
+						}
+					}
+				}
+			}
+			ja.put(ele);
+			pos++;
+		}
+		
 		return ja;
 	}
 	/**

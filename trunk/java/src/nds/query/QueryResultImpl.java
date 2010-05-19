@@ -203,6 +203,24 @@ public class QueryResultImpl implements QueryResult , JSONString{
     	return toJSONObject(true);
     }
     /**
+     * For numeric type columns, will format as Column definition of the scale
+     * @return
+     */
+    private java.text.Format[] getNumericFormats(){
+    	
+    	java.text.Format[] fmts=new java.text.Format[meta.getSelectionColumnCount()];
+    	
+    	for(int i=0;i<meta.getColumnCount();i++){
+    		Column col= manager.getColumn(meta.getColumnId(i+1));
+    		if(col.getType()==Column.NUMBER && (col.getSQLType()==SQLTypes.DOUBLE ||col.getSQLType()==SQLTypes.FLOAT )){
+    			fmts[this.displayColumnIndices[i]] =(QueryUtils.getDecimalFormat(col.getScale()));
+    		}
+    	}
+    	logger.debug(Arrays.toString(fmts));
+    	return fmts;
+    	
+    }
+    /**
      * Convert to json matrix array, each row is JSONArray 
      * @return if has "alerts" property, it will be a json object, which contains
      *  rows and their css classes, row id are indexed like "tr_*", e.g. tr_1 is for
@@ -217,7 +235,7 @@ public class QueryResultImpl implements QueryResult , JSONString{
     	jo.put("message", getAdditionalMessage());
     	
     	if(withData){
-    		jo.put("rows", nds.util.JSONUtils.toJSONArray(rows));
+    		jo.put("rows", nds.util.JSONUtils.toJSONArray(rows, getNumericFormats()));
     	}
     	// construct subtotal row
     	jo.put("subtotalRow", nds.util.JSONUtils.toJSONArray(getSubtotalRow()));

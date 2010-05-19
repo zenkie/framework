@@ -110,7 +110,7 @@ public final class QueryUtils {
     /**
      * Default range of query result, @see QueryRequest.getRange()
      */
-    public final static int DEFAULT_RANGE=10;
+    public static int DEFAULT_RANGE=10;
     public final static int MAXIMUM_RANGE=100;
     /**
      * selction range, can be updated by portal.properties#query.select.range
@@ -143,6 +143,13 @@ public final class QueryUtils {
 			 if(d!=null && d.length>0&& d[0]>0)SELECT_RANGES=d;
 		 }catch(Throwable t){
 		 	logger.error("Fail to load 	query.select.range:"+conf.getProperty("query.select.range"), t);
+		 }
+		 try{
+			 // format like 10,20,30,50,100
+			 int d=Tools.getInt( conf.getProperty("query.default.range"),DEFAULT_RANGE);
+			 if(d>0) DEFAULT_RANGE=d;
+		 }catch(Throwable t){
+		 	logger.error("Fail to load 	query.default.range:"+conf.getProperty("query.default.range"), t);
 		 }
 	}
 

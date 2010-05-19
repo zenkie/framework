@@ -185,7 +185,7 @@ public class ImportExcel implements Runnable{
     	if("true".equals(params.getProperty("partial_update"))){
     		event= createEventListUpdate();
     	}else{
-    		event=createEventObjCreate();
+    		event=createEventObjCreate(user);
     	}
     	event.put("nds.query.querysession",user.getSession());
     	event.put("JAVA.UTIL.LOCALE", user.getLocale());
@@ -381,7 +381,7 @@ public class ImportExcel implements Runnable{
      * @return
      * @throws NDSException
      */
-    private DefaultWebEvent createEventObjCreate() throws NDSException{
+    private DefaultWebEvent createEventObjCreate(UserWebImpl user) throws NDSException{
         DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
        	event.setParameter("command", "ObjectCreate"); // default value, may override by out parameters
         
@@ -397,13 +397,7 @@ public class ImportExcel implements Runnable{
         Column col;
         String cv;
 
-        ArrayList asc=table.getShowableColumns(Column.ADD);
-        // filter not modifiable columns
-        ArrayList columns=new ArrayList();
-        for( int i=0;i< asc.size();i++){
-            col= (Column) asc.get(i);
-            if( col.isModifiable(Column.ADD)) columns.add(col);
-        }
+        ArrayList columns=table.getColumns(new int[]{Column.MASK_CREATE_EDIT}, false, 0);
         ArrayList directColumnOfData= new ArrayList(); // if column is fk, the fk table's ak will be set here, so make it easier check input data type
 
         ArrayList colNames=new ArrayList();// if column is FK, the name will be like "col_ak", such as "product(id)_no"
@@ -513,6 +507,9 @@ public class ImportExcel implements Runnable{
 	        	}
 	        	isr.close();
 	        	for( int j=0;j< columns.size();j++){
+            	 	Column cl=(Column)columns.get(j);
+            	 	if(cl.getSecurityGrade()> user.getSecurityGrade())continue;
+
 	        		 //处理倍增请求
 	        		if(multiplyColumnIndex==j){
 	        			event.setParameter( (String)colNames.get(j) ,multiply(colData[j].toArray(),multiplyNum)  );
@@ -542,6 +539,10 @@ public class ImportExcel implements Runnable{
 	                }
 	            }
 	             for( int j=0;j< columns.size();j++){
+	            	 	//filter no permission rows
+	            	 	Column cl=(Column)columns.get(j);
+	            	 	if(cl.getSecurityGrade()> user.getSecurityGrade())continue;
+	            	 
 	//                 logger.debug("param for "+ columns.get(j)+ ":"+ (String)colNames.get(j));
 //	            	处理倍增请求
 		        		if(multiplyColumnIndex==j){
