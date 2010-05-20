@@ -114,7 +114,7 @@ public class Rest implements BinaryHandler{
     	  }catch(Throwable t){
     		  logger.error("Fail to process rest :",t);
     		  status= SipStatus.ERROR;
-    		  message=t.getLocalizedMessage();
+    		  message=t.getLocalizedMessage()+"("+ nds.log.LoggerManager.getNDC()+")";
     	  }
     	  logger.debug("sip_status="+status+", code="+status.getCode());
 

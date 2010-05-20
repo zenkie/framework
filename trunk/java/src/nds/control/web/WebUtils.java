@@ -13,7 +13,7 @@
 *no message
 *
 *Revision 1.1.1.1  2005/03/15 11:23:16  Administrator
-*init
+*init 
 *
 *Revision 1.4  2004/02/02 10:42:37  yfzhu
 *<No Comment Entered>
@@ -453,7 +453,7 @@ public final class WebUtils {
     	}else
     		r=s;
     	return nds.util.MessagesHolder.getInstance().translateMessage(
-    			r, locale);
+    			r, locale);//+"("+ nds.log.LoggerManager.getNDC()+")";
     }
     /**
      * ORA-00001 unique constraint (string.string) violated

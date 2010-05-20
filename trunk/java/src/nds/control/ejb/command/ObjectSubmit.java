@@ -12,6 +12,7 @@ import nds.control.util.AuditUtils;
 import nds.control.util.SecurityUtils;
 import nds.control.util.ValueHolder;
 import nds.query.QueryEngine;
+import nds.query.QueryUtils;
 import nds.query.SPResult;
 import nds.schema.*;
 import nds.security.Directory;
@@ -101,6 +102,9 @@ public class ObjectSubmit extends Command{
             throw new NDSEventException(e.getMessage() );
         }
         if (!b) throw new NDSEventException("@no-permission@!" );
+        
+        
+        
         
         Vector sqls= new Vector();
         sqls.addElement("update "+tableName+" set modifierid="+ userId+ ", modifieddate=sysdate where id="+pid);

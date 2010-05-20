@@ -157,6 +157,14 @@ public final class CommandFactory {
             return "ObjectReject";
         }else if(command.endsWith("Request")){
             return "ObjectRequest";
+        }else if(command.endsWith("Void")){
+            return "ObjectVoid";
+        }else if(command.endsWith("Unvoid")){
+            return "ObjectUnvoid";
+        }else if(command.endsWith("ListVoid")){
+            return "ListVoid";
+        }else if(command.endsWith("ListUnvoid")){
+            return "ListUnvoid";
         }
         return null;
     }

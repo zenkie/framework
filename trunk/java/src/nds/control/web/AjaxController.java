@@ -37,7 +37,7 @@ import org.json.*;
  */
 
 public class AjaxController {
-	private Logger logger= LoggerManager.getInstance().getLogger(AjaxController.class.getName());	
+	private static Logger logger= LoggerManager.getInstance().getLogger(AjaxController.class.getName());	
 	//How many columns returned when client request partial data in result returned in json
 	private final static int PARTIAL_DATA_COLUMNS=6;
 	/**

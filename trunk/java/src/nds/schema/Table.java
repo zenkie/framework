@@ -508,6 +508,12 @@ public interface Table extends Serializable  {
     * method, such as TranscredShtGroupSubmit('id1,id2,id3', r_code, r_msg);
     */
     public final static int GROUPSUBMIT=6;
+    
+    /**
+     * Object isactive=N, table that records can be void should not be child table(such as poitem)
+     * When we do void action on records, we will not do any actions on other tables
+     */
+    public final static int VOID=7;
     /**
      * Support unsubmit on object
      * 

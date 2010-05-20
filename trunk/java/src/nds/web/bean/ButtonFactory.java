@@ -143,6 +143,10 @@ public class ButtonFactory {
 		createButton("Reject", context, "R");
 		createButton("Unsubmit", context, "U");
 		// C will be used for Close
+		createButton("Void", context, "V");
+		createButton("ListVoid", context, "V");
+		createButton("Unvoid", context, "V");
+		createButton("ListUnvoid", context, "V");
 	}
 	/**
 	 * Get button factory according page context's locale

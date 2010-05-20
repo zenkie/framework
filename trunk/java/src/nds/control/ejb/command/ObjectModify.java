@@ -123,7 +123,11 @@ public class ObjectModify extends Command{
        //Tools.getInt(event.getParameterValue("id"),-1);
        int objectId =event.getObjectId(table, usr.adClientId, con);
        if(objectId==-1) throw new NDSException("@object-not-found@");
-       //event.setParameter("id", String.valueOf(objectId));
+       
+       /**
+        * record must be active
+        */
+       QueryUtils.checkVoid(table, objectId, "Y", con);
        
        int[] oids= new int[]{objectId};
 

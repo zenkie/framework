@@ -68,28 +68,16 @@ public class ObjectDelete extends Command{
        String sql = "";
        MailMsg mail=null; // elements of MailMsg
        String operatorDesc=usr.getDescription() ;
-       boolean bCheckStatus= (table.getColumn("status") !=null);
-       // check status
-       if ( bCheckStatus){
-      	int status=Tools.getInt(engine.doQueryOne("select status from "+ table.getRealTableName()+ " where id="+ objectid, con),-1);
-      	logger.error("Internal Error: status not valid(id="+objectid+")" );
-      	if(status==-1)  throw new NDSException("Internal Error: status not valid");
-      	if(status==JNDINames.STATUS_SUBMIT|| status==JNDINames.STATUS_AUDITING){
-      		// already submmited, so will not allow delete
-      		throw new NDSException("@object-already-submitted-no-delete@");
-      	}
-      }
+       /**
+        * unsubmit status
+        */
+       QueryUtils.checkStatus(table,objectid,con);
+       /**
+        * should be void
+        */
+       QueryUtils.checkVoid(table,objectid,"N",con);
        
        sql = getSql(tableName,objectid);
-       /*vec.addElement(sql) ;
-       //##################### added by yfzhu for dispatching to shop
-       if ( table.getDispatchType() != table.DISPATCH_NONE &&
-            table.isActionEnabled(Table.SUBMIT)==false && table.isActionEnabled(Table.AUDIT)==false){
-           // all client will recieve this sql, but only those has there records
-           // will be deleted
-           vec.addElement( Pub.getExpDataRecord(-1, sql+";"));
-       }
-       realCount=1;*/
        
        /**
         * Lock first

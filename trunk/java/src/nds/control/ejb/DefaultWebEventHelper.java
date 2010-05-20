@@ -1362,6 +1362,13 @@ public class DefaultWebEventHelper {
     	String state=null;
     	SPResult result=null;
     	try{
+    		java.sql.Connection conn=null;
+            try{
+            	conn= QueryEngine.getInstance().getConnection();
+            	QueryUtils.checkVoid(table, id, "Y", conn);
+            }finally{
+            	try{conn.close();}catch(Throwable t){}
+            }    		
    	 	/**
          * Check is this object shall do audit process
          */

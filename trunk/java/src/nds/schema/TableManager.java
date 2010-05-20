@@ -322,6 +322,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
         initActions();
         initSubSystems();
         initTableCategories();
+        this.checkVoidActionsOnTable();
     	/*
     	 * 建立时间表 T_DAY
     	 */
@@ -599,6 +600,19 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     		lazylist= LazyList.add(lazylist,tb2);
     		views.put( realTableName,lazylist);
     	}    	
+    }
+    /**
+     * All tables that has void action must have isactive column set to Y
+     */
+    private void checkVoidActionsOnTable(){
+    	Table tb2;
+    	String realTableName;
+    	for(int i=0;i< tableList.size();i++){
+    		tb2= (Table)tableList.elementAt(i);
+    		if(tb2.isActionEnabled(Table.VOID)  && ! columnNames.containsKey(tb2.getName()+ ".ISACTIVE")) {
+    			throw new RuntimeException("Table "+ tb2.getName()+ " has void action but has no isactive column");
+    		}
+    	}    
     }
     private void checkInit(){
         if( !isInitialized)

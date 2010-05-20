@@ -25,6 +25,7 @@ import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.schema.*;
 import nds.security.User;
+import nds.util.JNDINames;
 import nds.util.MessagesHolder;
 import nds.util.NDSException;
 import nds.util.PairTable;
@@ -1548,5 +1549,99 @@ public final class QueryUtils {
     			conn.close();
     		}catch(Throwable t){}
     	}
+    }
+    /**
+     * Make sure object status =1, if it has status column
+     * @param table
+     * @param objectId
+     * @throws NDSException
+     */
+    public static void checkStatus(Table table, int objectId, Connection conn) throws NDSException{
+    	if(table.isActionEnabled(Table.SUBMIT)){
+    		PreparedStatement pstmt=null;
+    		ResultSet rs=null;
+    		int status=-1;
+    		try{
+    		pstmt= conn.prepareStatement("select status from "+ table.getRealTableName()+ " where id=?");
+    		pstmt.setInt(1, objectId);
+    		rs=pstmt.executeQuery();
+    		if(rs.next())
+    			status=rs.getInt(1);
+    		}catch(Exception t){
+    			logger.error("fail to check status on " + table +" id="+ objectId, t);
+    		}finally{
+    			if(rs!=null)try{rs.close();}catch(Throwable t){}
+    			if(pstmt!=null)try{pstmt.close();}catch(Throwable t){}
+    		}
+    		if(status==-1)  throw new NDSException("Internal Error: status not valid");
+          	if(status!=1){
+          		// already submmited, so will not allow delete
+          		throw new NDSException("@object-not-in-unsubmit-status@");
+          	}
+    	}
+    }
+    /**
+     * Make sure object isactive is as expected, if it has isactive column
+     * @param table
+     * @param objectId
+     * @param expectedValue 'N' or 'Y', if isactive column has no equal value, will raise expception
+     * @throws NDSException
+     */
+    public static void checkVoid(Table table, int objectId, String expectedValue, Connection conn) throws NDSException{
+    	if(table.isActionEnabled(Table.VOID )){
+    		PreparedStatement pstmt=null;
+    		ResultSet rs=null;
+    		String act=null;
+    		try{
+    		pstmt= conn.prepareStatement("select isactive from "+ table.getRealTableName()+ " where id=?");
+    		pstmt.setInt(1, objectId);
+    		rs=pstmt.executeQuery();
+    		if(rs.next())
+    			act=rs.getString(1);
+    		}catch(Exception t){
+    			logger.error("fail to check isactive column on " + table +" id="+ objectId, t);
+    		}finally{
+    			if(rs!=null)try{rs.close();}catch(Throwable t){}
+    			if(pstmt!=null)try{pstmt.close();}catch(Throwable t){}
+    		}
+    		if(!expectedValue.equals(act)){
+    			if(expectedValue.equals("Y"))
+    				throw new NDSException("@object-must-be-active@");
+    			else 
+    				throw new NDSException("@object-must-be-inactive@");
+          	}
+    	}
+    }
+    /**
+     * 
+     * @param table
+     * @param objectId
+     * @return true if is void, else false. if table has no void action enabled, also return false
+     */
+    public static boolean isVoid(Table table, int objectId, Connection conn){
+    	if(table.isActionEnabled(Table.VOID )){
+    		boolean isNewConn=(conn==null);
+    		PreparedStatement pstmt=null;
+    		ResultSet rs=null;
+    		String act=null;
+    		try{
+        		if(isNewConn){
+        			conn=QueryEngine.getInstance().getConnection();
+        		}
+    		pstmt= conn.prepareStatement("select isactive from "+ table.getRealTableName()+ " where id=?");
+    		pstmt.setInt(1, objectId);
+    		rs=pstmt.executeQuery();
+    		if(rs.next())
+    			act=rs.getString(1);
+    		}catch(Exception t){
+    			logger.error("fail to check isactive column on " + table +" id="+ objectId, t);
+    		}finally{
+    			if(rs!=null)try{rs.close();}catch(Throwable t){}
+    			if(pstmt!=null)try{pstmt.close();}catch(Throwable t){}
+    			if(isNewConn)try{conn.close();}catch(Throwable t){}
+    		}
+    		return "N".equals(act);
+    	}
+    	return false;
     }
 }

@@ -13,6 +13,10 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
+import nds.control.web.AjaxController;
+import nds.log.Logger;
+import nds.log.LoggerManager;
+
 
 /**
  * <p>Example filter that sets the character encoding to be used in parsing the
@@ -44,7 +48,7 @@ import javax.servlet.ServletResponse;
  */
 
 public class SetCharacterEncodingFilter implements Filter {
-
+	private static Logger logger= LoggerManager.getInstance().getLogger(SetCharacterEncodingFilter.class.getName());
 
     // ----------------------------------------------------- Instance Variables
 
@@ -106,7 +110,13 @@ public class SetCharacterEncodingFilter implements Filter {
 //        System.out.println("-------------------------------------SetCharacterEncodingFilter =" + request.getCharacterEncoding());
 
     // Pass control on to the next filter
-        chain.doFilter(request, response);
+        nds.log.LoggerManager.pushNDC();
+        logger.debug(request.getRemoteAddr()+", host "+ request.getRemoteHost());
+        try{
+        	chain.doFilter(request, response);
+        }finally{
+        	nds.log.LoggerManager.popNDC();
+        }
     }
 
     // Methods

@@ -21,6 +21,8 @@ import nds.util.Tools;
 /**
 *   ListDelete is a module to delete the record from the web
 *   delete in batch
+
+*   yfzhu 2010-5-20 record must be void before delete if table has void action set
 */
 public class ListDelete extends Command{
   private TableManager manager;
@@ -72,23 +74,18 @@ public class ListDelete extends Command{
        		}
        }
        
-//##################### added by yfzhu for dispatching to shop
-       boolean isDispath=false;
-       if ( table.getDispatchType() != table.DISPATCH_NONE &&
-            table.isActionEnabled(Table.SUBMIT)==false  ){
-            isDispath=true;
-        }
         // check status 2005-11-15
        boolean bCheckStatus= (table.getColumn("status") !=null);
+       boolean bCheckVoid= table.isActionEnabled(Table.VOID);
         String res = "", s; int errCount=0;
         for(int i = 0;i<itemidStr.length ;i++){
             int itemid = Tools.getInt(itemidStr[i],-1) ;
-            s =deleteOne( table,itemid,isDispath,operatorDesc,con,bCheckStatus );
+            s =deleteOne( table,itemid,operatorDesc,con,bCheckStatus,bCheckVoid );
             if (s !=null) {
                 res += s+ "<br>";
                 errCount ++;
             }else{
-                logger.info("deleted table="+ table+", id="+itemid+" by "+ user.name+" of id"+ user.id);
+                logger.info("deleted table="+ table+", id="+itemid+" by "+ user.name+" of id "+ user.id);
             }
         }
         if(parent !=null)
@@ -122,10 +119,11 @@ public class ListDelete extends Command{
    * @param operatorDesc
    * @param con
    * @param checkStatus if true, will not delete when column "status" is 2
+   * @param checkVoid if true, will check isactive column, should be N when delete
    * @return
    */
-  private String deleteOne(Table table,int itemid, boolean isDispatch, 
-  		String operatorDesc,Connection con, boolean checkStatus){
+  private String deleteOne(Table table,int itemid, 
+  		String operatorDesc,Connection con, boolean checkStatus, boolean checkVoid){
       try{
           Vector vec = new Vector();
           String sql = "";
@@ -133,20 +131,15 @@ public class ListDelete extends Command{
           
           QueryUtils.lockRecord(table,itemid,con);
           
-          if ( checkStatus){
-          	int status=Tools.getInt(engine.doQueryOne("select status from "+ table.getRealTableName()+ " where id="+ itemid, con),-1);
-          	if(status==JNDINames.STATUS_SUBMIT || status==JNDINames.STATUS_AUDITING){
-          		// already submmited, so will not allow delete
-          		return "@can-not-delete-since-submitted@";
-          	}
-          }
+          QueryUtils.checkStatus(table,itemid,con);
+          /**
+           * should be void
+           */
+          QueryUtils.checkVoid(table,itemid,"N",con);
           
           sql = getSql(table.getRealTableName(),itemid);
           vec.addElement(sql);
-          //logger.debug("the value of sql from ListDelete is:"+sql) ;
-          if ( isDispatch) {
-              vec.addElement( Pub.getExpDataRecord(-1, getDispatchDeleteSQL(table.getRealTableName(),itemid)));
-          }
+          
           helper.doTrigger("BD", table, itemid, con);
           int count = engine.doUpdate(vec,con);
           // notify

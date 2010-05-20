@@ -129,7 +129,7 @@ public class TableImpl implements Table {
     private String rowClass;
     private TableCategory category;
     private int tableOrder;
-    private boolean[] actionMask;// 8 elements, means QADMSPGU by order
+    private boolean[] actionMask;// 9 elements, means QADMSPGUV by order
     private ArrayList columns=new ArrayList();
     private TriggerHolder triggers;
     //warning to programmer: Any time a new variable added, remind add it to clone() method
@@ -267,6 +267,7 @@ public class TableImpl implements Table {
      *   "P" - UNSUBMIT
      *   "G" - Group Submit( all selected id whill be concated by comma, and send to ObjectSubmit('id1,id2')
      *   "U" - Unsubmit (@since 4.0) DEPRECATED 
+     *   "V" - Void
      *   if action mask not found, the permission on the table will be denied
      */
     public void setMask(String maskString) {
@@ -285,6 +286,7 @@ public class TableImpl implements Table {
                 case 'P': actionMask[5]=true;break;
                 case 'G': actionMask[6]=true;break;
                 case 'U': actionMask[5]=true;break;// EQUAL TO P
+                case 'V': actionMask[7]=true;break;// EQUAL TO P
                 default: throw new Error("Unsupported action mask:"+ maskString+"(table="+ name+")");
             }
         }
