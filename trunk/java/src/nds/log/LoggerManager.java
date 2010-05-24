@@ -28,7 +28,7 @@ import java.text.DecimalFormat;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Properties;
-import org.apache.log4j.NDC;
+
 
 import org.apache.log4j.PropertyConfigurator;
 
@@ -239,23 +239,5 @@ public class LoggerManager
     {
         return this.isInitialized;
     }
-    private static ThreadLocal NDCFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
-		return new DecimalFormat("0000000000");}};
     
-    /**
-     * Create new string for ndc message and push into log4j ndc context
-     * @return the new message that should be popped later 
-     */
-    public static String pushNDC(){
-    	
-    	String msg="ndc" +  ((DecimalFormat) (NDCFormatter.get())).format(  nds.util.Sequences.getNextID("ndc"));
-    	NDC.push(msg);
-    	return msg;
-    }
-    public static String getNDC(){
-    	return NDC.peek();
-    }
-    public static void popNDC(){
-    	NDC.pop();
-    }
 }

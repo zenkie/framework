@@ -5,6 +5,7 @@
 package nds.control.web.filter;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -12,11 +13,17 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.apache.log4j.NDC;
 
 import nds.control.web.AjaxController;
+import nds.control.web.UserWebImpl;
+import nds.control.web.WebUtils;
 import nds.log.Logger;
 import nds.log.LoggerManager;
-
+import org.apache.log4j.MDC;
 
 /**
  * <p>Example filter that sets the character encoding to be used in parsing the
@@ -86,7 +93,17 @@ public class SetCharacterEncodingFilter implements Filter {
 
     }
 
-
+    private static ThreadLocal NDCFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+		return new DecimalFormat("0000000000");}};
+    
+    /**
+     * Create new string for ndc message and push into log4j ndc context
+     * @return the new message that should be popped later 
+     */
+    private static String getNDCSequence(){
+    	
+    	return ((DecimalFormat) (NDCFormatter.get())).format(  nds.util.Sequences.getNextID("ndc"));
+    }
     /**
      * Select and set (if specified) the character encoding to be used to
      * interpret request parameters for this request.
@@ -109,13 +126,37 @@ public class SetCharacterEncodingFilter implements Filter {
         }
 //        System.out.println("-------------------------------------SetCharacterEncodingFilter =" + request.getCharacterEncoding());
 
-    // Pass control on to the next filter
-        nds.log.LoggerManager.pushNDC();
-        logger.debug(request.getRemoteAddr()+", host "+ request.getRemoteHost());
+        // Pass control on to the next filter
+        String session="", username="";
+        if(request instanceof HttpServletRequest ){
+        	HttpSession s=((HttpServletRequest)request).getSession();
+        	if(s!=null){
+        		try{
+            		session= s.getId();
+        			UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(s).getActor(nds.util.WebKeys.USER));
+        			username=userWeb.getUserName();
+        			
+        		}catch(Throwable userWebException){
+        			
+        		}
+        		
+        	}
+        }
+        String ip=request.getRemoteAddr();
+        String tra= getNDCSequence();
+        
+        MDC.put("sid", session);
+        MDC.put("ip", ip);
+        MDC.put("user", username);
+        MDC.put("tra", tra);
+        //logger.debug(request.getRemoteAddr()+", host "+ request.getRemoteHost());
         try{
         	chain.doFilter(request, response);
         }finally{
-        	nds.log.LoggerManager.popNDC();
+        	MDC.remove(session);
+        	MDC.remove(ip);
+        	MDC.remove(username);
+        	MDC.remove(tra);
         }
     }
 

@@ -155,6 +155,7 @@ public class JReportRunner extends SvrProcess
 		    			"/servlets/binserv/GetFile?filename="+ finalFile);
 		    			//+",@file-name@:"+finalFile,"/servlets/binserv/GetFile?filename="+ finalFile);
 		    }
+		    this.addLog("File created:" +finalFile); 
 		    return "File created:" +finalFile;
 		    
 			

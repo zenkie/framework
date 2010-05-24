@@ -33,7 +33,7 @@ public class SysLogger {
 	public static final int DEFAULT_QUEUE_SIZE=100;
 	//syslog sleep time when no logevent,in seconds
 	public static final int DEFAULT_SLEEP_SECONDS=5;
-	private static final String INSERT_SYSLOG="insert into c_syslog(id, module, submodule,priority,operator,remote_host,message,ad_client_id)values(seq_c_syslog.nextval,?,?,?,?,?,?,?)"; 
+	private static final String INSERT_SYSLOG="insert into c_syslog(id, module, submodule,priority,operator,remote_host,message,ad_client_id)values(GET_SEQUENCES('C_SYSLOG'),?,?,?,?,?,?,?)"; 
 	
 	private static final int DEBUG=4;
 	private static final int INFO=3;

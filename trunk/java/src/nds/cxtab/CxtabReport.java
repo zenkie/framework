@@ -60,6 +60,7 @@ public class CxtabReport {
 	
 	private int dimCount=0; // dimension count, for sqlite table creation
 	private int meaCount=0; // measure count, for sqlite table creation
+	 
 	
 	/**
 	 * This will be needed when doing cube exporting
@@ -665,7 +666,7 @@ public class CxtabReport {
         	}
         }
         // check record limit
-    	String cntSQL= query.toCountSQL();
+    	String cntSQL=this.parseVariable( query.toCountSQL());
     	recordsCount= Tools.getInt(engine.doQueryOne(cntSQL, conn),-1);
     	if(maxRows >0 && recordsCount > maxRows )throw new NDSException("@report-rows-exeed-limit@("+recordsCount +">"+ maxRows+")");
         
@@ -770,6 +771,8 @@ public class CxtabReport {
         			}
         		}
         	}
+        	sql= this.parseVariable(sql);
+        	
         	return query;
         }
 		
@@ -957,7 +960,12 @@ public class CxtabReport {
 		this.cxtabName = CxtabName;
 	}
 	public void setFileName(String fileName) {
-		this.fileName = fileName;
+		try{
+			this.fileName =this.parseVariable( fileName);
+		}catch(NDSException e){
+			logger.error("fail to parse fileName:"+fileName, e);
+			throw new NDSRuntimeException("Fail to parse file name "+ fileName+":"+ fileName);
+		}
 	}
 	public void setFilterExpr(String filterExpr) {
 		this.filterExpr = filterExpr;
@@ -1015,5 +1023,18 @@ public class CxtabReport {
   		}finally{
   			try{pstmtm.close();}catch(Throwable tx){}
   		}		
+	}
+	/**
+	 * support for $v as Velocity template containing variables
+	 * @param sql may containing $v means for velocity variables
+	 * @return sql that can be executed in db
+	 * @throws NDSException
+	 */
+	private String parseVariable(String sql) throws NDSException{
+		//
+    	if(sql.indexOf('$')>0){
+    		sql= ReportVariables.getInstance().evaluate(sql); 
+    	}
+    	return sql;
 	}
 }

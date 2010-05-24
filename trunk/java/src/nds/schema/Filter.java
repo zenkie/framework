@@ -83,7 +83,7 @@ public class Filter implements java.io.Serializable {
             if (xml.startsWith("<![CDATA[") && xml.endsWith( "]]>")){
                 xml=  xml.substring(9, xml.length() -3);
             }
-            xml ="<?xml version=\"1.0\" encoding=\"GB2312\"?>"+xml;
+            xml ="<?xml version=\"1.0\" encoding=\"GBK\"?>"+xml;
             byte[] bs=xml.getBytes();
             ByteArrayInputStream bis=new ByteArrayInputStream(bs );
             this.loadMapping(bis);
@@ -120,7 +120,7 @@ public class Filter implements java.io.Serializable {
 	            if (xml.startsWith("<![CDATA[") && xml.endsWith( "]]>")){
 	                xml=  xml.substring(9, xml.length() -3);
 	            }
-	            xml ="<?xml version=\"1.0\" encoding=\"GB2312\"?>"+xml;
+	            xml ="<?xml version=\"1.0\" encoding=\"GBK\"?>"+xml;
 	            byte[] bs=xml.getBytes();
 	            ByteArrayInputStream bis=new ByteArrayInputStream(bs );
 	            this.loadMapping(bis);

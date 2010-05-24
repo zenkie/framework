@@ -380,7 +380,7 @@ public class JReport {
         }
 		
         logger.debug("sexpr="+sexpr);
-        whereClause=QueryUtils.replaceVariables(query.addParam(sexpr), qsession);
+        whereClause=this.parseVariable(QueryUtils.replaceVariables(query.addParam(sexpr), qsession));
 
 		List measures=  engine.doQueryList("select ad_column_id, function_, userfact, description, VALUEFORMAT,valuename, param1,param2,param2 from ad_cxtab_fact where ad_cxtab_id="+
 				cxtabId+" and isactive='Y' order by orderno asc",conn);
@@ -428,6 +428,7 @@ public class JReport {
             }
         	sql= query.toSQL();
         }
+        sql=this.parseVariable(sql);
 		return query;
 	}
 	
@@ -493,4 +494,17 @@ public class JReport {
 	public void setFilterDesc(String s){
 		this.filterDesc=s;
 	}
+	/**
+	 * support for $v as Velocity template containing variables
+	 * @param sql may containing $v means for velocity variables
+	 * @return sql that can be executed in db
+	 * @throws NDSException
+	 */
+	private String parseVariable(String sql) throws NDSException{
+		//
+    	if(sql.indexOf('$')>0){
+    		sql= ReportVariables.getInstance().evaluate(sql); 
+    	}
+    	return sql;
+	}	
 }
