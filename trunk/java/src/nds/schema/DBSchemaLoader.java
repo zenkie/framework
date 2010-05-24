@@ -235,6 +235,7 @@ public class DBSchemaLoader {
 
 	
 	private void createColumns(AdColumn column) throws Exception{
+		try{
 		AdTable tb= column.getAdTable();
 		if( Tools.getYesNo(tb.getIsActive(),true)== false) return;
 		// if category is not active , do no create
@@ -346,7 +347,10 @@ public class DBSchemaLoader {
     		}
             
         	table.addColumn(col);
-		
+		}catch(Throwable tx){
+        	logger.error("Fail to load column:"+ column.getName(),tx);
+        	throw new NDSException("Fail to load column "+ column.getName()+":"+tx.getMessage());
+        }
 		
 	}
 	private void createRefByTables(AdTable tb) throws Exception{
