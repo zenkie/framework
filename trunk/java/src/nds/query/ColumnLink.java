@@ -1,10 +1,14 @@
 package nds.query;
 import java.io.IOException;
 
+import nds.log.LoggerManager;
 import nds.schema.Column;
 import nds.schema.TableManager;
 import nds.util.Tools;
 import java.util.*;
+
+import nds.log.Logger;
+import nds.log.LoggerManager;
 import org.json.*;
 
 /**
@@ -12,6 +16,7 @@ import org.json.*;
  * 每个Column都是上一个Column所指明的referenceTable的某一列
  */
 public class ColumnLink implements java.io.Serializable, JSONString {
+	private static Logger logger= LoggerManager.getInstance().getLogger((ColumnLink.class.getName()));
     private transient Column[] columns;//not thread safe, but fast. columns should at least have 2 element
     private transient int hashCode;
     private String description;
@@ -42,7 +47,9 @@ public class ColumnLink implements java.io.Serializable, JSONString {
     	
     }
     private void setup(String[] columnNames)throws QueryException {
-        TableManager tm= TableManager.getInstance();
+        try{
+        	TableManager tm= TableManager.getInstance();
+        
         int[] columnIDs= new int[columnNames.length ];
         if ( columnNames.length > 0) {
             String s= columnNames[0];
@@ -58,6 +65,10 @@ public class ColumnLink implements java.io.Serializable, JSONString {
             columnIDs[i]= tm.getColumn( pc.getReferenceTable(true).getName() , columnNames[i] ).getId();
         }
         setup(columnIDs);
+        }catch(Throwable t){
+        	logger.error("Fail to parse "+ Tools.toString(columnNames), t);
+        	throw new QueryException("Error for clink construction:"+ Tools.toString(columnNames)+":"+t.getMessage());
+        }
     }
     public int length(){
     	return columns.length;

@@ -42,7 +42,15 @@ public class GridColumn implements JSONString{
 		jo.put("description",description);
 		jo.put("isVisible", isVisible);
 		jo.put("columnId",col==null? -1: col.getId());
-		if(columnLink!=null)jo.put("clink", columnLink.toHTMLString());
+		if(columnLink!=null){
+			jo.put("clink", columnLink.toHTMLString());
+			jo.put("dsptype", columnLink.getLastColumn().getDisplaySetting().getObjectType());
+		}
+		if(col!=null){
+			jo.put("dsptype", col.getDisplaySetting().getObjectType());
+		}
+
+		
 		jo.put("isNullable", col==null?true:col.isNullable());
 		if(	col!=null && col.isValueLimited()){
 			jo.put("isValueLimited",true);
@@ -50,6 +58,7 @@ public class GridColumn implements JSONString{
 		}else{
 			jo.put("isValueLimited",false);
 		}
+		
 		jo.put("type",type);
 		jo.put("rTableId",rTableId);
 		jo.put("objIdPos",objIdPos);

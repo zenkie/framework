@@ -202,6 +202,38 @@ public class ReportVariables  {
 		time.set(Calendar.DAY_OF_YEAR, num);
 		return ((SimpleDateFormat)QueryUtils.dateNumberFormatter.get()).format(time.getTime());
 	}
-	
+	/**
+	 * 
+	 * @return hour 0-23
+	 */
+	public String hour(){
+		Calendar time=Calendar.getInstance();
+		return String.valueOf( time.get(Calendar.HOUR_OF_DAY));
+	}
+	/**
+	 * 
+	 * @return current minute 0-59
+	 */
+	public String minute(){
+		Calendar time=Calendar.getInstance();
+		return String.valueOf( time.get(Calendar.MINUTE));
+	}
+	/**
+	 * 
+	 * @return "AM" or "PM"
+	 */
+	public String ampm(){
+		Calendar time=Calendar.getInstance();
+		return  time.get(Calendar.AM_PM)==Calendar.AM?"AM":"PM";
+	}
+	/**
+	 * Format current time 
+	 * @param format any format that java format accepts
+	 * @return 
+	 */
+	public String fmt(String pattern ){
+		SimpleDateFormat sdf=new SimpleDateFormat(pattern);
+		return sdf.format(new java.util.Date());
+	}
 	
 }

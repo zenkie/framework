@@ -13,6 +13,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import nds.control.web.WebUtils;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.report.ReportUtils;
@@ -53,11 +54,14 @@ public class GetFile implements BinaryHandler{
 	   *  	filename* - the file that should be returned, that file should be file name only and exist in user's web folder
 	   *    show     - "Y"(default) or "N" when "Y" will try get file real type and set in Content-Disposition
 	   *                so IE will display that file directly without save dialog
-	   *    del    - "N"(default), will delete after downloaded               
+	   *    del    - "N"(default), will delete after downloaded
+	   *    cd - content-disposition "inline"|"attachment" default to inline               
 	   */
       public void process(HttpServletRequest request,HttpServletResponse  response)  throws Exception{
         String filePath = request.getParameter("filename");
         boolean deleteFile=nds.util.Tools.getYesNo(request.getParameter("del"), false);
+        String cd= request.getParameter("cd");
+        if(!"attachment".equalsIgnoreCase(cd)) cd="inline";
         if(filePath==null){
         	// http://support.microsoft.com/kb/831929, since this bug, we set file name to PathInfo
         	/* this file should be deleted since such usage method is used for crosstab reports only
@@ -82,7 +86,10 @@ public class GetFile implements BinaryHandler{
             	
             	if( isTextType(file.getName())){
             		response.setContentType(CONTENT_TYPE);
-            		response.setHeader("Content-Disposition","inline;filename=\""+URLEncoder.encode(filePath,"UTF-8")+"\"");
+                	response.setHeader("Content-Disposition",cd+";"+ 
+                			WebUtils.getContentDispositionFileName(filePath, request));
+            		
+            		//response.setHeader("Content-Disposition","inline;filename=\""+URLEncoder.encode(filePath,"UTF-8")+"\"");
             	}else{
             		boolean fileExtFound=false;
             		if(isShow){
@@ -94,7 +101,10 @@ public class GetFile implements BinaryHandler{
 	            			for(int i=0;i<EXT.length;i++ ){
 	            				if(EXT[i].equals(fileExt)){
 	            					response.setContentType(EXT_CONTENT_TYPE[i]);
-	            					response.setHeader("Content-Disposition","inline;filename=\""+URLEncoder.encode(filePath,"UTF-8")+"\"");
+	            					response.setHeader("Content-Disposition",cd+";"+
+	                            			WebUtils.getContentDispositionFileName(filePath, request));
+	                        		
+	            					//response.setHeader("Content-Disposition","inline;filename=\""+URLEncoder.encode(filePath,"UTF-8")+"\"");
 	            					fileExtFound=true;
 	            					break;
 	            				}
@@ -103,7 +113,10 @@ public class GetFile implements BinaryHandler{
             		}
             		if(!fileExtFound){
             			response.setContentType(DOWNLOAD_TYPE);
-            			response.setHeader("Content-Disposition","inline;filename=\""+URLEncoder.encode(filePath,"UTF-8")+"\"");            			
+            			//response.setHeader("Content-Disposition","inline;filename=\""+URLEncoder.encode(filePath,"UTF-8")+"\"");
+            			response.setHeader("Content-Disposition",cd+";"+ 
+                    			WebUtils.getContentDispositionFileName(filePath, request));
+                		
             		}
             	}
                 

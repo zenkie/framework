@@ -13,6 +13,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import nds.control.web.WebUtils;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.report.ReportUtils;
@@ -80,7 +81,9 @@ public class Download implements BinaryHandler{
             	logger.debug("Downloading "+ file.getAbsolutePath());
             	
            		response.setContentType(DOWNLOAD_TYPE);
-           		response.setHeader("Content-Disposition","attachment;filename=\""+URLEncoder.encode(filePath,"UTF-8")+"\"");
+           		response.setHeader("Content-Disposition","attachment;"+ 
+            			WebUtils.getContentDispositionFileName(filePath, request));
+           		//response.setHeader("Content-Disposition","attachment;filename=\""+URLEncoder.encode(filePath,"UTF-8")+"\"");
 
                 
                 FileInputStream is=new FileInputStream(file);

@@ -68,17 +68,9 @@ Content-Disposition: attachment; filename*="utf8''%E4%B8%AD%E6%96%87%20%E6%96%87
     * 注意urlencode的结果与php的urlencode函数结果不太相同，php的urlencode会把空格替换成+，而这里需要替换成%20
 	         * 
 	         */
-	        //this is for firefox
-	        int bt=WebUtils.getBrowserType(request);
-	        if(bt==0){
-	        	//ie
-	        	response.setHeader("Content-Disposition","inline;filename=\""+
-	        			StringUtils.replace(java.net.URLEncoder.encode( att.getOrigFileName(),"UTF-8"), "+", "%20")+"\"");
-	        }else{
-	        	//ff
-	        	response.setHeader("Content-Disposition","inline;filename*=\"utf8''"+
-	        			StringUtils.replace(java.net.URLEncoder.encode( att.getOrigFileName(),"UTF-8"), "+", "%20")+"\"");
-	        }
+        	response.setHeader("Content-Disposition","inline;"+ 
+        			WebUtils.getContentDispositionFileName(att.getOrigFileName(), request));
+        	
 			InputStream is=attm.getAttachmentData(att);
 			ServletOutputStream os = response.getOutputStream();
 	            byte[] b = new byte[8192];

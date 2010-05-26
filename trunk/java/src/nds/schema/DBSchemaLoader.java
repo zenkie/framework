@@ -135,6 +135,7 @@ public class DBSchemaLoader {
 		return tc;
 	}
 	private TableImpl createTable(AdTable tb){
+		try{
 		// try loading class according to table name
 		TableImpl table=null;
 		if( Validator.isNotNull(tb.getClassName())){
@@ -231,6 +232,10 @@ public class DBSchemaLoader {
 		tables.put(tb.getId(),  table);
 		adTables.put(tb.getId(), tb);
 		return table;
+		}catch(Throwable t){
+			logger.error("Fail to load table :"+ tb.getName(),t);
+        	throw new NDSRuntimeException("Fail to load table "+ tb.getName()+":"+t.getMessage());
+		}
 	}
 
 	

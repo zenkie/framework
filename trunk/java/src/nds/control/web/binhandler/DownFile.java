@@ -13,12 +13,15 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import nds.util.*;
+import nds.control.web.WebUtils;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.report.ReportUtils;
 
 /**
- * Different with GetFile, thie handler always request client to download the file instead of dispalying directly 
+ * Different with GetFile, thie handler always request client to download the file instead of dispalying directly
+ * and loading from path relative to  webroot, that is "E:/portal422/server/default/deploy/nds.war/html/nds"
+ * 
  * @author yfzhu@agilecontrol.com
  */
 
@@ -85,8 +88,9 @@ public class DownFile implements BinaryHandler{
             	logger.debug("Downloading "+ file.getAbsolutePath());
             	
            		response.setContentType(DOWNLOAD_TYPE);
-           		response.setHeader("Content-Disposition","attachment;filename=\""+URLEncoder.encode(file.getName(),"UTF-8")+"\"");
-
+           		//response.setHeader("Content-Disposition","attachment;filename=\""+URLEncoder.encode(file.getName(),"UTF-8")+"\"");
+           		response.setHeader("Content-Disposition","attachment;"+ 
+            			WebUtils.getContentDispositionFileName(filePath, request));
                 
                 FileInputStream is=new FileInputStream(file);
                 ServletOutputStream os = response.getOutputStream();

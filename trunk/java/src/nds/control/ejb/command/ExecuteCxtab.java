@@ -211,7 +211,7 @@ public class ExecuteCxtab extends Command {
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("MMddHHmm");
 		//String filename="CXR_"+table.getName()+sdf.format(new Date());
-		String filename="CXR_"+cxtabId+sdf.format(new Date());
+		String filename="CXR_"+cxtabId+"_"+sdf.format(new Date());
 		
 		map.put("FILENAME", filename);
 		//map.put("FILETYPE", isBg?"xls":"htm");
@@ -250,7 +250,7 @@ public class ExecuteCxtab extends Command {
 	  		//url = "/html/nds/cxtab/viewrpt.jsp?file="+URLEncoder.encode(filename+"."+ fileType,"UTF-8");
 	  		if( "htm".equals(fileType) ){
 	  			url = "/html/nds/cxtab/viewrpt.jsp?file="+URLEncoder.encode(filename+"."+ fileType,"UTF-8");
-	  		}else if("xls".equals(fileType) ){
+	  		}else if("xls".equals(fileType) || "csv".equals(fileType)){
 	  			url= "/html/nds/cxtab/downloadrpt.jsp?file="+URLEncoder.encode(filename+"."+ fileType,"UTF-8");
 	  			//"/servlets/binserv/Download/"+ URLEncoder.encode(filename+"."+ fileType,"UTF-8");
 	  		}else{

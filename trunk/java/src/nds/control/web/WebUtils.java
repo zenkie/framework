@@ -833,5 +833,34 @@ public final class WebUtils {
        else if (s.indexOf("Firefox") > -1)
           return 1;
        return 2;	
-    }    
+    }   
+    /**
+     * Will guess client browser type from request header ("user-agent"), for ie and for ff is different
+ 其实按照RFC2231的定义，多语言编码的Content-Disposition应该这么定义：
+
+Content-Disposition: attachment; filename*="utf8''%E4%B8%AD%E6%96%87%20%E6%96%87%E4%BB%B6%E5%90%8D.txt"
+
+即：
+
+    * filename后面的等号之前要加 *
+    * filename的值用单引号分成三段，分别是字符集(utf8)、语言(空)和urlencode过的文件名。
+    * 最好加上双引号，否则文件名中空格后面的部分在Firefox中显示不出来
+    * 注意urlencode的结果与php的urlencode函数结果不太相同，php的urlencode会把空格替换成+，而这里需要替换成%20     * 
+     * @param filename
+     * @param req
+     * @return format like "filename=%d02.xls"
+     */
+    public static String getContentDispositionFileName(String filename, HttpServletRequest req) 
+    	throws java.io.UnsupportedEncodingException {
+    	int bt=WebUtils.getBrowserType(req);
+        if(bt==0){
+        	//ie
+        	return "filename=\""+
+        			StringUtils.replace(java.net.URLEncoder.encode(filename,"UTF-8"), "+", "%20")+"\"";
+        }else{
+        	//ff
+        	return "filename*=\"utf8''"+
+        			StringUtils.replace(java.net.URLEncoder.encode(filename,"UTF-8"), "+", "%20")+"\"";
+        }    	
+    }
 }
