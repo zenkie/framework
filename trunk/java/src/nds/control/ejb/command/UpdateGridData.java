@@ -166,21 +166,19 @@ public class UpdateGridData extends Command {
   		//when qlcid is set, will do partial_update
   		int qlcid=jo.optInt("qlcid", -1);
   		boolean partialUpdate= false;
-  		if(qlcid!=-1){
-  			nds.web.config.QueryListConfig qlc=nds.web.config.QueryListConfigManager.getInstance().getQueryListConfig(qlcid);
-  			List<ColumnLink> cls=qlc.getSelections(usr.getSecurityGrade());
-  			colNames=new ArrayList();
-  			colNames.add("ID");
-  			for(int i=0;i<cls.size();i++){
-  				ColumnLink cl=cls.get(i);
-  				if(cl.length()==1 && cl.getColumns()[0].isMaskSet(Column.MASK_MODIFY_EDIT))
-  					colNames.add(cl.getColumns()[0].getName());
-  			}
-  			partialUpdate=true;
-  			//logger.debug("qlcid="+ qlcid+", cols="+nds.util.Tools.toString(colNames, ","));
-  		}else{
-  			colNames=gm.getColumnsWhenModify();
-  		}
+		nds.web.config.QueryListConfig qlc=nds.web.config.QueryListConfigManager.getInstance().getQueryListConfig(qlcid);
+		if(qlc==null) qlc=nds.web.config.QueryListConfigManager.getInstance().getMetaDefault(table.getId());
+		
+		List<ColumnLink> cls=qlc.getSelections(usr.getSecurityGrade());
+		colNames=new ArrayList();
+		colNames.add("ID");
+		for(int i=0;i<cls.size();i++){
+			ColumnLink cl=cls.get(i);
+			if(cl.length()==1 && cl.getColumns()[0].isMaskSet(Column.MASK_MODIFY_EDIT))
+				colNames.add(cl.getColumns()[0].getName());
+		}
+		partialUpdate=true;
+		//logger.debug("qlcid="+ qlcid+", cols="+nds.util.Tools.toString(colNames, ","));
   		
   		
   		for(int i=0;i< al.length();i++){
@@ -370,14 +368,19 @@ public class UpdateGridData extends Command {
    * @throws JSONException
    */
   private DefaultWebEvent createEvent(JSONArray row, ArrayList colNames, DefaultWebEvent template ) throws JSONException{
-  	DefaultWebEvent e=(DefaultWebEvent)template.clone();
-  	Object value;
-  	for(int i=0;i< colNames.size();i++){
-  		value=     row.get(i+1);
-  		if(JSONObject.NULL.equals(value)) value=null;
-  		e.put( (String)colNames.get(i),value); // since row(0) is always row index 
+  	try{
+  		DefaultWebEvent e=(DefaultWebEvent)template.clone();
+	  	Object value;
+	  	for(int i=0;i< colNames.size();i++){
+	  		value=row.get(i+1);
+	  		if(JSONObject.NULL.equals(value)) value=null;
+	  		e.put( (String)colNames.get(i),value); // since row(0) is always row index 
+	  	}
+		e.put("JSONROW", row);// this could be used by some special command, such as B_V2_PRJ_TOKEModify
+	  	return e;
+  	}catch(Throwable t){
+  		logger.error("Fail to create event :row:"+  row.toString()+", columns:"+ Tools.toString(colNames, ","), t );
+  		throw new JSONException("Internal Error:"+ t.getMessage());
   	}
-	e.put("JSONROW", row);// this could be used by some special command, such as B_V2_PRJ_TOKEModify
-  	return e;
   }
 }
