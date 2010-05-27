@@ -12,6 +12,7 @@ import nds.control.ejb.command.pub.Pub;
 import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEventException;
 import nds.control.util.ValueHolder;
+import nds.control.web.WebUtils;
 import nds.mail.MailMsg;
 import nds.mail.NotificationManager;
 import nds.query.QueryEngine;
@@ -19,6 +20,7 @@ import nds.query.QueryUtils;
 import nds.schema.Table;
 import nds.schema.TableManager;
 import nds.security.User;
+import nds.util.Configurations;
 import nds.util.JNDINames;
 import nds.util.NDSException;
 import nds.util.Tools;
@@ -30,7 +32,13 @@ import nds.util.Tools;
 public class ObjectUnvoid extends Command{
     private TableManager manager ;
     public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
-      	
+        Configurations conf= (Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
+        /**
+         * Default to allow
+         */
+        boolean canUnvoid =!"false".equals(conf.getProperty("table.action.unvoid", "true"));
+        if(!canUnvoid) throw new NDSException("Unvoid action is disabled");
+
     	java.sql.Connection con=null;
        try{
        manager = helper.getTableManager() ;

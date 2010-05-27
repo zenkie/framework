@@ -101,7 +101,10 @@ public class ImportExcel implements Runnable{
                 s= TableManager.getInstance().getColumnValueByDescription(col.getId(),s,locale);
             }else{
             	int cellType= cell.getCellType();
-            switch(col.getType() ){
+            	if(cellType== cell.CELL_TYPE_BLANK){
+            		s="";// empty;
+            	}else{
+            	switch(col.getType() ){
             	case Column.STRING :
 	                try{t=cell.getStringCellValue();}
 	                catch(NumberFormatException e2){
@@ -139,7 +142,8 @@ public class ImportExcel implements Runnable{
                     break;
                 default:
                     logger.error("Unsupported column type:"+ col.getType());
-            }
+            	}
+            	}
             }
         }catch(Exception e){
             logger.error("Error parsing cell(" +rowNum+","+ cell.getCellNum() + ") as column " + col+":"+ e);

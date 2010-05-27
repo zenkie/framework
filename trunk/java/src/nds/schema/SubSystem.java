@@ -76,8 +76,9 @@ public class SubSystem {
 		});
 	}
 	public void addWebAction(WebAction action){
+		if(action.getScript()==null) throw new nds.util.NDSRuntimeException("SubSystem webaction must have script set:"+action.getId());
 		if(!action.getScript().startsWith("<")){
-			throw new nds.util.NDSRuntimeException("SubSystem webaction must be tree xml format(starts with '<' tag)");
+			throw new nds.util.NDSRuntimeException("SubSystem webaction must be tree xml format(starts with '<' tag):"+action.getId());
 		}
 		actions.add(action);
 		tcacts.add(action);

@@ -9,22 +9,31 @@ import nds.control.ejb.command.pub.Pub;
 import nds.control.event.DefaultWebEvent;
 import nds.control.util.SecurityUtils;
 import nds.control.util.ValueHolder;
+import nds.control.web.WebUtils;
 import nds.query.QueryEngine;
 import nds.query.QueryUtils;
 import nds.schema.Table;
 import nds.schema.TableManager;
 import nds.security.Directory;
 import nds.security.User;
+import nds.util.Configurations;
 import nds.util.JNDINames;
 import nds.util.NDSException;
 import nds.util.Tools;
 /**
 *  Valid all records selected, if condition ok
+*  Unvlid only valid when portal.properties#table.action.unvoid=true or not set
 */
 public class ListUnvoid extends Command{
   private TableManager manager;
   public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
-
+      Configurations conf= (Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
+      /**
+       * Default to allow
+       */
+      boolean canUnvoid =!"false".equals(conf.getProperty("table.action.unvoid", "true"));
+      if(!canUnvoid) throw new NDSException("Unvoid action is disabled");
+	  
        manager = helper.getTableManager() ;
        
        int tableId = Tools.getInt(event.getParameterValue("table", true),-1 ) ;
