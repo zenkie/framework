@@ -31,7 +31,11 @@ public class LoadCxtabJson extends Command {
 			cxtabId* - ad_cxtab.id
 			uk.ltd.getahead.dwr.WebContext - this is for convenience to request jsp result
 			tag - this is used by client to remember locale status, such as for row information,
-				  it will be sent back unchanged.	
+				  it will be sent back unchanged.
+			axisH: boolean if false, will not load axisH
+			axisV: boolean if false, will not load axisH
+			axisP: boolean if false, will not load axisH
+			measures:array: boolean if false, will not load measures:array	  	
 	 * @return "data" will be jsonObject with following format:
 	 * { 	code:0|!=0,
 	 * 		message: message for error,
@@ -51,6 +55,11 @@ public class LoadCxtabJson extends Command {
 	  	JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
 	  	Object tag= jo.opt("tag");
 	  	int cxtabId= jo.getInt("cxtabId");
+	  	boolean loadAxisH= jo.optBoolean("axisH", true);
+	  	boolean loadAxisV= jo.optBoolean("axisV", true);
+	  	boolean loadAxisP= jo.optBoolean("axisP", true);
+	  	boolean loadMeasures= jo.optBoolean("measures", true);
+	  	
 	  	int factTableId= Tools.getInt(engine.doQueryOne("select ad_table_id from ad_cxtab where id="+ cxtabId),-1);
 	  	Table factTable = manager.getTable(factTableId);
 	  	JSONArray axisH=new JSONArray();
@@ -80,41 +89,44 @@ public class LoadCxtabJson extends Command {
   			
   			dim.put("description", desc);
 	  		if("H".equals(pos)){
-	  			axisH.put(axisH.length(), dim);
+	  			if(loadAxisH)axisH.put(axisH.length(), dim);
 	  		}else if("V".equals(pos)){
-	  			axisV.put(axisV.length(), dim);
+	  			if(loadAxisV)axisV.put(axisV.length(), dim);
 	  		}else{
-	  			axisP.put(axisP.length(),dim);
+	  			if(loadAxisP)axisP.put(axisP.length(),dim);
 	  		}
 	  	}
   		String colName;
-	  	al= engine.doQueryList("select ad_column_id, description, function_, userfact, VALUEFORMAT, valuename,sgrade from ad_cxtab_fact where sgrade<="+usr.getSecurityGrade()+" and ad_cxtab_id="+ cxtabId+" order by orderno asc");
-	  	for(int i=0;i< al.size();i++){
-	  		List d= (List) al.get(i);
-	  		int colId = Tools.getInt( d.get(0), -1);
-	  		if(colId !=-1) {
-	  			if(manager.getColumn(colId)==null) continue;
-	  			colName=factTable.getName()+"."+ manager.getColumn(colId).getName();
-	  		}else{
-	  			colName="";
-	  		}
-	  		JSONObject m=new JSONObject();
-  			m.put("column",  colName);
-  			
-  			String desc=(String) d.get(1);
-  			if(Validator.isNull(desc)){
-  				//ColumnLink cl= new ColumnLink(new int[]{colId});
-  				desc ="["+ manager.getColumn(colId).getDescription(event.getLocale())+"]"; 	  		
-  			}  		
-  			
-  			m.put("description", desc);
-  			m.put("function_",   (String) d.get(2));
-  			m.put("userfact", (String) d.get(3));
-  			m.put("valueformat", (String) d.get(4));
-  			m.put("valuename", (String) d.get(5));
-  			m.put("sgrade", Tools.getInt( d.get(6), 0));
-  			measures.put(measures.length(), m);
-	  	}
+  		if(loadMeasures){
+		  	al= engine.doQueryList("select ad_column_id, description, function_, userfact, VALUEFORMAT, valuename,sgrade from ad_cxtab_fact where sgrade<="+usr.getSecurityGrade()+" and ad_cxtab_id="+ cxtabId+" order by orderno asc");
+		  	for(int i=0;i< al.size();i++){
+		  		
+		  		List d= (List) al.get(i);
+		  		int colId = Tools.getInt( d.get(0), -1);
+		  		if(colId !=-1) {
+		  			if(manager.getColumn(colId)==null) continue;
+		  			colName=factTable.getName()+"."+ manager.getColumn(colId).getName();
+		  		}else{
+		  			colName="";
+		  		}
+		  		JSONObject m=new JSONObject();
+	  			m.put("column",  colName);
+	  			
+	  			String desc=(String) d.get(1);
+	  			if(Validator.isNull(desc)){
+	  				//ColumnLink cl= new ColumnLink(new int[]{colId});
+	  				desc ="["+ manager.getColumn(colId).getDescription(event.getLocale())+"]"; 	  		
+	  			}  		
+	  			
+	  			m.put("description", desc);
+	  			m.put("function_",   (String) d.get(2));
+	  			m.put("userfact", (String) d.get(3));
+	  			m.put("valueformat", (String) d.get(4));
+	  			m.put("valuename", (String) d.get(5));
+	  			m.put("sgrade", Tools.getInt( d.get(6), 0));
+	  			measures.put(measures.length(), m);
+		  	}
+  		}
 	  	JSONObject ro=new JSONObject();
 	  	ro.put("tag", tag); //  return back unchanged.
   		ro.put("code", 0);

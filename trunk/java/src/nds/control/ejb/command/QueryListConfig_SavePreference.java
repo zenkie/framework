@@ -65,6 +65,12 @@ public class QueryListConfig_SavePreference extends Command {
 	  	Properties props=new Properties();
 	  	props.setProperty( tbName,String.valueOf( qlcId));
 	  	SavePreference.setPreferenceValues(user.id.intValue(), "qlc", props);
+		/**
+		 * clear user web cache for qlc 
+		 */
+		WebContext wc=(WebContext) jo.get("org.directwebremoting.WebContext");
+		UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(wc.getSession()).getActor(nds.util.WebKeys.USER));
+		userWeb.invalidatePreference("qlc", tbName);
 	  	
 	  	ro.put("tag", tag); //  return back unchanged.
 	  	ro.put("message", mh.translateMessage("@current-qlc@"+name, event.getLocale()));
@@ -74,12 +80,6 @@ public class QueryListConfig_SavePreference extends Command {
 	  	holder.put("message", mh.getMessage(event.getLocale(), "complete"));
 		holder.put("code","0");
 
-		/**
-		 * clear user web cache for qlc 
-		 */
-		WebContext wc=(WebContext) jo.get("org.directwebremoting.WebContext");
-		UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(wc.getSession()).getActor(nds.util.WebKeys.USER));
-		userWeb.invalidatePreference("qlc", tbName);
 		
 		
 		logger.info("Save qlc "+ (qlcId)+" as default config for "+  manager.getTable(tableId).getName() +" by "+ user.name+"(id="+ user.id+")");

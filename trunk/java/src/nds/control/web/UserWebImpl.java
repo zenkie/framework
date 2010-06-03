@@ -379,7 +379,7 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
      * @param userId
      * @param userName
      * @param clientDomain
-     * @return user.truename+"¡¾"+ client.description+ "¡¿"
+     * @return user.truename
      */
     private String getDetailDescription(int userId, String userName, String clientDomain){
     	String desc;
@@ -391,17 +391,7 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
     		logger.error("Could not retriever user description for "+ userId +":"+ e);
     		desc = userName;
     	}
-    	desc += "["+clientDomain+"]";
-    	/*
-    	try{
-    		String cdesc = (String)QueryEngine.getInstance().doQueryOne("select description from ad_client where domain='"+clientDomain+"'" );
-    		if( Validator.isNull(cdesc)) desc +="["+ clientDomain+"]";
-    		else desc += "["+cdesc+"]";
-    	}catch(Exception e){
-    		logger.error("Could not retriever ad_client description for "+ clientDomain +":"+ e);
-    		desc += "["+clientDomain+"]";
-    	}
-    	*/
+    	//desc += "["+clientDomain+"]";
     	if(! isActive) desc += "(Not acive)";
     	return desc;
     }

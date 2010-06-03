@@ -703,10 +703,12 @@ public class CxtabReport {
         		}else{
         			//only support avg for group by function
         			if("AVG".equalsIgnoreCase(function)){
-        				if(col.isVirtual())
+        				facts.add( "avg("+ col.getName() + ")");
+        				/*if(col.isVirtual())
                 			facts.add( "sum("+ col.getName() + ")/count("+factTable.getName()+".id)");
                 		else 
                 			facts.add( "sum("+ factTable.getName()+"."+col.getName() + ")/count("+factTable.getName()+".id)");
+                		*/	
                 		factDescs.add(mea.get(3));
         			}else
         				throw new NDSException("不支持此函数:"+ function);

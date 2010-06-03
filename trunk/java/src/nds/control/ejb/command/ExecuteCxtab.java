@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.Vector;
 
 import org.directwebremoting.WebContext;
@@ -22,6 +23,8 @@ import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEventException;
 import nds.control.util.SecurityUtils;
 import nds.control.util.ValueHolder;
+import nds.control.web.UserWebImpl;
+import nds.control.web.WebUtils;
 import nds.process.ProcessUtils;
 import nds.query.*;
 import nds.schema.*;
@@ -100,8 +103,23 @@ public class ExecuteCxtab extends Command {
 	  	}else{
 	  		list=engine.doQueryList("select c.ad_processqueue_id, q.name , c.isbackground,c.name,c.pre_procedure,c.AD_PI_COLUMN_ID, ad_table_id from ad_cxtab c, ad_processqueue q where q.id= c.ad_processqueue_id and c.id="+ cxtabName,conn);
 	  	}
-	  	
 	  	if(list.size()==0) throw new NDSException("@parameter-error@:(cxtab="+ cxtabName+")" );
+	  	
+	  	// save user cxtab preference on the root cxtab, so next time load, will show directly
+	  	String cxtabRootId=String.valueOf( engine.doQueryOne("select nvl(parent_id, id) from ad_cxtab where id="+ cxtabId, conn));
+	  	Properties props=new Properties();
+	  	props.setProperty( cxtabRootId,String.valueOf( cxtabId));
+	  	SavePreference.setPreferenceValues(user.id.intValue(), "cxtab"+cxtabRootId, props);
+		//clear user web cache 
+	  	// no need, we do not cache this one
+		/*WebContext wc=(WebContext) jo.opt("org.directwebremoting.WebContext");
+		if(wc!=null){
+			UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(wc.getSession()).getActor(nds.util.WebKeys.USER));
+			if(userWeb!=null)userWeb.invalidatePreference("cxtab"+cxtabRootId, cxtabRootId);
+		}*/
+		
+		
+		
 	  	int queueId= Tools.getInt( ((List)list.get(0)).get(0),-1);
 	  	String queueName=(String) ((List)list.get(0)).get(1);
 	  	boolean isBg= Tools.getYesNo(((List)list.get(0)).get(2),true);

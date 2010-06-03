@@ -4,6 +4,7 @@ import java.rmi.RemoteException;
 import java.sql.PreparedStatement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import org.directwebremoting.WebContext;
 import org.json.*;
@@ -32,12 +33,13 @@ public class SaveCxtabJson extends Command {
 	private final static String DELETE_DIMENSION="delete from ad_cxtab_dimension where ad_cxtab_id=?";
 	private final static String DELETE_MEASURE="delete from ad_cxtab_fact where ad_cxtab_id=?"; 
 	//private final static String INSERT_CXTAB="insert into ad_cxtab(id,ad_client_id,ad_org_id,name,description,ad_table_id,filter,ad_process_id,ad_column_cxtabinst_id,sampleurl,attr1,attr2,attr3,ownerid,modifierid,creationdate,modifieddate,isactive,isbackground,ad_processqueue_id,ad_cxtab_category_id,reporttype,orderno,pre_procedure,ad_pi_column_id,ispublic) values(get_sequences('ad_cxtab'),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,sysdate,sysdate,'Y',?,?,?,?,?,?,?,?)";
-	private final static String INSERT_CXTAB="insert into ad_cxtab(id,ad_client_id,ad_org_id,name,description,ad_table_id,filter,ad_column_cxtabinst_id,sampleurl,attr1,attr2,attr3,ownerid,modifierid,creationdate,modifieddate,isactive,isbackground,ad_processqueue_id,ad_cxtab_category_id,reporttype,orderno,pre_procedure,ad_pi_column_id,ispublic) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,sysdate,sysdate,'Y',?,?,?,?,?,?,?,?)";
+	private final static String INSERT_CXTAB="insert into ad_cxtab(id,ad_client_id,ad_org_id,name,description,ad_table_id,filter,ad_column_cxtabinst_id,sampleurl,attr1,attr2,attr3,ownerid,modifierid,creationdate,modifieddate,isactive,isbackground,ad_processqueue_id,ad_cxtab_category_id,reporttype,orderno,pre_procedure,ad_pi_column_id,ispublic,parent_id) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,sysdate,sysdate,'Y',?,?,?,?,?,?,?,?,?)";
 	/**
 	 * 
 	 * @param event contains 
 	 * 	jsonObject - 
 			cxtabId* - ad_cxtab.id
+			parentId - when cxtabId is -1, this param will sign for parent record of ad_cxtab
 	 		axisH :  axis horizontal, this is an array object, elements has properties: {columnlink, description}
 	 		axisV :  axis vertical, same as axisH
 	 		measures:array object, elements {description, column, userfact, valueformat,function_}
@@ -57,7 +59,6 @@ public class SaveCxtabJson extends Command {
   	MessagesHolder mh= MessagesHolder.getInstance();
   	java.sql.Connection conn=null;
   	PreparedStatement pstmt=null;
-  	StringBuffer sb=new StringBuffer();
   	boolean flag=false;
   	ValueHolder holder= new ValueHolder();
   	JSONObject ro=new JSONObject();
@@ -66,6 +67,8 @@ public class SaveCxtabJson extends Command {
   		JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
 	  	Object tag= jo.opt("tag");
 	  	int cxtabId= jo.getInt("cxtabId");
+	  	int parentId =jo.optInt("parentId",-1);
+	  	
 	  	String savetype=(String)jo.opt("savetype");
 		String name=(String)jo.opt("name");
 	  	
@@ -90,10 +93,10 @@ public class SaveCxtabJson extends Command {
 	  		if(count>=1){
 	  	  		ro.put("code", 2);
 	  		}else{
-		  		List replist=QueryEngine.getInstance().doQueryList("select ad_org_id,description,ad_table_id,filter,ad_process_id,ad_column_cxtabinst_id,sampleurl,attr1,attr2,attr3,isbackground,ad_processqueue_id,ad_cxtab_category_id,reporttype,orderno,pre_procedure,ad_pi_column_id from ad_cxtab where id="+ cxtabId);
+		  		List replist=QueryEngine.getInstance().doQueryList("select ad_org_id,description,ad_table_id,filter,ad_process_id,ad_column_cxtabinst_id,sampleurl,attr1,attr2,attr3,isbackground,ad_processqueue_id,ad_cxtab_category_id,reporttype,orderno,pre_procedure,ad_pi_column_id from ad_cxtab where id="+ (cxtabId==-1?parentId:cxtabId));
 		  		int oldCxtabId=cxtabId;
 		  		cxtabId=QueryEngine.getInstance().getSequence("ad_cxtab");
-		  		if(replist.size()>=0){
+		  		if(replist.size()>0){
 		  			pstmt= conn.prepareStatement(INSERT_CXTAB);
 		  			pstmt.setInt(1, cxtabId);
 		  			pstmt.setInt(2, user.adClientId);
@@ -117,6 +120,10 @@ public class SaveCxtabJson extends Command {
 		  			pstmt.setString(20, (String)((List)replist.get(0)).get(15));
 		  			pstmt.setInt(21, Tools.getInt(((List)replist.get(0)).get(16),0));
 		  			pstmt.setString(22,"N");
+		  			//parentid
+		  			if(parentId!=-1)pstmt.setInt(23, parentId);
+		  			else pstmt.setNull(23, SQLTypes.INT);
+		  			
 		  			pstmt.executeUpdate();
 				  	try{pstmt.close();}catch(Throwable td){}
 				  	//clone AD_CXTAB_JPARA
@@ -124,6 +131,8 @@ public class SaveCxtabJson extends Command {
 				  	"insert into AD_CXTAB_JPARA(id,ad_client_id,ad_cxtab_id,name,description,paratype,defaultvalue,ad_column_id,selectiontype,ownerid,modifierid,creationdate,modifieddate,isactive,orderno,nullable) select get_sequences('AD_CXTAB_JPARA'),ad_client_id,"+
 				  	cxtabId+",name,description,paratype,defaultvalue,ad_column_id,selectiontype,modifierid,modifierid,sysdate,sysdate,isactive,orderno,nullable from AD_CXTAB_JPARA where ad_cxtab_id="+oldCxtabId
 				  	);
+		  		}else{
+		  			throw new NDSException("Internal Error: cxtab not found");
 		  		}
 		  		flag=true;
 	  		}
@@ -265,6 +274,13 @@ public class SaveCxtabJson extends Command {
 		holder.put("data",ro );
 		holder.put("code","0");
 		logger.debug(ro.toString());
+		
+	  	// save user cxtab preference on the root cxtab, so next time load, will show directly
+	  	String cxtabRootId=String.valueOf( engine.doQueryOne("select nvl(parent_id, id) from ad_cxtab where id="+ cxtabId, conn));
+	  	Properties props=new Properties();
+	  	props.setProperty( cxtabRootId,String.valueOf( cxtabId));
+	  	SavePreference.setPreferenceValues(user.id.intValue(), "cxtab"+cxtabRootId, props);
+		
 		return holder;
   	}catch(Throwable t){
   		if(t instanceof NDSException) throw (NDSException)t;

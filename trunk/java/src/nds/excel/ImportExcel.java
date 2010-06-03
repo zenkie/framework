@@ -27,7 +27,7 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem;
  * then import each records in file to db, and log output(error) to
  * specified file
  * 
- * Excel file can be xls, txt and csv format
+ * Excel file can be xls, txt and csv format 
  */
 public class ImportExcel implements Runnable{
     private static Logger logger=LoggerManager.getInstance().getLogger(ImportExcel.class.getName());
@@ -256,7 +256,12 @@ public class ImportExcel implements Runnable{
 	        	if(excelStream==null) throw new NDSException("must set inputstream");
 	        	BufferedReader  isr=new BufferedReader(new InputStreamReader(excelStream, "GBK"));
 	        	
-	        	boolean txtLineTypeIsToken= "token".equals(params.getProperty("txt_type","token"));
+	        	boolean txtLineTypeIsToken;
+	        	if( "pandian".equals(params.getProperty("file_format"))){
+	        		txtLineTypeIsToken=false;
+	        	}else{
+	        		txtLineTypeIsToken="token".equals(params.getProperty("txt_type","token"));
+	        	}
 	        	StringTokenizer fixedLength=new StringTokenizer( params.getProperty("txt_fix_len","20,5"),",");
 	        	String token=  params.getProperty("txt_token");
 	        	
@@ -267,7 +272,7 @@ public class ImportExcel implements Runnable{
 	        	int[] endIdx=new int[columns.size()];
 	        	if(txtLineTypeIsToken){
 	        		//
-	        		if(Validator.isNull(token)) throw new NDSException("Œ¥…Ë÷√∑÷∏Ù∑˚");
+	        		if(Validator.isNull(token) || "undefined".equals(token)) throw new NDSException("Œ¥…Ë÷√∑÷∏Ù∑˚");
 	        		tokenPattern= Pattern.compile(token);
 	        	}else{
 		        	int cnt=0;
@@ -436,7 +441,12 @@ public class ImportExcel implements Runnable{
 	        	if(excelStream==null) throw new NDSException("must set inputstream");
 	        	BufferedReader  isr=new BufferedReader(new InputStreamReader(excelStream, "GBK"));
 	        	
-	        	boolean txtLineTypeIsToken= "token".equals(params.getProperty("txt_type","token"));
+	        	boolean txtLineTypeIsToken;
+	        	if("pandian".equals(params.getProperty("file_format")))
+	        		txtLineTypeIsToken=false;
+	        	else
+	        		txtLineTypeIsToken= "token".equals(params.getProperty("txt_type","token"));
+	        	
 	        	StringTokenizer fixedLength=new StringTokenizer( params.getProperty("txt_fix_len","20,5"),",");
 	        	String token=  params.getProperty("txt_token");
 	        	
@@ -447,7 +457,7 @@ public class ImportExcel implements Runnable{
 	        	int[] endIdx=new int[columns.size()];
 	        	if(txtLineTypeIsToken){
 	        		//
-	        		if(Validator.isNull(token)) throw new NDSException("Œ¥…Ë÷√∑÷∏Ù∑˚");
+	        		if(Validator.isNull(token) || "undefined".equals(token)) throw new NDSException("Œ¥…Ë÷√∑÷∏Ù∑˚");
 	        		tokenPattern= Pattern.compile(token);
 	        	}else{
 		        	int cnt=0;
