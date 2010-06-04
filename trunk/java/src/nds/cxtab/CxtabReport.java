@@ -703,7 +703,11 @@ public class CxtabReport {
         		}else{
         			//only support avg for group by function
         			if("AVG".equalsIgnoreCase(function)){
-        				facts.add( "avg("+ col.getName() + ")");
+        				if(col.isVirtual())
+        					facts.add( "AVG("+ col.getName() + ")");
+            			else 
+            				facts.add( "AVG("+ factTable.getName()+"."+col.getName() + ")");
+        				 
         				/*if(col.isVirtual())
                 			facts.add( "sum("+ col.getName() + ")/count("+factTable.getName()+".id)");
                 		else 
