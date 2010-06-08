@@ -133,13 +133,10 @@ public class SetCharacterEncodingFilter implements Filter {
         	if(s!=null){
         		try{
             		session= s.getId();
-        			UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(s).getActor(nds.util.WebKeys.USER));
-        			username=userWeb.getUserName();
-        			
+        			username=(String)s.getAttribute("USER_ID");
+        			if(username==null) username="";
         		}catch(Throwable userWebException){
-        			
         		}
-        		
         	}
         }
         String ip=request.getRemoteAddr();

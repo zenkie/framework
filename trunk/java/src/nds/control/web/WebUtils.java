@@ -207,7 +207,7 @@ public final class WebUtils {
         return context;
     }
 
-    public static synchronized ServletContextManager getServletContextManager( ) {
+    public static  ServletContextManager getServletContextManager( ) {
         ServletContextManager manager=null;
         if( context ==null)
             throw new NDSRuntimeException("Internal Error: ServletContext not set before calling getServletContextManager");
@@ -226,9 +226,15 @@ public final class WebUtils {
         manager= (ServletContextManager)context.getAttribute(WebKeys.SERVLET_CONTEXT_MANAGER);
         try {
             if( manager ==null) {
-                manager=(ServletContextManager)Beans.instantiate(MainServlet.class.getClassLoader(), "nds.control.web.ServletContextManager");
-                context.setAttribute(WebKeys.SERVLET_CONTEXT_MANAGER,manager);
-                manager.init(context);
+            	//synchronized(context){
+            		//check again
+            		manager= (ServletContextManager)context.getAttribute(WebKeys.SERVLET_CONTEXT_MANAGER);
+            		if(manager==null){
+                        manager=(ServletContextManager)Beans.instantiate(MainServlet.class.getClassLoader(), "nds.control.web.ServletContextManager");
+                        context.setAttribute(WebKeys.SERVLET_CONTEXT_MANAGER,manager);
+                        manager.init(context);
+            		}
+            	//}
             }
             return manager;
         } catch(Exception e) {
@@ -237,7 +243,7 @@ public final class WebUtils {
         }
     }
 
-    public static synchronized SessionContextManager getSessionContextManager(HttpSession session ) {
+    public static SessionContextManager getSessionContextManager(HttpSession session ) {
         return getSessionContextManager(session, true);
     }
     /**
@@ -246,7 +252,7 @@ public final class WebUtils {
      * @param create if true, will create session manager if not exists
      * @return
      */
-    public static synchronized SessionContextManager getSessionContextManager(HttpSession session , boolean create) {
+    public static  SessionContextManager getSessionContextManager(HttpSession session , boolean create) {
         try {
             if( session ==null ) {
                 System.out.println("Found session be null, and return null.");
@@ -254,10 +260,20 @@ public final class WebUtils {
             }
             SessionContextManager manager= (SessionContextManager)session.getAttribute(WebKeys.SESSION_CONTEXT_MANAGER);
             if( manager ==null && create) {
-                manager=(SessionContextManager)Beans.instantiate(MainServlet.class.getClassLoader(), "nds.control.web.SessionContextManager");
-                session.removeAttribute(WebKeys.SESSION_CONTEXT_MANAGER);
-                session.setAttribute(WebKeys.SESSION_CONTEXT_MANAGER,manager);
-                manager.init(session);
+            	//following is marked up, it's seldom when 2 threads work on the same new session in the same time.
+            	//even when happens, remove first one does no great harm to another one
+            	
+            	//synchronized(session){
+            	//	manager= (SessionContextManager)session.getAttribute(WebKeys.SESSION_CONTEXT_MANAGER);
+            	//	if(manager==null){
+		                manager=(SessionContextManager)Beans.instantiate(MainServlet.class.getClassLoader(), "nds.control.web.SessionContextManager");
+		                session.removeAttribute(WebKeys.SESSION_CONTEXT_MANAGER);
+		                session.setAttribute(WebKeys.SESSION_CONTEXT_MANAGER,manager);
+		                manager.init(session);
+            	//	}
+	                
+            	//}
+            	
     			// load locale if guest user visit the web site
     			Locale locale = (Locale)session.getAttribute(org.apache.struts.Globals.LOCALE_KEY);
     			if(locale==null) session.setAttribute(org.apache.struts.Globals.LOCALE_KEY, TableManager.getInstance().getDefaultLocale());
