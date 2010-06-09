@@ -645,7 +645,10 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 			if(isIntranet) return true;
 
 			conn= nds.query.QueryEngine.getInstance().getConnection();
-			pstmt= conn.prepareStatement("select emailverify from users where email=?");
+			if(nds.schema.TableManager.getInstance().getColumn("C_STORE", "USBKEY")!=null){
+				pstmt= conn.prepareStatement("select nvl(u.emailverify, c.usbkey) from users u, c_store c where u.email=? and c.id(+)= u.c_store_id");
+			}else
+				pstmt= conn.prepareStatement("select emailverify from users where email=?");
 			pstmt.setString(1, login);
 			rs= pstmt.executeQuery();
 			if(rs.next()){
