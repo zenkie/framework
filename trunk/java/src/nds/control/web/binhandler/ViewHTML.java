@@ -24,6 +24,7 @@ import nds.report.*;
  */
 
 public class ViewHTML implements BinaryHandler{
+	public void init(ServletContext context){}
     /**
      */
 	public void process(HttpServletRequest request,HttpServletResponse  response)  throws Exception{

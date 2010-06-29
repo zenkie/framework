@@ -91,7 +91,27 @@ public class JSONUtils {
 		}
 		return ja;
 	}
-
+	/**
+	 * Convert to json array
+	 * @param rs, should have cursor moved before first row
+	 * @param maxRows, end row at maxRows
+	 * @return
+	 * @throws JSONException
+	 */
+	public static JSONArray toJSONArray(java.sql.ResultSet rs, long maxRows) throws JSONException,java.sql.SQLException{
+		int cols=rs.getMetaData().getColumnCount();
+		JSONArray ja=new JSONArray(); 
+		long cnt=0;
+		while(rs.next() && cnt<maxRows){
+			JSONArray row=new JSONArray();
+			for(int i=0;i<cols;i++){
+				row.put(rs.getObject(i+1));
+			}
+			ja.put(row);
+			cnt++;
+		}
+		return ja;
+	}
 	/**
 	 * Convert java array to json array, if <param>cl</param> is multi-dimensional array
 	 * the converted json array will also be that.

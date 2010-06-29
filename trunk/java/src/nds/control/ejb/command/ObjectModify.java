@@ -110,8 +110,8 @@ public class ObjectModify extends Command{
        try{
        // 得到所要操作的表的名字
        TableManager manager = helper.getTableManager() ;
-       int tableId = Tools.getInt(event.getParameterValue("table"),-1 ) ;
-       Table table = manager.getTable(tableId) ;
+       Table table = manager.findTable(event.getParameterValue("table"));
+       int tableId = table.getId();
        String tableName = table.getName();
 
        

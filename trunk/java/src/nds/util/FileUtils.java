@@ -311,7 +311,12 @@ public class FileUtils {
     public static String [] getFileList(File dir, String prefix, String suffix) {
         return dir.list(new DirFilter(prefix, suffix));
     }
-    
+    /**
+     * return a list of files with this suffix in directory dstr
+     */
+    public static File[] getFiles(File dir, String prefix, String suffix) {
+        return dir.listFiles(new DirFilter(prefix, suffix));
+    }
 }
 /**
  * Filter used to seek directories

@@ -73,9 +73,9 @@ public class TurboScan extends Command {
 	  	pstmt=null;
 	  	
 	  	Object tag= jo.opt("tag");
-	  	int tableId= jo.getInt("table");
-	  	Table table= manager.getTable(tableId);
-	  	Table masterTable=manager.getTable( jo.getInt("masterTableId"));
+	  	Table table= manager.findTable(jo.opt("table"));
+	  	int tableId= table.getId();
+	  	Table masterTable=manager.findTable( jo.get("masterTableId"));
 	  	int masterObjectId=jo.getInt("masterObjId");
 
 	  	Column pfk=manager.getParentFKColumn(table);

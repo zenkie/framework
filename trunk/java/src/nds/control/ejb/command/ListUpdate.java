@@ -50,9 +50,8 @@ public class ListUpdate extends Command {
 	  TableManager manager=TableManager.getInstance();
       boolean isOutputJSONError=Tools.getYesNo(
     		  event.getParameterValue("output_json", true), false);
-	  
-      int tableId = Tools.getInt(event.getParameterValue("table"),-1 ) ;
-      Table table = manager.getTable(tableId) ;
+      Table table = manager.findTable(event.getParameterValue("table"));
+      int tableId = table.getId();
       String tableName = table.getName();
       String akName= table.getAlternateKey().getName();
 	  String operatorId=(String)event.getParameterValue("operatorid");

@@ -9,6 +9,7 @@
         </id> 
         <property column="AD_CLIENT_ID" length="10" name="AdClientId" not-null="false" type="integer" />
         <property column="NAME" length="40" name="Name" not-null="true" type="string" />
+        <property column="ALIASNAME" length="100" name="AliasName" not-null="false" type="string" />
         <property column="PK_COLUMN_ID" length="10" name="PkColumnId" not-null="false" type="integer" />
         <property column="REALTABLE_ID" length="10" name="RealtableId" not-null="false" type="integer" />
         <property column="FILTER" length="400" name="Filter" not-null="false" type="string" />

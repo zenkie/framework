@@ -26,7 +26,7 @@ import nds.report.*;
 
 public class JasperReport implements BinaryHandler{
     private Logger logger= LoggerManager.getInstance().getLogger(JasperReport.class.getName());
-	
+    public void init(ServletContext context){}
 	/**
 	*  return OutputStream of JasperReport object, this page could only be viewed from localhost
 	*  for security concern.
@@ -93,7 +93,7 @@ public class JasperReport implements BinaryHandler{
 	 */
 	private int getReportId(String clientDomain, String tableName, String reportType) throws Exception{
 		reportType= reportType.toUpperCase();
-		Table table= nds.schema.TableManager.getInstance().getTable(tableName);
+		Table table= nds.schema.TableManager.getInstance().findTable(tableName);
 		if( table ==null) throw new NDSException("table "+ tableName + " not found.");
 		String sql="select r.id from ad_report r, ad_client c where c.domain='"+ clientDomain+"' and r.ad_table_id="+table.getId()+" and r.reporttype='"+ reportType+"' and c.id=r.ad_client_id order by id asc";
 		return Tools.getInt(QueryEngine.getInstance().doQueryOne(sql), -1);

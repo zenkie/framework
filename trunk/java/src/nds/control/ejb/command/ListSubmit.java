@@ -44,9 +44,9 @@ public class ListSubmit extends Command{
      */
     public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
          TableManager manager = helper.getTableManager() ;
-         int tableId = Tools.getInt(event.getParameterValue("table", true),-1 ) ;
+         Table table = manager.findTable(event.getParameterValue("table",true));
+         int tableId = table.getId();
          String[] itemidStr = event.getParameterValues("itemid",true);
-         Table table = manager.getTable(tableId) ;
          User user= helper.getOperator(event);
          String operatorDesc=user.getDescription();
          Integer operaorID= user.getId() ;

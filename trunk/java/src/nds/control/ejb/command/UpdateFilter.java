@@ -55,8 +55,9 @@ public class UpdateFilter extends Command {
   	filterExpr=(String) event.getParameterValue("filter_expr");
   	if(Validator.isNull(filterExpr) || filterExpr.equalsIgnoreCase("undefined")){
   		// it should be obtained from sql 
-  	  	int tableId= Tools.getInt(event.getParameterValue("table"), -1);
-  	  	Table table= TableManager.getInstance().getTable(tableId);
+  	  	Table table= TableManager.getInstance().findTable(event.getParameterValue("table"));
+  	  	int tableId= table.getId();
+  	  	
   		Expression expr=new Expression(new ColumnLink(new int[]{table.getPrimaryKey().getId()}), 
   				filterSQL, filter);
   		filterExpr= expr.toString();

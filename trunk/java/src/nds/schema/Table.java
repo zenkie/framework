@@ -457,6 +457,15 @@ public interface Table extends Serializable  {
     public JSONObject getJSONProps();
     
     /**
+     * Alias name is a short yet unique name for Table, support comma separated values,
+     * each one could be a unique name, that is, one table can have several alias names.
+     * 
+     * So designer can build up several alias name systems in the same meta data 
+     * @return string may contain comma for alias
+     * @since 4.1
+     */
+    public String getAliasName();
+    /**
      * DISPATCH_NONE 表示不需要下发
      */
     public final static int DISPATCH_NONE=16;

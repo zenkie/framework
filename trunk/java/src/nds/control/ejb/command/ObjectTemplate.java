@@ -34,9 +34,9 @@ public class ObjectTemplate extends Command{
     public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
         logger.debug(event.toDetailString());
     	TableManager manager = helper.getTableManager();
-        int tableId = Tools.getInt(event.getParameterValue("table"),-1 ) ;
+    	Table table = manager.findTable(event.getParameterValue("table"));
+        int tableId = table.getId();
         Integer userId= helper.getOperator(event).id;
-        Table table = manager.getTable(tableId) ;
         String tableName = table.getName();          // 得到表的名字
         
         String module= "template."+ tableName.toLowerCase();

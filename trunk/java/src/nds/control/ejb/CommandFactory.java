@@ -44,6 +44,7 @@ import nds.control.web.WebUtils;
 import nds.util.Configurations;
 /**
  * Command factory.
+ * @deprecated
  */
 public final class CommandFactory {
 
@@ -112,20 +113,7 @@ public final class CommandFactory {
         }  
         return command;
     }
-    /**
-     * Get command according its name. Command are all in package named nds.control.ejb.command
-     * and class name must be same as to the request name, for easier location.
-     * @throws NDSExcption if Command could not be loaded
-     * @deprecated
-     */
-    public Command getCommand(String name) throws NDSEventException {
-        Command command=(Command) commands.get(name);
-        if( command == null) {
-        	command=createCommand(name);
-            commands.put(name, command);
-        }
-        return command;
-    }
+    
     /** Copied from nds.control.web.DefaultRequestHandler, which was created by tony
         I move it here for late handling, I will first trying to find the command, if
         not success, then use the default one.

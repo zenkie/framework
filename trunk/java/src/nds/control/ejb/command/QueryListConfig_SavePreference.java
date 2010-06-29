@@ -57,8 +57,9 @@ public class QueryListConfig_SavePreference extends Command {
   		JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
   		Object tag= jo.opt("tag");
 	  	int qlcId= jo.getInt("qlcid");
-	  	int tableId= jo.getInt("table");
-	  	String tbName=manager.getTable(tableId).getName();
+	  	Table table=manager.findTable(jo.opt("table"));
+	  	int tableId= table.getId();
+	  	String tbName=table.getName();
 	  	String name;
 	  	if(qlcId==-1)name= QueryListConfigManager.getInstance().getMetaDefault(tableId).getName();
 	  	else name= QueryListConfigManager.getInstance().getQueryListConfig(qlcId).getName();

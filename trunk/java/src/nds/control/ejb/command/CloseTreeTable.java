@@ -39,8 +39,8 @@ public class CloseTreeTable extends Command {
      */
     public ValueHolder execute(DefaultWebEvent event) throws NDSException, RemoteException {
     	TableManager manager= TableManager.getInstance();
-    	int tableId=Tools.getInt( event.getParameterValue("table",true),-1);
-    	Table table= manager.getTable(tableId);
+    	Table table= manager.findTable(event.getParameterValue("table",true));
+    	int tableId=table.getId();
     	if(!table.isTree())throw new NDSException("@not-tree-table@");
     	// following check directory permission needs this parameter
     	event.setParameter("directory", table.getSecurityDirectory());

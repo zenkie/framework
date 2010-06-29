@@ -59,45 +59,45 @@ public final class QueryUtils {
     public final static DecimalFormat intPrintFormatter=new DecimalFormat("###,###,###");
     public final static DecimalFormat floatPrintFormatter=(new DecimalFormat("###,###,##0.00"));*/
     
-    public static ThreadLocal inputDateFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+    public static ThreadLocal<SimpleDateFormat> inputDateFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
     	SimpleDateFormat a=new SimpleDateFormat("yyyy/MM/dd");
     	a.setLenient(false);
     	return a;}};
-    public static ThreadLocal dateTimeSecondsFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+    public static ThreadLocal<SimpleDateFormat> dateTimeSecondsFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
     	SimpleDateFormat a=new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     	a.setLenient(false);
     	return a;}};
-    public static ThreadLocal smallDateTimeSecondsFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+    public static ThreadLocal<SimpleDateFormat> smallDateTimeSecondsFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
     	SimpleDateFormat a=new SimpleDateFormat("MM/dd HH:mm");
     	a.setLenient(false);
     	return a;}};
-    public static ThreadLocal smallTimeFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+    public static ThreadLocal<SimpleDateFormat> smallTimeFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
     	SimpleDateFormat a=new SimpleDateFormat("HH:mm:ss");
     	a.setLenient(false);
     	return a;}};
-    public static ThreadLocal dateFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+    public static ThreadLocal<SimpleDateFormat> dateFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
     	SimpleDateFormat a=new SimpleDateFormat("yyyy/MM/dd");
     	a.setLenient(false);
     	return a;}};
-    public static ThreadLocal dateNumberFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+    public static ThreadLocal<SimpleDateFormat> dateNumberFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
     	SimpleDateFormat a=new SimpleDateFormat("yyyyMMdd");
     	a.setLenient(false);
     	return a;}};
-    public static ThreadLocal dateTimeNumberFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+    public static ThreadLocal<SimpleDateFormat> dateTimeNumberFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
     	SimpleDateFormat a=new SimpleDateFormat("yyyyMMdd HH:mm:ss");
     	a.setLenient(false);
     	return a;}};
 
-	public static ThreadLocal timeFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+	public static ThreadLocal<SimpleDateFormat> timeFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
 		SimpleDateFormat a=new SimpleDateFormat("yyyy/MM/dd HH:mm");
 		a.setLenient(false);
 		return a;}};
 		
-    public static ThreadLocal floatFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+    public static ThreadLocal<DecimalFormat> floatFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
 		return new DecimalFormat("#0.00");}};
-    public static ThreadLocal intPrintFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+    public static ThreadLocal<DecimalFormat> intPrintFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
        		return new DecimalFormat("###,###,###");}};
-    public static ThreadLocal floatPrintFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+    public static ThreadLocal<DecimalFormat> floatPrintFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
    		return new DecimalFormat("###,###,##0.00");}};
    	
    	/**
@@ -1288,7 +1288,9 @@ public final class QueryUtils {
  	public static Expression parseConditionInColumnLink(Map req, Locale locale) throws NDSException{
  		Expression exprAll=null, expr=null, expr2=null;
         TableManager manager=TableManager.getInstance();
-        int tableId= Tools.getInt(req.get("table"), -1);
+        Table table=manager.findTable(req.get("table"));
+        int tableId=-1;
+        if(table!=null) tableId=table.getId();
         
         int qlcid= Tools.getInt(req.get("qlcid"), -2);
         if(qlcid==-2) throw new QueryException("qlcid not found in req");

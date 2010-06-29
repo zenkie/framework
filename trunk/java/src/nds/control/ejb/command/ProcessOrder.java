@@ -122,7 +122,7 @@ public class ProcessOrder extends Command {
   		 * Master object handling
   		 */
   		masterObj=jo.getJSONObject("masterobj");
-  		masterTable=manager.getTable( masterObj.getInt("table"));
+  		masterTable=manager.findTable( masterObj.get("table"));
 
   		masterObjectId= event.getObjectIdByJSON(masterObj, masterTable, adClientId, conn);
 		logger.debug("masterTable="+ masterTable+",masterObjectId="+masterObjectId);
@@ -167,29 +167,52 @@ public class ProcessOrder extends Command {
   		 */
   		JSONObject detailobjs= jo.optJSONObject("detailobjs");
   		if(detailobjs!=null){
-  	  		JSONArray reftables= detailobjs.getJSONArray("reftables"); //elements are id of  RefByTable
+  	  		JSONArray reftables= detailobjs.optJSONArray("reftables"); //elements are id of  RefByTable
+  	  		JSONArray tables= detailobjs.optJSONArray("tables"); //elements are id/ak/alais of RefByTable table
+  	  		
+  	  		JSONArray rft;
+  	  		if(reftables==null) rft=tables;
+  	  		else rft= reftables;
+  	  		if(rft==null) throw new NDSException("neither reftables nor tables is set");
+  	  		
   	  		JSONArray refobjs= detailobjs.getJSONArray("refobjs"); //elements are object or list
   	  		ArrayList refbyTables=masterTable.getRefByTables();
   	  		RefByTable rbt=null;
 
-	  		for(int dojIdx=0;dojIdx<reftables.length();dojIdx++ ){
-	  			int refByTableId= reftables.getInt(dojIdx);
-	  			boolean rbTFound=false;
-	  			for(int rbTIdx=0;rbTIdx<refbyTables.size();rbTIdx++){
-	  				rbt=(RefByTable) refbyTables.get(rbTIdx);
-	  				if(rbt.getId()== refByTableId){
-	  					rbTFound=true;
-	  					break;
-	  				}
+	  		for(int dojIdx=0;dojIdx<rft.length();dojIdx++ ){
+	  			if( reftables!=null){
+	  				//load from reftables
+		  			int refByTableId= reftables.getInt(dojIdx);
+		  			boolean rbTFound=false;
+		  			for(int rbTIdx=0;rbTIdx<refbyTables.size();rbTIdx++){
+		  				rbt=(RefByTable) refbyTables.get(rbTIdx);
+		  				if(rbt.getId()== refByTableId){
+		  					rbTFound=true;
+		  					break;
+		  				}
+		  			}
+		  			if(!rbTFound)throw new NDSException("detailobjs:"+refByTableId+ " not found in master refby tables("+masterTable+")");
+	  			}else{
+	  				//load from tables
+	  				Table rftt=manager.findTable(tables.opt(dojIdx));
+	  				boolean rbTFound=false;
+	  				for(int rbTIdx=0;rbTIdx<refbyTables.size();rbTIdx++){
+		  				rbt=(RefByTable) refbyTables.get(rbTIdx);
+		  				if(rbt.getTableId()== rftt.getId()){
+		  					rbTFound=true;
+		  					break;
+		  				}
+		  			}
+		  			if(!rbTFound)throw new NDSException("detailobjs:"+rftt+ " not found in master refby tables("+masterTable+")");
+		  			
 	  			}
-	  			if(!rbTFound)throw new NDSException("detailobjs:"+refByTableId+ " not found in master refby tables("+masterTable);
 	  			if(rbt.getAssociationType()==RefByTable.ONE_TO_ONE){
 	  				/*
 	  				 *Inline single object (1:1) handling, for parent id, must using "ak" or "id_find" method
 	  				 *,since web ui does not support such case
 	  				 */
 	  				JSONObject inlineObject=refobjs.getJSONObject(dojIdx);
-	  				Table inlineTable=manager.getTable( inlineObject.getInt("table"));
+	  				Table inlineTable=manager.findTable( inlineObject.get("table"));
 	  				evt=createSingleObjEvent(inlineObject,template);
 	  				
 	  				int inlineObjectId=evt.getObjectId(inlineTable, usr.adClientId);

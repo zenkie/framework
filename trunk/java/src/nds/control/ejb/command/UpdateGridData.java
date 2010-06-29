@@ -109,9 +109,9 @@ public class UpdateGridData extends Command {
 	Boolean jc;
 
   	try{
-  		String tableName= jo.getString("table");
-	  	Table table= manager.getTable(tableName);
-	  	
+  		
+	  	Table table= manager.findTable(jo.getString("table"));
+	  	String tableName=table.getName();
 	  	
 	  	int[] masks=null;
 	  	JSONArray column_masks=jo.optJSONArray("column_masks");

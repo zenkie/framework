@@ -144,6 +144,11 @@ public class ServletContextManager implements ServletContextActor,java.io.Serial
             // controller
             actor =create("nds.control.web.ClientControllerWebImpl",context);
             manager.setRole(WebKeys.WEB_CONTROLLER, actor);
+
+            
+            actor =create("nds.io.PluginController",context);
+            manager.setRole(WebKeys.PLUGIN_CONTROLLER,actor );
+
             // table manager
             TableManager tm=nds.schema.TableManager.getInstance();
             // yfzhu changed at 2003-09-22 to load table path from nds.properties

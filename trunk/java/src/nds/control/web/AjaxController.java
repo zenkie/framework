@@ -132,7 +132,7 @@ public class AjaxController {
 			logger.debug("query("+ jsonObj+")");
 			JSONObject jo= new JSONObject(jsonObj);
 
-			Table table= TableManager.getInstance().getTable(jo.getString("table"));
+			Table table= TableManager.getInstance().findTable(jo.get("table"));
 			//必须具有查询的权限 20091213 yfzhu
 			usr.checkPermission(table.getSecurityDirectory(), nds.security.Directory.READ);
 			

@@ -34,6 +34,7 @@ public abstract class BaseAdTable  implements Serializable {
 	public static String PROP_ORDERNO = "Orderno";
 	public static String PROP_TRIG_AM = "TrigAm";
 	public static String PROP_NAME = "Name";
+	public static String PROP_ALIASNAME = "AliasName";
 	public static String PROP_MODIFIED_DATE = "ModifiedDate";
 	public static String PROP_DIRECTORY_ID = "DirectoryId";
 	public static String PROP_DK_COLUMN_ID = "DkColumnId";
@@ -74,6 +75,7 @@ public abstract class BaseAdTable  implements Serializable {
 	// fields
 	private java.lang.Integer _adClientId;
 	private java.lang.String _name;
+	private String _aliasName;
 	private java.lang.Integer _pkColumnId;
 	private java.lang.Integer _realtableId;
 	private java.lang.String _filter;
@@ -225,7 +227,12 @@ public abstract class BaseAdTable  implements Serializable {
 	public java.lang.String getName () {
 		return _name;
 	}
-
+	public java.lang.String getAliasName () {
+		return _aliasName;
+	}
+	public void setAliasName (java.lang.String _name) {
+		this._aliasName = _name;
+	}
 	/**
 	 * Set the value related to the column: NAME
 	 * @param _name the NAME value

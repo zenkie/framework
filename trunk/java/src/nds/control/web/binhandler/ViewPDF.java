@@ -21,6 +21,7 @@ import nds.report.*;
  */
 
 public class ViewPDF implements BinaryHandler{
+	public void init(ServletContext context){}
     /**
      */
 	public void process(HttpServletRequest request,HttpServletResponse  response)  throws Exception{

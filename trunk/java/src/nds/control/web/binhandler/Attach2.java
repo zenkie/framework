@@ -22,6 +22,7 @@ import nds.control.web.*;
  */
 
 public class Attach2 implements BinaryHandler{
+	public void init(ServletContext context){}
     /**
      * Things needed in this page:
      *  table* - (int) table id

@@ -101,7 +101,7 @@ public class UploadFileHandler extends RequestHandlerSupport {
             if(in !=null &&  Tools.getBoolean(event.getParameterValue("upload"), false)==true){
             // save to file system
         		TableManager manager= TableManager.getInstance();
-        		Table table= manager.getTable( Tools.getInt(event.getParameterValue("table"), -1));
+        		Table table= manager.findTable( event.getParameterValue("table"));
         		Column col= manager.getColumn( Tools.getInt(event.getParameterValue("column"), -1));
             	int objectId= Tools.getInt( event.getParameterValue("objectid"),-1);
                 if(!user.hasObjectPermission(table.getName(),objectId,  nds.security.Directory.WRITE)){

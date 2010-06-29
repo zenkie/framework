@@ -59,8 +59,8 @@ public class ExecuteJReport extends Command {
 		int userId=user.getId().intValue();
 		JSONObject jo= event.getJSONObject();
 		
-		int tableId= jo.getInt("table"); 
-		Table table=TableManager.getInstance().getTable(tableId);
+		Table table = TableManager.getInstance().findTable(jo.get("table"));
+		int tableId= table.getId();
 		String dir= table.getSecurityDirectory();
 		event.setParameter("directory",  dir);	
 	  	helper.checkDirectoryReadPermission(event, user);

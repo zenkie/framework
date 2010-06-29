@@ -45,8 +45,8 @@ public class ObjectDelete extends Command{
     	java.sql.Connection con=null;
        try{
        manager = helper.getTableManager() ;
-       int tableId = Tools.getInt(event.getParameterValue("table"),-1 ) ;
-       Table table = manager.getTable(tableId) ;
+       Table table = manager.findTable(event.getParameterValue("table"));
+       int tableId = table.getId();
 
        String tableName = table.getName() ;
        String tableDesc  = table.getDescription(Locale.CHINA);

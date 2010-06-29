@@ -70,11 +70,11 @@ public class BatchUpdate  extends Command{
     	long beginTime= System.currentTimeMillis();
         logger.debug(event.toDetailString());
     	TableManager manager = helper.getTableManager();
-        int tableId = Tools.getInt(event.getParameterValue("table",true),-1 ) ;
+        Table table = manager.findTable(event.getParameterValue("table",true));
+        int tableId = table.getId();
 
         User user=helper.getOperator(event);
         Integer userId= user.id;
-        Table table = manager.getTable(tableId) ;
         // check no special command class for this table's AM method
         checkCommand(table, table.getDescription(event.getLocale()));
 

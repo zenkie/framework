@@ -71,33 +71,35 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
      * key: tableID(integer)
      * value:table(Table)
      */
-    private Hashtable tableIDs;
+    private Hashtable<Integer, Table> tableIDs;
 
     /**
      * key:tableName(String)
      * value:table(Table)
      */
-    private Hashtable tableNames;
+    private Hashtable<String, Table> tableNames;
 
     /**
      * key:column id(Integer)
      * value:Column
      */
-    private Hashtable columnIDs;
+    private Hashtable<Integer, Column> columnIDs;
 
     /**
      * key: tablename.columnName(String) 
      * value:Column
      */
-    private Hashtable columnNames;
+    private Hashtable<String, Column> columnNames;
 
-    private Vector tableList;// element: Table
+    private Vector<Table> tableList;// element: Table
+    
+    private Hashtable<String, Table> aliasTableNames;
     /**
      * Key: table.id (Integer)
      * Value:Column in table which refere to Parent table
      * 
      */
-    private Hashtable parentTables;
+    private Hashtable<Integer, Column> parentTables;
     /**
      * Key: real table name (String)
      * Value: List elements are Table (may be empty, see LasyList ) whose realtable_id is set to the real table.
@@ -109,7 +111,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
      * Key: Ad_Action.id 
      * Value: WebAction
      */
-    private Hashtable webActions;
+    private Hashtable<Integer, WebAction> webActions;
     /**
      * TableManager's name
      */
@@ -123,6 +125,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     	name="TM"+ Sequences.getNextID("nds.schema.TableManager");
         tableIDs=new Hashtable(60,0.1f);
         tableNames=new Hashtable(60,0.1f);
+        aliasTableNames=new Hashtable(60,0.1f);
         columnIDs=new Hashtable(300,0.1f);
         columnNames=new Hashtable(300,0.1f);
         views = new Hashtable(300,0.1f);
@@ -197,6 +200,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     private void clearAll() {
         tableIDs.clear();
         tableNames.clear();
+        aliasTableNames.clear();
         columnIDs.clear();
         columnNames.clear();
         fkColumns.clear();
@@ -292,6 +296,19 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     		throw new NDSRuntimeException("Internal Error, some actions could not load from db.", t);
     	}
     }
+    
+    private void addAliasName(Table tb){
+    	String a= tb.getAliasName();
+    	if(a==null) return;
+    	String[] as=a.toUpperCase().split(",");
+    	for(int i=0;i<as.length;i++){
+    		Table t=aliasTableNames.get(as[i]);
+    		if(t!=null){
+    			throw new NDSRuntimeException("Internal Error, found duplicate alias name "+ as[i] +" for table "+ tb.getName()+" and "+t.getName());
+    		}
+    		aliasTableNames.put(as[i],tb);
+    	}
+    }
     /**
      * 
      * @param it elements are Table
@@ -305,6 +322,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
             // add to tableIDs and tableNames
             tableIDs.put(new Integer(table.getId()), table);
             tableNames.put(tableName,table);
+            addAliasName(table);
             tableList.add(table);
             ArrayList al=table.getAllColumns();
             for(int i=0;i< al.size();i++) {
@@ -410,6 +428,12 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     	tableIDs.remove(new Integer(table.getId()));
     	tableNames.remove(tableName);
     	tableList.remove(table);
+    	Iterator<String> it=aliasTableNames.keySet().iterator() ;
+    	for(;it.hasNext();){
+    		String key=it.next();
+    		if(aliasTableNames.get(key).equals(table) ) aliasTableNames.remove(key);
+    	}
+    	
     	ArrayList al=table.getAllColumns();
         for(int i=0;i< al.size();i++) {
             Column col=(Column)al.get(i);
@@ -626,6 +650,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     	return dateTable;
     }
     /**
+     * Will search both name and alias names
      * Note all table name is in upper case
      * @roseuid 3B845EA302B6
      */
@@ -633,9 +658,32 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     	checkInit();
         if( name==null)
             return null;
-        return (Table)tableNames.get(name.toUpperCase());
+        name=name.toUpperCase();
+        Table t= (Table)tableNames.get(name);
+        if(t==null) t= aliasTableNames.get(name);
+        return t;
     }
-
+    /**
+     * Find table accroding to id/name/key
+     * 
+     * @param t can be int/String, int for table id, String for name or key
+     * @return null if not found
+     */
+    public Table findTable(Object t){
+    	if(t==null) return null;
+    	if(t instanceof Number){
+    		return  getTable( ((Number)t).intValue());
+    	}else{
+    		String s= t.toString();
+    		try{
+    			int i= Integer.parseInt(s);
+    			return getTable(i);
+    		}catch(Throwable e){
+    			return getTable(s);
+    		}
+    	}
+    	
+    }
     /**
      * 检索获得class对应的表，不存在则返回null
      * @roseuid 3B84698E02BF
@@ -938,6 +986,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     	instance.subSystems = tmpInstance.subSystems;
     	instance.tableIDs=tmpInstance.tableIDs;
     	instance.tableNames=tmpInstance.tableNames;
+    	instance.aliasTableNames=tmpInstance.aliasTableNames;
     	instance.columnIDs= tmpInstance.columnIDs;
     	instance.columnNames=tmpInstance.columnNames;
     	instance.tableList= tmpInstance.tableList;

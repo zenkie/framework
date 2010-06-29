@@ -34,7 +34,7 @@ public class ExecuteWebAction extends Command {
 	 * 
 	 * @param  
 	 * 	jsonObject -
-			webaction* - id of ad_action 
+			webaction* - id/name of ad_action 
 	 *      target*  - String, just return to client
 	 *      query*  - json type:
 	 *      	selection: array of int for selected record id of current page, this is optional
@@ -68,12 +68,21 @@ public class ExecuteWebAction extends Command {
   	MessagesHolder mh= MessagesHolder.getInstance();
   	Connection conn=null;
   	try{
-	  	JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
-	  	int actionId= jo.getInt("webaction");
-	  	WebAction action=manager.getWebAction(actionId);
-	  	if(action==null) throw new NDSException("@object-not-found@:WebAction("+actionId+")");
-
 	  	conn=QueryEngine.getInstance().getConnection();
+
+  		JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
+	  	Object aid=jo.get("webaction");
+	  	int actionId=-1;
+	  	try{
+	  		actionId=Integer.parseInt(aid.toString());
+	  	}catch(Throwable t){
+	  		//try as ad_action.name
+	  		actionId=Tools.getInt( engine.doQueryOne("select id from ad_action where ad_client_id="+ 
+	  				usr.adClientId+" and name="+ QueryUtils.TO_STRING(aid.toString()), conn),-1);
+	  	}
+	  	WebAction action=manager.getWebAction(actionId);
+	  	if(action==null) throw new NDSException("@object-not-found@:WebAction("+aid+")");
+
 	  	Object target= jo.opt("target");
 	  	int objectId= jo.optInt("objectid", -1);
 

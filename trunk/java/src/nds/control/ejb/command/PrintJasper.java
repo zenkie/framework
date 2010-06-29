@@ -70,9 +70,8 @@ public class PrintJasper extends Command{
 	    	JSONObject params=jo.getJSONObject("params");
 	    	String tag=jo.optString("tag");
 
-	    	int tableId= params.getInt("table");
-	    	Table table= TableManager.getInstance().getTable(tableId);
-
+	    	Table table = TableManager.getInstance().findTable(params.get("table"));
+	        int tableId = table.getId();
 
 	    	//fetch default params: template and fmt
 	    	WebContext ctx=(WebContext) jo.opt("org.directwebremoting.WebContext");

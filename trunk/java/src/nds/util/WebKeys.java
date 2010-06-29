@@ -66,6 +66,7 @@ public interface WebKeys {
     public static final String SESSION_CONTEXT_MANAGER = "nds.web.sesonctxmgr";// Session Context
     public static final String  PORTLETCONFIG_MANAGER="nds.web.config.PortletConfigManager";// ServletContext
     public static final String  USER_WELCOME_MANAGER="nds.web.welcome.Manager";// ServletContext
+    public static final String  PLUGIN_CONTROLLER="nds.io.plugincontroller";// ServletContext
     
     // user information, is UserWebImpl
     public static final String USER = "nds.web.authorization";

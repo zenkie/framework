@@ -54,13 +54,13 @@ public class DBJSON extends Command {
   	try{
 	  	JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
 	  	Object tag= jo.opt("tag");
-	  	String table= jo.getString("table");
+	  	Table t= manager.findTable(jo.get("table"));
+	  	String table= t.getName();
 	  	String action= jo.getString("action");
 	  	String permission= jo.getString("permission");
 	  	String param= jo.getString("param");
 	  	
 	  	// check permission
-	  	Table t= manager.getTable(table);
 	  	if (!"root".equals(usr.getName())){
 		  	int perm= helper.getPermissions(t.getSecurityDirectory(),usr.id.intValue());
 		  	int minPerm=1;// read

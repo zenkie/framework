@@ -150,6 +150,8 @@ public class DBSchemaLoader {
 		if( table==null) table= new TableImpl(tb.getId().intValue());
 		table.setOrder(tb.getOrderno().intValue());
 		table.setName(tb.getName());
+		table.setAliasName(tb.getAliasName());
+		
 		table.setDescription(tb.getDescription());
 		table.setRowURL(tb.getUrl());
 		table.setCategory(getTableCategory( tb.getAdTableCategory()));

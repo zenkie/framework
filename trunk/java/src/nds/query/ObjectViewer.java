@@ -63,20 +63,18 @@ public class ObjectViewer extends HttpServlet {
         int tableId=-1;
         int id=-1;
         try {
-            tableId= nds.util.Tools.getInt(req.getParameter("table"), -1)  ;
             TableManager manager= TableManager.getInstance();
-            Table table = null;
-            if(tableId ==-1) {
-                String tn= req.getParameter("table");
-                table = manager.getTable(tn);
-                if( table ==null)
-                    res.sendRedirect(nds.util.WebKeys.NDS_URI+"/query/query_portal.jsp");
-                tableId= table.getId();
-            }else
-                table =  manager.getTable(tableId);
+            Table table = manager.findTable(req.getParameter("table"));
+            if( table ==null){
+                res.sendRedirect(nds.util.WebKeys.NDS_URI+"/query/query_portal.jsp");
+                return;
+            }
+            tableId= table.getId();
+            
             id=nds.util.Tools.getInt(req.getParameter("id"), -1)  ;
             if(id ==-1) {
                 res.sendRedirect(nds.util.WebKeys.NDS_URI+"/query/query?table="+ tableId);
+                return;
             }
 		UserWebImpl userWeb = ((UserWebImpl)WebUtils.getSessionContextManager(req.getSession(true)).getActor(nds.util.WebKeys.USER));	
             QueryRequestImpl query=QueryEngine.getInstance().createRequest(userWeb.getSession());

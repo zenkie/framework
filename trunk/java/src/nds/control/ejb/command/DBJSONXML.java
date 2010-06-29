@@ -59,7 +59,8 @@ public class DBJSONXML extends Command {
 	  	JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
 	  	Object tag= jo.opt("tag");
 	  	String pageURL= jo.optString("pageurl");
-	  	String table= jo.getString("table");
+	  	Table t= manager.findTable(jo.get("table"));
+	  	String table= t.getName();
 	  	String action= jo.getString("action");
 	  	String permission= jo.getString("permission");
 	  	String param= jo.getString("param");
@@ -70,7 +71,7 @@ public class DBJSONXML extends Command {
 	  	param= org.json.XML.toString(paramJSON);
 	  	
 	  	// check permission
-	  	Table t= manager.getTable(table);
+	  	
 	  	//Table t= manager.getTable("m_v_product");
 		if (!"root".equals(usr.getName())){
 		  	int perm= helper.getPermissions(t.getSecurityDirectory(),usr.id.intValue());

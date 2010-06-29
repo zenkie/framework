@@ -193,7 +193,7 @@ public class QueryInputHandler extends HttpServlet {
     	TableManager manager=TableManager.getInstance();
         int mainTableId=Tools.getInt(getRequestParameter(req,"table"), -1);
         if( mainTableId == -1) {
-            Table tb=manager.getTable(getRequestParameter(req,"table"));
+            Table tb=manager.findTable(getRequestParameter(req,"table"));
             if (tb ==null)
                 throw new QueryException("Intenal Error: table must be set");
             else

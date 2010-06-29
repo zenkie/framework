@@ -128,7 +128,7 @@ public class ProcessStep extends Command {
   		 */
   		p_nextstep = Tools.getInt(jo.getString("p_nextstep"),-1);
   		masterObj=jo.getJSONObject("masterobj");
-  		masterTable=manager.getTable( masterObj.getInt("table"));
+  		masterTable=manager.findTable( masterObj.get("table"));
   		masterObjectId= masterObj.getInt("id");
 		logger.debug("masterTable="+ masterTable+",masterObjectId="+masterObjectId);
 		if("N".equals(jo.getString("inline"))){
@@ -159,18 +159,10 @@ public class ProcessStep extends Command {
 		boolean hasItems= jo.optBoolean("bestEffort", false);
 		boolean hasItemAddList=false; // for item adding list checking
 		if(hasItems){
-	  		Table table;
-			String tableName= jo.optString("table"); //masterObj.optString("table");
-	  		int tableId= Tools.getInt(tableName, -1);
-	  		if(tableId==-1){
-	  			table=manager.getTable(tableName);
-			  	if(table!=null) tableId= table.getId();
-	  		}else{
-	  			table= manager.getTable(tableId);
-	  			if(table!=null) tableName= table.getName();
-	  		} 
-	  		if(table==null) throw new NDSRuntimeException("Invalid item table: "+ tableName);
-	  		
+	  		Table table=manager.findTable(jo.opt("table"));
+	  		if(table==null) throw new NDSRuntimeException("Invalid item table: "+ jo.opt("table"));
+			String tableName=table.getName();
+	  		int tableId=table.getId();
 	  		fixedColumns=jo.optString("fixedColumns");
 	  		/**
   			 * 需要额外处理新增界面下，订单明细与订单头同时保存的情况, 头的ID 将作为fixedcolumn 插入到明细

@@ -58,13 +58,14 @@ public class Query extends HttpServlet {
 
       int tableId= nds.util.Tools.getInt(req.getParameter("table"), -1)  ;
       TableManager manager = TableManager.getInstance();
-      String tn= req.getParameter("table");
-      Table table = manager.getTable(tn);
+
+      Table table = manager.findTable(req.getParameter("table"));
       if(table != null)
          tableId = table.getId();
 
-      if(tableId ==-1){
+      if(table ==null){
          getServletContext().getRequestDispatcher(nds.util.WebKeys.NDS_URI+"/query/query_portal.jsp").forward(req,resp);
+         return;
       }else {
           String tableName = manager.getTable(tableId).getName() ;
           // suppose query_[table_name].jsp file exist

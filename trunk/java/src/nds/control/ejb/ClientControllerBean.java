@@ -81,7 +81,9 @@ public class ClientControllerBean implements SessionBean,ClientController {
             acb.getQueueReceiver();
         }*/
         }catch(Exception e){
-            e.printStackTrace();
+        	logger.error("Fail to init ClientControllerBean", e);
+        	throw new nds.util.NDSRuntimeException("Internal Error: fail to init ClientControllerBean", e);
+            //e.printStackTrace();
         }
     }
     private void initNotificationManager(){
@@ -175,6 +177,12 @@ public class ClientControllerBean implements SessionBean,ClientController {
     public Handle getHandle() throws RemoteException{ return null;}
     public Object getPrimaryKey() throws RemoteException{ return null;}
     public boolean isIdentical(EJBObject eJBObject) throws RemoteException{ return false;}
-    public void remove() throws RemoteException, RemoveException{ }
+    public void remove() throws RemoteException, RemoveException{ 
+    	try{
+    		sm.destroy();
+    	}catch(Throwable t){
+    		throw new RemoveException(t.getMessage());
+    	}
+    }
 
 }

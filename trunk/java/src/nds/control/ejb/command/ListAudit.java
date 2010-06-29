@@ -20,8 +20,8 @@ public class ListAudit extends Command{
     }
     public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
          TableManager manager = helper.getTableManager() ;
-         int tableId = Tools.getInt(event.getParameterValue("table"),-1 ) ;
-         Table table = manager.getTable(tableId) ;
+         Table table = manager.findTable(event.getParameterValue("table"));
+         int tableId = table.getId();
          nds.security.User usr=helper.getOperator(event);
          String operatorDesc=usr.getDescription();
          int operatorId= usr.getId().intValue();

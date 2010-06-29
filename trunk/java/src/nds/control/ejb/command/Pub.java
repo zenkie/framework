@@ -27,10 +27,8 @@ public final class Pub {
     }
   public static String getTableName2(DefaultWebEvent event) throws NDSException{
       try{
-      int tableId = Tools.getInt(event.getParameterValue("table"),-1 ) ;
-
       TableManager manager = TableManager.getInstance() ;
-      Table table = manager.getTable(tableId) ;
+      Table table = manager.findTable(event.getParameterValue("table")) ;
       return table.getName();
       }catch(Exception e){
           throw new NDSEventException("Error occur when invoke getTableName"+e.getMessage() );
@@ -40,16 +38,7 @@ public final class Pub {
   }
 
   public static Table getTable2(DefaultWebEvent event) throws NDSException{
-      try{
-          int tableId = Tools.getInt(event.getParameterValue("table"),-1 ) ;
-          TableManager manager = TableManager.getInstance() ;
-          Table table = manager.getTable(tableId) ;
-          return table;
-      }catch(Exception e){
-          throw new NDSEventException("Error occur when invoke getTableName"+e.getMessage() );
-      }
-
-
+      return  TableManager.getInstance().findTable(event.getParameterValue("table"));
   }
       // 根据表明称返回返回表对象
     public static Table getTable2(String tableName){

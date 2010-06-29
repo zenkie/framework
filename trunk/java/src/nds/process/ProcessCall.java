@@ -16,6 +16,12 @@ import nds.control.util.ValueHolder;
 
 public interface ProcessCall {
 	/**
+	 * Create a new instance. ProcessCall will be managed as plugin by nds.io.PluginManager,
+	 * and since we do not allow client to newInstance, we delegate the new method to provider 
+	 * @return a new instance
+	 */
+	//public ProcessCall newInstance();
+	/**
 	 *  Start the process.
 	 *  Called when pressing the ... button in ...
 	 *  It should only return false, if the function could not be performed

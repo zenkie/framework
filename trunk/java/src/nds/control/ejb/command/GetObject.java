@@ -55,10 +55,11 @@ public class GetObject extends Command {
   	MessagesHolder mh= MessagesHolder.getInstance();
   	Connection conn=null;
 	JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
+	
+	Table table= manager.findTable(jo.opt("table"));
+	if(table==null)throw new NDSException("table "+ jo.opt("table") + " is not found");
+	int tableId= table.getId();
 
-	int tableId= jo.optInt("table", -1);
-	Table table= manager.getTable(tableId);
-	if(table==null)throw new NDSException("table id="+ tableId + " is not found");
 	int objectId=event.getObjectIdByJSON(jo,table, usr.adClientId, conn);
 	// check permission
     boolean b=false;

@@ -130,7 +130,7 @@ public class ProcessObject extends Command {
   		 * Master object handling
   		 */
   		masterObj=jo.getJSONObject("masterobj");
-  		masterTable=manager.getTable( masterObj.getInt("table"));
+  		masterTable=manager.findTable( masterObj.get("table"));
 
   		masterObjectId= masterObj.getInt("id");
 		logger.debug("masterTable="+ masterTable+",masterObjectId="+masterObjectId);
@@ -161,7 +161,7 @@ public class ProcessObject extends Command {
 		 */
 		JSONObject inlineObject= jo.optJSONObject("inlineobj");
 		if(inlineObject!=null){
-			Table inlineTable=manager.getTable( inlineObject.getInt("table"));
+			Table inlineTable=manager.findTable( inlineObject.opt("table"));
 			evt=createSingleObjEvent(inlineObject,template);
 			
 			int inlineObjectId=evt.getObjectId(inlineTable, usr.adClientId);
@@ -189,17 +189,10 @@ public class ProcessObject extends Command {
 		boolean hasItems= jo.optBoolean("bestEffort", false);
 		boolean hasItemAddList=false; // for item adding list checking
 		if(hasItems){
-	  		Table table;
-			String tableName= jo.optString("table"); //masterObj.optString("table");
-	  		int tableId= Tools.getInt(tableName, -1);
-	  		if(tableId==-1){
-	  			table=manager.getTable(tableName);
-			  	if(table!=null) tableId= table.getId();
-	  		}else{
-	  			table= manager.getTable(tableId);
-	  			if(table!=null) tableName= table.getName();
-	  		} 
-	  		if(table==null) throw new NDSRuntimeException("Invalid item table: "+ tableName);
+	  		Table table= manager.findTable(jo.opt("table"));
+	  		if(table==null) throw new NDSRuntimeException("Invalid item table: "+ jo.opt("table"));
+			String tableName=table.getName();
+	  		int tableId= table.getId();
 	  		
 	  		fixedColumns=jo.optString("fixedColumns");
 	  		/**
@@ -379,8 +372,8 @@ public class ProcessObject extends Command {
 	  		JSONObject qr=new JSONObject();
 	  		if(q!=null){
 	  			
-		  		Table qTable= findTable(q.getString("table"));
-		  		qr.put("table", q.getString("table"));
+		  		Table qTable= TableManager.getInstance().findTable(q.get("table"));
+		  		qr.put("table", q.get("table"));
 		  		qr.put("column_masks", q.get("column_masks"));
 		  		qr.put("column_include_uicontroller", q.optBoolean("column_include_uicontroller",false));
 		  		qr.put("init_query", true);
@@ -445,11 +438,11 @@ public class ProcessObject extends Command {
 					/**
 					 * Please note param "compress=false" is to prohibit  com.liferay.filters.compression.CompressionFilter from compressing file content 
 					 */
-					String page=wc.forwardToString(WebKeys.NDS_URI+"/object/ajax_object.jsp?compress=f&table="+masterObj.getInt("table")+"&id="+ masterObjectId);
+					String page=wc.forwardToString(WebKeys.NDS_URI+"/object/ajax_object.jsp?compress=f&table="+masterObj.get("table")+"&id="+ masterObjectId);
 					returnObj.put("masterpage", page);
 					// and for  mainAction== Table.ADD, reconstruct object page url for refresh and fixedcolumns information
 					if(mainAction== Table.ADD){
-						returnObj.put("url",WebKeys.NDS_URI+"/object/object.jsp?table="+ masterObj.getInt("table")+"&id="+ masterObjectId);
+						returnObj.put("url",WebKeys.NDS_URI+"/object/object.jsp?table="+ masterObj.get("table")+"&id="+ masterObjectId);
 						returnObj.put("fixecolumnstr",fixedColumns);
 						returnObj.put("fixecolumns",PairTable.parse(fixedColumns, null).toJSONString());
 					}
@@ -473,20 +466,7 @@ public class ProcessObject extends Command {
 	holder.put("data",returnObj );
 	return holder;
   }
-  /**
-   * Get table , try id first, then name
-   * @param tableIdOrName
-   * @return null if table not found
-   */
-  private Table findTable(Object tableIdOrName){
-	  if(tableIdOrName==null) return null;
-	  int id=Tools.getInt(tableIdOrName, -1);
-	  if(id!=-1){
-		  return TableManager.getInstance().getTable(id);
-	  }else{
-		  return TableManager.getInstance().getTable(tableIdOrName.toString());
-	  }
-  }
+ 
   private DefaultWebEvent createSingleObjEvent(JSONObject obj, DefaultWebEvent template  ) throws JSONException{
 	  	DefaultWebEvent e=(DefaultWebEvent)template.clone();
 	  	e.setParameter("command","ObjectCreate");

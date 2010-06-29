@@ -34,10 +34,11 @@ public class ListDelete extends Command{
   	 */
        manager = helper.getTableManager() ;
        
-       int tableId = Tools.getInt(event.getParameterValue("table", true),-1 ) ;
+       Table table = manager.findTable(event.getParameterValue("table",true));
+       int tableId = table.getId();
+
        String[] itemidStr = event.getParameterValues("itemid", true);
 
-       Table table = manager.getTable(tableId) ;
        User user= helper.getOperator(event);
        String operatorDesc=user.getDescription();
        String tableName = table.getRealTableName() ;

@@ -154,7 +154,7 @@ public class AjaxUtils {
 		QueryRequestImpl query = engine.createRequest(qsession);
 		
 		TableManager manager =TableManager.getInstance();
-		Table table= manager.getTable(jo.getString("table"));
+		Table table= manager.findTable(jo.get("table"));
 		query.setMainTable(table.getId());
 		/**
 		 * Support both column_masks and qlcid(QueryListConfig.id), and column_masks has higher priority
@@ -439,6 +439,7 @@ public class AjaxUtils {
 
 参数：
 	table: 	对应表的ID, or name
+	qlcid: 当qlcid存在时，将不考虑 columns参数 qlicid 指 QueryListConfig.id
 	columns:[column_name,…] // 通过数组指定要检索的字段，字段必须起始于table指明的表，可以通过ColumnLink方式关联到外键对应的表上的记录，详见Portal关于字段的配置。column_name 为字符串
 	params:{
 		combine: “and” | “or” | “and not” | “or not”
@@ -470,52 +471,63 @@ public class AjaxUtils {
 		QueryRequestImpl query = engine.createRequest(qsession);
 		
 		TableManager manager =TableManager.getInstance();
-		Table table;
-		int tableId=jo.optInt("table",-1);
-		if(tableId>-1)table=manager.getTable(tableId);
-		else table=manager.getTable(jo.optString("table"));
+		Table table=manager.findTable(jo.opt("table"));
+		int tableId=table.getId();
 
-		if(table==null) throw new NDSException("cound not find table "+ jo.optString("table"));
+		if(table==null) throw new NDSException("cound not find table "+ jo.opt("table"));
 		
 		query.setMainTable(table.getId());
 		
-		JSONArray columns= jo.optJSONArray("columns");
-		//ArrayList selections= new ArrayList();//elements are Column
+		int qlcId=jo.optInt("qlcid", -1);
+		QueryListConfig qlc=null;
+		if(qlcId!=-1) qlc=nds.web.config.QueryListConfigManager.getInstance().getQueryListConfig(qlcId);
 		
-		//Select
-		if(columns!=null){
-			for(int i=0;i<columns.length();i++){
-				String colname= columns.getString(i);
-				try{
-					ColumnLink cl= new ColumnLink(table.getName()+"."+ colname);
-					query.addSelection( cl.getColumnIDs(), false,null);
-					selections.add(cl.getLastColumn());
-				}catch(Throwable t){
-					logger.error("fail to parse column link:"+ table.getName()+"."+ colname, t);
-					throw new NDSException("column selection error:"+ colname);
+		if(qlc==null){
+			JSONArray columns= jo.optJSONArray("columns");
+			//ArrayList selections= new ArrayList();//elements are Column
+			
+			//Select
+			if(columns!=null){
+				for(int i=0;i<columns.length();i++){
+					String colname= columns.getString(i);
+					try{
+						ColumnLink cl= new ColumnLink(table.getName()+"."+ colname);
+						query.addSelection( cl.getColumnIDs(), false,null);
+						selections.add(cl.getLastColumn());
+					}catch(Throwable t){
+						logger.error("fail to parse column link:"+ table.getName()+"."+ colname, t);
+						throw new NDSException("column selection error:"+ colname);
+					}
+				}
+			}else{
+				JSONArray column_masks =jo.optJSONArray("column_masks");
+				
+				int[] columnMasks;
+				if(column_masks!=null){
+					columnMasks=new int[column_masks.length()];
+					for(int i=0;i< columnMasks.length ;i++) columnMasks[i]=  column_masks.getInt(i);
+				}else{
+					columnMasks= new int[]{6};// single object view
+				}
+				int sgrade=0;
+				if(qsession!=null)sgrade= qsession.getSecurityGrade();
+				else sgrade= nds.control.util.SecurityUtils.getUser(userId).getSecurityGrade();
+				ArrayList cols= table.getColumns(columnMasks, false, sgrade);
+				for(int i=0;i<cols.size();i++){
+					Column col= (Column)cols.get(i);
+					query.addSelection(col.getId());
+					selections.add(col);
 				}
 			}
 		}else{
-			JSONArray column_masks =jo.optJSONArray("column_masks");
-			
-			int[] columnMasks;
-			if(column_masks!=null){
-				columnMasks=new int[column_masks.length()];
-				for(int i=0;i< columnMasks.length ;i++) columnMasks[i]=  column_masks.getInt(i);
-			}else{
-				columnMasks= new int[]{6};// single object view
-			}
-			int sgrade=0;
-			if(qsession!=null)sgrade= qsession.getSecurityGrade();
-			else sgrade= nds.control.util.SecurityUtils.getUser(userId).getSecurityGrade();
-			ArrayList cols= table.getColumns(columnMasks, false, sgrade);
-			for(int i=0;i<cols.size();i++){
-				Column col= (Column)cols.get(i);
-				query.addSelection(col.getId());
-				selections.add(col);
+			//load config from QueryListConfig
+			List<ColumnLink> qlcs = qlc.getSelections(qsession ==null?0:qsession.getSecurityGrade());
+			for(int i=0;i<qlcs.size();i++){
+				ColumnLink col=qlcs.get(i);
+				query.addSelection(col.getColumnIDs(),false,null);
+				selections.add(col.getLastColumn());
 			}
 		}
-		
 		// Where
 		Expression expr=null,expr2;
 		// user read permission
@@ -540,17 +552,26 @@ public class AjaxUtils {
 		query.setRange(startIdx, range);
 		// order
 		JSONArray orderby= jo.optJSONArray("orderby");
-		if(orderby!=null)
-		for(int i=0;i<orderby.length();i++){
-			JSONObject od= orderby.getJSONObject(i);
-			try{
-				ColumnLink cl= new ColumnLink(table.getName()+"."+ od.getString("column"));
-				query.addOrderBy( cl.getColumnIDs(), od.optBoolean("asc",true));
-			}catch(Throwable t){
-				logger.error("fail to parse column link:"+ table.getName()+"."+ od.optString("column"), t);
-				throw new NDSException("order by column error:"+ od.optString("column"));
+		if(orderby!=null){
+			for(int i=0;i<orderby.length();i++){
+				JSONObject od= orderby.getJSONObject(i);
+				try{
+					ColumnLink cl= new ColumnLink(table.getName()+"."+ od.getString("column"));
+					query.addOrderBy( cl.getColumnIDs(), od.optBoolean("asc",true));
+				}catch(Throwable t){
+					logger.error("fail to parse column link:"+ table.getName()+"."+ od.optString("column"), t);
+					throw new NDSException("order by column error:"+ od.optString("column"));
+				}
+				
 			}
-			
+		}else{
+			if(qlc!=null){
+				//load from QueryListConfig
+				List<ColumnLink> od= qlc.getOrderBys(qsession==null?0:qsession.getSecurityGrade());
+				for(ColumnLink cl:od){
+					query.addOrderBy( cl.getColumnIDs(),  !Boolean.FALSE.equals(cl.getTag()));
+				}
+			}
 		}
 		return query;
 	}
@@ -560,6 +581,7 @@ public class AjaxUtils {
 
 参数：
 	table: 	对应表的ID
+	qlcid: 当qlcid存在时，将不考虑 columns参数 qlicid 指 QueryListConfig.id
 	columns:[column_name,…] // 通过数组指定要检索的字段，字段必须起始于table指明的表，可以通过ColumnLink方式关联到外键对应的表上的记录，详见Portal关于字段的配置。column_name 为字符串
 	params:{
 		combine: “and” | “or” | “and not” | “or not”

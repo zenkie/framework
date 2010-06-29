@@ -44,7 +44,7 @@ public class CopyItemForMM extends Command{
     public ValueHolder execute(DefaultWebEvent event) throws NDSException, RemoteException{
     	//logger.debug(event.toDetailString());
     	TableManager manager= TableManager.getInstance();
-    	Table table= manager.getTable(Tools.getInt(event.getParameterValue("table",true),-1));
+    	Table table = manager.findTable(event.getParameterValue("table"));
     	int objectId= Tools.getInt(event.getParameterValue("id",true),-1);
     	
     	// do user has write permission on the selected table?

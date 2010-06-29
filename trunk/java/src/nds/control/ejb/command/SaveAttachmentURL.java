@@ -57,7 +57,7 @@ public class SaveAttachmentURL extends Command {
 			url= (String)event.getParameterValue("fileurl");
 		}
 		TableManager manager= TableManager.getInstance();
-		Table table= manager.getTable( Tools.getInt(event.getParameterValue("table"), -1));
+		Table table= manager.findTable( event.getParameterValue("table"));
 		Column col= manager.getColumn( Tools.getInt(event.getParameterValue("column"), -1));
 		String sql = "update " + table.getRealTableName()+
 		" set "+ col.getName()+"='" +StringUtils.escapeForSQL(url)+"'" ;

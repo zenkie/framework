@@ -26,6 +26,7 @@ import nds.report.*;
 
 public class Image implements BinaryHandler{
 	private static Logger logger= LoggerManager.getInstance().getLogger(Image.class.getName());
+	public void init(ServletContext context){}
 	/**
 	*  @param image - image name 
 	*  @param dir - optional, if exists, will search file in that directory

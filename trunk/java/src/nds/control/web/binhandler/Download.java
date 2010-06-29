@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.PrintWriter;
 import java.net.URLEncoder;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -118,5 +119,5 @@ public class Download implements BinaryHandler{
         out.println("<p>文件不存在,或者文件不可读，或者没有指定文件名</p>");
         out.println("</body></html>");      	
       }
-
+      public void init(ServletContext context){}
 }

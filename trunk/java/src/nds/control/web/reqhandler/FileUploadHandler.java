@@ -164,8 +164,8 @@ public class FileUploadHandler extends RequestHandlerSupport {
 
     	if(objectId==-1) return;
 
-       	int tableId= Tools.getInt(props.getProperty("table"),-1);
-       	Table parentTable=TableManager.getInstance().getTable(tableId).getParentTable();
+       	//int tableId= Tools.getInt(props.getProperty("table"),-1);
+       	Table parentTable=TableManager.getInstance().findTable(props.getProperty("table")).getParentTable();
        	if(parentTable==null) return;
        	
        	java.sql.Connection conn=nds.query.QueryEngine.getInstance().getConnection(); 

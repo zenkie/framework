@@ -36,24 +36,12 @@ public class ObjectUnsubmit extends Command{
         if(nds.util.Validator.isNotNull(spName)){ 
         	tableName=spName.substring(0,spName.indexOf("Unsubmit") ) ;
         }else{
-        	Object to=event.getParameterValue("table");
-        	if(to!=null){
-        		logger.debug("table="+ to);
-        		table= TableManager.getInstance().getTable(to.toString());
-        		if(table!=null) tableName= table.getName();
-        		else{
-        			table=TableManager.getInstance().getTable(Tools.getInt(to, -1));
-        			if(table!=null) tableName= table.getName();
-        		}
-        		
-        	}else{
-        		throw new NDSException("Could not fetch table information");
-        	}
+        	table = TableManager.getInstance().findTable(event.getParameterValue("table"));
         	
         }
         logger.debug("table name="+ tableName +", table="+ table);
         String origTableName= tableName;
-        if(table==null) table=TableManager.getInstance().getTable(tableName);
+        if(table==null) table=TableManager.getInstance().findTable(tableName);
 
         User usr= helper.getOperator(event);	
         int pid =event.getObjectId(table, usr.adClientId);

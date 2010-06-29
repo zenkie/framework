@@ -117,6 +117,8 @@ public class TableImpl implements Table {
     private String prefetchColumn = null;
     private String prefetchSql = null;
 
+    private String aliasName=null;
+    
     private Column alternateKey=null;
     private Column alternateKey2=null;
     private Column dispatchColumn=null;
@@ -1224,6 +1226,20 @@ public class TableImpl implements Table {
     		alternateKey2=column;
     	}else
     		throw new NDSRuntimeException("Column "+ ak2+" not found in "+ name+" as ak2");
+    }
+    /**
+     * Alias name is a short yet unique name for Table, support comma separated values,
+     * each one could be a unique name, that is, one table can have several alias names.
+     * 
+     * So designer can build up several alias name systems in the same meta data 
+     * @return string may contain comma for alias
+     * @since 4.1
+     */
+    public String getAliasName(){
+    	return aliasName;
+    }
+    public void setAliasName(String name){
+    	aliasName=name;
     }
     /**
      * Set in ad_column.props as json object

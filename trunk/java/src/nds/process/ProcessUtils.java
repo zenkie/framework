@@ -216,8 +216,15 @@ public class ProcessUtils {
 	            ut.setTransactionTimeout(timeout); // forever, different to handleEvent in ClientController
 	            ut.begin();
 			}
-			Class myClass = Class.forName(ClassName);
-			myObject = (ProcessCall)myClass.newInstance();
+			//try plugin path first, then local one
+			nds.io.PluginController pc=(nds.io.PluginController) WebUtils.getServletContextManager().getActor(nds.util.WebKeys.PLUGIN_CONTROLLER);
+			myObject= pc.newPluginProcess(ClassName);
+			if(myObject==null){
+				//load in local
+				Class myClass = Class.forName(ClassName);
+				myObject = (ProcessCall)myClass.newInstance();
+			}
+			
 			if (myObject == null){
 				holder = new ValueHolder();
 				holder.put("code","-1");

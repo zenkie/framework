@@ -81,11 +81,11 @@ public class ObjectCreate extends Command{
   	  boolean jsonObjectCreated=false;	
   	  logger.debug(event.toDetailString());
       TableManager manager = helper.getTableManager();
-      int tableId = Tools.getInt(event.getParameterValue("table"),-1 ) ;
+      Table table = manager.findTable(event.getParameterValue("table"));
+      int tableId = table.getId();
       User usr=helper.getOperator(event);
       int userId= usr.id.intValue();
       boolean isRoot= "root".equals(usr.name) ;
-      Table table = manager.getTable(tableId) ;
       String tableName = table.getName();          // 得到表的名字
       String tableDesc = table.getDescription(Locale.CHINA) ;
       QuerySession qsession=event.getQuerySession();

@@ -54,10 +54,7 @@ public ValueHolder execute(DefaultWebEvent event) throws RemoteException, NDSExc
 	  	try {
 			JSONArray ja=(JSONArray)jo.getJSONArray("params");
 			TableManager manager =TableManager.getInstance();
-			
-			if(jo.getString("table")!=null){
-				table= manager.getTable(jo.getString("table"));
-			}
+			table= manager.findTable(jo.opt("table"));
 			for(int i=0;i<ja.length();i++){
                   jo=ja.getJSONObject(i);
                   str=(String)jo.get("value");

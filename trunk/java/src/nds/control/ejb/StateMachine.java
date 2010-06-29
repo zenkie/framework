@@ -30,10 +30,15 @@ import java.util.HashMap;
 import javax.ejb.SessionContext;
 
 import nds.control.event.NDSEvent;
+import nds.control.util.AjaxUtils;
 import nds.control.util.EJBUtils;
 import nds.control.util.ValueHolder;
+import nds.control.web.WebUtils;
 import nds.log.Logger;
+import nds.log.LoggerManager;
+import nds.util.Configurations;
 import nds.util.NDSException;
+import nds.util.WebKeys;
 
 
 /**
@@ -53,7 +58,7 @@ import nds.util.NDSException;
  *
  */
 public class StateMachine implements java.io.Serializable {
-    private Logger logger=  EJBUtils.getLogger(StateMachine.class.getName());
+	private static Logger logger= LoggerManager.getInstance().getLogger(StateMachine.class.getName());
 
     private ClientControllerBean sccejb;
     private ModelUpdateManager mum;
@@ -61,15 +66,20 @@ public class StateMachine implements java.io.Serializable {
     private HashMap attributeMap;
     private HashMap handlerMap;
     private SessionContext sc;
-
-    public StateMachine(ClientControllerBean sccejb, SessionContext sc) {
+    
+    
+    public StateMachine(ClientControllerBean sccejb, SessionContext sc) throws Exception{
         this.sccejb = sccejb;
         this.sc = sc;
         this.mum = new ModelUpdateManager();
         attributeMap = new HashMap();
         handlerMap = new HashMap();
-    }
 
+        
+    }
+    public void destroy() throws Exception{
+    }
+    
     public ValueHolder handleEvent(NDSEvent ese) throws NDSException, RemoteException{
         String eventName = ese.getEventName();
         ValueHolder holder=null;
@@ -137,5 +147,7 @@ public class StateMachine implements java.io.Serializable {
     public SessionContext getSessionContext() {
         return sc;
     }
+    
+    
 
 }

@@ -8,6 +8,8 @@ import java.io.*;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,6 +31,8 @@ import nds.util.*;
  * 处理Rest请求
 
 在服务器上给出专用URL，http://portal.server/servlets/binserv/Rest来处理所有接口内容
+
+如果请求对应的session 会话已经通过认证，则不再确认身份，并且会话在处理结束时也不断开
 
 HTTP认证如下：
 
@@ -79,7 +83,7 @@ public class Rest implements BinaryHandler{
 
 	  private static final long NETWORK_DELAY_SECONDS=1000*60*2;// 2 mininutes 
 	  private static final String CONTENT_TYPE_TEXT = "text/html; charset=UTF-8";
-	  
+	  public void init(ServletContext context){}
 	  /**
 	   */
       public void process(HttpServletRequest request,HttpServletResponse  response)  throws Exception{
@@ -87,8 +91,15 @@ public class Rest implements BinaryHandler{
     	  String message=null;
     	  SipStatus status=null;
     	  UserWebImpl usr=null;
+    	  boolean longSession=false; // should invalidate session or not
     	  try{
-	    	  status= validateRequest(request);
+	    	  //is an exist session?
+    		  if(request.getSession(true).getAttribute("USER_ID")==null)
+    			  status= validateRequest(request);
+    		  else{
+    			  status=SipStatus.SUCCESS;
+    			  longSession=true;
+    		  }
 	    	  if(status==SipStatus.SUCCESS ){
 	        	  // handle transctions
 	        	  String ts=request.getParameter("transactions");
@@ -128,7 +139,8 @@ public class Rest implements BinaryHandler{
     	  
 		  //logout session
 		  //request.getSession().setMaxInactiveInterval(5); 
-		  request.getSession().invalidate();
+		  if(!longSession)
+			  request.getSession().invalidate();
 		  /*long duration=System.currentTimeMillis()- startTime;
 		  nds.util.SysLogger.getInstance().debug("rest","batch", usr==null?"n/a":usr.getUserName(),
 				  request.getRemoteAddr(), String.valueOf(duration), usr==null?37:usr.getAdClientId());*/
@@ -152,30 +164,32 @@ public class Rest implements BinaryHandler{
     	  if(nds.util.Validator.isNull(sip_timestamp)) return  SipStatus.NEED_TIMESTAMP;
     	  if(nds.util.Validator.isNull(sip_sign)) return  SipStatus.NEED_SIGN;
     	  
-    	  /*
+    	  
     	  // parse timestamp
-    	  SimpleDateFormat a=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
+    	  SimpleDateFormat a=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
     	  a.setLenient(false);
     	  long d=a.parse(sip_timestamp).getTime();
-    	  if( System.currentTimeMillis()- d <0 || System.currentTimeMillis()-d >NETWORK_DELAY_SECONDS){
+    	  // range
+    	  if( System.currentTimeMillis()- d < -NETWORK_DELAY_SECONDS || System.currentTimeMillis()-d >NETWORK_DELAY_SECONDS){
+    		  logger.debug(" range test:"+(System.currentTimeMillis()- d));
     		  return SipStatus.REQ_TIMEOUT;
     	  }
     	  
     	  
     	  String passwd=(String)QueryEngine.getInstance().doQueryOne("select u.passwordhash from users u where email="+ QueryUtils.TO_STRING(sip_appkey));
-    	  logger.debug("passwd="+ passwd);
+    	  //logger.debug("passwd="+ passwd);
     	  if(nds.util.Validator.isNotNull(passwd)){
     		  String md5=nds.util.MD5Sum.toCheckSumStr(passwd);
-    		  
-			  String sign=nds.util.MD5Sum.toCheckSumStr(sip_appkey+sip_timestamp+passwd);
+    		  logger.debug("passwd md5="+ md5);
+			  String sign=nds.util.MD5Sum.toCheckSumStr(sip_appkey+sip_timestamp+md5);
 	    	  logger.debug("passwdsign="+ sign);
 			  if(!sip_sign.equalsIgnoreCase(sign)){
 				  return SipStatus.SIGNATURE_INVALID;
 			  }
     	  }else{
     		  return SipStatus.BINDUSER_FAILD;
-    	  }*/
-    	  logger.debug("authentication passed.");
+    	  }
+    	  //logger.debug("authentication passed.");
     	  
     	  WebUtils.getSessionContextManager(request.getSession(true));
     	  request.getSession().setAttribute(org.apache.struts.Globals.LOCALE_KEY,TableManager.getInstance().getDefaultLocale());
@@ -207,7 +221,7 @@ public class Rest implements BinaryHandler{
 //    		  boolean isCompositeObjectProcessing=command.equals("ProcessOrder") || command.equals("GetObject");
     		  boolean isQuery= command.equals("Query");
     		  
-    		  boolean keepJSON=(command.equals("ProcessOrder") || command.equals("GetObject")||command.equals("ExecuteWebAction")); 
+    		  boolean keepJSON= (command.equals("ProcessOrder") || command.equals("GetObject")||command.equals("ExecuteWebAction")); 
     		  boolean singleTransaction= !command.equals("Import"); // all commands are single transaction except import command
     		  
     		  JSONObject jo=tra.getJSONObject("params");
@@ -216,7 +230,7 @@ public class Rest implements BinaryHandler{
     			  //this will be web context substitution
     			  //and process order is not allow to parse json as event parameters
     			  jo.put("javax.servlet.http.HttpServletRequest", request);
-        		  if(!keepJSON){
+        		  if(!keepJSON && (jo.opt("parsejson")==null)){
        				  jo.put("parsejson","Y"); 
         		  }
         		  if(singleTransaction) jo.put("nds.control.ejb.UserTransaction","Y");

@@ -344,8 +344,14 @@ public class ClientControllerWebImpl implements java.io.Serializable,ServletCont
     * destroys itself.
     */
     public synchronized void remove() {
+        try{
+        	this.ccInstance.remove();
+        }catch(Throwable t){
+        	logger.error("Unable to remove controller ", t);
+        }
+        ccInstance=null;
         // call ejb remove on self/shopping cart/etc.
-        try {
+        /*try {
             if(controllerEjbHandle !=null ) {
                 EJBObject obj=controllerEjbHandle.getEJBObject();
                 obj.remove();
@@ -357,7 +363,7 @@ public class ClientControllerWebImpl implements java.io.Serializable,ServletCont
         catch(RemoteException re) {
             // ignore, after all its only a remove() call!
             logger.error("Unable to remove controller ejb", re);
-        }
+        }*/
         controllerEjbHandle=null;
     }
     public String toDebugInfo(){

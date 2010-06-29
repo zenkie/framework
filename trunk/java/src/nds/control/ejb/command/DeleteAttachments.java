@@ -39,7 +39,7 @@ public class DeleteAttachments extends Command {
 	ValueHolder v= new ValueHolder();
 	
 	TableManager manager= TableManager.getInstance();
-	Table table= manager.getTable( Tools.getInt(event.getParameterValue("table",true), -1));
+	Table table = manager.findTable(event.getParameterValue("table",true));
 	Column col= manager.getColumn( Tools.getInt(event.getParameterValue("column",true), -1));
 	String sql = "update " + table.getRealTableName()+
 	" set "+ col.getName()+"=null" ;
