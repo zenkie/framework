@@ -77,8 +77,7 @@ public class ExecuteWebAction extends Command {
 	  		actionId=Integer.parseInt(aid.toString());
 	  	}catch(Throwable t){
 	  		//try as ad_action.name
-	  		actionId=Tools.getInt( engine.doQueryOne("select id from ad_action where ad_client_id="+ 
-	  				usr.adClientId+" and name="+ QueryUtils.TO_STRING(aid.toString()), conn),-1);
+	  		actionId=Tools.getInt( engine.doQueryOne("select id from ad_action where name="+ QueryUtils.TO_STRING(aid.toString()), conn),-1);
 	  	}
 	  	WebAction action=manager.getWebAction(actionId);
 	  	if(action==null) throw new NDSException("@object-not-found@:WebAction("+aid+")");
