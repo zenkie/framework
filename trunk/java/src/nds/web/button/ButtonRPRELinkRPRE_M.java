@@ -29,8 +29,8 @@ public class ButtonRPRELinkRPRE_M extends ButtonCommandUI_Impl{
 		boolean b=false;
 		try{
 			int status= Tools.getInt(QueryEngine.getInstance().doQueryOne(
-					"select C_RPREPPLY_MONTY_ID from C_RPREPPLY_MONTYITEM where id="+ objectId), -1);
-			return  status==-1;
+					"select count(*) from C_RPREPPLY_MONTYITEM where C_RPREPPLY_MONTY_ID="+ objectId), -1);
+			return  status>0;
 		}catch(Throwable t){
 			logger.error("Could not check user permission on ButtonReclaim: column="+ column+", objectId="+objectId+
 					", user="+ ( userWeb!=null? userWeb.getUserId():-1), t);
