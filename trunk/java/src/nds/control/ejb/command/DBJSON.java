@@ -59,7 +59,7 @@ public class DBJSON extends Command {
 	  	String action= jo.getString("action");
 	  	String permission= jo.getString("permission");
 	  	String param= jo.getString("param");
-	  	
+	  	boolean isClob= jo.optBoolean("isclob",false);
 	  	// check permission
 	  	if (!"root".equals(usr.getName())){
 		  	int perm= helper.getPermissions(t.getSecurityDirectory(),usr.id.intValue());
@@ -80,10 +80,14 @@ public class DBJSON extends Command {
 	  	logger.debug("Call "+ func+"("+usr.getId()+","+param+")");
 	  	ArrayList params= new ArrayList();
 	  	params.add(usr.getId());
-	  	params.add(param);
+	  	if(param.length()>32767/3 && !isClob)
+	  		logger.warning("param length("+ param.length() +") too big while not set as clob");
+
+	  	params.add( (isClob? new StringBuffer(param): param));
+	  	
 	  	
 	  	ArrayList res= new ArrayList();
-	  	res.add( String.class);// string
+	  	res.add( java.sql.Clob.class);// Clob as return while java converts it to String
 	  	
 	  	Collection list=QueryEngine.getInstance().executeFunction(func, params, res);
 	  	String result= (String)list.iterator().next();

@@ -95,39 +95,45 @@ public class ObjButtonAction extends WebActionImpl {
 	public boolean canDisplay(Map env) throws Exception{
 		boolean b=false;
 		if(nds.util.Validator.isNull(filter)) return true;
+		try{
 
-		String f= StringUtils.replace(filter,"$OBJECTID$", 
-				String.valueOf(getValueFromMap("objectid", env, null,true)));
-
-		f= StringUtils.replace(f,"$MAINTABLE$", 
-				String.valueOf(getValueFromMap("maintable", env, null,true)));
-		
-		HttpServletRequest request=(HttpServletRequest) getValueFromMap("httpservletrequest", env, null,true);
-		UserWebImpl userWeb= (UserWebImpl)getValueFromMap("userweb", env, null,true);
-		Connection conn= (Connection)getValueFromMap("connection", env, null,true);
-		
-		f=QueryUtils.replaceVariables(f,userWeb.getSession());
-
-		switch(filterType){
-		case SQL:
-			// replace environment variables
+			String f= StringUtils.replace(filter,"$OBJECTID$", 
+					String.valueOf(getValueFromMap("objectid", env, null,true)));
+	
+			f= StringUtils.replace(f,"$MAINTABLE$", 
+					String.valueOf(getValueFromMap("maintable", env, null,true)));
 			
-			int cnt= Tools.getInt(QueryEngine.getInstance().doQueryOne(f,conn), -1);
-			b=(cnt>0);
-			break;
+			HttpServletRequest request=(HttpServletRequest) getValueFromMap("httpservletrequest", env, null,true);
+			UserWebImpl userWeb= (UserWebImpl)getValueFromMap("userweb", env, null,true);
+			Connection conn= (Connection)getValueFromMap("connection", env, null,true);
 			
-		case BEANSHELL:
-			Object ret=BshScriptUtils.evalScript(f,new StringBuffer(),false, env);
-			//when null, return false
-			if(ret!=null){
-				if(ret instanceof Boolean) b= ((Boolean)ret).booleanValue();
-				else if(ret instanceof java.lang.Number) b=((Number)ret).intValue()>0;
-				else b= Tools.getBoolean(ret, false);
+			f=QueryUtils.replaceVariables(f,userWeb.getSession());
+	
+			switch(filterType){
+			case SQL:
+				// replace environment variables
+				
+				int cnt= Tools.getInt(QueryEngine.getInstance().doQueryOne(f,conn), -1);
+				b=(cnt>0);
+				break;
+				
+			case BEANSHELL:
+					Object ret=BshScriptUtils.evalScript(f,new StringBuffer(),false, env);
+					//when null, return false
+					if(ret!=null){
+						if(ret instanceof Boolean) b= ((Boolean)ret).booleanValue();
+						else if(ret instanceof java.lang.Number) b=((Number)ret).intValue()>0;
+						else b= Tools.getBoolean(ret, false);
+					}
+				
+				
+				break;
+			case PYTHON:
+				b =PythonScriptUtils.convertInt( PythonScriptUtils.evalScript(f,new StringBuffer(),false, env))>0;
+				break;
 			}
-			break;
-		case PYTHON:
-			b =PythonScriptUtils.convertInt( PythonScriptUtils.evalScript(f,new StringBuffer(),false, env))>0;
-			break;
+		}catch(Throwable t){
+			logger.error("Fail to eval display condition of web action id="+ this.id, t);
 		}
 		return b;
 	}

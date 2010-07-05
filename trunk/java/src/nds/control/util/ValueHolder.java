@@ -18,7 +18,7 @@
 *
 ********************************************************************/
 package nds.control.util;
-
+import org.json.*;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -54,6 +54,9 @@ public class ValueHolder  implements java.io.Serializable{
     public void remove(String name){
         data.remove(name);
         
+    }
+    public JSONObject toJSONObject(){
+    	return new JSONObject(data);
     }
     /**
      * 

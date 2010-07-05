@@ -92,14 +92,30 @@ public class PluginManager<S> implements DeploymentListener {
 			serviceLoader =ServiceLoader.load(clazz, scanner.getPluginClassLoader());
 			
 			for(S plugin:serviceLoader){
-				plugins.put(plugin.getClass().getName(), plugin);
-				logger.debug("load "+ plugin.getClass().getName());
+				if(plugin instanceof AliasPlugin){
+					String[] alias= ((AliasPlugin) plugin).getAlias().split(",");
+					logger.debug("load "+ ((AliasPlugin) plugin).getAlias() +" for "+ plugin.getClass().getName());
+					for(int i=0;i<alias.length;i++){
+						plugins.put(alias[i].toLowerCase(), plugin);
+					}
+				}else{
+					logger.debug("load "+ plugin.getClass().getName());
+					plugins.put(plugin.getClass().getName(), plugin);
+				}
+				
 			}
 			
 		}
 		}catch(Throwable t){
 			logger.error("Fail to reload plugin manager of class "+ this.clazz.getName(), t);
 		}
+	}
+	/**
+	 * Iterator on all plugins
+	 * @return
+	 */
+	public Iterator<S> plugins(){
+		return plugins.values().iterator();
 	}
 	/**
 	 * Find plugin object of specfied class. 

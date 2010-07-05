@@ -1,5 +1,5 @@
 package nds.io;
-
+import java.util.*;
 import javax.servlet.ServletContext;
 
 import nds.control.web.WebUtils;
@@ -86,6 +86,9 @@ Caused by: java.io.FileNotFoundException: JAR entry META-INF/services/nds.contro
 	}
 	public ShellCmd findPluginShellCmd(String name){
 		return shellManager.findPlugin(name);
+	}
+	public Iterator<ShellCmd> listShellCmds(){
+		return shellManager.plugins();
 	}
 	/**
 	 * Each process object will be new one

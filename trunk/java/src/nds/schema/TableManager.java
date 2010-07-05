@@ -93,7 +93,8 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
 
     private Vector<Table> tableList;// element: Table
     
-    private Hashtable<String, Table> aliasTableNames;
+    
+    private Hashtable<String, Table> aliasTableNames;// name in uppercase
     /**
      * Key: table.id (Integer)
      * Value:Column in table which refere to Parent table
@@ -683,6 +684,30 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     		}
     	}
     	
+    }
+    /**
+     * Find table according to id/name/key, if includeDesc true, also include description,
+     * but only first one that matches will be returned, since description is not unique.
+     * 
+     * Default locale of TableManager will be used for description match.
+     * 
+     * @param t can be int/String, int for table id, String for name or key
+     * @param includeDesc whether include table description as search object
+     * @return null if not found
+     */
+    public Table findTable(Object t, boolean includeDesc){
+    	if(t==null) return null;
+    	Table tb= findTable(t);
+    	if(tb==null && includeDesc){
+    		// search table description
+    		for(Table tt:tableList){
+    			if(tt.getDescription(defaultLocale).equals(t)){
+    				tb= tt;
+    				break;
+    			}
+    		}
+    	}
+    	return tb;
     }
     /**
      * 检索获得class对应的表，不存在则返回null

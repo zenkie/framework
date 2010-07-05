@@ -274,6 +274,8 @@ public class Expression implements SQLCombination, Serializable{
         	//logger.debug("rightExpr is empty");
         	return this;
         }
+        if(this.isEmpty()) return rightExp;
+        
         if(operator== SQLCombination.SQL_AND && (rightExp.complexLevel==1|| complexLevel==1)){
         	if(rightExp.complexLevel>complexLevel){
         		if(rightExp.contains(this)) return rightExp;

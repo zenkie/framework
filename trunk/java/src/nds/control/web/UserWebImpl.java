@@ -94,7 +94,11 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
      * Note the standard property is not set in this object, such as id, name, desc
      */
     private Properties props;
-
+    
+    /**
+     * Elements are String for Shell command
+     */
+    private LinkedList<String> shellCmds=new  LinkedList<String>();
 	/**
 	 * OS Types
 	 */
@@ -1112,6 +1116,19 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
      */
     public boolean isActive(){
     	return isActive;
+    }
+    /**
+     * 
+     * @return elements are String(cmdline)
+     */
+    public Iterator<String> getShellCmds(){
+    	return this.shellCmds.iterator();
+    }
+    public void registerShellCmd(String cmd){
+    	if(!shellCmds.remove(cmd) && shellCmds.size()>=20){
+    		shellCmds.removeLast();
+    	}
+    	shellCmds.addFirst(cmd);
     }
     /**
      * Called by other modules when user visits specified table
