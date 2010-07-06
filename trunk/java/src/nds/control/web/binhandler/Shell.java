@@ -113,7 +113,7 @@ public class Shell implements BinaryHandler{
 				return;
 			}
 			cmdline= cmdline.trim();
-			logger.debug(cmdline);
+			//logger.debug(cmdline);
 			
 			String[] cmdparams=cmdline.split("[\t ]",2);
 			cmd= getCommand( cmdparams[0].toLowerCase());
@@ -136,7 +136,7 @@ public class Shell implements BinaryHandler{
 			if(userWeb!=null)envObj.put("userweb",userWeb);
 			
 			JSONObject ret=cmd.execute(args, envObj);
-			logger.debug(cmdline+":"+ ret);
+			//logger.debug(cmdline+":"+ ret);
 			response.setContentType("application/json; charset=UTF-8");
 			PrintWriter out = response.getWriter();
 			String s =MessagesHolder.getInstance().translateMessage(ret.toString(), userWeb.getLocale()) ;

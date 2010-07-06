@@ -68,7 +68,6 @@ public class SaveCxtabJson extends Command {
 	  	Object tag= jo.opt("tag");
 	  	int cxtabId= jo.getInt("cxtabId");
 	  	int parentId =jo.optInt("parentId",-1);
-	  	
 	  	String savetype=(String)jo.opt("savetype");
 		String name=(String)jo.opt("name");
 	  	
@@ -93,10 +92,13 @@ public class SaveCxtabJson extends Command {
 	  		if(count>=1){
 	  	  		ro.put("code", 2);
 	  		}else{
+	  			//new one
 		  		List replist=QueryEngine.getInstance().doQueryList("select ad_org_id,description,ad_table_id,filter,ad_process_id,ad_column_cxtabinst_id,sampleurl,attr1,attr2,attr3,isbackground,ad_processqueue_id,ad_cxtab_category_id,reporttype,orderno,pre_procedure,ad_pi_column_id from ad_cxtab where id="+ (cxtabId==-1?parentId:cxtabId));
 		  		int oldCxtabId=cxtabId;
-		  		cxtabId=QueryEngine.getInstance().getSequence("ad_cxtab");
+		  		cxtabId=QueryEngine.getInstance().getSequence("ad_cxtab",conn);
 		  		if(replist.size()>0){
+		  		  	if(parentId==-1 && oldCxtabId!=-1) parentId=Tools.getInt( engine.doQueryOne("select nvl(parent_id,id) from ad_cxtab where id="+oldCxtabId, conn),-1);
+
 		  			pstmt= conn.prepareStatement(INSERT_CXTAB);
 		  			pstmt.setInt(1, cxtabId);
 		  			pstmt.setInt(2, user.adClientId);
@@ -121,6 +123,8 @@ public class SaveCxtabJson extends Command {
 		  			pstmt.setInt(21, Tools.getInt(((List)replist.get(0)).get(16),0));
 		  			pstmt.setString(22,"N");
 		  			//parentid
+		  			
+		  			
 		  			if(parentId!=-1)pstmt.setInt(23, parentId);
 		  			else pstmt.setNull(23, SQLTypes.INT);
 		  			
@@ -280,7 +284,7 @@ public class SaveCxtabJson extends Command {
 	  	Properties props=new Properties();
 	  	props.setProperty( cxtabRootId,String.valueOf( cxtabId));
 	  	SavePreference.setPreferenceValues(user.id.intValue(), "cxtab"+cxtabRootId, props);
-		
+		logger.debug("savepreferece(" + user.id.intValue()+", cxtab"+cxtabRootId+", "+ cxtabId+")");
 		return holder;
   	}catch(Throwable t){
   		if(t instanceof NDSException) throw (NDSException)t;

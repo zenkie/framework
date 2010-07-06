@@ -12,7 +12,7 @@ import nds.control.web.*;
 import org.json.*;
 
 import com.liferay.util.Validator;
-
+import nds.util.*;
 import argparser.ArgParser;
 import java.util.*;
 /**
@@ -27,9 +27,9 @@ public abstract class AbstractShellCmd implements ShellCmd{
 	protected Logger logger=LoggerManager.getInstance().getLogger(getClass().getName());
 	
 	
-	protected String[] loadIds(Table table,String queryString, int dirPerm, int range,
+	protected String[] loadIds(Table table,String queryString,boolean fuzzy, int dirPerm, int range,
 			UserWebImpl userWeb ) throws Exception{
-		QueryRequest quest= parseQuery(table, queryString, dirPerm, range, userWeb);
+		QueryRequest quest= parseQuery(table, queryString,fuzzy, dirPerm, range, userWeb);
 		List al= QueryEngine.getInstance().doQueryList(quest.toSQL());
 		String[] ids=new String[al.size()];
 		for(int i=0;i<al.size();i++){
@@ -47,9 +47,9 @@ public abstract class AbstractShellCmd implements ShellCmd{
 	 * @return
 	 * @throws Exception
 	 */
-	protected int loadFirstId(Table table,String queryString, int dirPerm, int range,
+	protected int loadFirstId(Table table,String queryString,boolean fuzzy, int dirPerm, int range,
 			UserWebImpl userWeb ) throws Exception{
-		QueryRequest quest= parseQuery(table, queryString, dirPerm, 1, userWeb);
+		QueryRequest quest= parseQuery(table, queryString, fuzzy,dirPerm, 1, userWeb);
 		return Tools.getInt( QueryEngine.getInstance().doQueryOne(quest.toSQLWithRange()),-1);
 	}
 	
@@ -65,14 +65,18 @@ public abstract class AbstractShellCmd implements ShellCmd{
 	 *  此功能首次开发主要用于shell 命令中查询语句的构造，例如delete, query 这些命令都涉及到。
 		元素为字符串，有效的ColumnLink，不需书写主表名称。
 	 *  
-	 *  如查询内容为 * 或者 空，则表示全查
+	 *  如查询内容为 * ，则表示全查
 	 * @param dirPerm nds.security.Directory#READ, WRITE,SUBMIT so on
+	 * @param fuzzy query element should be identical or fuzzy 
 	 * @param userWeb
 	 * @return 
 	 * @throws Exception
 	 */
-	protected QueryRequestImpl parseQuery(Table table,String queryString, int dirPerm,int range,
+	protected QueryRequestImpl parseQuery(Table table,String queryString,boolean fuzzy, int dirPerm,int range,
 			UserWebImpl userWeb ) throws Exception{
+		if(Validator.isNull(queryString)){
+			throw new NDSException("@cmd-argument-error@: query is empty");
+		}
 		QueryRequestImpl query=QueryEngine.getInstance().createRequest(userWeb.getSession());
 		query.setMainTable(table.getId());
 		query.addSelection(table.getPrimaryKey().getId());
@@ -100,7 +104,10 @@ public abstract class AbstractShellCmd implements ShellCmd{
 		//range
 		query.setRange(0, range);
 		
-		if(Validator.isNull(queryString) || queryString.trim().equals("*")){
+		
+		if(queryString.trim().equals("*")){
+			if(fuzzy)
+				throw new NDSException("@cmd-argument-error@: query is fuzzy");
 			query.addParam(expr);
 			return query;
 		}
@@ -118,7 +125,7 @@ public abstract class AbstractShellCmd implements ShellCmd{
 			for(int j=0;j< qs.length;j++){
 				if(Validator.isNotNull(qs[j])){
 					expr3= new Expression( new ColumnLink(table.getName()+"."+ cls),
-							qs[j],null);
+							fuzzy?qs[j]:"="+qs[j],null);
 					expr2= expr3.combine(expr2, Expression.SQL_OR, null);
 				}
 			}
@@ -130,7 +137,7 @@ public abstract class AbstractShellCmd implements ShellCmd{
 					int qid= Integer.parseInt(qs[j]);
 					if(qid>0){
 						expr3= new Expression( new ColumnLink(table.getName()+".ID"),
-								qs[j],null);
+								"="+qs[j],null);
 						expr2= expr3.combine(expr2, Expression.SQL_OR, null);
 					}
 				}catch(Throwable t){}
