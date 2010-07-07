@@ -28,6 +28,7 @@ public class GetFile implements BinaryHandler{
 	  private Logger logger= LoggerManager.getInstance().getLogger(GetFile.class.getName());	 
 	
 	  private static final String CONTENT_TYPE = "text/html; charset=UTF-8";
+	  private static final String PLAIN_CONTENT_TYPE = "text/plain; charset=UTF-8";
 	  private static final String DOWNLOAD_TYPE = "application/octetstream; charset=GBK";
 	  private static final String[] TEXT_TYPE=new String[]{"html","htm","csv","txt","log"};
 	  
@@ -41,14 +42,14 @@ public class GetFile implements BinaryHandler{
 	  /**
 	   *  
 	   * @param fileName full file name
-	   * @return
+	   * @return 0 for html/htm, 1 from other text, -1 for none text
 	   */
-	  private boolean isTextType(String fileName){
+	  private int getFileType(String fileName){
     	String ext= fileName.substring(fileName.lastIndexOf(".")+1).toLowerCase();	
     	for(int i=0;i<TEXT_TYPE.length;i++ ){
-    		if(ext.equalsIgnoreCase(TEXT_TYPE[i])) return true; 
+    		if(ext.equalsIgnoreCase(TEXT_TYPE[i])) return (ext.contains("htm")? 0:1); 
     	}
-    	return false;
+    	return -1;
 	  }
 	  /**
 	   * will read parameters and decide whether display data directly or request download dialog
@@ -84,13 +85,17 @@ public class GetFile implements BinaryHandler{
             File file = new File(ru.getExportRootPath()+File.separator+ru.getUser().getClientDomain()+ File.separator+ name+File.separator+filePath);
             if(file.exists() && file.isFile()){
             	logger.debug("Downloading "+ file.getAbsolutePath());
-            	
-            	if( isTextType(file.getName())){
+            	int fileType=getFileType(file.getName());
+            	if( fileType==0){
             		response.setContentType(CONTENT_TYPE);
                 	response.setHeader("Content-Disposition",cd+";"+ 
                 			WebUtils.getContentDispositionFileName(filePath, request));
             		
             		//response.setHeader("Content-Disposition","inline;filename=\""+URLEncoder.encode(filePath,"UTF-8")+"\"");
+            	}else if(fileType==1){
+            		response.setContentType(PLAIN_CONTENT_TYPE);
+                	response.setHeader("Content-Disposition",cd+";"+ 
+                			WebUtils.getContentDispositionFileName(filePath, request));
             	}else{
             		boolean fileExtFound=false;
             		if(isShow){

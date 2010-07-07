@@ -27,7 +27,7 @@ import nds.report.ReportUtils;
 public class Download implements BinaryHandler{
 	  private Logger logger= LoggerManager.getInstance().getLogger(GetFile.class.getName());	 
 	
-	  private static final String CONTENT_TYPE = "text/html; charset=UTF-8";
+	  private static final String CONTENT_TYPE = "text/plain; charset=UTF-8";
 	  private static final String DOWNLOAD_TYPE = "application/octetstream; charset=GBK";
 	  private static final String[] TEXT_TYPE=new String[]{"html","htm","csv","txt","log"};
 	  
@@ -53,8 +53,7 @@ public class Download implements BinaryHandler{
 	  /**
 	   * will read parameters and decide whether display data directly or request download dialog
 	   *  	filename* - the file that should be returned, that file should be file name only and exist in user's web folder
-	   *    show     - "Y"(default) or "N" when "Y" will try get file real type and set in Content-Disposition
-	   *                so IE will display that file directly without save dialog  
+	   *  				for normal user, for root, it can be absolute path
 	   */
       public void process(HttpServletRequest request,HttpServletResponse  response)  throws Exception{
         String filePath = request.getParameter("filename");
@@ -71,19 +70,34 @@ public class Download implements BinaryHandler{
     		}
         	
         }
-        boolean isShow= nds.util.Tools.getYesNo(request.getParameter("show"), true);
         if(filePath!=null && !filePath.trim().equals("")){
             filePath = filePath.trim();
             ReportUtils ru = new ReportUtils(request);
             String name = ru.getUserName();
-
-            File file = new File(ru.getExportRootPath()+File.separator+ru.getUser().getClientDomain()+ File.separator+ name+File.separator+filePath);
-            if(file.exists() && file.isFile()){
+            nds.control.web.UserWebImpl userWeb=ru.getUser();
+            boolean isRoot=userWeb.isPermissionEnabled("WEBSQL_LIST", nds.security.Directory.WRITE);
+            
+            File file = new File(filePath);
+    	    if(file.isAbsolute()){
+    	    	if(!isRoot){
+    	        	file=null; // invalid file
+    	    	}
+    	    }else{
+    	    	file=new File( ru.getExportRootPath()+File.separator+ru.getUser().getClientDomain()+ File.separator+ name+File.separator+filePath);
+    	    }
+    	    if(!isRoot){
+    	    	//make sure that file exists in user web folder
+    	    	File parent= new File(ru.getExportRootPath()+File.separator+ru.getUser().getClientDomain()+ File.separator+ name);
+    	    	if(!file.getParentFile().equals(parent) ){
+    	    		file=null; // invalid file
+    	    	}
+    	    }
+            if(file!=null && file.exists() && file.isFile()){
             	logger.debug("Downloading "+ file.getAbsolutePath());
             	
            		response.setContentType(DOWNLOAD_TYPE);
            		response.setHeader("Content-Disposition","attachment;"+ 
-            			WebUtils.getContentDispositionFileName(filePath, request));
+            			WebUtils.getContentDispositionFileName(file.getName(), request));
            		//response.setHeader("Content-Disposition","attachment;filename=\""+URLEncoder.encode(filePath,"UTF-8")+"\"");
 
                 
@@ -113,11 +127,8 @@ public class Download implements BinaryHandler{
         }
         response.setContentType(CONTENT_TYPE);
         PrintWriter out = response.getWriter();
-        out.println("<html>");
-        out.println("<head><title>GetFile</title></head>");
-        out.println("<body>");
-        out.println("<p>文件不存在,或者文件不可读，或者没有指定文件名</p>");
-        out.println("</body></html>");      	
+        out.println("文件不存在,或者文件不可读，或者没有指定文件名");
+              	
       }
       public void init(ServletContext context){}
 }

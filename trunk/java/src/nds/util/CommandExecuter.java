@@ -4,10 +4,12 @@
 package nds.util;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Date;
 import java.util.Enumeration;
@@ -97,7 +99,8 @@ public class CommandExecuter{
 
             fos=null;
             if( out!=null )  {
-                fos=new PrintWriter( new FileWriter( out ) );
+               // fos=new PrintWriter( new FileWriter( out ) );
+            	fos=new PrintWriter(new OutputStreamWriter(new FileOutputStream(out,false),"UTF-8"));
             }
 
             // copy input and error to the output stream

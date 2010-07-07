@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import nds.io.AliasPlugin;
 import nds.log.Logger;
 import nds.log.LoggerManager;
-import argparser.*;
+
 import org.json.*;
 import nds.web.shell.*;
 import nds.control.web.*;
@@ -137,11 +137,16 @@ public class Shell implements BinaryHandler{
 			
 			JSONObject ret=cmd.execute(args, envObj);
 			//logger.debug(cmdline+":"+ ret);
-			response.setContentType("application/json; charset=UTF-8");
-			PrintWriter out = response.getWriter();
-			String s =MessagesHolder.getInstance().translateMessage(ret.toString(), userWeb.getLocale()) ;
-			out.print(s);
 			
+			//for some command, reponse will be forward to binary download response, so do not print 
+			//json here
+			//sample: download
+			//if(ret.optBoolean("output.json",true)){
+				response.setContentType("application/json; charset=UTF-8");
+				PrintWriter out = response.getWriter();
+				String s =MessagesHolder.getInstance().translateMessage(ret.toString(), userWeb.getLocale()) ;
+				out.print(s);
+			//}*/
 			//log to syslog and we can use this to fetch user command history
 			/*SysLogger.getInstance().debug("SH", cmd.getAlias().split(",", 2)[0], 
 					userWeb.getUserName(), userWeb.getHostIP(), cmdline, userWeb.getAdClientId() );
@@ -151,50 +156,8 @@ public class Shell implements BinaryHandler{
 			logger.error("Fail to load "+ cmdline, t);
 			showHelpPage(request,response,t.getMessage(),cmd, locale);
 		}
-		/*
-		ArgParser parser = new ArgParser("");
-	    StringHolder cmdParam = new StringHolder();
-	    StringHolder tableParam = new StringHolder();
-	    BooleanHolder debug = new BooleanHolder();
-	    BooleanHolder forceParam = new BooleanHolder();
-	    
-		parser.addOption ("-c %s #command to execute", cmdParam);
-		parser.addOption ("-t %s #table name or description", tableParam);
-		parser.addOption ("-f %v #force without prompt", forceParam);
-		*/
+		
 	}
 	
-	public static void main(String[] args){
-	    // create holder objects for storing results ...
-		String param="-theta 7.8 -debug -file /ai/lloyd/bar aaa bbb ccc ddd";
-		args=param.split(" "); 
-	    DoubleHolder theta = new DoubleHolder();
-	    StringHolder fileName = new StringHolder();
-	    BooleanHolder debug = new BooleanHolder();
-	    BooleanHolder vf = new BooleanHolder();
-	    // create the parser and specify the allowed options ...
-	 
-	    ArgParser parser = new ArgParser("");
-	    parser.addOption ("-theta %f #theta value (in degrees)", theta); 
-	    parser.addOption ("-file %s #name of the operating file", fileName);
-	    parser.addOption ("-debug %v #enables display of debugging info", debug);
-	    parser.addOption ("-v,--verbose %v #print lots of info",vf);
-
-	    // match the arguments ...
-	 
-	    String[] unmatched =
-	        parser.matchAllArgs (args, 0, parser.EXIT_ON_ERROR);
-	    
-	    for (int i = 0; i < unmatched.length; i++){ 
-	    	System.out.println ("unmatched["+i+"]=" + unmatched[i]);
-	    }
-
-	    // and print out the values
-
-	    System.out.println ("theta=" + theta.value);
-	    System.out.println ("fileName=" + fileName.value);
-	    System.out.println ("debug=" + debug.value);
-	    System.out.println ("vf=" + vf.value);
-	    
-	}
+	
 }
