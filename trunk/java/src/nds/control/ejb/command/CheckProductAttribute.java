@@ -25,14 +25,22 @@ import java.sql.*;
  * 3) product has attribute to configure.
  * This is for ajax request.	
  *  
+ *  按照
  */
 public class CheckProductAttribute extends Command {
 	//for burgeon product, size and color will also try to be loaded
 	private boolean loadingBurgeonProduct=false; //will loading M_ATTRIBUTESETINSTANCE_ID;value1 as color, and M_ATTRIBUTESETINSTANCE_ID;value2 as size
 	private boolean loadingBurgeonProduct2=false;//load M_ATTRIBUTESETINSTANCE_ID.VALUE1_CODE, and VALUE2_CODE
+	
+	private int cutOffTailLength=-1; //截断的输入条码，一般就是唯一码的流水号
 	public CheckProductAttribute(){
 		loadingBurgeonProduct=( TableManager.getInstance().getColumn("M_ATTRIBUTESETINSTANCE","VALUE1")!=null);
 		loadingBurgeonProduct2=( TableManager.getInstance().getColumn("M_ATTRIBUTESETINSTANCE","VALUE1_CODE")!=null);
+		try{
+		cutOffTailLength=Tools.getInt( QueryEngine.getInstance().doQueryOne("select value from ad_param where name='portal.6001'"),-1);
+		}catch(Throwable t){
+			logger.error("fail", t);
+		}
 	}
 	/**
 	 * If we can find product by name, attribute set will be checked, if found, will direct
@@ -175,6 +183,56 @@ public class CheckProductAttribute extends Command {
   		  	}
   		  	rs.close();
 			pstmt.close();
+  		}
+  		
+  		// 按照江南布衣的需求，如果仍然没找到商品，尝试通过截断若干位来进行定位，最后的若干位是唯一码的流水号
+  		// 2010-7-7 added
+  		if(productId==-1){
+  			if(checkAlias && cutOffTailLength>0 && product.length()>cutOffTailLength){
+  				product = product.substring(0,product.length()-cutOffTailLength );
+  				
+  	  			String sql="select m.id, m.name, m.value, m.m_attributeset_id, a.id,a.description, m.pricelist"+
+  	  			(this.loadingBurgeonProduct?",a.value1,a.value2":"")+
+  	  			(this.loadingBurgeonProduct2?",a.value1_code,a.value2_code":"")
+  	  			+" from m_product_alias p, "+
+  					"m_product m, m_attributesetinstance a where (p.no=? "+
+  					(aliasAk2==null?"":" or p."+aliasAk2.getName()+"=?" )
+  					+" ) and p.isactive='Y' and m.isactive='Y' and p.ad_client_id=? and m.id=p.m_product_id and a.id(+)=p.M_ATTRIBUTESETINSTANCE_ID"; 
+  							
+  	  			pstmt= conn.prepareStatement(sql);
+  	  			int i=1;
+  	  		  	pstmt.setString(i++, (manager.getColumn("m_product_alias", "no").isUpperCase()? product.toUpperCase():product));
+  	  		  	if(aliasAk2!=null)
+  	  		  		pstmt.setString(i++, (aliasAk2.isUpperCase()? product.toUpperCase():product));
+  	  		  	
+  	  		  	pstmt.setInt(i++, usr.adClientId);
+  	  		  	rs=pstmt.executeQuery();
+  	  			if(rs.next()){
+  	  		  		productId= rs.getInt(1);// Tools.getInt( al.get(0), -1);
+  	  		  		productName= rs.getString(2);//(String) al.get(1);
+  	  		  		productValue=rs.getString(3);// (String) al.get(2);
+  	  		  		asId=rs.getInt(4);// Tools.getInt( al.get(3), -1);
+  	  		  		if(rs.wasNull()) asId=-1;
+  	  		  		asiId= rs.getInt(5);
+  	  		  		if(rs.wasNull()) asiId=-1;
+  	  		  		asiName= rs.getString(6);
+  	  		  		
+  	  		  		pricelist=String.valueOf( rs.getDouble(7));
+  	  		  		if(rs.wasNull()) pricelist=null;
+  	  		  		if(loadingBurgeonProduct){
+  	  		  			value1= rs.getString(8);
+  	  		  			value2=rs.getString(9);
+  	  		  		}
+  	  		  		if(loadingBurgeonProduct2){
+  	  		  			value1_code= rs.getString(10);
+  	  		  			value2_code=rs.getString(11);
+  	  		  		}
+  	  		  		
+  	  			}
+  	  			rs.close();
+  	  			pstmt.close();
+  	  			
+  	  		}  			
   		}
 
 	  	/**
