@@ -18,6 +18,8 @@ import nds.schema.*;
 import nds.security.Directory;
 import nds.security.User;
 import nds.util.*;
+
+import java.sql.*;
 /**
  * Title:        NDS Project
  * Description:  San gao shui yuan, mu xiang ren jia
@@ -66,6 +68,8 @@ public class ObjectSubmit extends Command{
     	
         tableName=table.getRealTableName();
         QueryEngine engine = QueryEngine.getInstance() ;
+        Connection conn=null;
+        ValueHolder v = null;
         
         int status = engine.getSheetStatus(tableName,pid );
         if(status!=1){
@@ -89,35 +93,34 @@ public class ObjectSubmit extends Command{
         }
         if (!b) throw new NDSEventException("@no-permission@!" );
         
-        
-        
-        
-        Vector sqls= new Vector();
-        sqls.addElement("update "+tableName+" set modifierid="+ userId+ ", modifieddate=sysdate where id="+pid);
-        try{
-            engine.doUpdate(sqls);
-        }catch(Exception e){
-            throw new NDSEventException(e.getMessage() );
-        }
-        ValueHolder v = null;
         String state=null;
         SPResult s=null;
+        conn=engine.getConnection();
         try{
-
-            s= helper.auditOrSubmitObject(table, pid, userId, event);
-        }catch(Exception e){
-        	     	
-            if( e instanceof NDSException) throw (NDSException)e;
-        	else throw new NDSEventException(e.getMessage(), e );
-        }
-        if(s.getCode()!=0){
-        	throw new NDSEventException(s.getMessage());
-        }
-        v=new ValueHolder();
+	        /**
+	         * add check before submit, this is procedure
+	         */
+	        String onSubmit= null;
+	        if(table.getJSONProps()!=null ){
+	        	onSubmit= table.getJSONProps().optString("before_submit");
+	        	if(Validator.isNotNull(onSubmit)){
+	    			ArrayList params=new ArrayList();
+	    			params.add(new Integer(pid));
+	    			engine.executeStoredProcedure(onSubmit, params, false ,conn);
+	        	}
+	        }
+	        Vector sqls= new Vector();
+	        sqls.addElement("update "+tableName+" set modifierid="+ userId+ ", modifieddate=sysdate where id="+pid);
+            engine.doUpdate(sqls,conn);
+            
+            s= helper.auditOrSubmitObject(table, pid, userId, event, conn);
+	        if(s.getCode()!=0)
+	        	throw new NDSEventException(s.getMessage());
         
-        // will print now? a parameter decide that: printAfterSubmit( "Y" | "N" )
-        // and if print, will generate a file and return that file name to client in parameter "printfile"
-        try{
+	        v=new ValueHolder();
+        
+	        // will print now? a parameter decide that: printAfterSubmit( "Y" | "N" )
+	        // and if print, will generate a file and return that file name to client in parameter "printfile"
 	        boolean bPrintAfterSubmit=Tools.getYesNo( event.getParameterValue("printAfterSubmit"), false);
 	        if(bPrintAfterSubmit){
 		    	DefaultWebEvent dwe= (DefaultWebEvent)event.clone();
@@ -142,14 +145,18 @@ public class ObjectSubmit extends Command{
 		    	v.put("data", jo2);
 	
 	        }
-        }catch(org.json.JSONException e){
-        	throw new NDSException(e.getLocalizedMessage(),e);
-        }
-        v.put("code", String.valueOf(s.getCode()));
-        v.put("message",s.getMessage() ) ;
-        v.put("next-screen", "/html/nds/info.jsp");
+
+	        v.put("code", String.valueOf(s.getCode()));
+	        v.put("message",s.getMessage() ) ;
+	        v.put("next-screen", "/html/nds/info.jsp");
         
-        return v;
+	        return v;
+        }catch(Exception e){
+            if( e instanceof NDSException) throw (NDSException)e;
+        	else throw new NDSEventException(e.getMessage(), e );
+	    }finally{
+	    	if(conn!=null)try{conn.close();}catch(Throwable tx){}
+	    }
 
     }
 }

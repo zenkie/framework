@@ -1397,6 +1397,67 @@ public class DefaultWebEventHelper {
         return result;
     }
     /**
+     * If table record shall do audit, then setup audit process and execute it.
+     * If audit is accpeted, or record do not need auditing, then submit directly
+     * @param table
+     * @param id
+     * @param operatorId
+     * @param event
+     * @return
+     */
+    public SPResult auditOrSubmitObject(Table table, int id, int operatorId, DefaultWebEvent event,Connection conn)  {
+    	String state=null;
+    	SPResult result=null;
+    	try{
+       	QueryUtils.checkVoid(table, id, "Y", conn);
+   	 	/**
+         * Check is this object shall do audit process
+         */
+        int processId= AuditUtils.getProcess(table.getId(),id ,conn);
+        if (processId!=-1){
+        	// shall do audit process
+        	ValueHolder v= AuditUtils.executeProcess(table.getId(),id, processId, operatorId,-1,conn);
+        	state= (String)v.get("state");
+        	logger.debug(v.toDebugString());
+       		result =new SPResult(Tools.getInt(v.get("code"),-1), (String)v.get("message"));
+        }
+        if (processId==-1 || "A".equals(state)){
+        	// do submit 
+        	result = submitObject(table, id, operatorId, event,conn);
+        }
+        if( result.getCode()!=0 && result.getCode()!=2/*set by #submitOne*/){
+        	// set status of object to 1 if that column exists and status =3
+        	if(table.getColumn("status")!=null){
+        		String sql= "update "+ table.getRealTableName()+" set status=1 where id="+ id + " and status=3";
+        		logger.debug(sql);
+        		conn.createStatement().executeUpdate(sql);
+        	}
+        }
+    	}catch(Throwable t){
+    		logger.error("Fail to do submt object "+ table+ ",id="+ id, t);
+    		result=new SPResult(-1, t.getMessage());
+    	}
+    	logger.debug("spresult:code="+ result.getCode()+", message="+ result.getMessage());
+        return result;
+    }
+    /**
+     * 
+     * @param table
+     * @param id
+     * @param operatorId
+     * @param event
+     * @return if SPResult.getCode()!=0, it's failed, else, it's ok
+     */
+    public SPResult submitObject( Table table, int id, int operatorId, DefaultWebEvent event,Connection conn) {
+    	String spName=  table.getSubmitProcName();
+    	String tableName = table.getRealTableName() ;
+       	if( nds.util.Validator.isNull(spName))spName=tableName+ "Submit";
+       	boolean isJavaClass= spName.indexOf('.')>0;
+       	return isJavaClass?submitJavaOne(spName, table,id,operatorId,event):
+           	submitOne(spName ,table,id, operatorId,conn);
+       	
+    }
+    /**
      * 
      * @param table
      * @param id
@@ -1405,12 +1466,19 @@ public class DefaultWebEventHelper {
      * @return if SPResult.getCode()!=0, it's failed, else, it's ok
      */
     public SPResult submitObject( Table table, int id, int operatorId, DefaultWebEvent event) {
-    	String spName=  table.getSubmitProcName();
-    	String tableName = table.getRealTableName() ;
-       	if( nds.util.Validator.isNull(spName))spName=tableName+ "Submit";
-       	boolean isJavaClass= spName.indexOf('.')>0;
-       	return isJavaClass?submitJavaOne(spName, table,id,operatorId,event):
-           	submitOne(spName ,table,id, operatorId);
+    	Connection conn=null;
+		try{
+			try{
+				conn=QueryEngine.getInstance().getConnection();
+			}catch(Throwable tx){
+				throw new NDSRuntimeException("fail to get connection", tx);
+			}
+			return submitObject(table, id, operatorId, event,conn);
+		}finally{
+			if(conn!=null){
+				try{conn.close();}catch(Throwable tx){}
+			}
+		}
        	
     }
     /**
@@ -1440,7 +1508,7 @@ public class DefaultWebEventHelper {
     /**
      * @return if SPResult.getCode()!=0, it's failed, else, it's ok
      */
-      private SPResult submitOne(String spName, Table table, int pid,  int operaorID) {
+      private SPResult submitOne(String spName, Table table, int pid,  int operaorID,Connection conn) {
       	String tableName= table.getRealTableName();
       	try{
 
@@ -1459,7 +1527,7 @@ public class DefaultWebEventHelper {
           Vector sqls= new Vector();
           sqls.addElement("update "+tableName+" set modifierid="+ operaorID+ ", modifieddate=sysdate where id="+pid);
           try{
-              engine.doUpdate(sqls);
+              engine.doUpdate(sqls, conn);
           }catch(Exception e){
               throw new NDSEventException(e.getMessage() );
           }
@@ -1467,7 +1535,7 @@ public class DefaultWebEventHelper {
           ArrayList list = new ArrayList();
 
               list.add(new Integer(pid));
-              SPResult sp=engine.executeStoredProcedure(spName,list,true);
+              SPResult sp=engine.executeStoredProcedure(spName,list,true,conn);
               //logger.debug("submitOne:code="+ sp.getCode()+", message="+ sp.getMessage());
               return sp;
           }catch(Exception e){

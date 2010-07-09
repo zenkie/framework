@@ -80,16 +80,16 @@ public class AuditUtils {
 	 * @return au_process.id or -1 if not found
 	 * @throws Exception
 	 */
-	public static int getProcess(int tableId, int objectId) throws Exception{
+	public static int getProcess(int tableId, int objectId,Connection conn) throws Exception{
 		TableManager manager= TableManager.getInstance();
 		Table table= manager.getTable(tableId);
 		QueryEngine engine= QueryEngine.getInstance();
 		// currently process must be adClientId related.
 		if (!table.isAdClientIsolated()) throw new NDSException("Unexpected table type (no ad_client_id column?): tableId="+ tableId);
-		int adClientId= Tools.getInt(engine.doQueryOne("select ad_client_id from "+ table.getRealTableName()+" where id="+objectId), -1);
+		int adClientId= Tools.getInt(engine.doQueryOne("select ad_client_id from "+ table.getRealTableName()+" where id="+objectId,conn), -1);
 		
 		List al=engine.doQueryList("select p.filterobj, p.id from au_process p where p.isactive='Y' "+
-				"and p.ad_table_id="+ tableId+" and p.ad_client_id="+ adClientId +" order by p.priority desc");
+				"and p.ad_table_id="+ tableId+" and p.ad_client_id="+ adClientId +" order by p.priority desc",conn);
 		
 		for(Iterator it=al.iterator();it.hasNext();){
 			List p= (List)it.next();
@@ -112,10 +112,21 @@ public class AuditUtils {
 			query.addParam(exp);
 			String cntSQL=query.toCountSQL();
 			logger.debug(cntSQL);
-			int cnt=Tools.getInt(engine.doQueryOne(cntSQL),0);
+			int cnt=Tools.getInt(engine.doQueryOne(cntSQL,conn),0);
 			if(cnt > 0) return processId;
 		}
 		return -1;
+	}
+	public static int getProcess(int tableId, int objectId) throws Exception{
+		Connection conn=null;
+		try{
+			conn=QueryEngine.getInstance().getConnection();
+			return getProcess(tableId, objectId, conn);
+		}finally{
+			if(conn!=null){
+				try{conn.close();}catch(Throwable tx){}
+			}
+		}
 	}
 	/**
 	 * Convert object to display format, mainly for date object
