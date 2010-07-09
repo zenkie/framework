@@ -231,7 +231,11 @@ public class Rest implements BinaryHandler{
     			  //and process order is not allow to parse json as event parameters
     			  jo.put("javax.servlet.http.HttpServletRequest", request);
         		  if(!keepJSON && (jo.opt("parsejson")==null)){
-       				  jo.put("parsejson","Y"); 
+        			  /*
+        			   * these commands should not add following name/value pair
+        			   *  ProcessOrder,GetObject,ExecuteWebAction
+        			   */
+       				  jo.put("parsejson","Y");  
         		  }
         		  if(singleTransaction) jo.put("nds.control.ejb.UserTransaction","Y");
 

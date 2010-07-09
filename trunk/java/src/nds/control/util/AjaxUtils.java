@@ -12,6 +12,7 @@ import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nds.control.ejb.StateMachine;
 import nds.control.event.DefaultWebEvent;
 import nds.control.web.AjaxController;
 import nds.control.web.ClientControllerWebImpl;
@@ -21,6 +22,7 @@ import nds.control.web.WebUtils;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.query.*;
+import nds.rest.TransactionResponse;
 import nds.schema.Column;
 import nds.schema.DisplaySetting;
 import nds.schema.Table;
@@ -75,14 +77,53 @@ public class AjaxUtils {
 		
 	}
 	/**
-	 * Get jsonObj for nds.control.event.DefaultWebEvent, and return nds.control.util.Result.toJSONString() 
-	 * @param jsonObj should be parsed to DefaultWebEvent
-	 * @return should be nds.control.util.Result.toJSONString() 
+	 * Batch command 的拆解模式
+	 * @param tra
+	 * @param qsession
+	 * @param userId
+	 * @param locale
+	 * @return
 	 * @throws Exception
 	 */
-	public static ValueHolder process(JSONObject jo, nds.query.QuerySession qsession, int userId, Locale locale ) throws Exception{
+	public static DefaultWebEvent createEventByRestTransaction( 
+			JSONObject tra,HttpServletRequest request, nds.query.QuerySession qsession, 
+			int userId, Locale locale ) throws Exception{
 
-        DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
+		String traId= tra.optString("id","");
+  	  
+  	  	String command=null;
+  	  
+  		  command=tra.getString("command");
+//  		  boolean isWebAction=command.equals("ExecuteWebAction");
+//  		  boolean isCompositeObjectProcessing=command.equals("ProcessOrder") || command.equals("GetObject");
+  		  boolean isQuery= command.equals("Query");
+  		  
+  		  boolean keepJSON= (command.equals("ProcessOrder") || command.equals("GetObject")||command.equals("ExecuteWebAction")); 
+  		  boolean singleTransaction= !command.equals("Import"); // all commands are single transaction except import command
+  		  
+  		  JSONObject jo=tra.getJSONObject("params");
+  		  jo.put("command",command);
+  		  if(!isQuery){
+  			  //this will be web context substitution
+  			  //and process order is not allow to parse json as event parameters
+  			  jo.put("javax.servlet.http.HttpServletRequest", request);
+      		  if(!keepJSON && (jo.opt("parsejson")==null)){
+      			  /*
+      			   * these commands should not add following name/value pair
+      			   *  ProcessOrder,GetObject,ExecuteWebAction
+      			   */
+     				  jo.put("parsejson","Y");  
+      		  }
+      		  if(singleTransaction) jo.put("nds.control.ejb.UserTransaction","Y");
+
+  			  return createEvent(jo, qsession, userId,locale);
+  		  }else{
+  			  throw new NDSException("Query request not allowed here");
+  		  }
+  		  
+	}
+	public static DefaultWebEvent createEvent( JSONObject jo, nds.query.QuerySession qsession, int userId, Locale locale ) throws Exception{
+		DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
         String command=jo.getString("command");
 //        UserWebImpl usr=(UserWebImpl)scmanager.getActor(WebKeys.USER);
         if(qsession!=null)
@@ -114,6 +155,17 @@ public class AjaxUtils {
         if( jo.optBoolean("bestEffort", false) || 
         		"N".equals(jo.optString("nds.control.ejb.UserTransaction", "N"))
         )event.put("nds.control.ejb.UserTransaction" , "N");
+        return event;
+	}
+	/**
+	 * Get jsonObj for nds.control.event.DefaultWebEvent, and return nds.control.util.Result.toJSONString() 
+	 * @param jsonObj should be parsed to DefaultWebEvent
+	 * @return should be nds.control.util.Result.toJSONString() 
+	 * @throws Exception
+	 */
+	public static ValueHolder process(JSONObject jo, nds.query.QuerySession qsession, int userId, Locale locale ) throws Exception{
+
+        DefaultWebEvent event= createEvent(jo, qsession, userId,locale);
         ClientControllerWebImpl scc = (ClientControllerWebImpl)WebUtils.getServletContextManager().getActor(WebKeys.WEB_CONTROLLER);
         return scc.handleEvent(event);
 	}
