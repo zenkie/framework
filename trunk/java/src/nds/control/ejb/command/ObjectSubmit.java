@@ -52,7 +52,10 @@ public class ObjectSubmit extends Command{
         logger.debug("table name="+ tableName +", table="+ table);
         String origTableName= tableName;
         if(table==null) table=TableManager.getInstance().findTable(tableName);
-        
+        if(nds.util.Validator.isNotNull(tableName)){
+        	tableName= table.getName();
+        	origTableName= tableName;	
+        } 
         User usr= helper.getOperator(event);	
         int pid =event.getObjectId(table, usr.adClientId);
         //Integer pid = new Integer(Tools.getInt(event.getParameterValue("id") ,-1));
