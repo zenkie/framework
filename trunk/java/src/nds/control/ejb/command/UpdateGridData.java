@@ -167,7 +167,8 @@ public class UpdateGridData extends Command {
   		int qlcid=jo.optInt("qlcid", -1);
   		boolean partialUpdate= false;
 		nds.web.config.QueryListConfig qlc=nds.web.config.QueryListConfigManager.getInstance().getQueryListConfig(qlcid);
-		if(qlc==null) qlc=nds.web.config.QueryListConfigManager.getInstance().getMetaDefault(table.getId());
+		if(qlc==null) qlc=nds.web.config.QueryListConfigManager.getInstance().
+			getMetaDefault(table.getId(), usr.getSecurityGrade());
 		
 		List<ColumnLink> cls=qlc.getSelections(usr.getSecurityGrade());
 		colNames=new ArrayList();

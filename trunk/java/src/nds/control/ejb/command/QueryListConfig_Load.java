@@ -58,7 +58,7 @@ public class QueryListConfig_Load extends Command {
 	  	if( qlfId<1){
 	  		Table table= manager.findTable(jo.opt("table"));
 	  		int tableId=table.getId();
-	  		qlf=QueryListConfigManager.getInstance().getMetaDefault(tableId);
+	  		qlf=QueryListConfigManager.getInstance().getMetaDefault(tableId,user.getSecurityGrade());
 	  	}else{
 	  		qlf=QueryListConfigManager.getInstance().getQueryListConfig(qlfId);
 	  	}

@@ -1285,7 +1285,7 @@ public final class QueryUtils {
      * @return Expression for query conditions set by user using query form
      * @throws QueryException
      */
- 	public static Expression parseConditionInColumnLink(Map req, Locale locale) throws NDSException{
+ 	public static Expression parseConditionInColumnLink(Map req, Locale locale, int sgrade) throws NDSException{
  		Expression exprAll=null, expr=null, expr2=null;
         TableManager manager=TableManager.getInstance();
         Table table=manager.findTable(req.get("table"));
@@ -1296,7 +1296,8 @@ public final class QueryUtils {
         if(qlcid==-2) throw new QueryException("qlcid not found in req");
         List<ColumnLink> al;
         if( qlcid!=-1) al= nds.web.config.QueryListConfigManager.getInstance().getQueryListConfig(qlcid).getConditions();
-        else al=nds.web.config.QueryListConfigManager.getInstance().getMetaDefault(tableId).getConditions();
+        else al=nds.web.config.QueryListConfigManager.getInstance().
+        		getMetaDefault(tableId, sgrade).getConditions();
         
         String param, paramSQL ,cs;
         for(int i=0;i< al.size();i++){

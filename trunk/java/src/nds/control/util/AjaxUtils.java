@@ -216,7 +216,7 @@ public class AjaxUtils {
 		QueryListConfig qlc=null;
 		//try loading from QueryListConfig
 		if(qlcId==-1){
-			qlc= QueryListConfigManager.getInstance().getMetaDefault(table.getId());
+			qlc= QueryListConfigManager.getInstance().getMetaDefault(table.getId(), qsession==null?0: qsession.getSecurityGrade());
 		}else if(qlcId>-1){
 			qlc= QueryListConfigManager.getInstance().getQueryListConfig(qlcId);
 		}		
@@ -341,7 +341,7 @@ public class AjaxUtils {
 			if(expr2!=null && !expr2.isEmpty())expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
 			//logger.debug("after param_str"+expr );
 		} else if( jo.has("param_str2")){
-			expr2=parseQueryStringInColumnLink(cs2, locale);
+			expr2=parseQueryStringInColumnLink(cs2, locale, qsession==null?0:qsession.getSecurityGrade());
 			logger.debug("param_str2:"+ expr2.toString());
 			if(expr2!=null && !expr2.isEmpty())expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
 		}else{
@@ -800,7 +800,7 @@ public class AjaxUtils {
      * @param params in format like URL.queryString, should not be null
      * @return Expression for QueryRequest construction
      */
-    private static Expression parseQueryStringInColumnLink(String params,Locale locale) throws Exception{
+    private static Expression parseQueryStringInColumnLink(String params,Locale locale, int sgrade) throws Exception{
     	if(Validator.isNull(params)) return Expression.EMPTY_EXPRESSION;
     	CGIParser parser= new CGIParser(params,"UTF-8");
     	java.util.Enumeration e=parser.getParameterNames();
@@ -809,7 +809,7 @@ public class AjaxUtils {
     		String key= (String)e.nextElement();
     		map.put(key, parser.getParameter(key)); // we do not handle string[] here
     	}
-    	return QueryUtils.parseConditionInColumnLink(map, locale);
+    	return QueryUtils.parseConditionInColumnLink(map, locale,sgrade);
     }
     
     /**

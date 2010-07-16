@@ -1495,7 +1495,7 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
     	//default setting
     	if(qlc==null){
     		qlc=qlcm.getDefaultQueryListConfig(tableId);
-    		if(qlc==null) qlc=qlcm.getMetaDefault(tableId);
+    		if(qlc==null) qlc=qlcm.getMetaDefault(tableId,getSecurityGrade());
     	}
     	return qlc;
     	

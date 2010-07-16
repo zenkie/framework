@@ -76,9 +76,10 @@ public class QueryListConfigManager{
      * Query list configuration of meta data, retrieved definition from ad_table/ad_column
      * 
      * @param tableId
+       @param sgrade column with sgrade higher then this code, will not be selected
      * @return
      */
-    public QueryListConfig getMetaDefault(int tableId) throws NDSException{
+    public QueryListConfig getMetaDefault(int tableId, int sgrade) throws NDSException{
     	QueryListConfig qlc= metaConfig.get(tableId);
     	if(qlc!=null) return qlc;
     	
@@ -95,13 +96,14 @@ public class QueryListConfigManager{
     	ArrayList al=table.getIndexedColumns();
     	for(int i=0;i<al.size();i++){
     		Column col=(Column) al.get(i);
+    		if(col.getSecurityGrade()> sgrade) continue;
     		ColumnLink cl=new ColumnLink(new int[]{col.getId()});
     		cls.add(cl);
     	}
     	qlc.setConditions(cls);
     	//selections
     	cls=new ArrayList<ColumnLink>();
-    	al=table.getColumns(new int[]{Column.MASK_QUERY_LIST},false, 0 ); //default sgrade
+    	al=table.getColumns(new int[]{Column.MASK_QUERY_LIST},false, sgrade ); //default sgrade
     	for(int i=0;i<al.size();i++){
     		Column col=(Column) al.get(i);
     		ColumnLink cl=new ColumnLink(new int[]{col.getId()});

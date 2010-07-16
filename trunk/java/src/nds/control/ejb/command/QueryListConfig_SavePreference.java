@@ -61,7 +61,7 @@ public class QueryListConfig_SavePreference extends Command {
 	  	int tableId= table.getId();
 	  	String tbName=table.getName();
 	  	String name;
-	  	if(qlcId==-1)name= QueryListConfigManager.getInstance().getMetaDefault(tableId).getName();
+	  	if(qlcId==-1)name= QueryListConfigManager.getInstance().getMetaDefault(tableId, user.getSecurityGrade()).getName();
 	  	else name= QueryListConfigManager.getInstance().getQueryListConfig(qlcId).getName();
 	  	Properties props=new Properties();
 	  	props.setProperty( tbName,String.valueOf( qlcId));
