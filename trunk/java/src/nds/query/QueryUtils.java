@@ -9,8 +9,11 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.sql.*;
@@ -282,7 +285,7 @@ public final class QueryUtils {
      *              格式任意 <input>::={[=]<string>}，
      *                  如果首字母为'='，表示完全匹配，<output>:=={ (<column> = '<string>' )}
      *                  否则进行模糊匹配, 生成的SQL 子句为<output>:=={ (<column> LIKE '%<string>%' )}
-     *
+     *					其中，支持*,%表示任意长度匹配，?,_ 表示单字符匹配
      *      对于日期型(type=Column.DATE)
      *          <input>   ::={ <operator> <date> | <date> - <date> }
      *          <date>    ::={ yyyy/MM/dd[,hh:mm] }  注:yyyy为4位数的年，MM为月，其他类推
@@ -310,12 +313,21 @@ public final class QueryUtils {
 	            	if(lcseInput.startsWith("is ") || lcseInput.startsWith("in ")) {
 	            		ret=" ("+columnName+" "+ input +") ";
 	            	}else{
-	            		if(input.contains("*") ){
-	            			ret= " ("+columnName+" LIKE '"+input.replace("*", "%")+"') ";
-	            		}else if( input.contains("%")){
+	            		boolean wildcardReplace=input.contains("*");
+	            		if(wildcardReplace) input=input.replace("*", "%");
+	            		if(input.contains("?")){
+	            			input=input.replace("?", "_");
+	            			wildcardReplace=true;
+	            		}
+	            		if(input.contains("？")){
+	            			input=input.replace("？", "_");
+	            			wildcardReplace=true;
+	            		}
+	            		if(wildcardReplace){
+	            			ret= " ("+columnName+" LIKE '"+input+"') ";
+	            		}else if( input.contains("%")|| input.contains("_") ){
 	            			ret= " ("+columnName+" LIKE '"+input+"') ";
 	            		}else{
-	            			
 		            		ret= " ("+columnName+" LIKE '"+(isLeftSideMatchOnly?"":"%")+input+"%') ";
 	            		}
 	            	}
@@ -1647,4 +1659,44 @@ public final class QueryUtils {
     	}
     	return false;
     }
+    /**
+     * Create sql result to file
+     * @param sql
+     * @param filePath absolute file path
+     * @param conn
+     * @return count of lines saved 
+     * @throws Exception
+     */
+    /*public static int queryToFile(String sql, String filePath, Connection conn) throws Exception{
+    	ResultSet rs=null;
+		OutputStreamWriter fw=new OutputStreamWriter(new FileOutputStream(filePath,false),"UTF-8");
+		BufferedWriter outStream=null;
+		int count=0;
+		try{
+			rs= conn.createStatement().executeQuery(sql);
+			//FileWriter fw=new FileWriter(filePath,false);
+			outStream=new BufferedWriter(fw, 512*1024); // default is 8kb cache, we expand to bigger one
+			int colcnt= rs.getMetaData().getColumnCount();       
+			Object obj;
+			while(rs.next()){
+	        	for(int i=1;i<colcnt;i++) {
+	        		obj= rs.getObject(i);
+	        		if(rs.wasNull()) outStream.write(",");
+	        		else outStream.write(obj.toString()+",");
+	        	}
+	        	//last col
+        		obj= rs.getObject(colcnt);
+        		if(rs.wasNull()) outStream.write("\r\n");
+        		else outStream.write(obj.toString()+"\r\n");
+        		count++;
+	        }
+	            
+		}finally{
+			try{rs.close();}catch(Throwable t){}
+			try{outStream.flush();}catch(Throwable t){}
+			try{outStream.close();}catch(Throwable t){}
+		}
+		return count;
+		
+    }*/
 }
