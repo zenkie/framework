@@ -93,7 +93,7 @@ public class ExportExcel extends Command {
          
          short i;
          // Create a row and put some cells in it. Rows are 0 based.
-         short row=0;
+         int row=0;
          HSSFRow excel_row ;
          HSSFCell cell;
          if(showColumnName){
@@ -124,6 +124,10 @@ public class ExportExcel extends Command {
          int dn;
          while( rs.next() ){
              row ++;
+             if(row <0 || row>65534){
+            	 logger.warning("Exit loop since row count exceed excel max value:"+ row);
+            	 break;
+             }
              //logger.debug("row:"+ row);
              excel_row = sheet.createRow(row);
              for ( i=0 ;i< cols.length;i++){
