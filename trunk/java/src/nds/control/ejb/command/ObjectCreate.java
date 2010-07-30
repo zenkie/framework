@@ -20,6 +20,9 @@ import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEventException;
 import nds.control.util.ValueHolder;
 import nds.mail.NotificationManager;
+import nds.monitor.MonitorManager;
+import nds.monitor.ObjectActionEvent;
+import nds.monitor.ObjectActionEvent.ActionType;
 import nds.query.*;
 import nds.schema.Column;
 import nds.schema.RefByTable;
@@ -307,6 +310,18 @@ public class ObjectCreate extends Command{
                 		   stmt.executeUpdate();
                 		   
                 		   spr=helper.doTrigger("AC", table, oids[realPos], con);
+                		   
+                		   //monitor plugin
+                		   JSONObject cxt=new JSONObject();
+                		   cxt.put("source", this);
+                		   cxt.put("connection", con);
+                		   cxt.put("statemachine", this.helper.getStateMachine());
+                		   cxt.put("javax.servlet.http.HttpServletRequest", 
+                				   event.getParameterValue("javax.servlet.http.HttpServletRequest", true));
+                		   ObjectActionEvent oae=new ObjectActionEvent(table.getId(),
+                				   oids[realPos], usr.adClientId,ActionType.AC, usr, cxt);
+                		   MonitorManager.getInstance().dispatchEvent(oae);
+                		   
                 		   // check write permission on that record, 若不校验界面上可生成无写权限访问的记录, 
                 		   //权限校验仅针对菜单项单据 yfzhu 2009-12-13, root晃过
                 		   if( !isRoot && table.isMenuObject()&& !nds.control.util.SecurityUtils.hasObjectPermission(con,userId, usr.name, 
@@ -925,4 +940,5 @@ public class ObjectCreate extends Command{
 
   }
 }
+
 
