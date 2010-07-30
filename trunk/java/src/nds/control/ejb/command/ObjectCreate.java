@@ -318,9 +318,11 @@ public class ObjectCreate extends Command{
                 		   cxt.put("statemachine", this.helper.getStateMachine());
                 		   cxt.put("javax.servlet.http.HttpServletRequest", 
                 				   event.getParameterValue("javax.servlet.http.HttpServletRequest", true));
+                		   /*Edit by Robin 2010-07-30
                 		   ObjectActionEvent oae=new ObjectActionEvent(table.getId(),
                 				   oids[realPos], usr.adClientId,ActionType.AC, usr, cxt);
                 		   MonitorManager.getInstance().dispatchEvent(oae);
+                		   */
                 		   
                 		   // check write permission on that record, 若不校验界面上可生成无写权限访问的记录, 
                 		   //权限校验仅针对菜单项单据 yfzhu 2009-12-13, root晃过
