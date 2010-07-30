@@ -310,7 +310,7 @@ public class ObjectCreate extends Command{
                 		   stmt.executeUpdate();
                 		   
                 		   spr=helper.doTrigger("AC", table, oids[realPos], con);
-                		   
+                		   /*Edit by Robin 2010-07-30
                 		   //monitor plugin
                 		   JSONObject cxt=new JSONObject();
                 		   cxt.put("source", this);
@@ -318,7 +318,7 @@ public class ObjectCreate extends Command{
                 		   cxt.put("statemachine", this.helper.getStateMachine());
                 		   cxt.put("javax.servlet.http.HttpServletRequest", 
                 				   event.getParameterValue("javax.servlet.http.HttpServletRequest", true));
-                		   /*Edit by Robin 2010-07-30
+                		   
                 		   ObjectActionEvent oae=new ObjectActionEvent(table.getId(),
                 				   oids[realPos], usr.adClientId,ActionType.AC, usr, cxt);
                 		   MonitorManager.getInstance().dispatchEvent(oae);
