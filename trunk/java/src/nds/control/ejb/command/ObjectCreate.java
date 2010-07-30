@@ -22,7 +22,8 @@ import nds.control.util.ValueHolder;
 import nds.mail.NotificationManager;
 import nds.monitor.MonitorManager;
 import nds.monitor.ObjectActionEvent;
-import nds.monitor.ObjectActionEvent.ActionType;
+//Edit by Robin 2010-07-30
+//import nds.monitor.ObjectActionEvent.ActionType;
 import nds.query.*;
 import nds.schema.Column;
 import nds.schema.RefByTable;
