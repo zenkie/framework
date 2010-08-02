@@ -180,7 +180,7 @@ public class ExportExcel extends Command {
                      logger.debug("Find at cell(" + row + ","+ (i+1)+") type is invalid");
                  }
 
-             }
+             } 
          }
          TableManager tm= TableManager.getInstance();
          //check columns of ColumnInterpreter
