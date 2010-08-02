@@ -41,7 +41,7 @@ public class ProcessObject extends Command {
      * will new transaction and commit that one explicitly
      * @return false if use transaction from caller
      */
-    public boolean internalTransaction(){
+    public boolean internalTransaction(DefaultWebEvent event){
     	return true;
     }
 	/**
@@ -179,10 +179,11 @@ public class ProcessObject extends Command {
 				evt.setParameter("command", inlineTable.getName()+"Modify");
 			}
 			vh=helper.handleEventWithNewTransaction(evt);
-			//内嵌对象若为新增，强制要求刷新整个界面，避免重复创建 2010-7-24 by yfzhu
-			if(inlineObjectId==-1)
-				returnObj.put("refresh",true );
-
+			//内嵌对象若为新增，强制要求刷新整个界面，避免重复创建 2010-7-30 by yfzhu
+			if(inlineObjectId==-1){
+				SPResult spr2=new SPResult(1,null );
+				returnObj.put("spresult", spr2);
+			}	
 			inlineObjectId= Tools.getInt( (Integer)vh.get("objectid"), masterObjectId);
 			logger.debug("handled:inlineObject="+inlineObjectId);
 		}
