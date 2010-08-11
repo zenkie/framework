@@ -99,8 +99,10 @@ public class Expression implements SQLCombination, Serializable{
     				eprs=new Expression(eprs,new Expression(cl,s1,desc),SQLCombination.SQL_OR,desc);
     			}
     		}
-    		this.clink=eprs.getColumnLink();
-    		if(eprs.isLeaf())this.condition=eprs.getCondition();
+    		if(eprs.isLeaf()){
+    			this.clink=eprs.getColumnLink();
+    			this.condition=eprs.getCondition();
+    		}
     		this.desc=eprs.getDescription();
     		this.exprLeft=eprs.getLeftElement();
     		this.exprRight=eprs.getRightElement();
