@@ -79,6 +79,35 @@ public class Expression implements SQLCombination, Serializable{
      * @param desc
      */
     public Expression(ColumnLink cl, String condition, String desc){
+    	/**
+    	 * robin 2010-08-10 当condition中含有","时，解析为多选条件
+    	 * 及每个","隔开的都是或者关系
+    	 */
+    	if(condition.contains(",")){
+    		String[] cons=condition.split(",");
+    		List<String> conls=new ArrayList<String>();
+    		for(String s:cons){
+    			if(!s.equals("")){
+    				conls.add(s);
+    			}
+    		}
+    		Expression eprs=null;
+    		for(String s1:conls){
+    			if(null==eprs){
+    				eprs=new Expression(cl,s1,desc);
+    			}else{
+    				eprs=new Expression(eprs,new Expression(cl,s1,desc),SQLCombination.SQL_OR,desc);
+    			}
+    		}
+    		this.clink=eprs.getColumnLink();
+    		if(eprs.isLeaf())this.condition=eprs.getCondition();
+    		this.desc=eprs.getDescription();
+    		this.exprLeft=eprs.getLeftElement();
+    		this.exprRight=eprs.getRightElement();
+    		this.isLeaf=eprs.isLeaf();
+    		this.operator=eprs.getOperator();
+    		return;
+    	}
         /**
          * yfzhu 2005-05-15 发现关于LimitValue 的字段在界面上直接输入描述选项时查询会出现错误。
          * 例如：状态字段 输入"提交" 时应该由系统自动转换为2
