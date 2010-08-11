@@ -81,9 +81,11 @@ transaction-response:{
 public class Rest implements BinaryHandler{
 	  private Logger logger= LoggerManager.getInstance().getLogger(Rest.class.getName());	 
 
-	  private static final long NETWORK_DELAY_SECONDS=1000*60*2;// 2 mininutes 
+	  private static long NETWORK_DELAY_SECONDS=1000*60*10;// 10 mininutes 
 	  private static final String CONTENT_TYPE_TEXT = "text/html; charset=UTF-8";
-	  public void init(ServletContext context){}
+	  public void init(ServletContext context){
+       		NETWORK_DELAY_SECONDS=(Tools.getInt(WebUtils.getProperty("rest.timewindow","10"), 10)) * 1000*60 ;
+	  }
 	  /**
 	   */
       public void process(HttpServletRequest request,HttpServletResponse  response)  throws Exception{

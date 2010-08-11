@@ -53,7 +53,7 @@ public class Shell implements BinaryHandler{
 				}
 					
         	}catch(Exception c2){
-        		logger.error("Fail to load "+ name, c2);
+        		logger.error("Fail to load "+ name+":"+ c2);
         	}
         }
         return command;
