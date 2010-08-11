@@ -83,7 +83,7 @@ public class Expression implements SQLCombination, Serializable{
     	 * robin 2010-08-10 当condition中含有","时，解析为多选条件
     	 * 及每个","隔开的都是或者关系
     	 */
-    	if(condition.contains(",")){
+    	if(null!=condition&&condition.contains(",")){
     		String[] cons=condition.split(",");
     		List<String> conls=new ArrayList<String>();
     		for(String s:cons){
