@@ -879,4 +879,16 @@ Content-Disposition: attachment; filename*="utf8''%E4%B8%AD%E6%96%87%20%E6%96%87
         			StringUtils.replace(java.net.URLEncoder.encode(filename,"UTF-8"), "+", "%20")+"\"";
         }    	
     }
+    
+    public static Configurations getConfigurations(){
+    	Configurations conf=(Configurations)getServletContextManager().getActor(WebKeys.CONFIGURATIONS);
+    	return conf;
+    	
+    }
+    public static String getProperty(String name, String defaultValue){
+    	return getConfigurations().getProperty(name, defaultValue);
+    }
+    public static String getProperty(String name){
+    	return getConfigurations().getProperty(name);
+    }
 }
