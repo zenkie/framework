@@ -6,7 +6,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.*;
-
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.schema.TableManager;
