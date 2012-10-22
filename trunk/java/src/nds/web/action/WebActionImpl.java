@@ -73,6 +73,11 @@ public abstract class WebActionImpl implements WebAction{
 	 * 在界面上排放的位置, 越小越靠前
 	 */
 	protected int order;
+	/**
+	 * 折叠菜单对应
+	 */
+	protected int AcordionId=-1;
+	
 	protected SaveObjectEnum saveObjType;
 	protected ActionTypeEnum actionType;
 	protected DisplayTypeEnum displayType;
@@ -346,6 +351,12 @@ public abstract class WebActionImpl implements WebAction{
 	}
 	public void setSubSystemId(int subSystemId) {
 		this.subSystemId = subSystemId;
+	}
+	public int getAcordionId() {
+		return AcordionId;
+	}
+	public void setAcordionId(int AcordionId) {
+		this.AcordionId = AcordionId;
 	}
 	
 }

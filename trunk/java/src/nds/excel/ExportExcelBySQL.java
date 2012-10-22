@@ -191,7 +191,7 @@ public class ExportExcelBySQL implements Runnable{
                 cell= excel_row.createCell((short)i);
                 cell.setCellType(HSSFCell.CELL_TYPE_STRING);
                 cell.setCellStyle(getDefaultStyle(wb, true));
-                cell.setEncoding(HSSFCell.ENCODING_UTF_16);
+                //cell.setEncoding(HSSFCell.ENCODING_UTF_16);
                 cell.setCellValue(colNames[i]) ;
             }
             int[] cols= this.getColumnTypes(rs);
@@ -230,7 +230,7 @@ public class ExportExcelBySQL implements Runnable{
                         if( ! rs.wasNull() ){
                             cell.setCellType(HSSFCell.CELL_TYPE_STRING);
                             cell.setCellStyle(style);
-                            cell.setEncoding(HSSFCell.ENCODING_UTF_16);
+                            //cell.setEncoding(HSSFCell.ENCODING_UTF_16);
                             cell.setCellValue(s );
                         }
                         break;

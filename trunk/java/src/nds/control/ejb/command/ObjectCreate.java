@@ -869,10 +869,10 @@ public class ObjectCreate extends Command{
                   String colStr = columnName.substring(0,lastIndex) ;
                   parameterName = colStr.trim() +"_"+alColumnName;*/
                   parameterName= (columnName+"__"+ alColumnName).toLowerCase();
-//                  logger.debug("the value of parameter name is:"+parameterName) ;
+                  logger.debug("the value of parameter name is:"+parameterName) ;
               }else{
                   parameterName = columnName;
-//                  logger.debug("the value of parameter name is:"+parameterName) ;
+                  logger.debug("the value of parameter name is:"+parameterName) ;
               }
               if(column.isNullable()==false ){
                   String[] tt = event.getParameterValues(parameterName);
@@ -883,7 +883,7 @@ public class ObjectCreate extends Command{
                      }
 
                   }
-//                  logger.debug("The value of newlength is:"+newlength) ;
+                  logger.debug("The value of newlength is:"+newlength) ;
                   return newlength;
               }
           }

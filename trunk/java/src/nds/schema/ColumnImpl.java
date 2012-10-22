@@ -90,6 +90,7 @@ public class ColumnImpl implements Column {
     private Properties props=null;// parsed from regExpression(json type)
     private boolean isAutoComplete=false;
     private JSONObject jsonProps=null;
+    private String showcomment;
     private int securityGrade;
     /**
      * 
@@ -1028,4 +1029,16 @@ Specify SET NULL if you want db to convert dependent foreign key values to NULL.
     	if(jo!=null)
     		this.securityGrade = jo.optInt("sgrade",0);
     }
+    /**
+     * 
+     * set in ad_column.showcomment as string
+     * cyl 10.15
+     * 
+     */
+    public String getShowcomment(){
+    	return showcomment;
+    }
+    public void setShowcomment(String shcomment){
+    	this.showcomment= shcomment;
+    }    
 }

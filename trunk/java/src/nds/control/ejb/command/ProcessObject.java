@@ -327,8 +327,22 @@ public class ProcessObject extends Command {
 		}// end hasItems
   		/**May submit immediately*/
   		boolean bSubmit=Tools.getYesNo( jo.optString("submitAfterSave"), false);
+  		int bwebact=Tools.getInt(jo.optString("actionAfterSave"),0);
   		boolean bPrintAfterSubmit=Tools.getYesNo( jo.optString("printAfterSubmit"), false);
   		String printFileName=null;
+  		if(bwebact!=0){
+  			DefaultWebEvent dwe= (DefaultWebEvent)event.clone();
+  			dwe.setParameter("command", "ExecuteWebAction");
+  			JSONObject ac=new JSONObject();
+  			ac.put("webaction",bwebact);
+  			ac.put("objectid", String.valueOf(masterObjectId));
+  			HttpServletRequest request = ctx.getHttpServletRequest();
+  			ac.put("javax.servlet.http.HttpServletRequest", request);
+  			dwe.put("JSONOBJECT", ac);
+  			ValueHolder vh2=helper.handleEventWithNewTransaction(dwe);
+  			logger.debug("!!!!!!!test:"+(String)vh2.get("message"));
+  			return vh2;
+  		}
   		if(bSubmit && !errorFound){
 	    	DefaultWebEvent dwe= (DefaultWebEvent)event.clone();
 	    	dwe.setParameter("nds.control.ejb.UserTransaction" , "Y"); // original one set this to "N"

@@ -104,7 +104,7 @@ public class ExportExcel extends Command {
 	             cell= excel_row.createCell((short)i);
 	             cell.setCellType(HSSFCell.CELL_TYPE_STRING);
 	             cell.setCellStyle(getDefaultStyle(wb, true));
-	             cell.setEncoding(HSSFCell.ENCODING_UTF_16);
+	             //cell.setEncoding(HSSFCell.ENCODING_UTF_16);
 	             cell.setCellValue(colNames[i]) ;
 	         }
          }else{
@@ -138,7 +138,7 @@ public class ExportExcel extends Command {
                     if( ! rs.wasNull() ){
                         cell.setCellType(HSSFCell.CELL_TYPE_STRING);
                         cell.setCellStyle(stringCellStyle);
-                        cell.setEncoding(HSSFCell.ENCODING_UTF_16);
+                        //cell.setEncoding(HSSFCell.ENCODING_UTF_16);
                         cell.setCellValue(s );
                         
                     }
@@ -208,7 +208,7 @@ public class ExportExcel extends Command {
                          cell=sheet.getRow(j).createCell(i);
                          cell.setCellStyle(stringCellStyle);
                          cell.setCellType(HSSFCell.CELL_TYPE_STRING);
-                         cell.setEncoding(HSSFCell.ENCODING_UTF_16);
+                         //cell.setEncoding(HSSFCell.ENCODING_UTF_16);
                          cell.setCellValue(s);
                      }catch(Exception e){
                          logger.error("Could not interpret cell(" + j + ","+ (i+1)+"):" , e);

@@ -80,7 +80,7 @@ public class MainServlet extends HttpServlet {
    			//check license
         	cnt++;
    			if(cnt%20==10){
-   				nds.util.LicenseManager.validateLicense("Agile ERP","2.0",  EJBUtils.getApplicationConfigurations().getProperty("license","/license.xml") );
+   				//nds.util.LicenseManager.validateLicense("Agile ERP","2.0",  EJBUtils.getApplicationConfigurations().getProperty("license","/license.xml") );
    			}
         	
         	//logger.debug( nds.util.Tools.toString(request));

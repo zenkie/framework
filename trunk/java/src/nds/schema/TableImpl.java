@@ -150,8 +150,8 @@ public class TableImpl implements Table {
     private boolean isActiveFilterEnabled=false; // has column "active" or not
     private Date modifiedDate=null;
     private boolean isMenuObj, isSMS,isDropdown, isBig;
-    private int rowCount;
-    private String maskString;
+    private int rowCount,Accordid;
+    private String maskString,Accordico;
     private int uiconfigId=-1; //id of nds.web.config.ObjectUIConfig
     private int parentTableId=-1;// parent table id
     private PairTable lengendQueryList=null;
@@ -1046,13 +1046,15 @@ public class TableImpl implements Table {
      * 临界值通过portal.properties的"query.fk.list"设定，缺省为40，统计行数小于该值的将直接列表。
      * @return 当前记录数
      */
+
+    
     public int getRowCount(){
     	return rowCount;
     }
     public void setRowCount(int cnt){
     	rowCount=cnt;
     }
-    
+
     public Date getModifiedDate(){
     	return modifiedDate;
     }
@@ -1251,5 +1253,19 @@ public class TableImpl implements Table {
     public void setJSONProps(JSONObject jo){
     	this.jsonProps= jo;
     }
+    
+    public int getAccordid(){
+    	return Accordid;
+    }   
+    public void setAccordid(int Accordid){
+    	this.Accordid= Accordid;
+    }
         
+    public String getAccordico(){
+    	return Accordico;
+    }   
+    public void setAccordico(String Accordico){
+    	this.Accordico= Accordico;
+    }
+       
 }

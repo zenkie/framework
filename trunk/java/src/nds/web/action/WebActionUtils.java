@@ -17,7 +17,7 @@ public class WebActionUtils {
 	 */
 	public static List<WebAction> loadActions() throws Exception{
 		List actions=QueryEngine.getInstance().doQueryList(
-				"select id, displaytype,name, description,iconurl, ad_table_id,ad_tablecategory_id, priority, filter, actiontype, content, scripts,urltarget, saveobj, comments,ad_subsystem_id from ad_action where isactive='Y' and ( exists (select 1 from ad_tablecategory c, ad_subsystem s where c.id=ad_action.ad_tablecategory_id and s.id=c.ad_subsystem_id and c.isactive='Y' and s.isactive='Y' and exists(select 1 from ad_table t where t.ad_tablecategory_id=c.id and t.isactive='Y')) or exists (select 1 from ad_table t,ad_tablecategory c, ad_subsystem s where t.id=ad_action.ad_table_id and c.id=t.ad_tablecategory_id and s.id=c.ad_subsystem_id and t.isactive='Y' and c.isactive='Y' and s.isactive='Y')or exists(select 1 from ad_subsystem s where s.id=ad_action.ad_subsystem_id and s.isactive='Y')) order by priority"
+				"select id, displaytype,name, description,iconurl, ad_table_id,ad_tablecategory_id, priority, filter, actiontype, content, scripts,urltarget, saveobj, comments,ad_subsystem_id,AD_ACCORDION_ID from ad_action where isactive='Y' and ( exists (select 1 from ad_tablecategory c, ad_subsystem s where c.id=ad_action.ad_tablecategory_id and s.id=c.ad_subsystem_id and c.isactive='Y' and s.isactive='Y' and exists(select 1 from ad_table t where t.ad_tablecategory_id=c.id and t.isactive='Y')) or exists (select 1 from ad_table t,ad_tablecategory c, ad_subsystem s where t.id=ad_action.ad_table_id and c.id=t.ad_tablecategory_id and s.id=c.ad_subsystem_id and t.isactive='Y' and c.isactive='Y' and s.isactive='Y')or exists(select 1 from ad_subsystem s where s.id=ad_action.ad_subsystem_id and s.isactive='Y')) order by priority"
 		);
 		
 		ArrayList<WebAction> wactions=new ArrayList();
@@ -49,9 +49,10 @@ public class WebActionUtils {
 			String saveObjType= (String)act.get(j++);
 			String comments= (String)act.get(j++);
 			int subSystemId=  Tools.getInt( act.get(j++), -1);
+			int acordionId=  Tools.getInt( act.get(j++), -1);
 			
 			WebAction wa=createAction(id, displayType, name, description, iconURL, tableId, tableCategoryId, 
-					subSystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments);
+					subSystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments,acordionId);
 			
 			wactions.add(wa);
 		}
@@ -60,7 +61,7 @@ public class WebActionUtils {
 	public static WebAction createAction(int id, String displayType,String name,
 			String description,String iconURL,int tableId, int tableCategoryId,int subSystemId,
 			int order, String filter, String actionType,String content,String scripts,
-			String urlTarget,String saveObjType,String comments){
+			String urlTarget,String saveObjType,String comments,int acordionId){
 		WebAction.DisplayTypeEnum dte=WebAction.DisplayTypeEnum.parse(displayType);
 		WebActionImpl wa;
 		switch(dte){
@@ -88,13 +89,13 @@ public class WebActionUtils {
 		}
 		wa.setId(id);
 		updateWebAction(wa,dte, name, description, iconURL, tableId, tableCategoryId, 
-				subSystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments);
+				subSystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments,acordionId);
 		return wa;
 	}
 	private static void updateWebAction(WebActionImpl wa, WebAction.DisplayTypeEnum displayType,String name,
 			String description,String iconURL,int tableId, int tableCategoryId,int subSystemId,
 			int order, String filter, String actionType,String content,String scripts,
-			String urlTarget,String saveObjType,String comments){
+			String urlTarget,String saveObjType,String comments,int acordionId){
 		wa.setDisplayType(displayType);
 		wa.setName(name);
 		wa.setActionType(WebAction.ActionTypeEnum.parse(actionType));
@@ -110,6 +111,7 @@ public class WebActionUtils {
 		wa.setTableId(tableId);
 		wa.setSubSystemId(subSystemId);
 		wa.setUrlTarget(urlTarget);
+		wa.setAcordionId(acordionId);
 	}
 	/**
 	 * Reload action and update tablemanager cache
@@ -120,7 +122,7 @@ public class WebActionUtils {
 		List actions=QueryEngine.getInstance().doQueryList(
 				"select id, displaytype,name, description,iconurl, ad_table_id,"+
 				"ad_tablecategory_id, priority, filter, actiontype, content, scripts,"+
-				"urltarget, saveobj, comments,ad_subsystem_id from ad_action where id="+ id +" and isactive='Y' and "+
+				"urltarget, saveobj, comments,ad_subsystem_id,AD_ACCORDION_ID from ad_action where id="+ id +" and isactive='Y' and "+
 				"( exists (select 1 from ad_tablecategory c, ad_subsystem s where c.id=ad_action.ad_tablecategory_id and s.id=c.ad_subsystem_id "+
 				"and c.isactive='Y' and s.isactive='Y' ) or "+
 				"exists (select 1 from ad_table t,ad_tablecategory c, ad_subsystem s where "+ 
@@ -158,6 +160,7 @@ public class WebActionUtils {
 		String saveObjType= (String)act.get(j++);
 		String comments= (String)act.get(j++);
 		int subsystemId=Tools.getInt( act.get(j++), -1);
+		int acordionId=  Tools.getInt( act.get(j++), -1);
 		WebAction.DisplayTypeEnum dte=WebAction.DisplayTypeEnum.parse(displayType);
 		
 		/**
@@ -172,7 +175,7 @@ public class WebActionUtils {
 			boolean bUpdate=false;
 			if(list.isEmpty()){
 				WebAction wa=createAction(id, displayType, name, description, iconURL, tableId, tableCategoryId, 
-						subsystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments);
+						subsystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments,acordionId);
 				tb.addWebAction(wa);
 			}else{
 				for(int i=0;i< list.size();i++){
@@ -180,7 +183,7 @@ public class WebActionUtils {
 					if(a.getId()== id){
 						// do update
 						updateWebAction(a,WebAction.DisplayTypeEnum.parse(displayType), name, description, iconURL, tableId, tableCategoryId, 
-								subsystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments);
+								subsystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments,acordionId);
 						bUpdate=true;
 						break;
 					}
@@ -188,7 +191,7 @@ public class WebActionUtils {
 				if(!bUpdate){
 					// do insert
 					WebAction wa=createAction(id, displayType, name, description, iconURL, tableId, tableCategoryId, 
-							subsystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments);
+							subsystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments,acordionId);
 					list.add(wa);
 				}
 				nds.util.ListSort.sort(list, "Order");
@@ -204,7 +207,7 @@ public class WebActionUtils {
 			boolean bUpdate=false;
 			if(list.isEmpty()){
 				WebAction wa=createAction(id, displayType, name, description, iconURL, tableId, tableCategoryId, 
-						subsystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments);
+						subsystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments,acordionId);
 				c.addWebAction(wa);
 			}else{
 				for(int i=0;i< list.size();i++){
@@ -212,7 +215,7 @@ public class WebActionUtils {
 					if(a.getId()== id){
 						// do update
 						updateWebAction(a,WebAction.DisplayTypeEnum.parse(displayType), name, description, iconURL, tableId, tableCategoryId, 
-								subsystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments);
+								subsystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments,acordionId);
 						bUpdate=true;
 						break;
 					}
@@ -220,7 +223,7 @@ public class WebActionUtils {
 				if(!bUpdate){
 					// do insert
 					WebAction wa=createAction(id, displayType, name, description, iconURL, tableId, tableCategoryId, 
-							subsystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments);
+							subsystemId,order, filter, actionType, content, scripts, urlTarget, saveObjType, comments,acordionId);
 					list.add(wa);
 				}
 				nds.util.ListSort.sort(list, "Order");

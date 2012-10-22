@@ -4,6 +4,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RegexTest {
+	
+	String regEx = "[\\u4e00-\\u9fa5]";
+	
     public static void test1(){
         String pattern = "[a-z]+";
         String text = "Now is the time";
@@ -43,6 +46,39 @@ public class RegexTest {
         }
 
 
+    }
+    
+    public String chinaToUnicode(String str){  
+        String result="";  
+        for (int i = 0; i < str.length(); i++){  
+             int chr1 = (char) str.charAt(i);  
+             if(chr1>=19968&&chr1<=171941){//ºº×Ö·¶Î§ \u4e00-\u9fa5 (ÖÐÎÄ)  
+                 result+="\\u" + Integer.toHexString(chr1);  
+             }else{  
+                 result+=str.charAt(i);  
+             }  
+        }  
+        return result;  
+   }
+    
+    
+    public boolean vd(String str){
+    	  
+        char[] chars=str.toCharArray(); 
+        boolean isGB2312=false; 
+        for(int i=0;i<chars.length;i++){
+                    byte[] bytes=(""+chars[i]).getBytes(); 
+                    if(bytes.length==2){ 
+                                int[] ints=new int[2]; 
+                                ints[0]=bytes[0]& 0xff; 
+                                ints[1]=bytes[1]& 0xff; 
+                                if(ints[0]>=0x81 && ints[0]<=0xFE && ints[1]>=0x40 && ints[1]<=0xFE){ 
+                                            isGB2312=true; 
+                                            break; 
+                                } 
+                    } 
+        } 
+        return isGB2312; 
     }
     
     public static void main(String args[]) {

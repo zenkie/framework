@@ -58,6 +58,7 @@ public interface WebAction {
 	
 	public SaveObjectEnum getSaveObjType();
 	public int getSubSystemId();
+	public int getAcordionId();
 	public int getTableCategoryId();
 	public int getTableId() ;
 	public String getUrlTarget();

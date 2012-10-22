@@ -291,7 +291,7 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
             b=false;
         }
         String s= constructWhereClause(expr,b);
-
+        logger.debug("expr"+s);
         this.whereClause.add(s);
         return s;
     }

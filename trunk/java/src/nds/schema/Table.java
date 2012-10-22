@@ -423,6 +423,16 @@ public interface Table extends Serializable  {
      */
     public int getRowCount();
     /**
+    *获取表上面的折叠菜单栏ID
+    *
+    */
+    public int getAccordid();
+    /**
+     *获取表上面的折叠菜单栏ICO
+     *
+     */
+     public String getAccordico();
+    /**
      * Last modified date
      * @return date
      */

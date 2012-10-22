@@ -58,6 +58,8 @@ public abstract class BaseAdTable  implements Serializable {
 	public static String PROP_IS_TREE = "IsTree";
 	public static String PROP_COMMENTS = "Comments";
 	public static String PROP_PROPS = "Props";
+	public static String PROP_AD_ACCORDION_ID = "Accordion";
+	public static String PROP_AD_ACCORDION_IMG = "Accordionimg";
 	public static String PROP_IS_DROPDOWN = "IsDropdown";
 	public static String PROP_DIRECTORY = "Directory";
 	public static String PROP_CLASS_NAME = "ClassName";
@@ -86,6 +88,8 @@ public abstract class BaseAdTable  implements Serializable {
 	private java.lang.Integer _orderno;
 	private java.lang.String _comments;
 	private java.lang.String _props;
+	private java.lang.String _Accordionimg;
+	private java.lang.Integer _Accordion;
 	private java.lang.String _url;
 	private java.lang.String _className;
 	private java.lang.Integer _directoryId;
@@ -384,6 +388,35 @@ public abstract class BaseAdTable  implements Serializable {
 	public void setComments (java.lang.String _comments) {
 		this._comments = _comments;
 	}
+	/**
+	 * Return the value associated with the column: accordion
+	 */
+	public java.lang.Integer getAccordion () {
+		return _Accordion;
+	}
+
+	/**
+	 * Set the value related to the column: _Accordion
+	 * @param _comments the COMMENTS value
+	 */
+	public void setAccordion (java.lang.Integer _Accordion) {
+		this._Accordion = _Accordion;
+	}
+	
+	/**
+	 * Return the value associated with the column: Accordionimg
+	 */
+	public java.lang.String getAccordionimg () {
+		return _Accordionimg;
+	}
+
+	/**
+	 * Set the value related to the column: Accordionimg
+	 * @param _comments the COMMENTS value
+	 */
+	public void setAccordionimg (java.lang.String _Accordionimg) {
+		this._Accordionimg = _Accordionimg;
+	}	
 	/**
 	 * Return the value associated with the column: Props
 	 */

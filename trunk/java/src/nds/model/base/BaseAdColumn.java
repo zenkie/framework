@@ -53,6 +53,8 @@ public abstract class BaseAdColumn  implements Serializable {
 	public static String PROP_ERRMSG = "Errmsg";
 	public static String PROP_COMMENTS = "Comments";
 	public static String PROP_PROPS = "Props";
+	// show comments
+	public static String PROP_SHOW_COMMENTS = "Showcomment";
 	public static String PROP_SEQUENCENAME = "Sequencename";
 	public static String PROP_ID = "Id";
 	public static String PROP_CREATION_DATE = "CreationDate";
@@ -104,6 +106,7 @@ public abstract class BaseAdColumn  implements Serializable {
 	private java.lang.Integer _statSize;
 	private java.lang.String _isIndexed;
 	private java.lang.String _onDelete;
+	private java.lang.String _Showcomment;
 	
 	// many to one
 	private nds.model.AdTable _adTable;
@@ -459,6 +462,23 @@ public abstract class BaseAdColumn  implements Serializable {
 	public void setComments (java.lang.String _comments) {
 		this._comments = _comments;
 	}
+	
+	/**
+	 * Return the value associated with the column: accordion
+	 */
+	public java.lang.String getShowcomment () {
+		return _Showcomment;
+	}
+
+	/**
+	 * Set the value related to the column: _Accordion
+	 * @param _comments the COMMENTS value
+	 */
+	public void setShowcomment (java.lang.String _Showcomment) {
+		this._Showcomment = _Showcomment;
+	}	
+	
+	
 	/**
 	 * Return the value associated with the column: Props
 	 */

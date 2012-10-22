@@ -115,7 +115,7 @@ public class ExcelTemplateManager {
                 HSSFCell cell = row.createCell((short)j);
                 cell.setCellType(HSSFCell.CELL_TYPE_STRING);
                 cell.setCellStyle(style);
-                cell.setEncoding(HSSFCell.ENCODING_UTF_16);
+                //cell.setEncoding(HSSFCell.ENCODING_UTF_16);
                 cell.setCellValue( desc);//+"("+ typeMark+")"
                 short leng= (short)(column.getLength() * 256 );
                 if ( desc.length()  * 256 * 2/* 2 byte chinese */ > leng) leng=(short)( desc.length()  * 256 * 2);

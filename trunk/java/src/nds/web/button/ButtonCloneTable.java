@@ -43,6 +43,6 @@ public class ButtonCloneTable extends ButtonCommandUI_Impl{
 	 * @return
 	 */
 	protected String getPopupType( HttpServletRequest request, Column column, int objectId){
-		return POPUP_TARGET_TOP;
+		return POPUP_TARGET_SELF;
 	}
 }

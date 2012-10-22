@@ -48,7 +48,8 @@ public final class Tools {
 	 * @param loader
 	 */
 	public static void loadNativeLibrary(ClassLoader loader){
-		NativeTools.load(loader);
+		//NativeTools.load(loader);
+		return;
 	}
 	/**
 	 * Get local machine's cpus' id, seperated by comma if multiple cpu found
@@ -60,11 +61,13 @@ public final class Tools {
 	}
 	public static String decrypt(String s){
 		//return deobfuscate(s);
-		return NativeTools.decrypt(s);
+		//return NativeTools.decrypt(s);
+		return null;
 	}
 	public static String encrypt(String s){
 		//return obfuscate(s);
-		return NativeTools.encrypt(s);
+		//return NativeTools.encrypt(s);
+		return null;
 	}
     private static String[] _BOOLEANS = {"true", "t", "y", "on", "1"};
     

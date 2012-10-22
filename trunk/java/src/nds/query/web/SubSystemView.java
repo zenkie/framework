@@ -402,6 +402,197 @@ public class SubSystemView {
         }
     	return catschild;
 	}
+
+	/**
+	 * menu action
+	 * @throws Exception  cyl
+	 * @param request
+	 * @param tableCategoryId desgin menu list
+	 * @paqram includeAction if true, will load webactions also
+	 * @return elements are Table or WebAction and menu list
+	 */
+	public List getChildrenOfTableCategorybymenu(HttpServletRequest request, int tableCategoryId, boolean includeAction) throws Exception{
+		TableManager manager=TableManager.getInstance();
+		
+		WebAction action;
+        ArrayList cats = new ArrayList();
+        Connection conn= null;
+        HashMap webActionEnv=null;
+        Table table;
+        List al=QueryEngine.getInstance().doQueryList("select e.id,e.name from ad_table g,AD_ACCORDION e where g.AD_ACCORDION_id=e.id and g.ad_tablecategory_id="+tableCategoryId+" group by e.id,e.name order by count(1) desc");
+        UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
+        TableCategory tc= manager.getTableCategory(tableCategoryId);
+    	List children= tc.children();
+    	
+    	//ArrayList prow= new ArrayList();
+    	if(al.size()>0){
+			for(int i=0;i<al.size();i++){
+				List als= (List)al.get(i);
+				int  ACCORDION=Tools.getInt( als.get(0), -1);
+				logger.debug("ACCORDION~~~~~~~~~~"+String.valueOf(ACCORDION));
+				ArrayList catschild= new ArrayList();
+				String	ACCORDION_name=(String)als.get(1);
+				try{
+		            if(includeAction){
+			    		conn=QueryEngine.getInstance().getConnection();
+			        	webActionEnv=new HashMap();
+			        	webActionEnv.put("connection",conn);
+			        	webActionEnv.put("httpservletrequest",request);
+			        	webActionEnv.put("userweb",userWeb);
+		            }
+			    	for(int j=0;j< children.size();j++){
+			    		if(children.get(j) instanceof Table){
+			    			table=(Table)children.get(j);
+			    			logger.debug("getAccordid~~~~~~~~~~"+String.valueOf(table.getAccordid()));
+			    			if(!table.isMenuObject()){
+			                	continue;
+			                }
+			    			else if(ACCORDION!=table.getAccordid()){
+			    				logger.debug(String.valueOf(ACCORDION)+"!="+String.valueOf(table.getAccordid()));
+			    				continue;
+			    			}
+			    			try{
+			                    WebUtils.checkTableQueryPermission(table.getName(),request );
+			                }catch(NDSSecurityException e){
+			                    continue;
+			                }
+			                // table is ok for current user to list
+			                logger.debug(String.valueOf(ACCORDION)+"&&"+String.valueOf(table.getAccordid()));
+			                catschild.add(table);
+			    		}else if(children.get(j) instanceof WebAction){
+			        		if(includeAction){	
+				    			action=(WebAction)children.get(j);
+				        		if(action.canDisplay(webActionEnv)&&(action.getAcordionId()==ACCORDION))
+				        			logger.debug("add action"+String.valueOf(ACCORDION));
+				        			catschild.add(action);
+			        		}
+			    		}else{
+			    			throw new NDSRuntimeException("Unsupported element in TableCategory children:"+ 
+			    					children.get(j).getClass());
+			    			
+			    		}
+			    	}
+		    	}catch(Throwable t){
+		        	logger.error("Fail to load subsystem tree", t);
+		        }finally{
+		        	try{if(conn!=null)conn.close();}catch(Throwable e){}
+		        }
+	        	if(catschild.size()>0){
+	        		// show this category
+	        		ArrayList row= new ArrayList();
+	                row.add(ACCORDION_name);
+	                row.add(catschild);
+	                cats.add(row);
+	        	}
+			}
+			return cats;
+    	}else{
+    		ArrayList catschild1= new ArrayList();
+    	try{
+            if(includeAction){
+	    		conn=QueryEngine.getInstance().getConnection();
+	        	webActionEnv=new HashMap();
+	        	webActionEnv.put("connection",conn);
+	        	webActionEnv.put("httpservletrequest",request);
+	        	webActionEnv.put("userweb",userWeb);
+            }
+	    	for(int j=0;j< children.size();j++){
+	    		if(children.get(j) instanceof Table){
+	    			table=(Table)children.get(j);
+	    			if(!table.isMenuObject()){
+	                	continue;
+	                }
+	    			try{
+	                    WebUtils.checkTableQueryPermission(table.getName(),request );
+	                }catch(NDSSecurityException e){
+	                    continue;
+	                }
+	                // table is ok for current user to list
+	                catschild1.add(table);
+	    		}else if(children.get(j) instanceof WebAction){
+	        		if(includeAction){	
+		    			action=(WebAction)children.get(j);
+		        		if(action.canDisplay(webActionEnv))
+		        			catschild1.add(action);
+	        		}
+	    		}else{
+	    			throw new NDSRuntimeException("Unsupported element in TableCategory children:"+ 
+	    					children.get(j).getClass());
+	    			
+	    		}
+	    	}
+    	}catch(Throwable t){
+        	logger.error("Fail to load subsystem tree", t);
+        }finally{
+        	try{if(conn!=null)conn.close();}catch(Throwable e){}
+        }
+    	if(catschild1.size()>0){
+    		// show this category
+    		ArrayList row= new ArrayList();
+            row.add(tc.getName());
+            row.add(catschild1);
+            cats.add(row);
+    	}
+        }
+    	return cats;
+	}
+
+	
+	/**MU_FAVORITE
+	 * @throws Exception  cyl
+	 * @param request
+	 * @return elements are Table or WebAction and menu list
+	 * @paqram includeAction if true?not now
+	 */
+	
+	public List getSubSystemsOfmufavorite(HttpServletRequest request) throws Exception{
+		ArrayList mufavorite = new ArrayList();
+		TableManager manager=TableManager.getInstance();
+		Table table;
+		UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
+		int userid=userWeb.getUserId();
+		List al=QueryEngine.getInstance().doQueryList("select t.ad_table_id,t.menu_no,t.fa_menu,t.menu_re from MU_FAVORITE t where t.ownerid="+String.valueOf(userid)+" order by t.menu_no");		
+		if(al.size()>0){
+			for(int i=0;i<al.size();i++){
+				
+				ArrayList catschild= new ArrayList();
+				List als= (List)al.get(i);
+				String	fa_menu=(String)als.get(1);
+				String	menu_re=(String)als.get(2);
+				int  table_id=Tools.getInt( als.get(0), -1);
+				table=manager.getTable(table_id);
+				try{
+				if(!table.isMenuObject()){
+                	continue;
+                }
+				try{
+                    WebUtils.checkTableQueryPermission(table.getName(),request );
+                  }catch(NDSSecurityException e){
+                    continue;
+                }
+                  catschild.add(table);
+			
+	    	}catch(Throwable t){
+	        	logger.error("Fail to load mufavorite", t);
+
+		       }
+	    	
+        	if(catschild.size()>0){
+        		// show this category
+        		ArrayList row= new ArrayList();
+                row.add(fa_menu);
+                row.add(menu_re);
+                row.add(catschild);
+                mufavorite.add(row);
+        	    }
+		      }
+
+			}
+		return mufavorite;
+	}
+	
+	
+	
 	/**
 	 * Return table categories and table that user has view permission
 	 * @param request

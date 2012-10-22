@@ -200,7 +200,7 @@ public class ServletContextManager implements ServletContextActor,java.io.Serial
             
             
    			//check license
-   			nds.util.LicenseManager.validateLicense("Agile ERP","2.0",  conf.getProperty("license","/license.xml") );
+   			//nds.util.LicenseManager.validateLicense("Agile ERP","2.0",  conf.getProperty("license","/license.xml") );
             logger.debug("ServletContextManager initialized.");
             
 

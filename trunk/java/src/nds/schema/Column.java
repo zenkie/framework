@@ -165,7 +165,11 @@ public interface Column extends Serializable {
      * @return String of column meaning
      */
     public String getComment();
-
+    /**
+     * º¬Òå×¢ÊÍ
+     * @return String of Showcomments meaning
+     */
+    public String getShowcomment();
     /**
      * Limit Value Group Name
      * @return

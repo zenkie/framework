@@ -274,10 +274,11 @@ public class AjaxUtils {
 	            expr2= new Expression(cl,"="+ fixedColumns.get(key),null);
 	            expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
 	        }
+		
 			// directory perm
 			int dirPerm= jo.optInt("dir_perm", nds.security.Directory.READ);
 			expr2 =SecurityUtils.getSecurityFilter(table.getName(), dirPerm, userId, qsession);
-			
+			//logger.debug("fixedColumns:"+ expr2.toString());
 			if(expr2!=null && !expr2.isEmpty()){
 	        	expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
 	        }
@@ -304,7 +305,7 @@ public class AjaxUtils {
 			// directory perm
 			int dirPerm= jo.optInt("dir_perm", nds.security.Directory.READ);
 			expr2 =SecurityUtils.getSecurityFilter(table.getName(), dirPerm, userId, qsession);
-			
+			//logger.debug("fixedColumns:"+ expr2.toString());
 			if(expr2!=null && !expr2.isEmpty()){
 	        	expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
 	        }
@@ -324,25 +325,29 @@ public class AjaxUtils {
 		// this is used in command.UpdateGridData
 		//query filter have already set in param_expr
 		cs=jo.optString("param_expr"); 
+		//logger.debug("cs!!!!!!:"+ cs);
 		if ( Validator.isNotNull(cs)){
             // expression contains all param conditions
 			expr2=new Expression(cs);
 			//logger.debug("param_expr:"+ expr2.toString());
         	expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
-        	//logger.debug("after param_expr"+expr );
+        	//logger.debug("after param_expr"+expr.toString());
 		}
 		
 		//check param_str, this is set by user in query form
 		cs= jo.optString("param_str");// column name in format like "tab"+tabIdx+"_param/"+i+"/columns"
 		String cs2=jo.optString("param_str2");  //column in format as ColumnLink
+		//logger.debug("jo!!!!!:"+ jo.toString());
+		//logger.debug("cs1!!!!!:"+ cs.toString());
+		//logger.debug("cs2!!!!!:"+ cs2.toString());
 		if ( jo.has("param_str")  ){
 			expr2=parseQueryString(cs, locale);
 			//logger.debug("param_str:"+ expr2.toString());
 			if(expr2!=null && !expr2.isEmpty())expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
-			//logger.debug("after param_str"+expr );
+			//logger.debug("after param_str"+expr.toString() );
 		} else if( jo.has("param_str2")){
 			expr2=parseQueryStringInColumnLink(cs2, locale, qsession==null?0:qsession.getSecurityGrade());
-			logger.debug("param_str2:"+ expr2.toString());
+			//logger.debug("param_str2:"+ expr2.toString());
 			if(expr2!=null && !expr2.isEmpty())expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
 		}else{
 			
@@ -398,10 +403,12 @@ public class AjaxUtils {
              ids=QueryUtils.parseIntArray(cs);
              ColumnLink clnk2= (new ColumnLink(ids));
              String cond=  checkCondition( clnk2.getLastColumn(),  data_search,locale);
+             //logger.debug("query cond"+cond);
              if(cond !=null){
                  expr2= new Expression(clnk2,cond, null);
                  expr= expr2.combine(expr, SQLCombination.SQL_AND, null);
              }
+             //logger.debug("query cond"+cond);
          }	
         /*由于在Column.Filter 上增加过滤器，此过滤器也将作用于界面，故此处将根据
 	     *      accepter_id 的结构解析出对应的Column 上的过滤器，主要的依据是 "column_" 后的id 内容
@@ -809,7 +816,8 @@ public class AjaxUtils {
     		String key= (String)e.nextElement();
     		map.put(key, parser.getParameter(key)); // we do not handle string[] here
     	}
-    	return QueryUtils.parseConditionInColumnLink(map, locale,sgrade);
+    	//return QueryUtils.parseConditionInColumnLink(map, locale,sgrade);
+    	return QueryUtils.parseConditionInColumnLinkForUI(map, locale,sgrade);
     }
     
     /**

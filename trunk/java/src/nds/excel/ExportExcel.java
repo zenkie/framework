@@ -134,7 +134,7 @@ public class ExportExcel implements Runnable{
                 cell= excel_row.createCell((short)i);
                 cell.setCellType(HSSFCell.CELL_TYPE_STRING);
                 cell.setCellStyle(getDefaultStyle(wb, true));
-                cell.setEncoding(HSSFCell.ENCODING_UTF_16);
+                //cell.setEncoding(HSSFCell.ENCODING_UTF_16);
                 cell.setCellValue(colNames[i]) ;
             }
             Column[] cols= getDisplayColumns(req,pk,ak);
@@ -177,7 +177,7 @@ public class ExportExcel implements Runnable{
                         if( ! rs.wasNull() ){
                             cell.setCellType(HSSFCell.CELL_TYPE_STRING);
                             cell.setCellStyle(style);
-                            cell.setEncoding(HSSFCell.ENCODING_UTF_16);
+                            //cell.setEncoding(HSSFCell.ENCODING_UTF_16);
                             cell.setCellValue(s );
                         }
                         break;
@@ -210,7 +210,7 @@ public class ExportExcel implements Runnable{
                             cell=sheet.getRow(j).createCell(i);
                             cell.setCellType(HSSFCell.CELL_TYPE_STRING);
                             cell.setCellStyle(style);
-                            cell.setEncoding(HSSFCell.ENCODING_UTF_16);
+                            //cell.setEncoding(HSSFCell.ENCODING_UTF_16);
                             cell.setCellValue(s);
                         }catch(Exception e){
                             logger.error("Could not interpret cell(" + j + ","+ (i+1)+"):" , e);

@@ -105,7 +105,7 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
      */
     public void init(ServletContext context) {
         Configurations conf=(Configurations)WebUtils.getServletContextManager().getActor(WebKeys.CONFIGURATIONS);
-        nds.util.LicenseManager.validateLicense("Agile ERP","2.0",  EJBUtils.getApplicationConfigurations().getProperty("license","/license.xml") );        
+        //nds.util.LicenseManager.validateLicense("Agile ERP","2.0",  EJBUtils.getApplicationConfigurations().getProperty("license","/license.xml") );        
         try{
         	int i= Tools.getInt(conf.get("process.transaction.timeout"),-1);
         	if(i>0) piTransactionTimeout= i*60;

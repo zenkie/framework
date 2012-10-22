@@ -3,13 +3,10 @@ package nds.query;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Properties;
 import java.util.*;
 
 import nds.log.Logger;
 import nds.log.LoggerManager;
-import nds.schema.TableManager;
 import nds.schema.*;
 import nds.util.PairTable;
 import nds.util.StringBufferWriter;
@@ -83,7 +80,11 @@ public class Expression implements SQLCombination, Serializable{
     	 * robin 2010-08-10 当condition中含有","时，解析为多选条件
     	 * 及每个","隔开的都是或者关系
     	 */
-    	if(null!=condition&&condition.contains(",")){
+    	//boolean isStartWithOperator="=><iI".indexOf(input.charAt(0))>-1;
+    	//boolean isStartWithOperator="IN".indexOf(condition.charAt(0))>-1;
+    	//System.out(isStartWithOperator);&&(!isStartWithOperator
+    	/*
+    	if(null!=condition&&condition.contains(",")&&!condition.startsWith(" IN") ){
     		String[] cons=condition.split(",");
     		List<String> conls=new ArrayList<String>();
     		for(String s:cons){
@@ -108,8 +109,9 @@ public class Expression implements SQLCombination, Serializable{
     		this.exprRight=eprs.getRightElement();
     		this.isLeaf=eprs.isLeaf();
     		this.operator=eprs.getOperator();
+    		logger.debug("cond"+condition);
     		return;
-    	}
+    	}*/
         /**
          * yfzhu 2005-05-15 发现关于LimitValue 的字段在界面上直接输入描述选项时查询会出现错误。
          * 例如：状态字段 输入"提交" 时应该由系统自动转换为2
@@ -131,14 +133,51 @@ public class Expression implements SQLCombination, Serializable{
     		this.condition= condition.toUpperCase();
     	}else
     		this.condition=condition;
-    	
+    	logger.debug("cond"+condition);
         this.desc = desc;
+        logger.debug("desc"+condition);
         this.isLeaf = true;
         complexLevel=1;
         if(clink!=null && "AD_CLIENT_ID".equals(clink.getLastColumn().getName())){
         	logger.warning("find AD_CLIENT_ID:"+ condition +" ,"+ desc);
         }
     }
+    
+    
+	public static Expression parseORExpr(ColumnLink cl, String paramString) {
+		String localObject;
+		//Expression fe;
+		if (paramString == null)
+			return EMPTY_EXPRESSION;
+		if ((paramString.startsWith("=")) || (cl == null))
+			return new Expression(cl, paramString, null);
+		if (cl.getLastColumn().getType() == 1)
+			return new Expression(cl, paramString, null);
+
+		if ((cl.getLastColumn().getType() == 2)
+				&& (paramString.startsWith("\""))
+				&& (paramString.endsWith("\""))) {
+			return new Expression(cl, paramString.substring(1,
+					paramString.length() - 1), null);
+		}
+
+		if (((localObject = paramString.toUpperCase()).startsWith("IS "))
+				|| (((String) localObject).startsWith("IN ")))
+			return new Expression(cl, paramString, null);
+
+		if (paramString.startsWith("$"))
+			return new Expression(cl, paramString, null);
+	
+		StringTokenizer paramString1 = new StringTokenizer(paramString, " ,\t");
+		Object fe = EMPTY_EXPRESSION;
+		while (paramString1.hasMoreTokens()) {
+			String str;
+			if (!(str = paramString1.nextToken()).trim().equals(""))
+				fe = new Expression(cl, str, null)
+						.combine((Expression) fe, 2, null);
+		}
+		return (Expression)fe;
+	}
     
     public Expression(){
         isLeaf=true;

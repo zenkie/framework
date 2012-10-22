@@ -308,7 +308,9 @@ public final class QueryUtils {
 	            input=input.trim();
 	            if( input.startsWith("=") ||input.startsWith("＝") ) {
 	                ret=" ("+columnName+" = '"+input.substring(1)+"') ";
-	            } else{
+	            }else if(input.startsWith("!=") ||input.startsWith("！＝")){
+	            	ret=" ("+columnName+" "+ input +") ";
+                }else{
 	            	String lcseInput=input.toLowerCase();
 	            	if(lcseInput.startsWith("is ") || lcseInput.startsWith("in ")) {
 	            		ret=" ("+columnName+" "+ input +") ";
@@ -325,7 +327,8 @@ public final class QueryUtils {
 	            		}
 	            		if(wildcardReplace){
 	            			ret= " ("+columnName+" LIKE '"+input+"') ";
-	            		}else if( input.contains("%")|| input.contains("_") ){
+	            		//}else if( input.contains("%")|| input.contains("_") ){
+	            		}else if( input.contains("%")){
 	            			ret= " ("+columnName+" LIKE '"+input+"') ";
 	            		}else{
 		            		ret= " ("+columnName+" LIKE '"+(isLeftSideMatchOnly?"":"%")+input+"%') ";
@@ -343,6 +346,8 @@ public final class QueryUtils {
                 	if ( input.indexOf("~")> 0){
                 		ret=" ( "+ columnName+" BETWEEN "+ input.substring(0, hyphen)+
 							" AND "+input.substring(hyphen+1) + ") ";
+                	}else if(input.startsWith("!=") ||input.startsWith("！＝")){
+    	            	ret=" ("+columnName+" "+ input +") ";
                 	}else{
 	                	// no operator, use "="
 	                    ret=" ("+columnName+"="+input+") ";
@@ -1298,6 +1303,7 @@ public final class QueryUtils {
      * @throws QueryException
      */
  	public static Expression parseConditionInColumnLink(Map req, Locale locale, int sgrade) throws NDSException{
+ 		logger.debug("req!!!!!:"+ req.toString());
  		Expression exprAll=null, expr=null, expr2=null;
         TableManager manager=TableManager.getInstance();
         Table table=manager.findTable(req.get("table"));
@@ -1357,6 +1363,73 @@ public final class QueryUtils {
         }
         return expr;
  	}
+ 	/*
+ 	 * 重构界面查询',' parseORExpr
+ 	*/
+ 	public static Expression parseConditionInColumnLinkForUI(Map req, Locale locale, int sgrade) throws NDSException{
+ 		logger.debug("req!!!!!:"+ req.toString());
+ 		Expression exprAll=null, expr=null, expr2=null;
+        TableManager manager=TableManager.getInstance();
+        Table table=manager.findTable(req.get("table"));
+        int tableId=-1;
+        if(table!=null) tableId=table.getId();
+        
+        int qlcid= Tools.getInt(req.get("qlcid"), -2);
+        if(qlcid==-2) throw new QueryException("qlcid not found in req");
+        List<ColumnLink> al;
+        if( qlcid!=-1) al= nds.web.config.QueryListConfigManager.getInstance().getQueryListConfig(qlcid).getConditions();
+        else al=nds.web.config.QueryListConfigManager.getInstance().
+        		getMetaDefault(tableId, sgrade).getConditions();
+        
+        String param, paramSQL ,cs;
+        for(int i=0;i< al.size();i++){
+        	ColumnLink clink=al.get(i);
+        	param= clink.toHTMLString(); 
+        	cs=(String)req.get(param);
+        	paramSQL=(String)req.get( param+"/sql");
+        	expr2=null;
+        	if( Validator.isNotNull(paramSQL)){
+                // sql entered, in two format:
+                // 1. in ( id1, id2,...)
+                // 2. in (select table.id from xxx,xxx where xxx)
+                // will add following format:
+                // columnID  $sql
+
+                // ids has reference table' AK column, remove it
+                expr2=new Expression(clink, paramSQL, "("+ clink.getDescription(locale) 
+                		+ MessagesHolder.getInstance().getMessage(locale,"-satisfy-")+  cs +")" ); // param contains description
+        		
+        	}else{
+        		if(  Validator.isNotNull(cs)) {
+                    // mind that GUI may send colum of values
+                    Column lastColumn=clink.getLastColumn();
+                    if( lastColumn.getValues(locale) !=null) {
+                        try{
+                            if( (new Integer(cs.trim()).intValue()) ==EXCLUDE_VALUE) {
+                                continue;
+                        }}catch(NumberFormatException enfe){}
+                    }
+                    if(lastColumn.getReferenceTable()!=null){
+                    	//query on reference table, so input is ak value of reference table
+                    	//reconstruct one
+                    	clink=new ColumnLink(clink.getColumnIDs());
+                    	clink.addColumn(lastColumn.getReferenceTable().getAlternateKey());
+                    }
+                    //query.addParam(ids,cs);
+                    expr2= Expression.parseORExpr(clink, cs);
+                }
+        	}
+        	if ( expr2 !=null){
+                //logger.debug("Expr2=" + expr2);
+                if(expr==null) expr=expr2;
+                else expr=new Expression(expr,expr2, SQLCombination.SQL_AND ,null);
+            }
+        }
+        return expr;
+ 	}
+    	
+ 	
+ 	
     /**
      * @param req map for request parameters, key: String, value: String[]
      * 
@@ -1410,7 +1483,8 @@ public final class QueryUtils {
                             }}catch(NumberFormatException enfe){}
                         }
                         //query.addParam(ids,cs);
-                        expr2=new Expression(new ColumnLink(ids), cs, null);
+                        //expr2=new Expression(new ColumnLink(ids), cs, null);
+                        expr2= Expression.parseORExpr(new ColumnLink(ids), cs);
                     }
                 }
                 if ( expr2 !=null){

@@ -51,6 +51,8 @@
         <property column="PARENT_TABLE_ID" length="10" name="ParentTableId" not-null="false" type="integer" />
         <property column="AD_OBJUICONF_ID" length="10" name="AdObjuiconfId" not-null="false" type="integer" />
         <property column="PROPS" length="4000" name="Props" not-null="false" type="string" />
+        <property column="AD_ACCORDION_ID" length="10" name="Accordion" not-null="false" type="integer" />
+        <property column="AD_ACCORDION_IMG" length="255" name="Accordionimg" not-null="false" type="string" />
         <!-- 
         <many-to-one class="AdColumn" name="PkColumn" insert="false" update="false" not-null="false" >
             <column name="PK_COLUMN_ID" />

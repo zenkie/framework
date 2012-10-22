@@ -163,6 +163,12 @@ public class DBSchemaLoader {
 		table.setIsBig(Tools.getYesNo(tb.getIsBig(),false));
 		table.setIsSMS(Tools.getYesNo(tb.getIsSMS(),false));
 		table.setIsDropdown(Tools.getYesNo(tb.getIsDropdown(),false));
+		if(tb.getAccordionimg()!=null)
+			//logger.debug("getAccord~~~~~~~~"+tb.getAccord().intValue());
+			table.setAccordico(tb.getAccordionimg());
+		if(tb.getAccordion()!=null)
+			//logger.debug("getAccord~~~~~~~~"+tb.getAccord().intValue());
+			table.setAccordid(tb.getAccordion().intValue());
 		if(tb.getAdObjuiconfId()!=null)
 			table.setUIConfigId(tb.getAdObjuiconfId().intValue());
 		if(tb.getParentTableId()!=null)
@@ -326,6 +332,8 @@ public class DBSchemaLoader {
             	col.setValues(avg.getName(), pt);
             }
             if(loadingComments) col.setComment(column.getComments());
+            //showcomments
+            col.setShowcomment(column.getShowcomment());
             //after displaysetting
             col.setFilter(column.getFilter());
             

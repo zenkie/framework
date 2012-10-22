@@ -997,7 +997,7 @@ public class DefaultWebEventHelper {
 		    	logger.debug(sql+":"+ cnt+", ids.length="+ (endIdx-startIdx+1));
 	    	}catch(Exception e){
 	    		logger.error("found error:",e);
-	    		throw new NDSException("@can-not-check-records@:"+ e.getMessage());
+	    		throw new NDSException("@can-not-check-records@:"+ e.getMessage()+" "+sql);
 	    	}
 	    	finally{
 	    		if(rs!=null) try{rs.close();}catch(Exception ee){}
