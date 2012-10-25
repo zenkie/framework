@@ -18,6 +18,7 @@ import org.apache.poi.hssf.usermodel.HSSFFont;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.util.HSSFColor;
 
 /**
  * Currently only Chinese excel template supported
@@ -70,15 +71,24 @@ public class ExcelTemplateManager {
     private boolean shouldCreate(Table tb, File file){
     	 return file.lastModified() < tb.getModifiedDate().getTime();
     }
-    private HSSFCellStyle getDefaultStyle(HSSFWorkbook wb){
+    private HSSFCellStyle getDefaultStyle(HSSFWorkbook wb,boolean isnull){
         // Create a new font and alter it.
         HSSFFont font = wb.createFont();
         font.setFontHeightInPoints((short)10);
         font.setFontName("ËÎÌå");
-
+      
         // Fonts are set into a style so create a new one to use.
         HSSFCellStyle style = wb.createCellStyle();
+        //is not null background color is HSSFColor.RED
+        if(isnull){
+        	//System.out.println(isnull);
+            font.setColor((short) HSSFColor.RED.index);
+            font.setBoldweight(font.BOLDWEIGHT_BOLD);
+        }
         style.setFont(font);
+   
+        
+
         return style;
     }
     /**
@@ -89,7 +99,7 @@ public class ExcelTemplateManager {
             HSSFWorkbook wb = new HSSFWorkbook();
             HSSFSheet sheet = wb.createSheet(table.getName());
             HSSFRow row = sheet.createRow((short)0);
-            HSSFCellStyle style=getDefaultStyle(wb);
+       
             boolean isASITable=( table instanceof nds.schema.AttributeDetailSupportTableImpl);
             ArrayList al= table.getAllColumns() ;
             int j=0;Column column;String desc;
@@ -111,6 +121,7 @@ public class ExcelTemplateManager {
                     case Column.STRING  : typeMark="×Ö·ûÐÍ";break;
                     default: typeMark="";
                 }
+                HSSFCellStyle style=getDefaultStyle(wb,column.isNullable());
                 // Create a cell and put a value in it.
                 HSSFCell cell = row.createCell((short)j);
                 cell.setCellType(HSSFCell.CELL_TYPE_STRING);
@@ -121,10 +132,11 @@ public class ExcelTemplateManager {
                 if ( desc.length()  * 256 * 2/* 2 byte chinese */ > leng) leng=(short)( desc.length()  * 256 * 2);
                 //sheet.setColumnWidth((short)j,leng) ;
                 sheet.autoSizeColumn((short)j) ;
+              
                 j ++;
             }
 
-
+            sheet.createFreezePane(0,1,0,1);
             FileOutputStream fileOut = new FileOutputStream(root+"/"+ table.getName() +".xls");
             wb.write(fileOut);
             fileOut.close();
