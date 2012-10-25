@@ -1067,12 +1067,14 @@ public final class WebUtils {
 	 * @return 0 - ie, 1 - ff, 2 - others,3-Chrome
 	 */
 	public static int getBrowserType(HttpServletRequest req) {
-		String s = req.getHeader("USER-AGENT").toLowerCase();
+		String s = req.getHeader("User-Agent");
+		if (s == null)
+			return 2;
 		if (s.indexOf("MSIE") > -1)
 			return 0;
 		else if (s.indexOf("Firefox") > -1)
 			return 1;
-		else if (s.indexOf("chrome") > -1 )
+		else if (s.indexOf("Chrome") > -1 )
 			return 3;
 		return 2;
 	}
@@ -1097,7 +1099,7 @@ public final class WebUtils {
 	public static String getContentDispositionFileName(String filename,
 			HttpServletRequest req) throws java.io.UnsupportedEncodingException {
 		int bt = WebUtils.getBrowserType(req);
-		System.out.print(bt);
+		//System.out.print(bt);
 		if (bt == 0) {
 			// ie
 			return "filename=\""
