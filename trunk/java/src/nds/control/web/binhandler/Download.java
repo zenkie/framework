@@ -32,10 +32,10 @@ public class Download implements BinaryHandler{
 	  private static final String[] TEXT_TYPE=new String[]{"html","htm","csv","txt","log"};
 	  
 	  private static final String[] EXT=new String[]{
-		  "xls","doc","pdf","zip"
+		  "xls","doc","pdf","zip","cub"
 	  };
 	  private static final String[] EXT_CONTENT_TYPE=new String[]{
-		  "application/vnd.ms-excel","application/vnd.ms-word","application/pdf","application/zip"
+		  "application/vnd.ms-excel","application/vnd.ms-word","application/pdf","application/zip","application/x-download"
 	  };
 	  
 	  /**

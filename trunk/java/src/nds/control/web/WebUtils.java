@@ -44,6 +44,7 @@ package nds.control.web;
 
 import java.beans.Beans;
 
+import javax.mail.internet.MimeUtility;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -1063,16 +1064,16 @@ public final class WebUtils {
 	/**
 	 * 
 	 * @param req
-	 * @return 0 - ie, 1 - ff, 2 - others
+	 * @return 0 - ie, 1 - ff, 2 - others,3-Chrome
 	 */
 	public static int getBrowserType(HttpServletRequest req) {
-		String s = req.getHeader("user-agent");
-		if (s == null)
-			return 2;
+		String s = req.getHeader("USER-AGENT").toLowerCase();
 		if (s.indexOf("MSIE") > -1)
 			return 0;
 		else if (s.indexOf("Firefox") > -1)
 			return 1;
+		else if (s.indexOf("chrome") > -1 )
+			return 3;
 		return 2;
 	}
 
@@ -1096,13 +1097,17 @@ public final class WebUtils {
 	public static String getContentDispositionFileName(String filename,
 			HttpServletRequest req) throws java.io.UnsupportedEncodingException {
 		int bt = WebUtils.getBrowserType(req);
+		System.out.print(bt);
 		if (bt == 0) {
 			// ie
 			return "filename=\""
 					+ StringUtils.replace(
 							java.net.URLEncoder.encode(filename, "UTF-8"), "+",
 							"%20") + "\"";
-		} else {
+		}else if(bt==3){
+			//chrome
+			 return "filename=\"" + MimeUtility.encodeText(filename, "UTF8", "B") + "\"";  
+		}else {
 			// ff
 			return "filename*=\"utf8''"
 					+ StringUtils.replace(
