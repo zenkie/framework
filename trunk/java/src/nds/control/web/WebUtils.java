@@ -65,6 +65,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import nds.control.event.NDSEventException;
 import nds.query.*;
@@ -1076,8 +1078,16 @@ public final class WebUtils {
 			return 1;
 		else if (s.indexOf("Chrome") > -1 )
 			return 3;
+		else if(regex("Opera", s)) 
+			return 4;
 		return 2;
 	}
+	
+    public static boolean regex(String regex,String str){  
+        Pattern p =Pattern.compile(regex,Pattern.MULTILINE);  
+        Matcher m=p.matcher(str);  
+        return m.find();  
+    } 
 
 	/**
 	 * Will guess client browser type from request header ("user-agent"), for ie
@@ -1099,7 +1109,7 @@ public final class WebUtils {
 	public static String getContentDispositionFileName(String filename,
 			HttpServletRequest req) throws java.io.UnsupportedEncodingException {
 		int bt = WebUtils.getBrowserType(req);
-		//System.out.print(bt);
+		logger.debug(bt);
 		if (bt == 0) {
 			// ie
 			return "filename=\""
@@ -1109,7 +1119,9 @@ public final class WebUtils {
 		}else if(bt==3){
 			//chrome
 			 return "filename=\"" + MimeUtility.encodeText(filename, "UTF8", "B") + "\"";  
-		}else {
+		}else if(bt==4){
+			 return "filename*=UTF-8''" + java.net.URLEncoder.encode(filename, "UTF8");  
+		}else{
 			// ff
 			return "filename*=\"utf8''"
 					+ StringUtils.replace(
