@@ -16,6 +16,17 @@ import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;  
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Cell;  
+import org.apache.poi.ss.usermodel.DateUtil;  
+import org.apache.poi.ss.usermodel.Row;  
+import org.apache.poi.ss.usermodel.Sheet;  
+import org.apache.poi.ss.usermodel.Workbook;  
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;  
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import nds.control.ejb.Command;
 import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEventException;
@@ -52,9 +63,9 @@ public class ExportExcel extends Command {
     //  html or txt, from 2.0 add taxifc for C_Invoice interface
     String separator = (String)event.getParameterValue("separator"); 
     boolean ak= ((Boolean)event.getParameterValue("ak")).booleanValue() ;
-    boolean pk= ((Boolean)event.getParameterValue("pk")).booleanValue() ;
-
-    if ( QueryEngine.getInstance().getTotalResultRowCount(req)> MAX_REPORT_LINES )
+    boolean pk= ((Boolean)event.getParameterValue("pk")).booleanValue() ; 
+    //03 xls max 65535
+    if(fileName.endsWith(".xls")&&QueryEngine.getInstance().getTotalResultRowCount(req)> MAX_REPORT_LINES )
      	throw new NDSException("@file-lines-greater-than@"+MAX_REPORT_LINES+",@please-export-by-page@");
     
      File svrDir = new File(location);
@@ -73,29 +84,39 @@ public class ExportExcel extends Command {
      Connection con=null;
      ResultSet rs=null;
      try {
-         HSSFWorkbook wb = new HSSFWorkbook();
-         HSSFSheet sheet = wb.createSheet("download");
-         HSSFCellStyle style=getDefaultStyle(wb,false);
+         //HSSFWorkbook wb = new HSSFWorkbook();
+         Workbook wb = null;  
+         if (fileName.endsWith(".xls")) {  
+            // inp = new FileInputStream(FilePath);  
+             wb = (Workbook) new HSSFWorkbook();  
+         } else if (fileName.endsWith(".xlsx")) {   
 
-         org.apache.poi.hssf.usermodel.HSSFDataFormat format = wb.createDataFormat();
-         HSSFCellStyle dateCellStyle = wb.createCellStyle();
+             wb = (Workbook) new XSSFWorkbook();  
+         }  
+         //SXSSFWorkbook wb = new SXSSFWorkbook(100); 
+         //System.out.println("基于流写入执行完毕!");  
+         Sheet sheet = wb.createSheet("download");
+         CellStyle style=getDefaultStyle(wb,false);
+         org.apache.poi.ss.usermodel.DataFormat format = wb.createDataFormat();
+         //org.apache.poi.hssf.usermodel.HSSFDataFormat format = wb.createDataFormat();
+         CellStyle dateCellStyle = wb.createCellStyle();
          dateCellStyle.setDataFormat(format.getFormat("yyyy-MM-dd"));
          
-         HSSFCellStyle datetimeCellStyle = wb.createCellStyle();
+         CellStyle datetimeCellStyle = wb.createCellStyle();
          datetimeCellStyle.setDataFormat(format.getFormat("yyyy-MM-dd hh:mm:ss"));
 
-         HSSFCellStyle stringCellStyle = wb.createCellStyle();
+         CellStyle stringCellStyle = wb.createCellStyle();
          stringCellStyle.setDataFormat(format.getFormat("text"));
 
-         HSSFCellStyle numberCellStyle = wb.createCellStyle();
+         CellStyle numberCellStyle = wb.createCellStyle();
          numberCellStyle.setDataFormat(format.getFormat("General"));
          
          
          short i;
          // Create a row and put some cells in it. Rows are 0 based.
          int row=0;
-         HSSFRow excel_row ;
-         HSSFCell cell;
+         Row excel_row ;
+         Cell cell;
          if(showColumnName){
          	excel_row= sheet.createRow(row);
 	         // create header information
@@ -305,9 +326,9 @@ public class ExportExcel extends Command {
       return cols;
 
   }
-  private HSSFCellStyle getDefaultStyle(HSSFWorkbook wb, boolean  isBold){
+  private CellStyle getDefaultStyle(Workbook wb, boolean  isBold){
       // Create a new font and alter it.
-      HSSFFont font = wb.createFont();
+      Font font = wb.createFont();
       font.setFontHeightInPoints((short)10);
       font.setFontName("宋体");
       if(isBold){
@@ -315,7 +336,7 @@ public class ExportExcel extends Command {
           font.setBoldweight(font.BOLDWEIGHT_BOLD);
       }
       // Fonts are set into a style so create a new one to use.
-      HSSFCellStyle style = wb.createCellStyle();
+      CellStyle style = wb.createCellStyle();
       style.setFont(font);
 
       return style;
