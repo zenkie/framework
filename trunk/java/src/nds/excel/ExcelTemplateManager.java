@@ -80,7 +80,7 @@ public class ExcelTemplateManager {
         // Fonts are set into a style so create a new one to use.
         HSSFCellStyle style = wb.createCellStyle();
         //is not null background color is HSSFColor.RED
-        if(isnull){
+        if(!isnull){
         	//System.out.println(isnull);
             font.setColor((short) HSSFColor.RED.index);
             font.setBoldweight(font.BOLDWEIGHT_BOLD);
