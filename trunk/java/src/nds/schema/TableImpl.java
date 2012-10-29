@@ -293,7 +293,50 @@ public class TableImpl implements Table {
             }
         }
     }
-	
+	/**
+	 * 
+	 * 获取对性的MASK 返回值
+	 */
+    
+    public static int getDirectoryPermissionByMask(char paramChar)
+    {
+      switch (paramChar) {
+      case 'Q':
+        paramChar = 1; break;
+      case 'A':
+        paramChar = 3; break;
+      case 'D':
+        paramChar = 3; break;
+      case 'M':
+        paramChar = 3; break;
+      case 'S':
+        paramChar = 5; break;
+      case 'P':
+        paramChar = 0; break;
+      case 'G':
+        paramChar = 5; break;
+      case 'U':
+        paramChar = 0; break;
+      case 'V':
+        paramChar = 3; break;
+      case 'B':
+      case 'C':
+      case 'E':
+      case 'F':
+      case 'H':
+      case 'I':
+      case 'J':
+      case 'K':
+      case 'L':
+      case 'N':
+      case 'O':
+      case 'R':
+      case 'T':
+      default:
+        throw new Error("Unsupported action mask:" + paramChar);
+      }
+      return paramChar;
+    }
 	/**
 	 * @param tableOrder The tableOrder to set.
 	 */
