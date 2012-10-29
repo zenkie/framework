@@ -5,8 +5,9 @@
 package nds.control.ejb.command;
 import java.io.File;
 import java.rmi.RemoteException;
+import java.sql.PreparedStatement;
 import java.util.*;
-
+import nds.util.Validator;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 
@@ -16,8 +17,11 @@ import nds.schema.*;
 import nds.control.ejb.Command;
 import nds.control.event.DefaultWebEvent;
 import nds.control.util.ValueHolder;
+import nds.control.web.AjaxController;
 import nds.control.web.UserWebImpl;
 import nds.control.web.WebUtils;
+import nds.log.Logger;
+import nds.log.LoggerManager;
 import nds.query.ColumnLink;
 import nds.query.Expression;
 import nds.query.QueryEngine;
@@ -27,6 +31,7 @@ import nds.query.QueryResultImpl;
 import nds.report.ReportFactory;
 import nds.report.ReportTools;
 import nds.security.Directory;
+import nds.util.CommandExecuter;
 import nds.util.Configurations;
 import nds.util.NDSException;
 import nds.util.Sequences;
@@ -43,6 +48,8 @@ import net.sf.jasperreports.engine.util.JRLoader;
  */
 
 public class PrintJasper extends Command{
+	private static Logger logger= LoggerManager.getInstance().getLogger(PrintJasper.class.getName());	
+
 	/**
 	 * @param event parameters:
 	 * 		"tag"	- Return to client directly
@@ -68,6 +75,7 @@ public class PrintJasper extends Command{
 	    	nds.security.User user= helper.getOperator(event);
 	    	JSONObject jo=event.getJSONObject();
 	    	JSONObject params=jo.getJSONObject("params");
+	    	logger.debug("params!!!!!!!"+params.toString());
 	    	String tag=jo.optString("tag");
 
 	    	Table table = TableManager.getInstance().findTable(params.get("table"));
@@ -89,7 +97,6 @@ public class PrintJasper extends Command{
 	    	if(nds.util.Validator.isNull(template)){
 	    		template= getPrintTemplate(userWeb,table);
 	    	}
-	    	
 	    	boolean isCxtabJReport= template.substring(0,2).equals("cx");
 	    	int reportId=-1;
 	    	if(isCxtabJReport )reportId= Tools.getInt(template.substring(2), -1);
@@ -111,8 +118,37 @@ public class PrintJasper extends Command{
 	    	String destFile	=destFolder + java.io.File.separator+ fileName+"."+ fileType  ;
 	    	
 	    	String reportType= params.optString("reporttype","O"); // L for List , O for Object
+	    	//int objectId= params.optInt("id",-1);
+	    	logger.debug("reportType!!!!!!!"+reportType);
+	    	/*
+	    	 * 支持打印多选结果
+	    	 * */
+	    	Object object_ids=params.opt("id");
+	    	int objectId = -1;
+	    	//logger.debug(typeof(object_ids))
+	    	logger.debug("object_ids!!!!!!!"+String.valueOf(object_ids));
+	    	if (object_ids != null && !(object_ids instanceof JSONArray))
+	    		objectId = Tools.getInt(object_ids, -1);
+	    	logger.debug("objectId!!!!!!!"+String.valueOf(objectId));
+			Integer objectIds[] = null;
+			boolean is_printlist = false;
+
+			//zyf use pdfconcet many pdffile
+			//think about jasp print_list to print many-one pdf
+			if ("O".equals(reportType) && object_ids != null && (object_ids instanceof JSONArray))
+			{
+				fileType = "pdf";
+				objectIds = new Integer[((JSONArray) (object_ids = (JSONArray)object_ids)).length()];
+				for (int i = 0; i < objectIds.length; i++)
+					objectIds[i] = Integer.valueOf(((JSONArray) (object_ids)).getInt(i));
+
+				if (objectIds.length > 1)
+					is_printlist = true;
+				else
+					objectId = objectIds[0].intValue();
+			}
 	    	
-	    	int objectId= params.optInt("id",-1);
+	    	
 	    	String expr=params.optString("expr");
 	    	
 	    	Map parameters = new HashMap();
@@ -160,7 +196,9 @@ public class PrintJasper extends Command{
 	    				parameters.put("where","1=1");
 	    		}
 	    		
-	    	}else{
+	    	}
+	    	if(!is_printlist){
+	    		//判断是否为单对象打印
 	        	parameters.put("objectid", new Integer(objectId));
 	    		if(!isCxtabJReport){
 	    			// will create several sql for internal usage
@@ -183,18 +221,82 @@ public class PrintJasper extends Command{
 	    	retData.put("tag", tag);
 	    	
 	    	conn=QueryEngine.getInstance().getConnection();
-	    	
+	    	JasperPrint jasperPrint = JasperFillManager.fillReport(report, parameters, conn);
     		// catch all errors so write to destfolder
-			JasperPrint jasperPrint = JasperFillManager.fillReport(report, parameters, conn);
+			
     		if( "pdf".equalsIgnoreCase(fileType)){
-    			JasperExportManager.exportReportToPdfFile(jasperPrint, destFile);
+    			//首先判断是否为单对象打印
+    			if(!is_printlist){
+    			
+    			JRPdfExporter exporter = new JRPdfExporter();
+    			exporter.setParameter(JRExporterParameter.JASPER_PRINT, jasperPrint);
+				exporter.setParameter(JRExporterParameter.OUTPUT_FILE_NAME, destFile);
+				exporter.exportReport();
+				}else{
+				    String destFile_tmp_path = conf.getProperty("export.root.nds","/aic/home") + File.separator +"tmp"+File.separator+String.valueOf(user.id);
+				    File f= new File(destFile_tmp_path);
+				    if(!f.exists())f.mkdirs();
+				    String pdftdk = WebUtils.getProperty("program.pdftk", "pdftk")+" ";
+				    StringBuffer a = new StringBuffer();
+				    //循环生成界面传入的打印对象ID
+					for (int j = 0; j < objectIds.length; j++)
+					{
+						parameters.put("objectid",objectIds[j]);
+						if (!isCxtabJReport)
+							addSQLParam(parameters,table.getId(),objectIds[j].intValue(),userWeb);
+						String destFile_tmp_file=destFile_tmp_path+ File.separator+String.valueOf(objectIds[j])+"."+fileType;
+						a.append(destFile_tmp_file+"  ");
+						JasperPrint jasperprint1;  
+						jasperprint1 = JasperFillManager.fillReport(report, parameters, conn);
+						JasperExportManager.exportReportToPdfFile(jasperprint1, destFile_tmp_file);
+					}
+					//暂存文件路径文件名
+					String pdffile=destFile_tmp_path+File.separator+fileName+".pdf";
+					String exec_cmd=pdftdk+a.toString()+"cat output "+pdffile;
+					logger.debug("merge pdf file cmd is"+exec_cmd);
+			        String outFile=destFile+".log";
+					Object obj3;
+					//由于rename 文件没有残留
+					if (new File(destFile).exists()){
+						File file = new File(destFile);
+						file.delete();
+					}
+					//调用pdk合并生成打印文件
+					((CommandExecuter) (obj3 = new CommandExecuter(outFile))).run(exec_cmd);
+					((File) (obj3 = new File(pdffile))).renameTo(new File(destFile));
+				}
+    			//JasperExportManager.exportReportToPdfFile(jasperPrint, destFile);
+    			//更新打印次数
+    			String print_col=table.getJSONProps().optString("printcnt_column");
+    			if (table.getJSONProps() != null && !Validator.isNull(print_col))
+    			{
+    				String vsql = "UPDATE "+table.getRealTableName()+" SET "+print_col+"=nvl("+print_col+",0)+1 WHERE ID=";
+    				//PreparedStatement stmt=null;
+    				//stmt = conn.prepareStatement(vsql);
+                	
+    				if (!is_printlist)
+    				{
+    					//stmt.setInt(1, objectId);
+    					//stmt.executeUpdate();
+    					QueryEngine.getInstance().executeUpdate(vsql+String.valueOf(objectId));
+    				} else
+    				{
+    					for (int j = 0; j < objectIds.length; j++)
+    					//stmt.setInt(1, objectIds[j]);
+    					//stmt.executeUpdate();
+    					QueryEngine.getInstance().executeUpdate(vsql+String.valueOf(objectIds[j]));
+    							
+    				}
+    				
+    			}
+    	
     		}else if("xls".equalsIgnoreCase(fileType)){
 				JRXlsExporter exporter = new JRXlsExporter();
 				
 				exporter.setParameter(JRExporterParameter.JASPER_PRINT, jasperPrint);
 				exporter.setParameter(JRExporterParameter.OUTPUT_FILE_NAME, destFile);
 				exporter.setParameter(JRXlsExporterParameter.IS_ONE_PAGE_PER_SHEET, Boolean.FALSE);
-				
+		 
 				exporter.exportReport();
     		}else if("csv".equalsIgnoreCase(fileType)){
 				JRCsvExporter exporter = new JRCsvExporter();
