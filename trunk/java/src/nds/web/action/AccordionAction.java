@@ -188,7 +188,7 @@ public class AccordionAction extends WebActionImpl {
 				//	tabout="<div><h3><a>"+ACCORDION_name+"</a></h3><div style=\"height:300px;max-height:269px\">"+Inable+"</div></div>";
 					//根据内容明细的大小控制高度
 				accord_xml.append("<div><h3><a>").append((String) text_lable)
-					  .append("</a></h3><div style=\"height:300px;max-height:269px\">");
+					  .append("</a></h3><div style=\"height:300px;max-height:290px\">");
 				accord_xml.append((String) folder);
 				accord_xml.append("</div></div>");
 					}else{
