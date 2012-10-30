@@ -58,7 +58,7 @@ public interface WebAction {
 	
 	public SaveObjectEnum getSaveObjType();
 	public int getSubSystemId();
-	public int getAcordionId();
+	public int getAcordionId();//获得对应outlook 菜单归类id
 	public int getTableCategoryId();
 	public int getTableId() ;
 	public String getUrlTarget();
@@ -85,7 +85,8 @@ public interface WebAction {
 	public enum DisplayTypeEnum{
 		ListButton("listbutton",0), ListMenuItem("listmenuitem",1), ObjButton("objbutton",2),
 		ObjMenuItem("objmenuitem",3),TabButton("tabbutton",4),
-		TreeNode("treenode",99)
+		TreeNode("treenode",99), Accord("accord",98)
+		
 		;
 	    private String dpt;
 	    private int idx;
@@ -106,6 +107,7 @@ public interface WebAction {
 	    	else if("objmenuitem".equals(type)) return ObjMenuItem;
 	    	else if("tabbutton".equals(type)) return TabButton;
 	    	else if("treenode".equals(type)) return TreeNode;
+	    	else if("accord".equals(type)) return Accord;
 	    	else throw new nds.util.NDSRuntimeException("type "+ type +" is invalid as DisplayTypeEnum");
 	    }	    
 	};
