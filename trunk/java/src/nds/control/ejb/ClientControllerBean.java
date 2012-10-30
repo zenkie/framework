@@ -64,7 +64,11 @@ public class ClientControllerBean implements SessionBean,ClientController {
 //    private static AsyncControllerBean acb=null;// jms
     public ClientControllerBean(){
     }
-
+//get StateMachine
+    public StateMachine getStateMachine()
+    {
+      return this.sm;
+    }
     public void ejbCreate() {
         try{
         logger= EJBUtils.getLogger(ClientControllerBean.class.getName());

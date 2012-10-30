@@ -63,22 +63,24 @@ import java.util.*;
 import nds.control.ejb.ClientController;
 import nds.control.ejb.ClientControllerBean;
 import nds.control.ejb.ClientControllerHome;
+import nds.control.ejb.StateMachine;
 import nds.control.event.*;
 import nds.control.util.EJBUtils;
 import nds.control.util.ValueHolder;
 import nds.log.Logger;
 import nds.log.LoggerManager;
-import nds.util.Configurations;
-import nds.util.Director;
-import nds.util.JNDINames;
-import nds.util.NDSException;
-import nds.util.NDSRuntimeException;
-import nds.util.ObjectQueue;
-import nds.util.ServletContextActor;
-import nds.util.TimeLog;
 import nds.util.*;
 import nds.util.threadpool.DefaultThreadPool;
 import nds.util.threadpool.ThreadPool;
+import nds.util.Configurations;
+import nds.util.DestroyListener;
+import nds.util.Director;
+import nds.util.LockManager;
+import nds.util.NDSException;
+import nds.util.NDSRuntimeException;
+import nds.util.ServletContextActor;
+import nds.util.TimeLog;
+
 
 public class ClientControllerWebImpl implements java.io.Serializable,ServletContextActor,
     nds.util.DestroyListener {
@@ -157,6 +159,7 @@ public class ClientControllerWebImpl implements java.io.Serializable,ServletCont
                 controller = getClientControllerHome().create();
                 logger.debug("ClientController created for context");
             }
+            	
 //            controllerEjbHandle = controller.getHandle();
         } catch (Exception ce) {
             logger.error("Error getting ClientController",ce);
@@ -203,7 +206,17 @@ public class ClientControllerWebImpl implements java.io.Serializable,ServletCont
               );
     	
     }
+    
+    /**
+     * 
+     * 
+     * 
+     */
 
+    public StateMachine getStateMachine()
+    {
+      return ((ClientControllerBean)threadPool).getStateMachine();
+    }
     /**
      * feeds the specified event to the state machine of the business logic.
      *
@@ -252,7 +265,7 @@ public class ClientControllerWebImpl implements java.io.Serializable,ServletCont
             return v;
         } catch (Throwable re) {
         	if(re instanceof NDSException) throw (NDSException)re;
-            //logger.error("Error handling event "+ese, re);
+            logger.debug("Error handling event "+ese, re);
             if( ese instanceof DefaultWebEvent){
             	locale=( (DefaultWebEvent)ese).getLocale();
             }else{
@@ -374,5 +387,3 @@ public class ClientControllerWebImpl implements java.io.Serializable,ServletCont
     	return sb.toString();
     }
 }
-
-
