@@ -83,6 +83,9 @@ public class WebActionUtils {
 			case TreeNode:
 				wa=new TreeNodeAction();
 				break;
+			case Accord:
+				wa=new AccordionAction();
+				break;
 			default:
 				throw new IllegalArgumentException("display type:"+ displayType +" not defined as WebAction");
 			
