@@ -190,7 +190,7 @@ public class TableImpl implements Table {
     public void addWebAction(WebAction action){
     	int idx=action.getDisplayType().getIndex();
 
-    	if(actions==null) actions=new ArrayList[5]; // treenode should not be here
+    	if(actions==null) actions=new ArrayList[5]; // treenode should not be here outlook should not be here
     	if(actions[idx]==null) actions[idx]=new ArrayList<WebAction>();
     	
     	actions[idx].add(action);
