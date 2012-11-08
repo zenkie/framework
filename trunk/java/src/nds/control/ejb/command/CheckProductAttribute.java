@@ -6,10 +6,15 @@ import java.util.ArrayList;
 import org.directwebremoting.WebContext;
 import org.json.*;
 
+import sun.rmi.runtime.Log;
+
 import nds.control.ejb.Command;
 import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEventException;
 import nds.control.util.ValueHolder;
+import nds.control.web.FlowProcessor;
+import nds.log.Logger;
+import nds.log.LoggerManager;
 import nds.query.*;
 import nds.schema.*;
 import nds.util.*;
@@ -28,6 +33,7 @@ import java.sql.*;
  *  按照
  */
 public class CheckProductAttribute extends Command {
+	private Logger logger= LoggerManager.getInstance().getLogger(CheckProductAttribute.class.getName());
 	//for burgeon product, size and color will also try to be loaded
 	private boolean loadingBurgeonProduct=false; //will loading M_ATTRIBUTESETINSTANCE_ID;value1 as color, and M_ATTRIBUTESETINSTANCE_ID;value2 as size
 	private boolean loadingBurgeonProduct2=false;//load M_ATTRIBUTESETINSTANCE_ID.VALUE1_CODE, and VALUE2_CODE
@@ -266,6 +272,13 @@ public class CheckProductAttribute extends Command {
 
 	  	JSONObject ro=new JSONObject();
 	  	ro.put("tag", tag); //  return back unchanged.
+	  	logger.debug("productId        "+String.valueOf(productId));
+	  	logger.debug("asiId        "+String.valueOf(asiId));
+	  	//蜘蛛网模式矩阵输入模式
+	  	String pstr=(String)QueryEngine.getInstance().doQueryOne("select t.value from ad_param t where t.name = 'portal.pdtMatrix.tables'");
+	  	if(pstr.indexOf(table.getRealTableName())>=0){
+	  		asiId=-1;
+	  	}
 	  	if(productId==-1 ){
 	  		// not found the product, error returns
 	  		ro.put("code", 1);
@@ -294,8 +307,10 @@ public class CheckProductAttribute extends Command {
 	  	  		ro.put("product_value2_code",value2_code);
 	  		}else{
 	  			if(asId!=-1 && tryMatrix ){
+	  				logger.debug("now matrix");
 	  				// does the attribute set support matrix?
 	  				int cnt=Tools.getInt( engine.doQueryOne("select count(*) from m_attributeuse u where u.isactive='Y' and u.M_ATTRIBUTESET_ID="+ asId+" and exists(select 1 from M_ATTRIBUTE a where a.ATTRIBUTEVALUETYPE='L' and a.id=u.M_ATTRIBUTE_ID)",conn), -1);
+	  				logger.debug("now cnt         "+String.valueOf(cnt));
 	  				if(cnt>0){
 		  				WebContext wc=(WebContext) jo.get("org.directwebremoting.WebContext");
 		  				/**
