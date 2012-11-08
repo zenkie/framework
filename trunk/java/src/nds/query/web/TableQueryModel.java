@@ -472,7 +472,11 @@ public class TableQueryModel {
             	//desc ="<span id='"+ imageCalendar+"' onaction=\"javascript:showCalendar('"+imageCalendar+"',false,'"+inputBoxName+"',null,null,true);\"><img width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></span><script>createButton(document.getElementById(\""+imageCalendar+"\"));</script>";
             	
             	/*  must has class named as coolButton here as javascript use this class to locate buttons and hide/show/fix column*/
-                desc ="&nbsp;<a class=\"coolButton\" onclick=\"event.cancelBubble=true;\" href=\"javascript:showCalendar('"+imageCalendar+"',false,'"+inputBoxName+"',null,null,true);\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>";
+                //desc ="&nbsp;<a class=\"coolButton\" onclick=\"event.cancelBubble=true;\" href=\"javascript:showCalendar('"+imageCalendar+"',false,'"+inputBoxName+"',null,null,true);\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>";
+            	//desc ="&nbsp;<a class=\"coolButton\" onclick=\"event.cancelBubble=true;\" href=\"javascript:showCalendar('"+imageCalendar+"',false,'"+inputBoxName+"',null,null,true);\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>";
+            	//desc ="&nbsp;<a class=\"coolButton\" onclick=\"event.cancelBubble=true;\" href=\"javascript:showCalendar('"+imageCalendar+"',false,'"+inputBoxName+"',null,null,true);\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>";
+            	desc ="&nbsp;<img onclick=\"WdatePicker({el:'"+inputBoxName+"'});\" style=\"cursor:pointer\" id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>";
+            	//<img align="absmiddle" border="0" style="cursor:pointer" onclick="WdatePicker({el:'column_20675'});" src="/html/nds/images/datenum.gif">
         	}
         }
         
