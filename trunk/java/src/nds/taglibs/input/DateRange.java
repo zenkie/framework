@@ -78,8 +78,8 @@ public class DateRange extends TagSupport {
             Util.printAttributes(out, attributes);
             out.print(">");
         	String imageCalendar="ic_"+id+"_1";
-            out.print("<a onclick=\"event.cancelBubble=true;\" href=\"javascript:showCalendar('"+imageCalendar+"',false,'"+id+"_1',null,null,true);\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>");
-        	//out.print("<a onclick=\"event.cancelBubble=true;\" href=\"javascript:WdatePicker({el:'"+id+"'});\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>");
+            //out.print("<a onclick=\"event.cancelBubble=true;\" href=\"javascript:showCalendar('"+imageCalendar+"',false,'"+id+"_1',null,null,true);\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>");
+        	out.print("<a onclick=\"event.cancelBubble=true;\" href=\"javascript:WdatePicker({el:'"+id+"_1'});\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>");
 
         	// to input
             out.print("<br>");
@@ -94,9 +94,9 @@ public class DateRange extends TagSupport {
             Util.printAttributes(out, attributes);
             out.print(">");
         	imageCalendar="ic_"+id+"_2";
-        	//out.print("<a onclick=\"event.cancelBubble=true;\" href=\"javascript:WdatePicker({el:'"+id+"'});\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>");
+        	out.print("<a onclick=\"event.cancelBubble=true;\" href=\"javascript:WdatePicker({el:'"+id+"_2'});\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>");
 
-            out.print("<a onclick=\"event.cancelBubble=true;\" href=\"javascript:showCalendar('"+imageCalendar+"',false,'"+id+"_2',null,null,true);\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>");
+            //out.print("<a onclick=\"event.cancelBubble=true;\" href=\"javascript:showCalendar('"+imageCalendar+"',false,'"+id+"_2',null,null,true);\"><img id='"+imageCalendar+"' width='16' height=18 src='"+WebKeys.NDS_URI+"/images/datenum.gif' border='0' align='absmiddle'></a>");
             
 
         } catch (Exception ex) {
