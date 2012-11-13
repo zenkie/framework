@@ -166,11 +166,10 @@ public class TreeNodeAction extends WebActionImpl {
 				ico_png = "/html/nds/js/xloadtree111/images/xp/folder.png";
 			if (Validator.isNull((String) text_lable))
 				text_lable = "Folder";
-
-			if ((Boolean) (((folder = writeXmlFromJSONArray((JSONArray) folder,
-					local, userweb).toString()) == null
-					|| (folder.toString().length() == 0) || (folder.toString()
-					.trim().length() == 0)) ? 1 : 0 == 0))
+			folder = writeXmlFromJSONArray((JSONArray) folder,
+					local, userweb).toString();
+			if (folder != null&&(folder.toString().length() != 0)&&(folder.toString()
+					.trim().length() != 0))
 
 			{
 				xtree_xml.append("<tree icon=\"").append(ico_png)
