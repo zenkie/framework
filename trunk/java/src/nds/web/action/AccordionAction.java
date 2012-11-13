@@ -176,11 +176,10 @@ public class AccordionAction extends WebActionImpl {
 				text_lable = "自定义菜单";
 			//System.out.println(((JSONArray) folder).length());  
 			int folder_size= ((JSONArray) folder).length();
-			if ((Boolean) (((folder = writeXmlFromJSONArray((JSONArray) folder,
-					local, userweb).toString()) == null
-					|| (folder.toString().length() == 0) || (folder.toString()
+			folder = writeXmlFromJSONArray((JSONArray) folder,
+					local, userweb).toString();
+			if ((Boolean)((folder == null|| (folder.toString().length() == 0) || (folder.toString()
 					.trim().length() == 0)) ? 1 : 0 == 0))
-
 			{
 				//<h3><a>head name</a></h3><div>
 				//</div>
