@@ -178,8 +178,8 @@ public class AccordionAction extends WebActionImpl {
 			int folder_size= ((JSONArray) folder).length();
 			folder = writeXmlFromJSONArray((JSONArray) folder,
 					local, userweb).toString();
-			if ((Boolean)((folder == null|| (folder.toString().length() == 0) || (folder.toString()
-					.trim().length() == 0)) ? 1 : 0 == 0))
+			if (folder != null|| (folder.toString().length() != 0) || (folder.toString()
+					.trim().length() != 0))
 			{
 				//<h3><a>head name</a></h3><div>
 				//</div>
