@@ -159,7 +159,7 @@ public class AccordionAction extends WebActionImpl {
 				&& (!ico_png.startsWith("http:")) && (!ico_png.startsWith("/"))) {
 			ico_png = "<img src=\"/html/nds/images/" + ico_png+"\" style=\"height:16px;width:20px;\"></img>";
 		}
-		System.out.println(showico);
+		//System.out.println(showico);
 		if(!showico){
 			ico_png=" ";
 		}
