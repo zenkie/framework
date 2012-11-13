@@ -548,46 +548,49 @@ public class SubSystemView {
 	public List getSubSystemsOfmufavorite(HttpServletRequest request) throws Exception{
 		ArrayList mufavorite = new ArrayList();
 		TableManager manager=TableManager.getInstance();
-		Table table;
+		//Table table;
+		try{
 		UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
 		int userid=userWeb.getUserId();
-		List al=QueryEngine.getInstance().doQueryList("select t.ad_table_id,t.menu_no,t.fa_menu,t.menu_re from MU_FAVORITE t where t.ownerid="+String.valueOf(userid)+" order by t.menu_no");		
+		List al=QueryEngine.getInstance().doQueryList("select t.ad_table_id,t.menu_no,t.fa_menu,t.menu_re from MU_FAVORITE t where t.ownerid="+String.valueOf(userid)+" group by t.ad_table_id,t.menu_no,t.fa_menu,t.menu_re order by t.menu_no");		
+		logger.debug("MU_FAVORITE size is "+String.valueOf(al.size()));
 		if(al.size()>0){
 			for(int i=0;i<al.size();i++){
-				
 				ArrayList catschild= new ArrayList();
 				List als= (List)al.get(i);
 				String	fa_menu=(String)als.get(1);
 				String	menu_re=(String)als.get(2);
 				int  table_id=Tools.getInt( als.get(0), -1);
-				table=manager.getTable(table_id);
-				try{
+				Table table=manager.getTable(table_id);
+				logger.debug(table.getName());
+				 /*
 				if(!table.isMenuObject()){
                 	continue;
-                }
+                	//because many table is webaction not ismenuobject
+                }*/
 				try{
                     WebUtils.checkTableQueryPermission(table.getName(),request );
                   }catch(NDSSecurityException e){
                     continue;
                 }
-                  catschild.add(table);
-			
-	    	}catch(Throwable t){
-	        	logger.error("Fail to load mufavorite", t);
 
-		       }
-	    	
+				catschild.add(table);
+				logger.debug("add_table    ->"+table.getName());
+		 
         	if(catschild.size()>0){
         		// show this category
         		ArrayList row= new ArrayList();
                 row.add(fa_menu);
                 row.add(menu_re);
                 row.add(catschild);
+                logger.debug("fa_menu    ->"+fa_menu);
                 mufavorite.add(row);
         	    }
 		      }
-
 			}
+        }catch(Throwable t){
+        	logger.error("Fail to load mufavorite", t);
+        }
 		return mufavorite;
 	}
 	
