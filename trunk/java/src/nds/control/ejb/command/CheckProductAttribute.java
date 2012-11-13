@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import org.directwebremoting.WebContext;
 import org.json.*;
 
-import sun.rmi.runtime.Log;
-
 import nds.control.ejb.Command;
 import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEventException;
