@@ -17,10 +17,23 @@ import nds.schema.TableManager;
 import nds.util.*;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFFont;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.hssf.util.HSSFColor;
+
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;  
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Cell;  
+import org.apache.poi.ss.usermodel.DateUtil;  
+import org.apache.poi.ss.usermodel.Row;  
+import org.apache.poi.ss.usermodel.Sheet;  
+import org.apache.poi.ss.usermodel.Workbook;  
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  * Import Excel file to db, will get file content from file system
@@ -91,7 +104,7 @@ public class ImportExcel implements Runnable{
      * Get cell value which should be defined in by column, note col may not
      * be maintable's column, it can be fk_table's ak column.
      */
-    private String getCellValue(int rowNum, HSSFCell cell, Column col){
+    private String getCellValue(int rowNum, Cell cell, Column col){
         if( cell==null) return "";
         String s="",t; int colType; long l;double d;
         try{
@@ -101,7 +114,7 @@ public class ImportExcel implements Runnable{
                 s= TableManager.getInstance().getColumnValueByDescription(col.getId(),s,locale);
             }else{
             	int cellType= cell.getCellType();
-            	if(cellType== cell.CELL_TYPE_BLANK){
+            	if(cellType== Cell.CELL_TYPE_BLANK){
             		s="";// empty;
             	}else{
             	switch(col.getType() ){
@@ -113,10 +126,16 @@ public class ImportExcel implements Runnable{
 	                    if((long)d==d) t=( (long)d)+"";
 	                	else t= d+"";
 	                }
+	                //字符类型的字段值，所对应的EXCEL 可能是数字型的错误补货
+	                catch(IllegalStateException e3){
+	                    d = cell.getNumericCellValue();
+	                    if((long)d==d) t=( (long)d)+"";
+	                	else t= d+"";
+	                }
 	                s= (t==null?"":t.trim());
 	                break;
                 case Column.NUMBER:
-                    if( cellType== cell.CELL_TYPE_STRING) s = cell.getStringCellValue();
+                    if( cellType== Cell.CELL_TYPE_STRING) s = cell.getStringCellValue();
                 	else {
                 		d= cell.getNumericCellValue();
                         s= String.valueOf(d); // null will be '0'
@@ -146,7 +165,7 @@ public class ImportExcel implements Runnable{
             	}
             }
         }catch(Exception e){
-            logger.error("Error parsing cell(" +rowNum+","+ cell.getCellNum() + ") as column " + col+":"+ e);
+            logger.error("Error parsing cell(" +rowNum+","+ cell.getColumnIndex() + ") as column " + col+":"+ e+"-"+cell.getCellType());
         }
         //logger.debug(" cell(" +rowNum+","+ cell.getCellNum() + ")="+ s);
         return s;
@@ -343,24 +362,29 @@ public class ImportExcel implements Runnable{
 	        	
 	        }else{
 	        	//xls file handling
+	        	Workbook wb = null; 
+	        	if (srcFile.endsWith(".xls")) {  
 	            POIFSFileSystem fs ;
 	            // check input stream first, if not found, use srcFile name
 	            if ( this.excelStream !=null) fs= new POIFSFileSystem(excelStream);
 	            else fs=new POIFSFileSystem(new FileInputStream(srcFile));
-	
-	            HSSFWorkbook wb = new HSSFWorkbook(fs);
-	            HSSFSheet sheet = wb.getSheetAt(0);
+	               // inp = new FileInputStream(FilePath);  
+	                wb = (Workbook) new HSSFWorkbook(fs);  
+	            } else if (srcFile.endsWith(".xlsx")) {   
+	                wb = (Workbook) new XSSFWorkbook(excelStream);  
+	            }
+	        	Sheet sheet = wb.getSheetAt(0);
 	            logger.debug("Last row num:"+  sheet.getLastRowNum());
 //	            String[][] colData= new String[columns.size()][1+sheet.getLastRowNum() -startRow];
 	            logger.debug("Create array["+columns.size()+"]["+ (sheet.getLastRowNum() -startRow)+"]" );
 	            for ( int i= startRow; i<= sheet.getLastRowNum();i++){
-	                HSSFRow row = sheet.getRow(i);
+	                Row row = sheet.getRow(i);
 	                if( row==null) continue;
 	                DefaultWebEvent dwe=createRowModifyEvent();
 	                dwe.setParameter("nds.row.index",String.valueOf(i));
 	                for( int j=0;j< colNames.size();j++){
 	                    col= (Column) directColumnOfData.get(j);
-	                    HSSFCell cell = row.getCell((short)(j+startColumn)); //列从startColumn开始
+	                    Cell cell = row.getCell((j+startColumn)); //列从startColumn开始
 	                    cv= getCellValue(i, cell, col);
 	                    dwe.setParameter((String)colNames.get(j), cv);
 	                }
@@ -532,22 +556,33 @@ public class ImportExcel implements Runnable{
 	        	}
 	        }else{
 	        	//xls file handling
+	        	//suport xlsx 2007
+	        	Workbook wb = null; 
+	            logger.debug(srcFile);
+	        	if (srcFile.endsWith(".xls")) {  
 	            POIFSFileSystem fs ;
 	            // check input stream first, if not found, use srcFile name
+
 	            if ( this.excelStream !=null) fs= new POIFSFileSystem(excelStream);
 	            else fs=new POIFSFileSystem(new FileInputStream(srcFile));
-	
-	            HSSFWorkbook wb = new HSSFWorkbook(fs);
-	            HSSFSheet sheet = wb.getSheetAt(0);
+	               // inp = new FileInputStream(FilePath);  
+	                wb = (Workbook) new HSSFWorkbook(fs);  
+	            } else if (srcFile.endsWith(".xlsx")) {   
+	            //if ( this.excelStream !=null) fs= new POIFSFileSystem(excelStream);
+	                wb = (Workbook) new XSSFWorkbook(excelStream);  
+	            }
+	        	Sheet sheet = wb.getSheetAt(0);
+	           // HSSFWorkbook wb = new HSSFWorkbook(fs);
+	            //HSSFSheet sheet = wb.getSheetAt(0);
 	            logger.debug("Last row num:"+  sheet.getLastRowNum());
 	            String[][] colData= new String[columns.size()][1+sheet.getLastRowNum() -startRow];
 	            logger.debug("Create array["+columns.size()+"]["+ (sheet.getLastRowNum() -startRow)+"]" );
 	            for ( int i= startRow; i<= sheet.getLastRowNum();i++){
-	                HSSFRow row = sheet.getRow(i);
+	                Row row = sheet.getRow(i);
 	                if( row==null) continue;
 	                for( int j=0;j< directColumnOfData.size();j++){
 	                    col= (Column) directColumnOfData.get(j);
-	                    HSSFCell cell = row.getCell((short)(j+startColumn));
+	                    Cell cell = row.getCell((j+startColumn));
 	                    cv= getCellValue(i, cell, col);
 	                    colData[j][i-startRow]= cv;
 	                }
