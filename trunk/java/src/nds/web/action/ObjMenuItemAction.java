@@ -22,7 +22,7 @@ public class ObjMenuItemAction extends ObjButtonAction {
 		if( nds.util.Validator.isNotNull( s)){
 			sb.append("style=\"background-image:url(").append(s).append(")\" ");
 		}
-		sb.append("href=\"");	
+		sb.append("onclick=\"");	
 		
 		WebAction.ActionTypeEnum ate= this.getActionType();
 		String target=this.getUrlTarget();
