@@ -86,12 +86,14 @@ public class ExportExcel extends Command {
      try {
          //HSSFWorkbook wb = new HSSFWorkbook();
          Workbook wb = null;  
+         int max_rowcount=65535;
          if (fileName.endsWith(".xls")) {  
             // inp = new FileInputStream(FilePath);  
              wb = (Workbook) new HSSFWorkbook();  
          } else if (fileName.endsWith(".xlsx")) {   
-
+        	 
              wb = (Workbook) new XSSFWorkbook();  
+             max_rowcount=1048576;
          }  
          //SXSSFWorkbook wb = new SXSSFWorkbook(100); 
          //System.out.println("基于流写入执行完毕!");  
@@ -145,7 +147,7 @@ public class ExportExcel extends Command {
          int dn;
          while( rs.next() ){
              row ++;
-             if(row <0 || row>65534){
+             if(row <0 || row>max_rowcount){
             	 logger.warning("Exit loop since row count exceed excel max value:"+ row);
             	 break;
              }
