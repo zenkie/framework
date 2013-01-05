@@ -419,7 +419,7 @@ public class SubSystemView {
         Connection conn= null;
         HashMap webActionEnv=null;
         Table table;
-        List al=QueryEngine.getInstance().doQueryList("select e.id,e.name from ad_table g,AD_ACCORDION e where g.AD_ACCORDION_id=e.id and g.ad_tablecategory_id="+tableCategoryId+" group by e.id,e.name order by count(1) desc");
+        List al=QueryEngine.getInstance().doQueryList("select e.id,e.name from ad_table g,AD_ACCORDION e where g.AD_ACCORDION_id=e.id and g.ad_tablecategory_id="+tableCategoryId+" group by e.id,e.name order by e.orderno desc");
         UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
         TableCategory tc= manager.getTableCategory(tableCategoryId);
     	List children= tc.children();
