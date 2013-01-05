@@ -12,6 +12,10 @@ import java.net.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.jsp.*;
+
+import nds.log.Logger;
+import nds.log.LoggerManager;
+import nds.query.web.SubSystemView;
 import nds.web.*;
 /**
  * 
@@ -20,6 +24,7 @@ import nds.web.*;
  * @author yfzhu@agilecontrol.com
  */
 public class ButtonFactory {
+	private static Logger logger=LoggerManager.getInstance().getLogger(ButtonFactory.class.getName());
 	/**
 	 * Key: Locale, Value: ButtonFactory
 	 */
@@ -62,18 +67,25 @@ public class ButtonFactory {
 	 */
 	public Button newButtonInstance(String name, String value, String action){
 		
-		return newButtonInstance(name, value, action, null,null);
+		return newButtonInstance(name, value, action, null,null,null);
 	}
 	public Button newButtonInstance(String name, String value, String action, String accessKey){
-		return newButtonInstance(name, value, action, accessKey,null);
+		return newButtonInstance(name, value, action, accessKey,null,null);
 	}
-	public Button newButtonInstance(String name, String value, String action, String accessKey, String title){
+	//add button img
+	public Button newButtonInstance(String name, String value, String action, String accessKey,String img_url){
+		
+		return newButtonInstance(name, value, action, accessKey,null,img_url);
+	}
+	public Button newButtonInstance(String name, String value, String action, String accessKey, String title,String img_url){
 		Button b=new Button();
+		logger.debug("img_url is "+img_url);
 		b.setName(name);
 		b.setValue(value+(accessKey!=null?"("+accessKey+")": ""));
 		HashMap map=new HashMap();
 		map.put("onclick",action);
 		if(title!=null)map.put("title",title);
+		if(img_url!=null)map.put("imgurl", img_url);
 		if(accessKey!=null) map.put("accessKey", accessKey);
 		b.setAttributes(map);
 		return b;
