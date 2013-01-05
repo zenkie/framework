@@ -54,6 +54,21 @@ public class Button {
     	return sb.toString();
     	
     }
+    public String toHREFbyimg(String cssClass){
+    	StringBuffer sb=new StringBuffer();
+    	String onclick= (String)attributes.get("onclick");
+    	String imgurl= (String)attributes.get("imgurl");
+    	if(onclick!=null) onclick="javascript:"+ onclick;
+    	else onclick="#";
+    	sb.append("<a ");
+    	if(cssClass!=null) sb.append(" class=\"").append(cssClass).append("\" ");
+    	sb.append("href=\"" + onclick+"\">");
+    	if(imgurl!=null) sb.append("<img src=\""+imgurl+"\">");
+    	sb.append(value).append("</a>");
+    	
+    	return sb.toString();
+    	
+    }
     /**
      * Show button as input in object page
      * @return
