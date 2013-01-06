@@ -1,6 +1,7 @@
 package nds.web.action;
 
 import java.util.*;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -330,6 +331,12 @@ public class TreeNodeAction extends WebActionImpl {
 			}
 		}
 		return (i != 0) && (j != 0) && (k != 0);
+	}
+
+	@Override
+	public String toHREF(Locale locale, Map env) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

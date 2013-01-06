@@ -85,4 +85,10 @@ public class ListButtonAction_HREF extends WebActionImpl {
 		return sb.toString();
 	}
 
+	@Override
+	public String toHREF(Locale locale, Map env) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

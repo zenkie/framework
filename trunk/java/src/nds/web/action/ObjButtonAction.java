@@ -137,4 +137,75 @@ public class ObjButtonAction extends WebActionImpl {
 		}
 		return b;
 	}
+	@Override
+
+	public String toHREF(Locale locale,Map env) {
+		/*<a href="javascript:pc.doAdd()" accesskey="N">
+		<img src="/html/nds/images/tb_new.gif"/>
+		ÐÂÔö
+		</a>*/
+		StringBuffer sb=new StringBuffer("<a id=\"wa_").append(this.getId()).append("\" href=\"");
+		
+		WebAction.ActionTypeEnum ate= this.getActionType();
+		String target=this.getUrlTarget();
+		switch(ate){
+			case URL:
+				if(nds.util.Validator.isNull(target)) target="_self";
+				sb.append("javascript:popup_window('");
+				sb.append(this.getScript()).append("',target='").
+					append(target).append("')\">");
+				break;
+			case JavaScript:
+				sb.append("javascript:").append(this.getScript()).append("\">");
+				break;
+			case AdProcess:
+				// get ad_process.id according to process name
+				try{
+					int processId= Tools.getInt(QueryEngine.getInstance().doQueryOne(
+						"select id from ad_process where name="+ QueryUtils.TO_STRING(this.getScript()))
+						,-1);
+					if(processId==-1) throw new NDSException("ad_process with name "+this.getScript()+" not found" );
+					sb.append("javascript:showObject('/html/nds/schedule/addpi.jsp?id=").
+						append(processId).append("')\">");
+				}catch(Throwable t ){
+					sb.append("javascript:alert('Error:").
+					append(t.getMessage()).append("')\">");
+				}
+				break;
+			case StoredProcedure:
+			case BeanShell:
+			case Python:
+			case OSShell:
+				sb.append("javascript:pc.webaction(").append(this.getId()).append(",");
+				if(this.getComments()!=null) sb.append("'").append(this.getComments()).append("',");
+				else sb.append("null,");
+				
+				if(nds.util.Validator.isNotNull(target)){
+					sb.append("'").append( target ).append("'");			
+				}else{
+					sb.append("null");
+				}
+				
+				sb.append(")\">");
+				break;
+			default:
+				sb.append("javascript:").append(this.getScript()).append("\">");			
+		}		
+		
+		String s=this.getIconURL();
+		if( nds.util.Validator.isNotNull( s)){
+			sb.append("<img src=\"").append(s).append("\"/>");
+		}
+		sb.append(StringUtils.escapeForXML(this.getDescription()));
+		sb.append("</a>");
+		
+		String f= StringUtils.replace(sb.toString(),"$OBJECTID$", 
+				String.valueOf(getValueFromMap("objectid", env, null,true)));
+
+		f= StringUtils.replace(f,"$MAINTABLE$", 
+				String.valueOf(getValueFromMap("maintable", env, null,true)));
+		
+		return f;
+	}
+
 }
