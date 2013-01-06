@@ -31,6 +31,8 @@ public interface WebAction {
 	 * @return html code
 	 */
 	public String toHTML(Locale locale,Map env);
+	public String toHREF(Locale locale,Map env);
+	
 	/**
 	 * This can be url, ad_process.name, beashell script, os command, and so on
 	 * the content comes from ad_action.content, ad_action.scripts in order
