@@ -27,7 +27,7 @@ package nds.control.ejb;
 
 import java.rmi.RemoteException;
 import java.util.Hashtable;
-
+import com.liferay.util.Validator;
 import nds.control.ejb.command.SaveReqParam;
 import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEvent;
@@ -65,6 +65,14 @@ public class CommandHandler extends StateHandlerSupport{
         
         DefaultWebEvent event= (DefaultWebEvent) e;
         command= (String)event.getParameterValue("command");
+		if (Validator.isNull(command)) {
+			logger.warning("command not found in event:"
+					+ event.toDetailString());
+			ValueHolder vd = new ValueHolder();
+			vd.put("message", "");
+			vd.put("code", Integer.valueOf(0));
+			return vd;
+		}
         
         nds.io.PluginController pc=(nds.io.PluginController) WebUtils.getServletContextManager().getActor(nds.util.WebKeys.PLUGIN_CONTROLLER);
         Command cmd= pc.findPluginCommand(command);
@@ -97,6 +105,14 @@ public class CommandHandler extends StateHandlerSupport{
         	}
         }*/
         
+		if (cmd.internalTransaction() && event.shouldCreateUserTransaction()) {
+			String errmsg = "Internal error: command "
+					+ cmd.getClass()
+					+ " has internal transaction while controller creates UserTransaction for it";
+			logger.error(errmsg);
+			logger.error(event.toDetailString());
+			throw new NDSException(errmsg);
+		}
         ValueHolder vd= cmd.execute(event);
         return  vd;
 
