@@ -93,6 +93,24 @@ public class DefaultWebEvent implements  NDSEvent {
     public Date getCreationDate(){
     	return creationDate;
     }
+    
+	public boolean shouldCreateUserTransaction() {
+		boolean bool;
+		if ((bool = Tools.getYesNo(
+				getParameterValue("nds.control.ejb.UserTransaction"), true))) {
+			bool = false;
+			try {
+				bool = new Boolean((String) getParameterValue("best_effort"))
+						.booleanValue();
+			} catch (Exception localException) {
+			}
+			return !bool;
+		}
+		return false;
+	}
+    
+    
+    
     /**
      * Reset event's name
      * @param e
