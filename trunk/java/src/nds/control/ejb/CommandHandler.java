@@ -104,7 +104,9 @@ public class CommandHandler extends StateHandlerSupport{
         		throw new NDSException(errmsg);
         	}
         }*/
-        
+        /**
+         * 如果command是一个内部事件的话，用户不能再创建一个用户事件的判定
+         */
 		if (cmd.internalTransaction() && event.shouldCreateUserTransaction()) {
 			String errmsg = "Internal error: command "
 					+ cmd.getClass()
