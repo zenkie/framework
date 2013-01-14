@@ -92,6 +92,10 @@ public final class WebUtils {
 	 * ad_client.domain (String), AD_SITE_TEMPLATE.foldername (String)]
 	 */
 	private static Hashtable adClientDomainCache = new Hashtable();
+	
+	private static Hashtable domains = new Hashtable();
+
+	private static String DOM_DOMAIN;
 
 	/**
 	 * @param f
@@ -157,6 +161,18 @@ public final class WebUtils {
 		if (dc == null)
 			return null; // default to 001
 		return (String) dc[2];
+	}
+	
+	public static String getClientDomain(int client_id) throws Exception {
+		String domname=new String();
+		if (domains.get(client_id) == null) {
+			domname=(String) QueryEngine.getInstance().doQueryOne("select domain from ad_client where id="+client_id);
+			if (Validator.isNull(domname))
+				throw new NDSException(
+						"Could not find ad_client domain for id=" + String.valueOf(client_id));
+			domains.put(client_id,domname);
+		}
+		return domname;
 	}
 
 	/**
@@ -1144,4 +1160,11 @@ public final class WebUtils {
 	public static String getProperty(String name) {
 		return getConfigurations().getProperty(name);
 	}
+	
+	public static String getDocumentDomain() {
+		if (DOM_DOMAIN == null)
+			DOM_DOMAIN = getConfigurations().getProperty("im.domain");
+		return DOM_DOMAIN;
+	}
+	     
 }
