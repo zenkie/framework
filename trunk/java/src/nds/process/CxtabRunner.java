@@ -12,7 +12,11 @@ import nds.control.util.SecurityUtils;
 import nds.control.util.ValueHolder;
 import nds.control.web.ClientControllerWebImpl;
 import nds.control.web.WebUtils;
+import nds.cxtab.CxtabReport;
+import nds.cxtab.EmptyRecordException;
 import nds.schema.*;
+import nds.log.Logger;
+import nds.log.LoggerManager;
 import nds.query.*;
 import nds.security.User;
 import nds.util.NDSException;
@@ -33,6 +37,19 @@ public class CxtabRunner extends SvrProcess
 	private String fileType;
 	private QueryEngine engine;
 	private String filter;
+	private String folder;
+	private static HashSet<String> prclist;
+	
+	private static Logger logger= LoggerManager.getInstance().getLogger((CxtabRunner.class.getName()));
+
+	public static void updateNoDeleteProcedures(String prcname) {
+		prclist.clear();
+		if (com.liferay.util.Validator.isNotNull(prcname)) {
+			String[] b = prcname.split(",");
+			for (int i = 0; i < b.length; i++)
+				prclist.add(b[i]);
+		}
+	}
 	/**
 	 *  Parameters:
 	 *    filter_expr, filter_sql (if set, will take privilege over filter_expr), 
@@ -58,6 +75,8 @@ public class CxtabRunner extends SvrProcess
 				fileType= ((String)para[i].getParameter());
 			else if (name.equals("filter"))
 				filter= ((String)para[i].getParameter());
+			else if (name.equals("folder"))
+				folder= ((String)para[i].getParameter());
 		}
 	}	//	prepare
 	
@@ -90,9 +109,12 @@ public class CxtabRunner extends SvrProcess
 	  	PreparedStatement pstmt=null;
 		engine=  QueryEngine.getInstance();
 		boolean isBackground=true;
+		boolean iscus = "cus".equalsIgnoreCase(this.fileType);
+		
 	    try{
 		    conn= engine.getConnection();
 		    // check PRE_PROCEDURE for cxtab
+		    if (iscus) conn.setAutoCommit(false);
 		    
 		    List cxInfo=(List) engine.doQueryList(
 		    		"select PRE_PROCEDURE, AD_PI_COLUMN_ID from ad_cxtab where ad_client_id="+ this.getAD_Client_ID()+
@@ -100,10 +122,10 @@ public class CxtabRunner extends SvrProcess
 		    String preProcedure=(String) ((List)cxInfo.get(0)).get(0);
 		    int piColumnId= Tools.getInt( ((List)cxInfo.get(0)).get(1), -1);
 		    
-		    if( nds.util.Validator.isNotNull(preProcedure)){
+		    if( nds.util.Validator.isNotNull(preProcedure)&&(!"cub".equalsIgnoreCase(this.fileType))){
 		    	ArrayList al=new ArrayList();
 		    	al.add(new Integer(this.getAD_PInstance_ID()));
-		    	engine.executeStoredProcedure(preProcedure, al, false);
+		    	engine.executeStoredProcedure(preProcedure, al, false,conn);
 		    	
 		    }
 		    /*int preProcessInstanceId= createPreProcessInstance(conn);
@@ -122,26 +144,15 @@ public class CxtabRunner extends SvrProcess
 		    cr.setFileName(fileName);
 		    cr.setFilterSQL(filterSQL);
 		    cr.setFilterExpr(filterExpr);
-		    cr.setFileName(fileName);
 		    cr.setFileType(fileType);
 		    cr.setFilterDesc(filter);
+		    cr.setFolder(folder);
 		    cr.setUserId( this.getAD_User_ID());
 		    //cr.setReportInstanceId(preProcessInstanceId); // this may be used as specical filter for sql statement
 		    cr.setAD_PInstance_ID(this.getAD_PInstance_ID()); // this will be needed when doing cube exporting
-		    String finalFile= cr.create(conn);
-		    
-		    // if cxtab has pre_procedure and ad_pi_column_id set, then will try eraise report data in fact table
-		    // this task is asynchronized
-		    if(nds.util.Validator.isNotNull(preProcedure) && piColumnId!=-1){
-		    	ClientControllerWebImpl controller=(ClientControllerWebImpl)WebUtils.getServletContextManager().getActor(nds.util.WebKeys.WEB_CONTROLLER);
-		    	DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
-		    	event.setParameter("operatorid", String.valueOf(this.getAD_User_ID()));
-		    	event.setParameter("command", "RemoveCxtabTmpData");
-		    	event.setParameter("cxtab", cxtabName);
-		    	event.setParameter("ad_pi_id", String.valueOf(this.getAD_PInstance_ID()));
-		    	controller.handleEventBackground(event);
-		    }
-		    
+		    String finalFile;
+		    try{  
+		    finalFile= cr.create(conn);
 		    if( isBackground){
 		    	// this is asynchronous task, so should notifiy user (creator) of the completion
 		    	notifyOwner("["+cxtabName+"]@report-created@"+((System.currentTimeMillis() - startTime)/1000),
@@ -150,10 +161,39 @@ public class CxtabRunner extends SvrProcess
 		    			//+",@file-name@:"+finalFile,"/servlets/binserv/GetFile?filename="+ finalFile);
 		    }
 		    this.addLog("File created:" +finalFile);
-		    return "File created:" +finalFile;
+		    finalFile = "File created:" + finalFile;
+		    logger.debug(finalFile);
+			} catch (EmptyRecordException e) {
+				if (isBackground) {
+					notifyOwner("[" + cxtabName + "]@empty-record@",
+							"@empty-record@", null);
+				}
+				addLog("empty record");
+				finalFile = "empty record";
+			}
+		    if (iscus) conn.commit();logger.debug("is cus");
+		    // if cxtab has pre_procedure and ad_pi_column_id set, then will try eraise report data in fact table
+		    // this task is asynchronized
+		    logger.debug("preProcedure is "+preProcedure+" piColumnId is "+String.valueOf(piColumnId));
+		    if(nds.util.Validator.isNotNull(preProcedure) && piColumnId!=-1&&(!prclist.contains(preProcedure.toUpperCase()))){
+		    	ClientControllerWebImpl controller=(ClientControllerWebImpl)WebUtils.getServletContextManager().getActor(nds.util.WebKeys.WEB_CONTROLLER);
+		    	DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
+		    	event.setParameter("operatorid", String.valueOf(this.getAD_User_ID()));
+		    	event.setParameter("command", "RemoveCxtabTmpData");
+		    	event.setParameter("cxtab", cxtabName);
+		    	event.setParameter("ad_pi_id", String.valueOf(this.getAD_PInstance_ID()));
+		    	controller.handleEventBackground(event);
+		    }		    
 		    
+		    return finalFile;
 			
 	    }catch(Throwable e){
+	         try {
+		   if (iscus)
+					conn.rollback();
+			} catch (Throwable e2) {
+				this.log.error("fail to rollback conn:" + e2.getMessage());
+			}
 		 	log.error("", e);
 		 	if( isBackground){
 		    	// this is asynchronous task, so should notifiy user (creator) of the completion
@@ -169,6 +209,15 @@ public class CxtabRunner extends SvrProcess
 	    }
 
 	}
+
 	
+	static {
+		if ((CxtabRunner.prclist = null) == null) {
+			prclist = new HashSet();
+			String localObject = WebUtils.getConfigurations().getProperty(
+					"cxtab.preprocedure.nodelete", "");
+			updateNoDeleteProcedures(localObject);
+		}
+	}
 	
 }
