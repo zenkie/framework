@@ -3,14 +3,14 @@ package nds.db;
 import java.sql.Connection;
 import java.util.Collection;
 import java.util.Properties;
-
+import java.util.List;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.query.QueryException;
 import nds.query.QueryRequestImpl;
 import nds.query.*;
 import nds.util.Loader;
-
+import org.json.*;
 /**
  * Work as proxy for respective database managers, the dbtype should be defined
  * as "dbms.type" in configuration file, and there should exists Class
@@ -85,6 +85,44 @@ public class DBController implements java.io.Serializable, DBManager,
         return manager.getSheetStatus(tableName, tableId);
     }
 
+	public List doQueryList(String sql, Object[] paramArrayOfObject,
+			int paramInt, Connection conn) throws QueryException {
+		return manager.doQueryList(sql, paramArrayOfObject, paramInt, conn);
+	}
+	
+	public JSONArray doQueryJSONArray(String sql,
+			Object[] paramArrayOfObject, int paramInt,
+			Connection conn) throws QueryException {
+		return manager.doQueryJSONArray(sql, paramArrayOfObject,
+				paramInt, conn);
+	}
+
+	public JSONArray doQueryObjectArray(String sql,
+			Object[] paramArrayOfObject, Connection conn,
+			boolean toUpper) throws QueryException {
+		return manager.doQueryObjectArray(sql, paramArrayOfObject,
+				conn, toUpper);
+	}
+
+	public int executeUpdate(String sql, Object[] paramArrayOfObject,
+			Connection conn) throws QueryException {
+		return manager.executeUpdate(sql, paramArrayOfObject,
+				conn);
+	}
+
+	public JSONObject doQueryObject(String sql,
+			Object[] paramArrayOfObject, Connection conn)
+			throws QueryException {
+		return manager.doQueryObject(sql, paramArrayOfObject,
+				conn, true);
+	}
+
+	public JSONObject doQueryObject(String sql,
+			Object[] paramArrayOfObject, Connection conn,
+			boolean toUpper) throws QueryException {
+		return manager.doQueryObject(sql, paramArrayOfObject,
+				conn, toUpper);
+	}
 
 
 }
