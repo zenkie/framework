@@ -35,6 +35,11 @@ public class LoadPage extends Command {
 	 * }
 	 * 	
 	 */
+	
+	public boolean internalTransaction(DefaultWebEvent event) {
+		return true;
+	}
+	
   public ValueHolder execute(DefaultWebEvent event) throws RemoteException, NDSException {
   	TableManager manager=TableManager.getInstance();
   	User usr=helper.getOperator(event);

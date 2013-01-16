@@ -32,6 +32,10 @@ public class ExecuteImmediateADProcessInstance extends Command {
 	/**
 	 *  objectid will be  ad_processqueue_id
 	 */
+	
+	public boolean internalTransaction(DefaultWebEvent event) {
+		return true;
+	}
   public ValueHolder execute(DefaultWebEvent event) throws RemoteException, NDSException {
   	User usr=helper.getOperator(event);
   	

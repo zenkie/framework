@@ -28,6 +28,10 @@ import nds.util.Tools;
  */
 public class ListModify extends Command{
 
+	
+	public boolean internalTransaction(DefaultWebEvent event) {
+		return true;
+	}
    public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
 	 if(true)throw new NDSException("ListModify is deprecated, not support binding value sql update");   
   	/**

@@ -50,9 +50,23 @@ public class ObjectCreate extends Command{
      * will new transaction and commit that one explicitly
      * @return false if use transaction from caller
      */
+	/*
     public boolean internalTransaction(){
     	return true;
-    }	
+    }
+    */
+    public boolean internalTransaction(DefaultWebEvent paramDefaultWebEvent)
+      {
+    	boolean	bestEffort=false;
+		try {
+			 	bestEffort = new Boolean(
+					(String) paramDefaultWebEvent
+							.getParameterValue("best_effort")).booleanValue();
+		} catch (Exception e) {
+		}
+		return bestEffort;
+      }    
+    
     /**
      * ÏËË¿ÄñµÄÐèÇó 
      */

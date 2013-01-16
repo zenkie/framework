@@ -45,6 +45,9 @@ public class ExecuteJReport extends Command {
 	 * 		if by immediately, execute that pi and create that report as html and save to user report folder
 	 *      if by schedule, return infor.jsp
 	 */
+	public boolean internalTransaction(DefaultWebEvent event) {
+		return true;
+	}	
   public ValueHolder execute(DefaultWebEvent event) throws RemoteException, NDSException {
 	Connection conn=null;
   	PreparedStatement pstmt=null;

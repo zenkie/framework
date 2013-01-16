@@ -6,6 +6,7 @@ import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 
 import org.directwebremoting.WebContext;
+import org.jfree.util.Log;
 import org.json.*;
 
 import nds.control.ejb.Command;
@@ -125,6 +126,7 @@ public class ProcessObject extends Command {
 	String returnMsg=null;
 	boolean masterObjectCreateAction=false; //what's on master object, add or modify?
 	SPResult spr=null; // main object's ac/am procedure result 
+	logger.debug("jsonObject   is  ->"+jo.toString());
   	try{
   		/*
   		 * Master object handling

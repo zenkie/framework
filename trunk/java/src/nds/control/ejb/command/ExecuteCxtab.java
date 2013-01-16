@@ -91,7 +91,7 @@ public class ExecuteCxtab extends Command {
 					cachetime * 60000, 50000);
 	}
 
-	public boolean internalTransaction() {
+	public boolean internalTransaction(DefaultWebEvent event) {
 		return true;
 	}
 	 /** 

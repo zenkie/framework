@@ -26,6 +26,10 @@ import nds.util.Tools;
 */
 public class ListUnvoid extends Command{
   private TableManager manager;
+  
+	public boolean internalTransaction(DefaultWebEvent event) {
+		return true;
+	}
   public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
       Configurations conf= (Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
       /**

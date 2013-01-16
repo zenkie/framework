@@ -23,6 +23,11 @@ import nds.util.Tools;
 */
 public class ListVoid extends Command{
   private TableManager manager;
+  
+	public boolean internalTransaction(DefaultWebEvent event) {
+		return true;
+	}
+	
   public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
 
        manager = helper.getTableManager() ;

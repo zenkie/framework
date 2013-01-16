@@ -32,9 +32,9 @@ public class ListSubmit extends Command{
      * will new transaction and commit that one explicitly
      * @return false if use transaction from caller
      */
-    public boolean internalTransaction(){
-    	return true;
-    }
+	public boolean internalTransaction(DefaultWebEvent event) {
+		return true;
+	}
     /**
      * Will check all objects' status before submit
      * @param event:

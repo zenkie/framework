@@ -37,9 +37,9 @@ public class ListUpdate extends Command {
      * will new transaction and commit that one explicitly
      * @return false if use transaction from caller
      */
-    public boolean internalTransaction(){
-    	return true;
-    }
+	public boolean internalTransaction(DefaultWebEvent event) {
+		return true;
+	}
 	/**
 	 * @param event contains 
 	 * 		rows - ArrayList elements are DefaultWebEvent with only data from file

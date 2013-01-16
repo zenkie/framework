@@ -26,6 +26,11 @@ import nds.util.Tools;
 */
 public class ListDelete extends Command{
   private TableManager manager;
+  
+	public boolean internalTransaction(DefaultWebEvent event) {
+		return true;
+	}
+	
   public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
   	/**
   	 * 2005-11-15 增加了对status 字段的判断，如果status字段为2 则当前记录不允许删除。这种情况主要发生

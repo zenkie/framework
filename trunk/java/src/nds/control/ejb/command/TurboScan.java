@@ -34,9 +34,9 @@ public class TurboScan extends Command {
      * will new transaction and commit that one explicitly
      * @return false if use transaction from caller
      */
-    public boolean internalTransaction(){
-    	return true;
-    }
+	public boolean internalTransaction(DefaultWebEvent event) {
+		return true;
+	}
 	/**
 	 * A normal line with m_product_id and m_attributesetinstance_id columns 
 	 * and m_product_id should only contains barcode as input

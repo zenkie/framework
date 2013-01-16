@@ -107,7 +107,7 @@ public class CommandHandler extends StateHandlerSupport{
         /**
          * 如果command是一个内部事件的话，用户不能再创建一个用户事件的判定
          */
-		if (cmd.internalTransaction() && event.shouldCreateUserTransaction()) {
+		if (cmd.internalTransaction(event) && event.shouldCreateUserTransaction()) {
 			String errmsg = "Internal error: command "
 					+ cmd.getClass()
 					+ " has internal transaction while controller creates UserTransaction for it";

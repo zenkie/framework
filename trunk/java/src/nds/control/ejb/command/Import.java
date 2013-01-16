@@ -43,9 +43,9 @@ public class Import extends Command{
      * will new transaction and commit that one explicitly
      * @return false if use transaction from caller
      */
-    public boolean internalTransaction(){
-    	return true;
-    }	
+	public boolean internalTransaction(DefaultWebEvent event) {
+		return true;
+	}
   /**
    * Redirect to object creation command with batch mode set 
    */	

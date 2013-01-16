@@ -30,7 +30,7 @@ public class ChangeUsbKey extends Command {
      * will new transaction and commit that one explicitly
      * @return false if use transaction from caller
      */
-    public boolean internalTransaction(){
+    public boolean internalTransaction(DefaultWebEvent event){
     	
     	return true;
     }	

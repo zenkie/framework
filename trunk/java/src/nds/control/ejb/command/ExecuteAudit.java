@@ -45,6 +45,10 @@ public class ExecuteAudit extends Command {
 	 *  "itemid"		- only those listed in "selectedItemIdx"
 	 *  "assignee"          - when doing assignment, this is to specifie the assignee's user name
 	 */
+	
+	public boolean internalTransaction(DefaultWebEvent event) {
+		return true;
+	}
   public ValueHolder execute(DefaultWebEvent event) throws RemoteException, NDSException {
   	//logger.debug(event.toDetailString());
   	String a=(String) event.getParameterValue("auditAction");
