@@ -33,7 +33,7 @@ public class SaveCxtabJson extends Command {
 	private final static String DELETE_DIMENSION="delete from ad_cxtab_dimension where ad_cxtab_id=?";
 	private final static String DELETE_MEASURE="delete from ad_cxtab_fact where ad_cxtab_id=?"; 
 	//private final static String INSERT_CXTAB="insert into ad_cxtab(id,ad_client_id,ad_org_id,name,description,ad_table_id,filter,ad_process_id,ad_column_cxtabinst_id,sampleurl,attr1,attr2,attr3,ownerid,modifierid,creationdate,modifieddate,isactive,isbackground,ad_processqueue_id,ad_cxtab_category_id,reporttype,orderno,pre_procedure,ad_pi_column_id,ispublic) values(get_sequences('ad_cxtab'),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,sysdate,sysdate,'Y',?,?,?,?,?,?,?,?)";
-	private final static String INSERT_CXTAB="insert into ad_cxtab(id,ad_client_id,ad_org_id,name,description,ad_table_id,filter,ad_column_cxtabinst_id,sampleurl,attr1,attr2,attr3,ownerid,modifierid,creationdate,modifieddate,isactive,isbackground,ad_processqueue_id,ad_cxtab_category_id,reporttype,orderno,pre_procedure,ad_pi_column_id,ispublic,parent_id) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,sysdate,sysdate,'Y',?,?,?,?,?,?,?,?,?)";
+	private final static String INSERT_CXTAB="insert into ad_cxtab(id,ad_client_id,ad_org_id,name,description,ad_table_id,filter,ad_column_cxtabinst_id,sampleurl,attr1,attr2,attr3,ownerid,modifierid,creationdate,modifieddate,isactive,isbackground,ad_processqueue_id,ad_cxtab_category_id,reporttype,orderno,pre_procedure,ad_pi_column_id,ispublic,parent_id,user_dims) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,sysdate,sysdate,'Y',?,?,?,?,?,?,?,?,?,?)";
 	/**
 	 * 
 	 * @param event contains 
@@ -98,7 +98,16 @@ public class SaveCxtabJson extends Command {
 		  		cxtabId=QueryEngine.getInstance().getSequence("ad_cxtab",conn);
 		  		if(replist.size()>0){
 		  		  	if(parentId==-1 && oldCxtabId!=-1) parentId=Tools.getInt( engine.doQueryOne("select nvl(parent_id,id) from ad_cxtab where id="+oldCxtabId, conn),-1);
-
+		  		int user_dims = 0;
+		  		//before save check user_dims if 0 then getProperty
+		  		//jack by
+		  	    if (parentId != -1) {
+		  	    	user_dims = Tools.getInt(engine.doQueryOne("select user_dims from ad_cxtab where id="+parentId,conn),0);
+		  			}
+		  		if (user_dims < 1) {
+		  			Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+		  			user_dims = Tools.getInt(conf.getProperty("cxtab.dimension.threshold"), 0);
+		  		    }
 		  			pstmt= conn.prepareStatement(INSERT_CXTAB);
 		  			pstmt.setInt(1, cxtabId);
 		  			pstmt.setInt(2, user.adClientId);
@@ -127,7 +136,7 @@ public class SaveCxtabJson extends Command {
 		  			
 		  			if(parentId!=-1)pstmt.setInt(23, parentId);
 		  			else pstmt.setNull(23, SQLTypes.INT);
-		  			
+		  			pstmt.setInt(24, user_dims);
 		  			pstmt.executeUpdate();
 				  	try{pstmt.close();}catch(Throwable td){}
 				  	//clone AD_CXTAB_JPARA
