@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Properties;
-
+import java.util.List;
 import nds.db.DBManager;
 import nds.log.Logger;
 import nds.log.LoggerManager;
@@ -19,6 +19,7 @@ import nds.query.QueryException;
 import nds.query.QuerySession;
 import nds.query.SPResult;
 import nds.util.NDSRuntimeException;
+import org.json.*;
 
 public class DatabaseManager implements DBManager{
 
@@ -239,4 +240,30 @@ public class DatabaseManager implements DBManager{
         }
     }
 
+	public List doQueryList(String sql, Object[] paramArrayOfObject,
+			int paramInt, Connection conn) throws QueryException {
+		throw new QueryException("not implimented yet");
+	}
+	
+	public JSONArray doQueryJSONArray(String sql, Object[] paramArrayOfObject,
+			int paramInt, Connection conn) throws QueryException {
+		throw new QueryException("not implimented yet");
+	}
+
+	public JSONObject doQueryObject(String sql, Object[] paramArrayOfObject,
+			Connection paramConnection, boolean toUpper)
+			throws QueryException {
+		throw new QueryException("not implimented yet");
+	}
+
+	public JSONArray doQueryObjectArray(String sql,
+			Object[] paramArrayOfObject, Connection conn, boolean toUpper)
+			throws QueryException {
+		throw new QueryException("not implimented yet");
+	}
+ 
+	public int executeUpdate(String sql, Object[] paramArrayOfObject,
+			Connection conn) throws QueryException {
+		throw new QueryException("not implimented yet");
+	}
 }
