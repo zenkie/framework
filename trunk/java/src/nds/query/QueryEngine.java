@@ -7,10 +7,15 @@
 
 package nds.query;
 
+import com.liferay.util.Validator;
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+ 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -26,10 +31,14 @@ import org.apache.commons.logging.LogFactory;
 
 import nds.control.util.EJBUtils;
 import nds.db.DBController;
+import nds.db.oracle.DatabaseManager;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.util.NativeTools;
 import nds.util.Tools;
+import oracle.jdbc.OracleConnection;
+import org.jboss.resource.adapter.jdbc.WrappedConnection;
+import org.json.*;
 import sun.jdbc.rowset.CachedRowSet;
 /**
  * Singleton
@@ -83,6 +92,44 @@ public class QueryEngine {
     protected QueryEngine(String name) {
 
     }
+    
+	public int executeUpdate(String sql, Object[] paramArrayOfObject,
+			Connection conn) throws QueryException {
+		if (Validator.isNull(sql))
+			return 0;
+		return this.controller.executeUpdate(
+				sql, paramArrayOfObject, conn);
+	}
+
+	public int executeUpdate(String sql, Object[] paramArrayOfObject)
+			throws QueryException {
+		if (Validator.isNull(sql))
+			return 0;
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			return this.controller.executeUpdate(
+					sql, paramArrayOfObject, conn);
+		} finally {
+			try {
+				closeConnection(conn);
+			} catch (Exception e) {
+			}
+		}
+	}
+
+	public int executeUpdate(String sql, Connection conn)
+			throws SQLException {
+		Statement stmt = null;
+        try{
+        	stmt = conn.createStatement();
+        	logger.debug(sql);
+            return stmt.executeUpdate(sql);
+        }finally{
+            try{closeConnection(conn);}catch(Exception e){}
+        }
+	}
+  
     public int executeUpdate(String sql)throws SQLException{
         Connection con=null;
         Statement stmt=null;
@@ -177,6 +224,8 @@ public class QueryEngine {
         }
         return count;
     }
+    
+    
     public QueryResult doQuery(QueryRequest quest)throws QueryException {
     	Connection con=null;
     	try{
@@ -186,6 +235,7 @@ public class QueryEngine {
     		try{closeConnection(con);}catch(Exception eb){}
     	}
     }
+
     /**
      * do dummy query 
      * @param quest
@@ -309,6 +359,55 @@ public class QueryEngine {
             
         }
     }*/
+    /**
+     * 
+     * @param sql
+     * @param paramArrayOfObject
+     * @param conn
+     * @return
+     * @throws QueryException
+     * get first return int value
+     */
+	public int doQueryInt(String sql, Object[] paramArrayOfObject,
+			Connection conn) throws QueryException {
+		return Tools.getInt(doQueryOne(sql, paramArrayOfObject, conn),-1);
+	}
+
+	public int doQueryInt(String sql, Object[] paramArrayOfObject)
+			throws QueryException {
+		return Tools.getInt(doQueryOne(sql, paramArrayOfObject), -1);
+	}
+
+	public Object doQueryInt(String sql, Connection conn)
+			throws QueryException {
+		return Integer.valueOf(Tools.getInt(doQueryOne(sql), -1));
+	}
+    		
+	public Object doQueryOne(String sql, Object[] paramArrayOfObject,
+			Connection conn) throws QueryException {
+		Object localObject = null;
+		List al = this.controller.doQueryList(sql, paramArrayOfObject, 1, conn);
+		if (al.size() > 0) {
+			if (al.get(0) != null && ((al instanceof List)))
+				localObject = al.get(0);
+		}
+		return localObject;
+	}
+
+	public Object doQueryOne(String sql, Object[] paramArrayOfObject)
+			throws QueryException {
+		Connection conn = getConnection();
+		try {
+			return doQueryOne(sql, paramArrayOfObject, conn);
+		} finally {
+			try {
+				closeConnection(conn);
+			} catch (Exception e) {
+				throw new QueryException("Error doing query:"+sql, e);
+			}
+		}
+		 
+	}
     
     /**
      * Retriever first row first column of the query result
@@ -339,6 +438,105 @@ public class QueryEngine {
         }    	
     	
     }    
+    
+	public JSONObject doQueryObject(String sql, Object[] paramArrayOfObject)
+			throws QueryException {
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			return this.controller.doQueryObject(sql, paramArrayOfObject, conn);
+		} finally {
+			try {
+				conn.close();
+			} catch (Throwable e) {
+			}
+		}
+	}
+          
+	public JSONObject doQueryObject(String sql,
+			Object[] paramArrayOfObject, boolean toUpper)
+			throws QueryException {
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			return this.controller.doQueryObject(sql,
+					paramArrayOfObject, conn, toUpper);
+		} finally {
+			try {
+				conn.close();
+			} catch (Throwable e) {
+			}
+		}
+	}
+
+	public JSONObject doQueryObject(String sql, Object[] paramArrayOfObject,
+			Connection conn, boolean toUpper) throws QueryException {
+		return this.controller.doQueryObject(sql, paramArrayOfObject, conn,
+				toUpper);
+	}
+
+	public JSONObject doQueryObject(String sql, Object[] paramArrayOfObject,
+			Connection conn) throws QueryException {
+		return this.controller.doQueryObject(sql, paramArrayOfObject, conn);
+	}
+
+	public JSONObject doQueryObject(String sql, Connection conn)
+			throws QueryException {
+		return doQueryObject(sql, null, conn);
+	}
+
+	public JSONObject doQueryObject(String sql) throws QueryException {
+		Connection conn = getConnection();
+		try {
+			return doQueryObject(sql, conn);
+		} finally {
+			try {
+				closeConnection(conn);
+			} catch (Exception e) {
+			}
+		}
+	}
+
+	public JSONArray doQueryObjectArray(String sql, Object[] paramArrayOfObject)
+			throws QueryException {
+		Connection conn = getConnection();
+		try {
+			return this.controller.doQueryObjectArray(sql, paramArrayOfObject,
+					conn, true);
+		} finally {
+			try {
+				closeConnection(conn);
+			} catch (Exception e) {
+			}
+		}
+	}
+
+	public JSONArray doQueryObjectArray(String sql,
+			Object[] paramArrayOfObject, boolean toUpper) throws QueryException {
+		Connection conn = getConnection();
+		try {
+			return this.controller.doQueryObjectArray(sql, paramArrayOfObject,
+					conn, toUpper);
+		} finally {
+			try {
+				closeConnection(conn);
+			} catch (Exception e) {
+			}
+		}
+	}
+
+	public JSONArray doQueryObjectArray(String sql,
+			Object[] paramArrayOfObject, Connection conn) throws QueryException {
+		return this.controller.doQueryObjectArray(sql, paramArrayOfObject,
+				conn, true);
+	}
+
+	public JSONArray doQueryObjectArray(String sql,
+			Object[] paramArrayOfObject, Connection conn, boolean toUpper)
+			throws QueryException {
+		return this.controller.doQueryObjectArray(sql, paramArrayOfObject,
+				conn, toUpper);
+	}    
     /**
      * Retriever first row first column of the query result
      * @param sql
@@ -362,6 +560,58 @@ public class QueryEngine {
             try{closeConnection(con);}catch(Exception eb){}
         }    
     }
+
+	public List doQueryList(String sql, Object[] paramArrayOfObject)
+			throws QueryException {
+		Connection conn = getConnection();
+		try {
+			return this.controller.doQueryList(sql, paramArrayOfObject, -1, conn);
+		} finally {
+			try {
+				closeConnection(conn);
+			} catch (Exception e) {
+				throw new QueryException("Error doing query:"+sql, e);
+			}
+		}
+	
+	}
+	public List doQueryList(String sql, Object[] paramArrayOfObject,
+			Connection conn) throws QueryException {
+		return this.controller.doQueryList(sql, paramArrayOfObject, -1, conn);
+	}
+
+	public JSONArray doQueryJSONArray(String sql, Object[] paramArrayOfObject,
+			Connection conn) throws QueryException {
+		return this.controller.doQueryJSONArray(sql, paramArrayOfObject, -1,
+				conn);
+	}
+
+	public JSONArray doQueryJSONArray(String sql, Object[] paramArrayOfObject)
+			throws QueryException {
+		return doQueryJSONArray(sql, paramArrayOfObject, -1);
+	}
+
+	public JSONArray doQueryJSONArray(String sql, Object[] paramArrayOfObject,
+			int paramInt, Connection conn) throws QueryException {
+		return this.controller.doQueryJSONArray(sql, paramArrayOfObject,
+				paramInt, conn);
+	}
+
+	public JSONArray doQueryJSONArray(String sql, Object[] paramArrayOfObject,
+			int paramInt) throws QueryException {
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			return this.controller.doQueryJSONArray(sql, paramArrayOfObject,
+					paramInt, conn);
+		} finally {
+			try {
+				closeConnection(conn);
+			} catch (Exception e) {
+			}
+		}
+	}
+
     /**
      * 
      * @param sql 
@@ -539,6 +789,44 @@ public class QueryEngine {
         return p;
         
     }
+    
+	public Clob getClob(StringBuffer clobData,
+			Connection conn) throws SQLException {
+		if (clobData == null)
+			return null;
+//   	 converting conn to oracle.jdbc.OracleConnection
+		oracle.jdbc.OracleConnection oc=null;
+		
+		if ((conn instanceof WrappedConnection)) {
+			oc = (OracleConnection) ((WrappedConnection) conn).getUnderlyingConnection();
+		} else if ((conn instanceof OracleConnection))
+			oc = (OracleConnection) conn;
+		else {
+			throw new SQLException("Not supported connection class:"
+					+ oc.getClass().getName()
+					+ " (only oracle and jboss connection supported)");
+		}
+		return DatabaseManager.getCLOB(new StringBuilder(clobData),oc);
+	}
+
+	public Clob getClob(StringBuilder clobData,
+			Connection conn) throws SQLException {
+		if (clobData == null)
+			return null;
+//  	 converting conn to oracle.jdbc.OracleConnection
+		oracle.jdbc.OracleConnection oc=null;
+		
+		if ((conn instanceof WrappedConnection)) {
+			oc = (OracleConnection) ((WrappedConnection) conn).getUnderlyingConnection();
+		} else if ((conn instanceof OracleConnection))
+			oc = (OracleConnection) conn;
+		else {
+			throw new SQLException("Not supported connection class:"
+					+ oc.getClass().getName()
+					+ " (only oracle and jboss connection supported)");
+		}
+		return DatabaseManager.getCLOB(clobData, oc);
+	}
 
     public Connection getConnection() throws QueryException {
         try{
