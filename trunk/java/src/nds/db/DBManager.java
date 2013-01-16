@@ -3,11 +3,12 @@ package nds.db;
 import java.sql.Connection;
 import java.util.Collection;
 import java.util.Properties;
-
+import java.util.List;
 import nds.query.QueryException;
 import nds.query.QueryRequestImpl;
 import nds.query.*;
 import nds.util.DestroyListener;
+import org.json.*;
 
 public interface DBManager extends DestroyListener  {
     public void init(Properties props);
@@ -34,4 +35,19 @@ public interface DBManager extends DestroyListener  {
 
     public QueryRequestImpl createRequest();
     public QueryRequestImpl createRequest(QuerySession session);
+    
+    public abstract List doQueryList(String sql, Object[] paramArrayOfObject, int paramInt, Connection conn)
+    	    throws QueryException;
+    
+	public abstract JSONArray doQueryJSONArray(String sql,Object[] paramArrayOfObject, int paramInt,Connection conn)
+			throws QueryException;
+
+	public abstract int executeUpdate(String sql,Object[] paramArrayOfObject, Connection conn)
+			throws QueryException;
+
+	public abstract JSONObject doQueryObject(String sql,Object[] paramArrayOfObject, Connection conn,boolean toUpper)
+			throws QueryException;
+
+	public abstract JSONArray doQueryObjectArray(String sql,Object[] paramArrayOfObject, Connection conn,boolean toUpper) 
+			throws QueryException;
 }
