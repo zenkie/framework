@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Vector;
+import java.io.*;
 
 import org.directwebremoting.WebContext;
 import org.json.*;
@@ -25,10 +26,14 @@ import nds.control.util.SecurityUtils;
 import nds.control.util.ValueHolder;
 import nds.control.web.UserWebImpl;
 import nds.control.web.WebUtils;
+import nds.cxtab.CxtabReport;
 import nds.process.ProcessUtils;
 import nds.query.*;
 import nds.schema.*;
 import nds.util.*;
+import nds.web.config.PortletConfig;
+import nds.web.config.QueryListConfig;
+import nds.web.config.QueryListConfigManager;
 
 import java.util.*;
 
@@ -37,7 +42,9 @@ import nds.security.User;
 import java.text.*;
 import org.json.*;
 import com.Ostermiller.util.CGIParser;
-import com.Ostermiller.util.NameValuePair;;
+import com.Ostermiller.util.NameValuePair;
+import org.shiftone.cache.Cache;
+import org.shiftone.cache.CacheManager;
 
 /**
  * Create crosstab runner process instance, including following parameters:
@@ -49,6 +56,8 @@ import com.Ostermiller.util.NameValuePair;;
  * @author yfzhu@agilecontrol.com 
  */
 public class ExecuteCxtab extends Command {
+	
+	private Cache cache;
 	/**
 	 * Record current running job count
 	 */
@@ -63,6 +72,27 @@ public class ExecuteCxtab extends Command {
 	public static void resetRunningJobCount(){
 		lastMaxJobCountReachedTime=-1;
 		runningJobCount=0;
+	}
+	
+	//private static ExecuteCxtab instance=null;
+	
+	public ExecuteCxtab() {
+		logger.debug("ExecuteCxtab initialized.");
+		Configurations conf = (Configurations) WebUtils
+				.getServletContextManager().getActor("nds.web.configs");
+		int cachetime = Tools.getInt(
+				conf.getProperty("cxtab.recent_task_cache.duration"), 10);
+		logger.debug("cxtab.recent_task_cache.duration" + String.valueOf(cachetime));
+		if (cachetime <= 0) {
+			cache = null;
+			return;
+		}
+		   cache = org.shiftone.cache.CacheManager.getInstance().newCache(
+					cachetime * 60000, 50000);
+	}
+
+	public boolean internalTransaction() {
+		return true;
 	}
 	 /** 
 	  * @param event contains JSONObject that has following properties:
@@ -80,6 +110,9 @@ public class ExecuteCxtab extends Command {
   public ValueHolder execute(DefaultWebEvent event) throws RemoteException, NDSException {
 	Connection conn=null;
   	PreparedStatement pstmt=null;
+  	
+  	String cx_usr_FILTER = null;
+  	int i = 0;
   	
   	QueryEngine engine= QueryEngine.getInstance();
     
@@ -198,13 +231,17 @@ public class ExecuteCxtab extends Command {
 		    	//logger.debug( Tools.toString(csMap));
 		    	
 		    	filterDesc=addJparams(params, map, cxtabId,csMap,event.getQuerySession(), userId,event.getLocale(), conn);
+		    	cx_usr_FILTER = String.valueOf(userId) + "#" + cxtabName + "#" + cs + "#" + fileType;
 			}
 		}else{
+
 			if(isRest){
 				logger.debug("parse as rest query");
 				req=nds.control.util.AjaxUtils.parseRestQuery(query, event.getQuerySession(), userId, event.getLocale());
 			}else
 				req=nds.control.util.AjaxUtils.parseQuery(query, event.getQuerySession(), userId, event.getLocale());
+		
+				cx_usr_FILTER = String.valueOf(userId) + "#" + cxtabName + "#" + req.getParamExpression() + "#" + fileType;
 		}
 	
 		
@@ -226,23 +263,51 @@ public class ExecuteCxtab extends Command {
 		map.put("FILTER", ((filterDesc==null)? req.getParamDesc(true): filterDesc));
 		if(req.getParamExpression()!=null)map.put("FILTER_EXPR",req.getParamExpression().toString());
 		
-		
-		SimpleDateFormat sdf = new SimpleDateFormat("MMddHHmm");
+		//文件增加到秒单位
+		SimpleDateFormat sdf = new SimpleDateFormat("MMddHHmmss");
 		//String filename="CXR_"+table.getName()+sdf.format(new Date());
 		String filename="CXR_"+cxtabId+"_"+sdf.format(new Date());
 		
 		map.put("FILENAME", filename);
 		//map.put("FILETYPE", isBg?"xls":"htm");
 		map.put("FILETYPE", fileType);
+		logger.debug("abc is here!" );
+		logger.debug("FILTER is "+cx_usr_FILTER);
+		 
+		logger.debug("check is cache");
+		//ValueHolder pc=(ValueHolder)cache.getObject(cx_usr_FILTER);
+		if (cache != null) {
+			logger.debug("check add cache");
+			if(cache.getObject(cx_usr_FILTER)!=null){;
+			logger.error("Found same execution request of same user:"
+					+ cx_usr_FILTER);
+			throw new NDSException("@cxtab-task-duplicate@");
+		 
+			}
+		   cache.addObject(cx_usr_FILTER, cx_usr_FILTER);
+		 
+		}
 		
-	    piId=ProcessUtils.createAdProcessInstance(piId,pid,queueName, "",user,params,map,conn);
-	    ValueHolder hd=null;
-	    JSONObject returnObj=new JSONObject();
-	    if(isBg){
-	    	hd=new ValueHolder();
-	    	hd.put("code","0");
+	 
+		i = 1;
+		
+		String folder = jo.optString("folder");
+		if (Validator.isNotNull(filename)) {
+			map.put("FOLDER",folder);
+		}
+		
+		piId = ProcessUtils.createAdProcessInstance(piId, pid, queueName,
+				"", user, params, map, conn);
+		ValueHolder hd = null;
+		JSONObject returnObj = new JSONObject();
+		
+		if (((!jo.optBoolean("forcerun", false)) && (isBg))
+				|| ((maxJobCount > 0) && (runningJobCount >= maxJobCount))) {
+			hd = new ValueHolder();
+			hd.put("code", "0");
 	    	returnObj.put("message", MessagesHolder.getInstance().translateMessage("@cxtab-task-generated@",event.getLocale()));
-	  	}else{
+	  	
+		}else{
 	  		
 	  		//run now
 	  		try{
@@ -264,9 +329,22 @@ public class ExecuteCxtab extends Command {
 	  		/**
 	  		 * For htm type, will direct to print page, for xls, direct download
 	  		 */
+	  		
+	  	
 	  		String url;
-	  		//url = "/html/nds/cxtab/viewrpt.jsp?file="+URLEncoder.encode(filename+"."+ fileType,"UTF-8");
-	  		if( "htm".equals(fileType) ){
+	  		Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+	  		String exportRootPath=conf.getProperty("export.root.nds","/act/home");
+	  		String filePath =Validator.isNull(folder)?exportRootPath + File.separator+user.getClientDomain()+File.separator+ user.getName():folder;
+			
+	  		logger.debug("filePath is "+filePath);
+	  		
+	  		logger.debug("COMPRESS_CUB_FILE" + String.valueOf(CxtabReport.COMPRESS_CUB_FILE));
+	  		if ((fileType.equals("cub")) && (!CxtabReport.COMPRESS_CUB_FILE)) fileType = "cuz";
+	  		logger.debug("file is "+filePath+File.separator+filename+"."+ fileType);
+	  		File f=new File(filePath+File.separator+filename+"."+ fileType);
+	  		if(!f.exists()||(f.length() == 0L)) {
+				url = "/html/nds/cxtab/empty.jsp";	
+			}else if( "htm".equals(fileType) ){
 	  			url = "/html/nds/cxtab/viewrpt.jsp?file="+URLEncoder.encode(filename+"."+ fileType,"UTF-8");
 	  		}else if("xls".equals(fileType) || "csv".equals(fileType)){
 	  			url= "/html/nds/cxtab/downloadrpt.jsp?file="+URLEncoder.encode(filename+"."+ fileType,"UTF-8");
@@ -281,6 +359,7 @@ public class ExecuteCxtab extends Command {
 		
 		return hd;
 	 }catch(Throwable e){
+		if ((i != 0) && (cache != null)) cache.remove(cx_usr_FILTER);
 	 	logger.error("", e);
 	 	if(!(e instanceof NDSException ))throw new NDSEventException("异常", e);
 	 	else throw (NDSException)e;
