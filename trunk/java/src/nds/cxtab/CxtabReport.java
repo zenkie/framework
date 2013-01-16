@@ -9,7 +9,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.sql.*;
 import java.io.*;
-
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.poifs.filesystem.*;
@@ -36,10 +43,14 @@ import nds.jcrosstab.*;
 
 public class CxtabReport {
     private static Logger logger= LoggerManager.getInstance().getLogger((CxtabReport.class.getName()));
+    public static final boolean SKIP_RECORDS_COUNT = "true".equals(WebUtils.getProperty("cxtab.skip.count", "false"));
+
+    public static boolean COMPRESS_CUB_FILE = !"false".equals(WebUtils.getProperty("cxtab.compress", "true"));
 	
 	private String cxtabName;
 	private int cxtabId=-1;
 	private String filterExpr;
+	private String folder;
 	private Expression filterExpression;
 	private String filterSQL;
 	private String filterDesc; // filter description
@@ -87,7 +98,7 @@ public class CxtabReport {
 			user= SecurityUtils.getUser( userId);    
 			String filePath =exportRootPath + File.separator+user.getClientDomain()+File.separator+ user.getName();
 			if("xls".equalsIgnoreCase(fileType)){
-				QueryRequest query=this.prepareReport(conn,true, false,false); // generate sql only
+				QueryRequest query=this.prepareReport(conn,true, false,false,false); // generate sql only
 				
 				File f= new File(filePath);
 				if(!f.exists())f.mkdirs();
@@ -98,7 +109,7 @@ public class CxtabReport {
 				
 		    }else if("htm".equalsIgnoreCase(fileType)){
 		    	//default to html
-				this.prepareReport(conn,false,true,false);
+				this.prepareReport(conn,false,true,false,false);
 				
 				File f= new File(filePath);
 				if(!f.exists())f.mkdirs();
@@ -109,7 +120,7 @@ public class CxtabReport {
 		    	if(this.cxtabId==250)logger.debug(jxrs.toDetailString());
 		    }else if("cbx".equalsIgnoreCase(fileType)){
 		    	//sqlite file for later analize in client
-				QueryRequest query=this.prepareReport(conn,true, false,true); // generate sql only
+				QueryRequest query=this.prepareReport(conn,true, false,true,true); // generate sql only
 				File f= new File(filePath);
 				if(!f.exists())f.mkdirs();
 
@@ -117,20 +128,46 @@ public class CxtabReport {
 		    	this.writeSQLiteFile(filePath+File.separator+file,query, conn);
 		    	
 		    }else if("csv".equalsIgnoreCase(fileType)){
-				QueryRequest query=this.prepareCSVReport(conn);
+		    	QueryRequest query=this.prepareCSVReport(conn);
 				File f= new File(filePath);
 				if(!f.exists())f.mkdirs();
 
 				file=this.fileName+ ".csv";
 		    	this.writeCSVFile(filePath+File.separator+file,query, conn);
 		    	
+		    }else if("cus".equalsIgnoreCase(fileType)){
+		    	
+		    	this.prepareReport(conn,true, false, true, true);
+		    	file=this.fileName+ ".cus";
+		    	String filename=filePath+File.separator+file;
+				ArrayList vec=new ArrayList();
+				vec.add("update ad_pinstance_para set p_clob="+ QueryUtils.TO_STRING(sql)+" where name='filter' and ad_pinstance_id="+processInstanceId );
+				vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(filePath)+" where name='filename' and ad_pinstance_id="+processInstanceId );
+				QueryEngine.getInstance().doUpdate(vec, conn);
+
+				SQLiteDB sqldb = new SQLiteDB(processInstanceId, dimCount, sql,
+						filename, cxtabId, cxtabName, filterDesc, user, conn);
+				recordsCount=sqldb.save();
+				// confirm cube file created
+				File f=new File(filename);
+				if(!f.exists()){
+					logger.error(filename + " not found in file system");
+					throw new NDSException("@cube-creation-failed@:CXB"+ this.processInstanceId);
+					
+				}
+		        int duration=(int)((System.currentTimeMillis()-startTime)/1000);
+		        String sqlInfo="["+user.getNameWithDomain()+"]"+"("+duration+" s) "+factTable.getDescription(user.locale)+":"+filePath +" "+ processInstanceId+",size:"+ (f.length()/1024.0/1024.0)+"MB";
+		        if (duration > 10) logger.info(sqlInfo );
+				else logger.debug(sqlInfo);
+
+		    	//this.writeCSVFile(filePath+File.separator+file,query, conn);
 		    }else{
 		    	//cube
-				QueryRequest query=this.prepareReport(conn,true, false,true); // generate sql only
+		    	file = fileName + (COMPRESS_CUB_FILE ? ".cub" : ".cuz");
+				QueryRequest query=this.prepareReport(conn,true, false,true,true); // generate sql only
 				File f= new File(filePath);
 				if(!f.exists())f.mkdirs();
-
-				file=this.fileName+ ".cub";
+				
 		    	this.writeCubeFile(filePath+File.separator+file,query, conn);
 		    }
 		    // create description file for report
@@ -380,7 +417,7 @@ public class CxtabReport {
 		startTime=System.currentTimeMillis();
 		
 		ArrayList vec=new ArrayList();
-		vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(sql)+" where name='filter' and ad_pinstance_id="+processInstanceId );
+		vec.add("update ad_pinstance_para set p_clob="+ QueryUtils.TO_STRING(sql)+" where name='filter' and ad_pinstance_id="+processInstanceId );
 		vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(filePath)+" where name='filename' and ad_pinstance_id="+processInstanceId );
 		QueryEngine.getInstance().doUpdate(vec, conn);
 		
@@ -393,6 +430,7 @@ public class CxtabReport {
 		
 		int err=cmd.run(pcube +" "+ processInstanceId);
 		// confirm cube file created
+		logger.debug("writeCubeFile "+String.valueOf(COMPRESS_CUB_FILE)+" "+filePath);
 		File f=new File(filePath);
 		if(!f.exists()){
 			throw new NDSException("@cube-creation-failed@:CXB"+ this.processInstanceId);
@@ -565,7 +603,7 @@ public class CxtabReport {
 			String value=(String) pt.get(key);
 			sb.append(",'").append(key).append("','").append( value).append("'");
 		}
-		sb.append(",'N/A')");
+		sb.append(",'N/A') b").append(pos);;
 		return sb.toString();
 	}
 	/**
@@ -725,9 +763,15 @@ public class CxtabReport {
         //if(isDBGroupByEnabled || sqlOnly){ // yfzhu marked up here 2009/4/14 since isDBGroupByEnabled=false, we should not do group by then 
         if(facts.size()==0) throw new NDSException("至少配置一个您可以访问的汇总数据字段");
         // check record limit
-    	String cntSQL=this.parseVariable( query.toCountSQL());
-    	recordsCount= Tools.getInt(engine.doQueryOne(cntSQL, conn),-1);
-    	if(maxRows >0 && recordsCount > maxRows )throw new NDSException("@report-rows-exeed-limit@("+recordsCount +">"+ maxRows+")");
+        if (!SKIP_RECORDS_COUNT)
+        {
+          String cntSQL=this.parseVariable( query.toCountSQL());
+          recordsCount= Tools.getInt(engine.doQueryOne(cntSQL, conn),-1);
+          if (recordsCount == 0) {
+            throw new EmptyRecordException("empty result");
+          }
+          if(maxRows >0 && recordsCount > maxRows )throw new NDSException("@report-rows-exeed-limit@("+recordsCount +">"+ maxRows+")");
+        }
         
     	sql= query.toGroupBySQL(facts );
     	
@@ -838,274 +882,300 @@ public class CxtabReport {
     	 *  	select c1,c2,c3,d1,d2 from xxx where yyy group by ggg)
     	 *    
     	 * @throws Exception
+    	 * add user_dims check
     	 */
-    	private QueryRequest prepareReport(Connection conn, boolean sqlOnly, boolean isOnHTML,boolean translateLimitValue) throws Exception{
-            startTime=System.currentTimeMillis();
-    		if(!sqlOnly && translateLimitValue) throw new java.lang.IllegalArgumentException("translateLimitValue only can be true when sqlOnly is true");
-    		QueryEngine engine=QueryEngine.getInstance();
-    		TableManager manager=TableManager.getInstance();
-    		if(cxtabId ==-1)cxtabId=Tools.getInt(engine.doQueryOne(
-    				"select id from ad_cxtab where name="+QueryUtils.TO_STRING(cxtabName)+
-    				" and ad_client_id=(select ad_client_id from users where id="+userId+")", conn), -1);
-    		
-    		List ed= engine.doQueryList("select ad_table_id,name,maxrows from ad_cxtab where id="+ cxtabId, conn);
-    		int factTableId= Tools.getInt(((List)ed.get(0)).get(0),-1);
-    		String cxtabDesc=(String) ((List)ed.get(0)).get(1);
-    		int maxRows= Tools.getInt(((List)ed.get(0)).get(2),-1);
-    		/*int factTableId= Tools.getInt(engine.doQueryOne(
+	private QueryRequest prepareReport(Connection conn, boolean sqlOnly, boolean isOnHTML,boolean translateLimitValue,boolean ck_user_dims) throws Exception{
+		startTime=System.currentTimeMillis();
+		if(!sqlOnly && translateLimitValue) throw new java.lang.IllegalArgumentException("translateLimitValue only can be true when sqlOnly is true");
+		QueryEngine engine=QueryEngine.getInstance();
+		TableManager manager=TableManager.getInstance();
+		if(cxtabId ==-1)cxtabId=Tools.getInt(engine.doQueryOne(
+				"select id from ad_cxtab where name="+QueryUtils.TO_STRING(cxtabName)+
+				" and ad_client_id=(select ad_client_id from users where id="+userId+")", conn), -1);
+
+		List ed= engine.doQueryList("select ad_table_id,name,maxrows,user_dims from ad_cxtab where id="+ cxtabId, conn);
+		int factTableId= Tools.getInt(((List)ed.get(0)).get(0),-1);
+		String cxtabDesc=(String) ((List)ed.get(0)).get(1);
+		int maxRows= Tools.getInt(((List)ed.get(0)).get(2),-1);
+		int user_dims=Tools.getInt(((List)ed.get(0)).get(3),-1);
+		/*int factTableId= Tools.getInt(engine.doQueryOne(
     				"select ad_table_id from ad_cxtab where id="+ cxtabId, conn), -1);*/
-    		factTable= manager.getTable(factTableId);
-    		
-    		/**
-    		 * 由于DCube的原因，必须先在sql 语句里构造V列，再构造H列，参见Dcube.AddRowEx 方法
-    		 */
-    		List dimensionsV= engine.doQueryList("select columnlink, description, measure_order,hidehtml from ad_cxtab_dimension where ad_cxtab_id="+
-    				cxtabId+" and isactive='Y' and position_='V' "+ (isOnHTML?"and hidehtml='N'":"") +" order by orderno asc", conn);
-    		List dimensionsH= engine.doQueryList("select columnlink, description, measure_order, hidehtml from ad_cxtab_dimension where ad_cxtab_id="+
-    				cxtabId+" and isactive='Y' and position_='H' "+ (isOnHTML?"and hidehtml='N'":"") +" order by orderno asc", conn);
-    		List dimensionsP= engine.doQueryList("select columnlink, description, measure_order, hidehtml from ad_cxtab_dimension where ad_cxtab_id="+
-    				cxtabId+" and isactive='Y' and position_='P' "+ (isOnHTML?"and hidehtml='N'":"") +" order by orderno asc", conn);
-    		
-    		// filter will be added to where clause directly
-    		String cxtabFilter= (String)engine.doQueryOne("select filter from ad_cxtab where id="+cxtabId, conn);
-    		
-    		//user= SecurityUtils.getUser( userId); 
-    		// check user output folder available size
-    		if ( ReportTools.getAvailableSpaceSize(user)<0){
-    			throw new NDSException("@no-free-space-for-user@:"+user.name);
-    		}
-    		
-    		
-    		Locale locale= user.locale;
-    		logger.debug("Locale for "+ user.getNameWithDomain()+"(id="+ userId+") is "+ locale);
-    		QuerySession qsession= QueryUtils.createQuerySession(userId, user.getSecurityGrade(),"", user.locale);
-    		QueryRequestImpl query=engine.createRequest(qsession);
-    		query.setMainTable(factTableId,true, cxtabFilter);
+		factTable= manager.getTable(factTableId);
 
-    		//select
-    		if(dimensionsV!=null && dimensionsV.size()>0)for(int i=0;i< dimensionsV.size();i++){
-    			List dim= (List)dimensionsV.get(i);
-    			ColumnLink cl=new ColumnLink((String) dim.get(0));
-    			query.addSelection(cl.getColumnIDs(), false, (String)dim.get(1));
-    		}else{
-    			if(!sqlOnly)query.addSelection("1", "");
-    		}
-    		if(dimensionsH!=null && dimensionsH.size()>0)for(int i=0;i< dimensionsH.size();i++){
-    			List dim= (List)dimensionsH.get(i);
-    			ColumnLink cl=new ColumnLink((String) dim.get(0));
-    			query.addSelection(cl.getColumnIDs(), false, (String)dim.get(1));
-    		}else{
-    			if(!sqlOnly)query.addSelection("1", "");
-    		}
-    		if(!isOnHTML){
-    			// currently axis_p is not supported on html (yfzhu 2009-4-13)
-    			if(dimensionsP!=null && dimensionsP.size()>0)for(int i=0;i< dimensionsP.size();i++){
-    				List dim= (List)dimensionsP.get(i);
-    				ColumnLink cl=new ColumnLink((String) dim.get(0));
-    				query.addSelection(cl.getColumnIDs(), false, (String)dim.get(1));
-    			}
-    		}
-    		logger.debug("filterExpr="+ filterExpr);
-    		logger.debug("filterSQL="+ filterSQL);
-    		// where
-    		Expression expr=null;
-            // user-defined filter
-            if(filterExpression==null){
-    			if(filterExpr==null || filterExpr.trim().equalsIgnoreCase("undefined") ){
-    	        	// sql in format like 'in (xxx,yyy)', will save as expression also
-    	        	if(filterSQL!=null)
-    	        		expr=new Expression(new ColumnLink( new int[]{factTable.getPrimaryKey().getId()}), filterSQL, null);
-    	        }else{
-    	        	expr=new Expression(filterExpr);
-    	        }
-            }else{
-            	expr= filterExpression;
-            }
-            logger.debug("expr="+expr);
-    		//security filter
-            Expression sexpr= SecurityUtils.getSecurityFilter(factTable.getName(), Directory.READ,userId,qsession);
-            logger.debug("sexpr="+sexpr);
-            if(sexpr!=null && !sexpr.isEmpty() ){
-            	if ((expr!=null && !expr.isEmpty()))
-            		sexpr= expr.combine(sexpr,SQLCombination.SQL_AND,null);
-            }else{
-            	sexpr= expr;
-            }
-            
-    		// column that stores report instance id, data should be limited to this range
-    		int reportInstanceColumnId=Tools.getInt(engine.doQueryOne(
-    				"select AD_COLUMN_CXTABINST_ID  from ad_cxtab where id="+cxtabId, conn), -1);
-    		Column reportInstanceColumn=null;
-    		if(reportInstanceColumnId!=-1){
-    			//reportInstanceColumn=manager.getColumn(reportInstanceColumnId);
-    			// check reportInstanceColumn must be column in fact table
-    			reportInstanceColumn =factTable.getColumn(reportInstanceColumnId);
-    		}
-    		
-            if(reportInstanceColumn!=null && reportInstanceId!=-1){
-            	Expression instanceExpr= new Expression(new ColumnLink(new int[]{reportInstanceColumn.getId()}),"="+reportInstanceId,null );
-            	sexpr = instanceExpr.combine(sexpr,SQLCombination.SQL_AND,null);
-            }
-            logger.debug("sexpr="+sexpr);
-            query.addParam(sexpr);
-            
-    		List measures=  engine.doQueryList("select ad_column_id, function_, userfact, description,sgrade, VALUEFORMAT,valuename, param1,param2,param2 from ad_cxtab_fact where ad_cxtab_id="+
-    				cxtabId+" and isactive='Y' order by orderno asc",conn);
-            //和平均有关的函数，包括avg, var,stdev，都不能让数据库进行group by 操作
-            //而计数，最大，最小，累计等，可以先使用数据库完成有关group by运算
-    		//注意计算列 (以等号开头)的将不参与前期运算
-            ArrayList facts=new ArrayList();
-            factDescs=new ArrayList();
-            int userSecurityGrade= user.getSecurityGrade();
-            boolean isDBGroupByEnabled=true;
-            boolean mustBeDBGroupBy=false;
-            for(int i=0;i< measures.size();i++){
-            	List mea= (List)measures.get(i);
-            	int sgrade= Tools.getInt( mea.get(4),0);
-            	if(sgrade>userSecurityGrade){
-            		//current user should not see this column
-            		continue;
-            	}
-            	String userFact= (String)mea.get(2);
-            	if(Validator.isNotNull(userFact)){
-            		if( userFact.startsWith("=")) continue;
-            		// user fact 用于构造group by 语句，user fact 一般是一个汇总函数,如 count(distinct id)
-            		facts.add(userFact);
-            		factDescs.add(mea.get(3));
-            		mustBeDBGroupBy=true;
-            	}else{
-                	String function= (String)mea.get(1);
-            		int colId= Tools.getInt(mea.get(0),-1);
-            		Column col= TableManager.getInstance().getColumn(colId);
-            		
-            		if(nds.jcrosstab.fun.FunUtil.isValidGroupByFunction(function)){
-                		if(col.isVirtual())
-                			facts.add( function+"("+ col.getName() + ")");
-                		else 
-                			facts.add( function+"("+ factTable.getName()+"."+col.getName() + ")");
-                		factDescs.add(mea.get(3));
+		/**
+		 * 由于DCube的原因，必须先在sql 语句里构造V列，再构造H列，参见Dcube.AddRowEx 方法
+		 */
+		List dimensionsV= engine.doQueryList("select columnlink, description, measure_order,hidehtml,id from ad_cxtab_dimension where ad_cxtab_id="+
+				cxtabId+" and isactive='Y' and position_='V' "+ (isOnHTML?"and hidehtml='N'":"") +" order by orderno asc", conn);
+		List dimensionsH= engine.doQueryList("select columnlink, description, measure_order, hidehtml,id from ad_cxtab_dimension where ad_cxtab_id="+
+				cxtabId+" and isactive='Y' and position_='H' "+ (isOnHTML?"and hidehtml='N'":"") +" order by orderno asc", conn);
+		List dimensionsP= engine.doQueryList("select columnlink, description, measure_order, hidehtml,id from ad_cxtab_dimension where ad_cxtab_id="+
+				cxtabId+" and isactive='Y' and position_='P' "+ (isOnHTML?"and hidehtml='N'":"") +" order by orderno asc", conn);
 
-            		}else{
-            			isDBGroupByEnabled=false;
-            		}
-            		
-            		
-            	}
-            }
-            // check record limit
-        	String cntSQL=this.parseVariable( query.toCountSQL());
-        	recordsCount= Tools.getInt(engine.doQueryOne(cntSQL, conn),-1);
-        	if(maxRows >0 && recordsCount > maxRows )throw new NDSException("@report-rows-exeed-limit@("+recordsCount +">"+ maxRows+")");
-            
-            //if(isDBGroupByEnabled || sqlOnly){ // yfzhu marked up here 2009/4/14 since isDBGroupByEnabled=false, we should not do group by then 
-            if(isDBGroupByEnabled){
-                if(facts.size()==0) throw new NDSException("No fact valid for current report, check sum fields and their security grade");
-            	sql= query.toGroupBySQL(facts );
-            	
-            	this.dimCount =query.getSelectionCount();
-            	this.meaCount= facts.size();
-            }else{
-            	if(mustBeDBGroupBy) throw new NDSException("Cxtab configuration error, found user fact(db group by function) and invalid db group by function (e.g. avg) in the same time");
-            	
-            	this.dimCount= query.getSelectionCount();
-            	this.meaCount =measures.size();
-            	
-            	for(int i=0;i< measures.size();i++){
-                	List mea= (List)measures.get(i);
-                	int sgrade= Tools.getInt( mea.get(4),0);
-                	if(sgrade>userSecurityGrade){
-                		//current user should not see this column
-                		continue;
-                	}
-                	// may not have user fact 
-               		int colId= Tools.getInt(mea.get(0),-1);
-               		Column col= TableManager.getInstance().getColumn(colId);
-               		if(col!=null)query.addSelection( colId );
-               		else query.addSelection("1", "1") ;
-                }
-            	sql= query.toSQL();
-            	 
-            }
-            
-            /**
-             * Handle sql for those contained limit value (should translate db value to description tha readable)
-             */
-            if( sqlOnly){
-            	if(translateLimitValue){
-            		//wrap in a sql
-            		boolean shouldWrap=false;
-            		 /*  "select b0,b1,decode(b2,'a','n','b','m',''), s0,s1 from (
-            		 *  	select b0,b1,b2,s0,s1 from xxx where yyy group by ggg)
-            		 */
-            		StringBuffer gsql=new StringBuffer("SELECT ");
-            		String decodeSQL;
-            		int pos=0; 
-            		if(dimensionsV!=null && dimensionsV.size()>0)for(int i=0;i< dimensionsV.size();i++){
-            			List dim= (List)dimensionsV.get(i);
-            			ColumnLink cl=new ColumnLink((String) dim.get(0));
-            			if(cl.getLastColumn().isValueLimited()){
-            				shouldWrap=true;
-            				decodeSQL=getDecodeSQL(cl.getLastColumn(), pos);
-            			}else{
-            				decodeSQL= "b"+ pos;
-            			}
-            			if(pos>0)gsql.append(",");
-            			pos++;
-            			gsql.append(decodeSQL);
-            		}
-            		if(dimensionsH!=null && dimensionsH.size()>0)for(int i=0;i< dimensionsH.size();i++){
-            			List dim= (List)dimensionsH.get(i);
-            			ColumnLink cl=new ColumnLink((String) dim.get(0));
-            			if(cl.getLastColumn().isValueLimited()){
-            				shouldWrap=true;
-            				decodeSQL=getDecodeSQL(cl.getLastColumn(), pos);
-            			}else{
-            				decodeSQL= "b"+ pos;
-            			}
-            			if(pos>0)gsql.append(",");
-            			pos++;
-            			gsql.append(decodeSQL);
-            		}
-            		if(dimensionsP!=null && dimensionsP.size()>0)for(int i=0;i< dimensionsP.size();i++){
-            			List dim= (List)dimensionsP.get(i);
-            			ColumnLink cl=new ColumnLink((String) dim.get(0));
-            			if(cl.getLastColumn().isValueLimited()){
-            				shouldWrap=true;
-            				decodeSQL=getDecodeSQL(cl.getLastColumn(), pos);
-            			}else{
-            				decodeSQL= "b"+ pos;
-            			}
-            			if(pos>0)gsql.append(",");
-            			pos++;
-            			gsql.append(decodeSQL);
-            		}    
-            		if(shouldWrap){
-            			if(isDBGroupByEnabled){
-            				// every fact is named sxxx in sql
-                			for(int i=0;i< facts.size();i++){
-                				gsql.append(",s").append(i);
-                			}
-                			gsql.append(" FROM (").append(sql).append(")");
-                			sql= gsql.toString();
-            			}else{
-            				// facts are named as bxxxx in sql
-            				for(int i=0;i< measures.size();i++){
-                				gsql.append(",b").append(pos);
-                				pos++;
-                			}
-                			gsql.append(" FROM (").append(sql).append(")");
-                			sql= gsql.toString();
-            			}
-            		}
-            	}
-            	sql= this.parseVariable(sql);
-            	logger.debug(sql);
-            	return query;
-            }
-    		
-        //create jCrosstabber, if dimensionH or dimensionV is size=0, or more than one fact, will only create
-        //list instead of crosstab
-        /*if(dimensionsH==null || dimensionsH.size()==0 || dimensionsV==null || dimensionsV.size()==0 || measures.size()!=1){
+		//check user_dims
+		if (ck_user_dims && (user_dims > 0) && (user_dims < dimensionsV.size() + dimensionsH.size() + dimensionsP.size()))
+		{
+			String uses_dimval=(String)engine.doQueryOne("select value from ad_user_pref where ad_user_id="+userId+" and module='cxtabdim' and name="+String.valueOf(cxtabId),conn);
+
+			if (Validator.isNotNull(uses_dimval)){
+
+				String iparray[] = uses_dimval.split(",");
+				HashSet dim_ids = new HashSet();
+				for (int v=0; v < iparray.length; v++){
+					int dim_id;
+					if ((dim_id = Tools.getInt(iparray[v],-1))
+							!= -1)((HashSet)dim_ids).add(Integer.valueOf(dim_id));
+				}
+				removeDims(dimensionsV, (HashSet)dim_ids);
+				removeDims(dimensionsH, (HashSet)dim_ids);
+				removeDims(dimensionsP, (HashSet)dim_ids);
+			}
+			else {
+				logger.error("Internal Error: user work on a cxtab which has more dims than limitation, cxtab id=" + cxtabId);
+				throw new NDSException("当前报表维度超过了限制");
+			}
+		}
+
+		// filter will be added to where clause directly
+		String cxtabFilter= (String)engine.doQueryOne("select filter from ad_cxtab where id="+cxtabId, conn);
+
+		//user= SecurityUtils.getUser( userId); 
+		// check user output folder available size
+		if ( ReportTools.getAvailableSpaceSize(user)<0){
+			throw new NDSException("@no-free-space-for-user@:"+user.name);
+		}
+
+
+		Locale locale= user.locale;
+		logger.debug("Locale for "+ user.getNameWithDomain()+"(id="+ userId+") is "+ locale);
+		QuerySession qsession= QueryUtils.createQuerySession(userId, user.getSecurityGrade(),"", user.locale);
+		QueryRequestImpl query=engine.createRequest(qsession);
+		query.setMainTable(factTableId,true, cxtabFilter);
+
+		//select
+		if(dimensionsV!=null && dimensionsV.size()>0)for(int i=0;i< dimensionsV.size();i++){
+			List dim= (List)dimensionsV.get(i);
+			ColumnLink cl=new ColumnLink((String) dim.get(0));
+			query.addSelection(cl.getColumnIDs(), false, (String)dim.get(1));
+		}else{
+			if(!sqlOnly)query.addSelection("1", "");
+		}
+		if(dimensionsH!=null && dimensionsH.size()>0)for(int i=0;i< dimensionsH.size();i++){
+			List dim= (List)dimensionsH.get(i);
+			ColumnLink cl=new ColumnLink((String) dim.get(0));
+			query.addSelection(cl.getColumnIDs(), false, (String)dim.get(1));
+		}else{
+			if(!sqlOnly)query.addSelection("1", "");
+		}
+		if(!isOnHTML){
+			// currently axis_p is not supported on html (yfzhu 2009-4-13)
+			if(dimensionsP!=null && dimensionsP.size()>0)for(int i=0;i< dimensionsP.size();i++){
+				List dim= (List)dimensionsP.get(i);
+				ColumnLink cl=new ColumnLink((String) dim.get(0));
+				query.addSelection(cl.getColumnIDs(), false, (String)dim.get(1));
+			}
+		}
+		logger.debug("filterExpr="+ filterExpr);
+		logger.debug("filterSQL="+ filterSQL);
+		// where
+		Expression expr=null;
+		// user-defined filter
+		if(filterExpression==null){
+			if(filterExpr==null || filterExpr.trim().equalsIgnoreCase("undefined") ){
+				// sql in format like 'in (xxx,yyy)', will save as expression also
+				if(filterSQL!=null)
+					expr=new Expression(new ColumnLink( new int[]{factTable.getPrimaryKey().getId()}), filterSQL, null);
+			}else{
+				expr=new Expression(filterExpr);
+			}
+		}else{
+			expr= filterExpression;
+		}
+		logger.debug("expr="+expr);
+		//security filter
+		Expression sexpr= SecurityUtils.getSecurityFilter(factTable.getName(), Directory.READ,userId,qsession);
+		logger.debug("sexpr="+sexpr);
+		if(sexpr!=null && !sexpr.isEmpty() ){
+			if ((expr!=null && !expr.isEmpty()))
+				sexpr= expr.combine(sexpr,SQLCombination.SQL_AND,null);
+		}else{
+			sexpr= expr;
+		}
+
+		// column that stores report instance id, data should be limited to this range
+		int reportInstanceColumnId=Tools.getInt(engine.doQueryOne(
+				"select AD_COLUMN_CXTABINST_ID  from ad_cxtab where id="+cxtabId, conn), -1);
+		Column reportInstanceColumn=null;
+		if(reportInstanceColumnId!=-1){
+			//reportInstanceColumn=manager.getColumn(reportInstanceColumnId);
+			// check reportInstanceColumn must be column in fact table
+			reportInstanceColumn =factTable.getColumn(reportInstanceColumnId);
+		}
+
+		if(reportInstanceColumn!=null && reportInstanceId!=-1){
+			Expression instanceExpr= new Expression(new ColumnLink(new int[]{reportInstanceColumn.getId()}),"="+reportInstanceId,null );
+			sexpr = instanceExpr.combine(sexpr,SQLCombination.SQL_AND,null);
+		}
+		logger.debug("sexpr="+sexpr);
+		query.addParam(sexpr);
+
+		List measures=  engine.doQueryList("select ad_column_id, function_, userfact, description,sgrade, VALUEFORMAT,valuename, param1,param2,param2 from ad_cxtab_fact where ad_cxtab_id="+
+				cxtabId+" and isactive='Y' order by orderno asc",conn);
+		//和平均有关的函数，包括avg, var,stdev，都不能让数据库进行group by 操作
+		//而计数，最大，最小，累计等，可以先使用数据库完成有关group by运算
+		//注意计算列 (以等号开头)的将不参与前期运算
+		ArrayList facts=new ArrayList();
+		factDescs=new ArrayList();
+		int userSecurityGrade= user.getSecurityGrade();
+		boolean isDBGroupByEnabled=true;
+		boolean mustBeDBGroupBy=false;
+		for(int i=0;i< measures.size();i++){
+			List mea= (List)measures.get(i);
+			int sgrade= Tools.getInt( mea.get(4),0);
+			if(sgrade>userSecurityGrade){
+				//current user should not see this column
+				continue;
+			}
+			String userFact= (String)mea.get(2);
+			if(Validator.isNotNull(userFact)){
+				if( userFact.startsWith("=")) continue;
+				// user fact 用于构造group by 语句，user fact 一般是一个汇总函数,如 count(distinct id)
+				facts.add(userFact);
+				factDescs.add(mea.get(3));
+				mustBeDBGroupBy=true;
+			}else{
+				String function= (String)mea.get(1);
+				int colId= Tools.getInt(mea.get(0),-1);
+				Column col= TableManager.getInstance().getColumn(colId);
+
+				if(nds.jcrosstab.fun.FunUtil.isValidGroupByFunction(function)){
+					if(col.isVirtual())
+						facts.add( function+"("+ col.getName() + ")");
+					else 
+						facts.add( function+"("+ factTable.getName()+"."+col.getName() + ")");
+					factDescs.add(mea.get(3));
+
+				}else{
+					isDBGroupByEnabled=false;
+				}
+
+
+			}
+		}
+		// check record limit
+		String cntSQL=this.parseVariable( query.toCountSQL());
+		recordsCount= Tools.getInt(engine.doQueryOne(cntSQL, conn),-1);
+		if(maxRows >0 && recordsCount > maxRows )throw new NDSException("@report-rows-exeed-limit@("+recordsCount +">"+ maxRows+")");
+
+		//if(isDBGroupByEnabled || sqlOnly){ // yfzhu marked up here 2009/4/14 since isDBGroupByEnabled=false, we should not do group by then 
+		if(isDBGroupByEnabled){
+			if(facts.size()==0) throw new NDSException("No fact valid for current report, check sum fields and their security grade");
+			sql= query.toGroupBySQL(facts );
+
+			this.dimCount =query.getSelectionCount();
+			this.meaCount= facts.size();
+		}else{
+			if(mustBeDBGroupBy) throw new NDSException("Cxtab configuration error, found user fact(db group by function) and invalid db group by function (e.g. avg) in the same time");
+
+			this.dimCount= query.getSelectionCount();
+			this.meaCount =measures.size();
+
+			for(int i=0;i< measures.size();i++){
+				List mea= (List)measures.get(i);
+				int sgrade= Tools.getInt( mea.get(4),0);
+				if(sgrade>userSecurityGrade){
+					//current user should not see this column
+					continue;
+				}
+				// may not have user fact 
+				int colId= Tools.getInt(mea.get(0),-1);
+				Column col= TableManager.getInstance().getColumn(colId);
+				if(col!=null)query.addSelection( colId );
+				else query.addSelection("1", "1") ;
+			}
+			sql= query.toSQL();
+
+		}
+
+		/**
+		 * Handle sql for those contained limit value (should translate db value to description tha readable)
+		 */
+		if( sqlOnly){
+			if(translateLimitValue){
+				//wrap in a sql
+				boolean shouldWrap=false;
+				/*  "select b0,b1,decode(b2,'a','n','b','m',''), s0,s1 from (
+				 *  	select b0,b1,b2,s0,s1 from xxx where yyy group by ggg)
+				 */
+				StringBuffer gsql=new StringBuffer("SELECT ");
+				String decodeSQL;
+				int pos=0; 
+				if(dimensionsV!=null && dimensionsV.size()>0)for(int i=0;i< dimensionsV.size();i++){
+					List dim= (List)dimensionsV.get(i);
+					ColumnLink cl=new ColumnLink((String) dim.get(0));
+					if(cl.getLastColumn().isValueLimited()){
+						shouldWrap=true;
+						decodeSQL=getDecodeSQL(cl.getLastColumn(), pos);
+					}else{
+						decodeSQL= "b"+ pos;
+					}
+					if(pos>0)gsql.append(",");
+					pos++;
+					gsql.append(decodeSQL);
+				}
+				if(dimensionsH!=null && dimensionsH.size()>0)for(int i=0;i< dimensionsH.size();i++){
+					List dim= (List)dimensionsH.get(i);
+					ColumnLink cl=new ColumnLink((String) dim.get(0));
+					if(cl.getLastColumn().isValueLimited()){
+						shouldWrap=true;
+						decodeSQL=getDecodeSQL(cl.getLastColumn(), pos);
+					}else{
+						decodeSQL= "b"+ pos;
+					}
+					if(pos>0)gsql.append(",");
+					pos++;
+					gsql.append(decodeSQL);
+				}
+				if(dimensionsP!=null && dimensionsP.size()>0)for(int i=0;i< dimensionsP.size();i++){
+					List dim= (List)dimensionsP.get(i);
+					ColumnLink cl=new ColumnLink((String) dim.get(0));
+					if(cl.getLastColumn().isValueLimited()){
+						shouldWrap=true;
+						decodeSQL=getDecodeSQL(cl.getLastColumn(), pos);
+					}else{
+						decodeSQL= "b"+ pos;
+					}
+					if(pos>0)gsql.append(",");
+					pos++;
+					gsql.append(decodeSQL);
+				}    
+				if(shouldWrap){
+					if(isDBGroupByEnabled){
+						// every fact is named sxxx in sql
+						for(int i=0;i< facts.size();i++){
+							gsql.append(",s").append(i);
+						}
+						gsql.append(" FROM (").append(sql).append(")");
+						sql= gsql.toString();
+					}else{
+						// facts are named as bxxxx in sql
+						for(int i=0;i< measures.size();i++){
+							gsql.append(",b").append(pos);
+							pos++;
+						}
+						gsql.append(" FROM (").append(sql).append(")");
+						sql= gsql.toString();
+					}
+				}
+			}
+			sql= this.parseVariable(sql);
+			logger.debug(sql);
+			return query;
+		}
+
+		//create jCrosstabber, if dimensionH or dimensionV is size=0, or more than one fact, will only create
+		//list instead of crosstab
+		/*if(dimensionsH==null || dimensionsH.size()==0 || dimensionsV==null || dimensionsV.size()==0 || measures.size()!=1){
         	DefaultWebEvent event=createEvent();
             ClientControllerWebImpl controller=(ClientControllerWebImpl)WebUtils.getServletContextManager().getActor(nds.util.WebKeys.WEB_CONTROLLER);
             if("xls".equalsIgnoreCase(fileType)){
@@ -1117,116 +1187,129 @@ public class CxtabReport {
           	if(Tools.getInt( vh.get("code"), 0)!=0){
           		throw new NDSException((String)vh.get("message"));
           	}
-        	
-        }else{*/
-        	// Crosstab
-			jCrosstabber jx = new jCrosstabber();
-			int pos=1;
-			ColumnValueFormatter ft;
-			ColumnInterpreter ci;
-			StringBuffer dimensionsVDesc=new StringBuffer(); 
-			if(dimensionsV!=null && dimensionsV.size()>0)for(int i=0;i< dimensionsV.size();i++){
-				List dim= (List)dimensionsV.get(i);
-				ColumnLink cl=new ColumnLink((String) dim.get(0));
-	
-				ci= manager.getColumnInterpreter( cl.getLastColumn().getId());
-				if(ci!=null)
-					ft= new ColumnValueFormatter(ci , locale);
-				else ft=null;
-				String desc= (String)dim.get(1);
-				if(Validator.isNull(desc)) desc= cl.getDescription(locale);
-				
-				jx.addVerticalSliceByTableColumnIndex(pos,ft,desc);
-				pos++;
-				if(i>0) dimensionsVDesc.append(",");
-				dimensionsVDesc.append( desc);
-			}else{
-				jx.addVerticalSliceByTableColumnIndex(pos,FakeColumnFormatter.INSTANCE,"");
-				pos++;
-			}
-			StringBuffer dimensionsHDesc=new StringBuffer(); 
-			if(dimensionsH!=null && dimensionsH.size()>0)for(int i=0;i< dimensionsH.size();i++){
-				List dim= (List)dimensionsH.get(i);
-				ColumnLink cl=new ColumnLink((String) dim.get(0));
-				
-				ci= manager.getColumnInterpreter( cl.getLastColumn().getId());
-				if(ci!=null)
-					ft= new ColumnValueFormatter(ci , locale);
-				else ft=null;
-				String desc= (String)dim.get(1);
-				if(Validator.isNull(desc)) desc= cl.getDescription(locale);
-				jx.addHorizontalSliceByTableColumnIndex(pos,ft,desc);
-				pos++; 
-				if(i>0) dimensionsHDesc.append(",");
-				dimensionsHDesc.append( desc );
-			}else{
-				jx.addHorizontalSliceByTableColumnIndex(pos, FakeColumnFormatter.INSTANCE,"");
-				pos++;
-			}
-			/*List measures=  engine.doQueryList("select ad_column_id, function_, userfact, description,param1,param2,param3 from ad_cxtab_fact where ad_cxtab_id="+
-					cxtabId+" and isactive='Y'",conn);*/
-			StringBuffer factDesc=new StringBuffer();
-			for(int i=0;i< measures.size();i++){
-				//TODO add param
-				HashMap params=null;
-				// should chang count to sum here
-				String function= (String) ((List)measures.get(i)).get(1);
-				if(isDBGroupByEnabled && "COUNT".equalsIgnoreCase(function)) function="SUM";
-				
-				String userFact=(String) ((List)measures.get(i)).get(2);
-				
-				
-				jx.addDataRowsColumnByIndex(pos,function,params,
-						(String) ((List)measures.get(i)).get(3), 
-						(String) ((List)measures.get(i)).get(4)/*format*/,
-						userFact/*userfact*/,
-						(String) ((List)measures.get(i)).get(5)/*valuename*/
-						);
-				if(i>0) factDesc.append(","); 
-				factDesc.append((String) ((List)measures.get(i)).get(3));
-				if(!(userFact!=null && userFact.startsWith("=")))pos++;
-				
-			}
-			String file=null;
-			
-			ResultSet rs=null;
-			try{
-				rs=conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY).executeQuery(sql);
-				
-	
-			    jxrs = jx.getCrosstabResultSet(rs);
-			  //  jxrs.setDataName(factDesc);
-				
-				props=new Properties();
-				String filterDesc= query.getParamDesc(true);
-				props.setProperty("title", factTable.getDescription(user.locale)+" - "+filterDesc+ " - "+  MessagesHolder.getInstance().getMessage(user.locale, "cxtabreport"));
-				props.setProperty("subject", MessagesHolder.getInstance().getMessage(user.locale, "cxtabreport")+" - "+cxtabDesc/*factTable.getDescription(user.locale) */ );
-				props.setProperty("facttable", factTable.getDescription(user.locale)  );
-				props.setProperty("creator", MessagesHolder.getInstance().getMessage(user.locale, "creator")+" : "+user.name);
-				props.setProperty("creationdate", MessagesHolder.getInstance().getMessage(user.locale, "creationdate")+" : "+((java.text.SimpleDateFormat)QueryUtils.dateTimeSecondsFormatter.get()).format(new java.util.Date()));
-				props.setProperty("description", MessagesHolder.getInstance().getMessage(user.locale, "filter-description")+" : "+filterDesc);
-				props.setProperty("axis_h", MessagesHolder.getInstance().getMessage(user.locale, "axis-h")+" : "+dimensionsHDesc.toString() );
-				props.setProperty("axis_v", MessagesHolder.getInstance().getMessage(user.locale, "axis-v")+" : "+dimensionsVDesc.toString() );
-				props.setProperty("facts", MessagesHolder.getInstance().getMessage(user.locale, "fact-desc")+" : "+factDesc.toString() );
 
-				props.put("startfrom",  new Long(startTime));
-				props.put("rowsfetched", new Long(jxrs.getRowsFetched()));
-				props.setProperty("sql",  sql);
-			}finally{
-				if(rs!=null)try{ rs.close();}catch(Throwable t){}
-		        int duration=(int)((System.currentTimeMillis()-startTime)/1000);
-		        
-		        String sqlInfo="["+user.getNameWithDomain()+"]"+"("+duration+" s) "+factTable.getDescription(user.locale)+":"+sql;
-		        if (duration > 10) logger.info(sqlInfo );
-				else logger.debug(sqlInfo);
-			}		
-			return query;
+        }else{*/
+		// Crosstab
+		jCrosstabber jx = new jCrosstabber();
+		int pos=1;
+		ColumnValueFormatter ft;
+		ColumnInterpreter ci;
+		StringBuffer dimensionsVDesc=new StringBuffer(); 
+		if(dimensionsV!=null && dimensionsV.size()>0)for(int i=0;i< dimensionsV.size();i++){
+			List dim= (List)dimensionsV.get(i);
+			ColumnLink cl=new ColumnLink((String) dim.get(0));
+
+			ci= manager.getColumnInterpreter( cl.getLastColumn().getId());
+			if(ci!=null)
+				ft= new ColumnValueFormatter(ci , locale);
+			else ft=null;
+			String desc= (String)dim.get(1);
+			if(Validator.isNull(desc)) desc= cl.getDescription(locale);
+
+			jx.addVerticalSliceByTableColumnIndex(pos,ft,desc);
+			pos++;
+			if(i>0) dimensionsVDesc.append(",");
+			dimensionsVDesc.append( desc);
+		}else{
+			jx.addVerticalSliceByTableColumnIndex(pos,FakeColumnFormatter.INSTANCE,"");
+			pos++;
+		}
+		StringBuffer dimensionsHDesc=new StringBuffer(); 
+		if(dimensionsH!=null && dimensionsH.size()>0)for(int i=0;i< dimensionsH.size();i++){
+			List dim= (List)dimensionsH.get(i);
+			ColumnLink cl=new ColumnLink((String) dim.get(0));
+
+			ci= manager.getColumnInterpreter( cl.getLastColumn().getId());
+			if(ci!=null)
+				ft= new ColumnValueFormatter(ci , locale);
+			else ft=null;
+			String desc= (String)dim.get(1);
+			if(Validator.isNull(desc)) desc= cl.getDescription(locale);
+			jx.addHorizontalSliceByTableColumnIndex(pos,ft,desc);
+			pos++; 
+			if(i>0) dimensionsHDesc.append(",");
+			dimensionsHDesc.append( desc );
+		}else{
+			jx.addHorizontalSliceByTableColumnIndex(pos, FakeColumnFormatter.INSTANCE,"");
+			pos++;
+		}
+		/*List measures=  engine.doQueryList("select ad_column_id, function_, userfact, description,param1,param2,param3 from ad_cxtab_fact where ad_cxtab_id="+
+					cxtabId+" and isactive='Y'",conn);*/
+		StringBuffer factDesc=new StringBuffer();
+		for(int i=0;i< measures.size();i++){
+			//TODO add param
+			HashMap params=null;
+			// should chang count to sum here
+			String function= (String) ((List)measures.get(i)).get(1);
+			if(isDBGroupByEnabled && "COUNT".equalsIgnoreCase(function)) function="SUM";
+
+			String userFact=(String) ((List)measures.get(i)).get(2);
+
+
+			jx.addDataRowsColumnByIndex(pos,function,params,
+					(String) ((List)measures.get(i)).get(3), 
+					(String) ((List)measures.get(i)).get(4)/*format*/,
+					userFact/*userfact*/,
+					(String) ((List)measures.get(i)).get(5)/*valuename*/
+					);
+			if(i>0) factDesc.append(","); 
+			factDesc.append((String) ((List)measures.get(i)).get(3));
+			if(!(userFact!=null && userFact.startsWith("=")))pos++;
+
+		}
+		String file=null;
+
+		ResultSet rs=null;
+		try{
+			rs=conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY).executeQuery(sql);
+
+
+			jxrs = jx.getCrosstabResultSet(rs);
+			//  jxrs.setDataName(factDesc);
+
+			props=new Properties();
+			String filterDesc= query.getParamDesc(true);
+			props.setProperty("title", factTable.getDescription(user.locale)+" - "+filterDesc+ " - "+  MessagesHolder.getInstance().getMessage(user.locale, "cxtabreport"));
+			props.setProperty("subject", MessagesHolder.getInstance().getMessage(user.locale, "cxtabreport")+" - "+cxtabDesc/*factTable.getDescription(user.locale) */ );
+			props.setProperty("facttable", factTable.getDescription(user.locale)  );
+			props.setProperty("creator", MessagesHolder.getInstance().getMessage(user.locale, "creator")+" : "+user.name);
+			props.setProperty("creationdate", MessagesHolder.getInstance().getMessage(user.locale, "creationdate")+" : "+((java.text.SimpleDateFormat)QueryUtils.dateTimeSecondsFormatter.get()).format(new java.util.Date()));
+			props.setProperty("description", MessagesHolder.getInstance().getMessage(user.locale, "filter-description")+" : "+filterDesc);
+			props.setProperty("axis_h", MessagesHolder.getInstance().getMessage(user.locale, "axis-h")+" : "+dimensionsHDesc.toString() );
+			props.setProperty("axis_v", MessagesHolder.getInstance().getMessage(user.locale, "axis-v")+" : "+dimensionsVDesc.toString() );
+			props.setProperty("facts", MessagesHolder.getInstance().getMessage(user.locale, "fact-desc")+" : "+factDesc.toString() );
+
+			props.put("startfrom",  new Long(startTime));
+			props.put("rowsfetched", new Long(jxrs.getRowsFetched()));
+			props.setProperty("sql",  sql);
+		}finally{
+			if(rs!=null)try{ rs.close();}catch(Throwable t){}
+			int duration=(int)((System.currentTimeMillis()-startTime)/1000);
+
+			String sqlInfo="["+user.getNameWithDomain()+"]"+"("+duration+" s) "+factTable.getDescription(user.locale)+":"+sql;
+			if (duration > 10) logger.info(sqlInfo );
+			else logger.debug(sqlInfo);
+		}		
+		return query;
 	}
+	/**
+    	 * 
+    	 * 
+    	 *
+    	 */
+    private static void removeDims(List paramList, HashSet paramHashSet)
+    {
+    	    for (int i = paramList.size() - 1; i >= 0; i--) {
+    	      int j = Tools.getInt(((List)paramList.get(i)).get(4), -1);
+    	      if (!paramHashSet.contains(Integer.valueOf(j))) paramList.remove(i); 
+    	    }
+    }
+    	
 	public void writeHtmlContent(Writer w) throws Exception{
 		Connection conn=null;
 		try{
 			conn= QueryEngine.getInstance().getConnection();
-			this.prepareReport(conn,false,true,false);
+			this.prepareReport(conn,false,true,false,false);
 			
 			// prepare file
 	        Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
@@ -1300,7 +1383,13 @@ public class CxtabReport {
 	public void setFilterSQL(String filterSQL) {
 		this.filterSQL = filterSQL;
 	}
-
+	public String getFolder() {
+		return folder;
+	}
+	public void setFolder(String folder) {
+		this.folder = folder;
+	}
+	
 	public int getCxtabId() {
 		return cxtabId;
 	}
