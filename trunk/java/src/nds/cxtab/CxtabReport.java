@@ -139,6 +139,8 @@ public class CxtabReport {
 		    	
 		    	this.prepareReport(conn,true, false, true, true);
 		    	file=this.fileName+ ".cus";
+				File p= new File(filePath);
+				if(!p.exists())p.mkdirs();
 		    	String filename=filePath+File.separator+file;
 				ArrayList vec=new ArrayList();
 				vec.add("update ad_pinstance_para set p_clob="+ QueryUtils.TO_STRING(sql)+" where name='filter' and ad_pinstance_id="+processInstanceId );
