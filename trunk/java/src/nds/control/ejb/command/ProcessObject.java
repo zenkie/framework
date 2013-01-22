@@ -126,6 +126,7 @@ public class ProcessObject extends Command {
 	String returnMsg=null;
 	boolean masterObjectCreateAction=false; //what's on master object, add or modify?
 	SPResult spr=null; // main object's ac/am procedure result 
+	SPResult sbr=null;// submit result 
 	logger.debug("jsonObject   is  ->"+jo.toString());
   	try{
   		/*
@@ -355,7 +356,14 @@ public class ProcessObject extends Command {
 		    	dwe.put("org.directwebremoting.WebContext", ctx);// need for PrintJasper
 	    	}
 	    	ValueHolder vh2=helper.handleEventWithNewTransaction(dwe); 
-	    	if(Tools.getInt(vh2.get("code"), -1) !=0){
+	    	  /**
+             * 修改submit 方法支持rcode 返回
+             * 101 刷新不关闭
+             */
+	  		sbr=(SPResult)vh2.get("sbresult");
+	  		returnObj.put("sbresult", sbr);
+	    	
+	    	if(Tools.getInt(vh2.get("code"), -1) !=0&& Tools.getInt(vh2.get("code"), -1) !=101){
 	    		throw new NDSEventException((String)vh2.get("message") );
 	    	}else{
 	    		returnMsg= (String)vh2.get("message");

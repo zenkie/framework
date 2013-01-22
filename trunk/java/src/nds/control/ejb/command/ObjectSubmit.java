@@ -117,7 +117,12 @@ public class ObjectSubmit extends Command{
             engine.doUpdate(sqls,conn);
             
             s= helper.auditOrSubmitObject(table, pid, userId, event, conn);
-	        if(s.getCode()!=0)
+	        //if(s.getCode()!=0)
+            /**
+             * 修改submit 方法支持rcode 返回
+             * 101 刷新不关闭
+             */
+            if(s.getCode()!=0 && s.getCode()!=101 )
 	        	throw new NDSEventException(s.getMessage());
         
 	        v=new ValueHolder();
@@ -140,7 +145,11 @@ public class ObjectSubmit extends Command{
 		    	dwe.put("JSONOBJECT",jo);
 		    	
 		    	ValueHolder vh2=helper.handleEvent(dwe);
-		    	if(Tools.getInt(vh2.get("code"), -1) !=0){
+	            /**
+	             * 修改 方法支持rcode 返回
+	             * 101 刷新不关闭
+	             */
+		    	if(Tools.getInt(vh2.get("code"), -1) !=0 && Tools.getInt(vh2.get("code"), -1) !=101){
 		    		throw new NDSEventException((String)vh2.get("message") );
 		    	}
 		    	org.json.JSONObject jo2= new org.json.JSONObject();
@@ -148,11 +157,19 @@ public class ObjectSubmit extends Command{
 		    	v.put("data", jo2);
 	
 	        }
-
+            logger.debug("submit code is"+String.valueOf(s.getCode()));
+            
 	        v.put("code", String.valueOf(s.getCode()));
 	        v.put("message",s.getMessage() ) ;
 	        v.put("next-screen", "/html/nds/info.jsp");
-        
+	        /**
+	         * ajax 支持、sbresult
+	         */
+	        if(s.getCode()==101){
+	        SPResult sbr=new SPResult(s.getCode(),s.getMessage());
+	        v.put("sbresult", sbr);
+	        logger.debug(sbr.toJSONString());
+	        }
 	        return v;
         }catch(Exception e){
             if( e instanceof NDSException) throw (NDSException)e;
