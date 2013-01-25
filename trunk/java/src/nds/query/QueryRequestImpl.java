@@ -433,4 +433,16 @@ public abstract class QueryRequestImpl implements QueryRequest {
 
     	throw new QueryException("not implimented");
     }
+    
+    /**
+     * To group by sql ,add order by
+     * @return all selection columns will be set as category column, so the return sql
+     * will be like:
+     *   select <selections>, <facts> from <maintable>, <fkTable> where <filter> group by <selections>
+     * @throws QueryException
+     */
+    public String toGroupBySQL(List facts, boolean isorderby) throws QueryException{
+
+    	throw new QueryException("not implimented");
+    }
 }
