@@ -929,6 +929,13 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
         return bsql;
 
     }
+    
+    public String toGroupBySQL(List paramList)
+    		throws QueryException
+    		{
+    	return toGroupBySQL(paramList, false);
+    		}
+
     /**
      * To group by sql 
      * @param facts elements are String 
@@ -937,7 +944,7 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
      *   select <selections>, <facts> from <maintable>, <fkTable> where <filter> group by <selections>
      * @throws QueryException
      */
-    public String toGroupBySQL(List facts) throws QueryException{
+    public String toGroupBySQL(List facts,boolean isorder ) throws QueryException{
         // assemble SQL
         StringBuffer sql=new StringBuffer("SELECT ");
         for( int i=0;i<selections.size();i++) {
@@ -1044,9 +1051,44 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
             	sql.append(sitem);
             }
         }        
-        
+        if(!isorder){
         if(orderbyClause !=null)
             sql.append(" ORDER BY "+ orderbyClause);
+        }else{
+        	sql.append(" ORDER BY ");
+        	for (int j = 0; j < selections.size(); j++) {
+        		if (j > 0) {
+        			sql.append(",");
+        		}
+        		Object sitem= selections.get(j);
+        		ColumnLink c=null;
+        		if (sitem instanceof ColumnLink){
+
+        			c=(ColumnLink)selections.get(j);
+        			String alias;
+        			if (c.getColumns().length > 1)
+        			{
+        				alias=(String)rtables.get(c.getColumnLinkExcludeLastColumn());
+        				if(alias ==null)
+        				{
+        					throw new Error("Internal error: table alias not found for selection:" + c);
+        				}sql.append((String)alias + "." + c.getLastColumn().getName());
+        			}
+        			else if (!c.getLastColumn().isVirtual()) {
+        				alias = this.mainTable.getName();
+        				sql.append((String)alias + "." + c.getLastColumn().getName());
+        			} else {
+        				sql.append(c.getLastColumn().getName());
+        			}
+        		}
+        		else {
+        			sql.append(sitem);
+        		}
+        	}
+
+
+        }
+        
         return this.replaceVariables(sql.toString());    	
     }
     
