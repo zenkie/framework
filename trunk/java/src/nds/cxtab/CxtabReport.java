@@ -1072,7 +1072,7 @@ public class CxtabReport {
 		//if(isDBGroupByEnabled || sqlOnly){ // yfzhu marked up here 2009/4/14 since isDBGroupByEnabled=false, we should not do group by then 
 		if(isDBGroupByEnabled){
 			if(facts.size()==0) throw new NDSException("No fact valid for current report, check sum fields and their security grade");
-			sql= query.toGroupBySQL(facts );
+			sql= query.toGroupBySQL(facts,true);
 
 			this.dimCount =query.getSelectionCount();
 			this.meaCount= facts.size();
