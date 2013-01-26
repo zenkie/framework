@@ -221,7 +221,16 @@ public class AjaxUtils {
 			qlc= QueryListConfigManager.getInstance().getQueryListConfig(qlcId);
 		}		
 		Object masks= jo.opt("column_masks");
-		if(masks!=null){
+
+		//support id,ak,ak2 droplist flash
+		if ( Validator.isNotNull(jo.optString("drop_flash"))){
+			query.addSelection(table.getPrimaryKey().getId());
+			query.addSelection(table.getAlternateKey().getId());
+			//支持ak2 字段显示 如没有AK2则只显示AK字段 
+			if(table.getAlternateKey2()!=null){
+			query.addSelection(table.getAlternateKey2().getId());
+			}
+		}else if(masks!=null){
 			int[] cmasks;
 			
 			if(masks instanceof JSONArray){
