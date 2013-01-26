@@ -12,6 +12,7 @@ import nds.control.web.WebUtils;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.query.QueryEngine;
+import nds.query.QueryException;
 import nds.query.QueryUtils;
 import nds.security.User;
 import nds.util.*;
@@ -114,7 +115,7 @@ public class SQLiteDB {
 		Statement stmt = null;
 		PreparedStatement ptmt=null;
 		Connection conn = null;
-		int datacount;
+		int datacount=0;
 		Object connb;
 		Statement cx_stmt;
 		PreparedStatement cx_ptmt;
@@ -266,7 +267,9 @@ public class SQLiteDB {
 					conn.close();
 				} catch (Throwable ea) {
 				}
-		} finally {
+		}catch(SQLException e){	
+			 logger.error("Error doing sqlite save:"+e.getMessage(),e);
+		}finally {
 			if (stmt != null)
 				try {
 					stmt.close();
