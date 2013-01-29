@@ -775,7 +775,7 @@ public class CxtabReport {
           if(maxRows >0 && recordsCount > maxRows )throw new NDSException("@report-rows-exeed-limit@("+recordsCount +">"+ maxRows+")");
         }
         
-    	sql= query.toGroupBySQL(facts );
+    	sql= query.toGroupBySQL(facts,true);
     	
     	this.dimCount =query.getSelectionCount();
     	this.meaCount= facts.size();
@@ -1060,8 +1060,6 @@ public class CxtabReport {
 				}else{
 					isDBGroupByEnabled=false;
 				}
-
-
 			}
 		}
 		// check record limit
@@ -1071,12 +1069,14 @@ public class CxtabReport {
 
 		//if(isDBGroupByEnabled || sqlOnly){ // yfzhu marked up here 2009/4/14 since isDBGroupByEnabled=false, we should not do group by then 
 		if(isDBGroupByEnabled){
+			logger.debug("cxtab now isDBGroupByEnabled");
 			if(facts.size()==0) throw new NDSException("No fact valid for current report, check sum fields and their security grade");
 			sql= query.toGroupBySQL(facts,true);
-
+			
 			this.dimCount =query.getSelectionCount();
 			this.meaCount= facts.size();
 		}else{
+			logger.debug("cxtab now isDBGroupByUabled");
 			if(mustBeDBGroupBy) throw new NDSException("Cxtab configuration error, found user fact(db group by function) and invalid db group by function (e.g. avg) in the same time");
 
 			this.dimCount= query.getSelectionCount();
@@ -1171,7 +1171,7 @@ public class CxtabReport {
 				}
 			}
 			sql= this.parseVariable(sql);
-			logger.debug(sql);
+			logger.debug("readonly sql is:"+sql);
 			return query;
 		}
 
