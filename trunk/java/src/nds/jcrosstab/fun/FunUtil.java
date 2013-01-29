@@ -69,7 +69,7 @@ public class FunUtil {
     	
     }
     private final static String[] VALIDGROUPBYFUNCTION=new String[]{
-		"SUM","MAX", "COUNT", "MIN"
+		"SUM","MAX", "COUNT", "MIN","AVG"
 	};
 	/**
 	 * //和平均有关的函数，包括avg, var,stdev，都不能让数据库进行group by 操作
