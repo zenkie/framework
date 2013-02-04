@@ -81,6 +81,11 @@ Caused by: java.io.FileNotFoundException: JAR entry META-INF/services/nds.contro
 	 * @param name
 	 * @return
 	 */
+	    public PluginScanner getPluginScanner()
+	   {
+	    return scanner;
+	   }
+	
 	public Command findPluginCommand(String name){
 		return cmdManager.findPlugin(name);
 	}

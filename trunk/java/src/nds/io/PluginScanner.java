@@ -39,6 +39,7 @@ public class PluginScanner{
 			scanner= new URLDeploymentScanner();
 			scanner.setExtensionFilter(".jar"); // only jar is supported (no zip)
 			scanner.setRecursiveSearch(false);
+			scanner.setURLComparator("nds.io.scanner.DeploymentSorter");
 			//scanner.setScanPeriod(60*1000);// default to one minute
 	
 			Configurations conf=(Configurations)WebUtils.getServletContextManager().getActor(WebKeys.CONFIGURATIONS);
