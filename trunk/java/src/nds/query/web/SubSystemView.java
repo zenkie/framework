@@ -47,11 +47,18 @@ public class SubSystemView {
 	public List<SubSystem> getSubSystems(HttpServletRequest request, int permissionType  ) throws Exception{
 		if(permissionType==PERMISSION_VIEWABLE) return getSubSystems(request);
 
+		UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
 		
+		String subsystems=(String)QueryEngine.getInstance().doQueryOne("SELECT subsystems from users where id="+userWeb.getUserId());
+		if (Validator.isNotNull(subsystems))
+		{
+			return Collections.EMPTY_LIST;
+		}
 		TableManager manager=TableManager.getInstance();
+	 
+		
 		if(permissionType==PERMISSION_NO_PERM){
 			ArrayList subs=new ArrayList();
-			UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
 			List al= (List)userWeb.getProperty("subsystems");// elements are subystem.id
 			if (al==null){
 				getSubSystems(request);
@@ -72,7 +79,7 @@ public class SubSystemView {
 			}
 			return subs;
 			
-		}else{
+		}//else{
 			// no license
 			if(subSystemNoLicense==null){
 				subSystemNoLicense=new ArrayList<SubSystem>();
@@ -91,7 +98,7 @@ public class SubSystemView {
 				}
 			}
 			return subSystemNoLicense;
-		}
+		//}
 		
 		
 	}
@@ -118,7 +125,34 @@ public class SubSystemView {
 			}
 		}else{
 			// search all tablecategoris for subsystem
+			// add users subsystems param
 			al=new ArrayList();
+			String[] sub_list;
+			try
+			{
+				String subsystems=(String)QueryEngine.getInstance().doQueryOne("SELECT subsystems from users where id="+userWeb.getUserId());
+				if (Validator.isNotNull(subsystems)){
+					sub_list = subsystems.split(",");
+					for (int m = 0; m < sub_list.length; m++)
+					{
+						SubSystem usersub = manager.getSubSystem(sub_list[m].trim());
+						if (usersub != null)
+						{
+							
+							  al.add(new Integer(usersub.getId()));
+							  subs.add(usersub);
+						}
+					}
+					userWeb.setProperty("subsystems", al);
+					return subs;
+				}
+			}
+			catch (QueryException e) {
+				logger.error("Fail to load subsystems from users", e);
+			}			
+			
+			
+			
 			for(int i=0;i< manager.getSubSystems().size();i++){
 				SubSystem ss=(SubSystem) manager.getSubSystems().get(i);
 				if(containsViewableChildren(request, ss)){
