@@ -79,6 +79,7 @@ import nds.util.LockManager;
 import nds.util.NDSException;
 import nds.util.NDSRuntimeException;
 import nds.util.ServletContextActor;
+import nds.control.event.DefaultWebEvent;
 import nds.util.TimeLog;
 
 
@@ -191,7 +192,7 @@ public class ClientControllerWebImpl implements java.io.Serializable,ServletCont
      * Handle event asynchronous, will start a new thread
      * 
      */
-    public void handleEventBackground(final NDSEvent event) throws NDSException {
+    public void handleEventBackground(final DefaultWebEvent event) throws NDSException {
         threadPool.invokeLater(
                 new Runnable() {
                   public void run() {
@@ -243,7 +244,7 @@ public class ClientControllerWebImpl implements java.io.Serializable,ServletCont
      * @param ese is the current event
      * @return ValueHolder getting from ejb
      */
-    public ValueHolder handleEvent(NDSEvent ese)
+    public ValueHolder handleEvent(DefaultWebEvent ese)
     throws NDSException {
         Locale locale;
     	/*Object lock=null;
