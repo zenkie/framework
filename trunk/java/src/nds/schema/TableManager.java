@@ -165,6 +165,12 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
 		return null;
 	}
 	
+	public SubSystem getSubSystem(String subname) {
+		for (int i = 0; i < this.subSystems.size(); i++)
+			if (((SubSystem)this.subSystems.get(i)).getName().equals(subname)) return (SubSystem)subSystems.get(i);
+		return null;
+	}	
+	
 	/**
 	 * Return column interpreter if found
 	 * @param columnId
