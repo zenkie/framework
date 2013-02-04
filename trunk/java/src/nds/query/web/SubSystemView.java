@@ -135,7 +135,7 @@ public class SubSystemView {
 					sub_list = subsystems.split(",");
 					for (int m = 0; m < sub_list.length; m++)
 					{
-						SubSystem usersub = manager.getSubSystem(sub_list[m].trim());
+						SubSystem usersub = manager.getSubSystem((String)sub_list[m].trim());
 						if (usersub != null)
 						{
 							
