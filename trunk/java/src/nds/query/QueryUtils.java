@@ -12,6 +12,7 @@ import java.util.*;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
@@ -1740,18 +1741,52 @@ public final class QueryUtils {
      * @param conn
      * @return count of lines saved 
      * @throws Exception
+     * @param paramBoolean 是否只输出结果
      */
-    /*public static int queryToFile(String sql, String filePath, Connection conn) throws Exception{
+    public static int queryToFile(String sql, String filePath, Connection conn) throws Exception {
+    	return queryToFile(sql, filePath, conn, false);
+    }
+
+    public static int queryToFile(String sql, String filePath, Connection conn,boolean paramBoolean) throws Exception{
     	ResultSet rs=null;
 		OutputStreamWriter fw=new OutputStreamWriter(new FileOutputStream(filePath,false),"UTF-8");
 		BufferedWriter outStream=null;
 		int count=0;
+ 
 		try{
 			rs= conn.createStatement().executeQuery(sql);
+			 
 			//FileWriter fw=new FileWriter(filePath,false);
 			outStream=new BufferedWriter(fw, 512*1024); // default is 8kb cache, we expand to bigger one
 			int colcnt= rs.getMetaData().getColumnCount();       
 			Object obj;
+			
+			if (!paramBoolean) {
+
+				for (int v = 1; v < colcnt; v++) {
+					outStream.write(rs.getMetaData().getColumnLabel(v) + ",");
+				}
+					outStream.write(rs.getMetaData().getColumnLabel(colcnt) + "\r\n");
+			}
+			else if (rs.next()) {
+	 
+
+				for (int p = 1; p < colcnt; p++) {
+					outStream.write(rs.getMetaData().getColumnLabel(p) + ",");
+				}
+					outStream.write(rs.getMetaData().getColumnLabel(colcnt) + "\r\n");
+					
+				for (int p = 1; p < colcnt; p++) {
+					obj = rs.getObject(p);
+					if (rs.wasNull())outStream.write(",");
+	        		else outStream.write(obj.toString()+",");
+	        	}
+				obj = rs.getObject(colcnt);
+				if (rs.wasNull())outStream.write(",");
+        		else outStream.write(obj.toString()+",");
+				count++;
+			}
+			
 			while(rs.next()){
 	        	for(int i=1;i<colcnt;i++) {
 	        		obj= rs.getObject(i);
@@ -1764,6 +1799,22 @@ public final class QueryUtils {
         		else outStream.write(obj.toString()+"\r\n");
         		count++;
 	        }
+			
+			try {
+				rs.close();
+			} catch (Throwable e) {
+			}
+			try {
+				if (outStream != null)
+					outStream.flush();
+
+			} catch (Throwable e) {
+			}
+			try {
+				if (outStream != null)
+					outStream.close();
+			} catch (Throwable e) {
+			}
 	            
 		}finally{
 			try{rs.close();}catch(Throwable t){}
@@ -1772,5 +1823,5 @@ public final class QueryUtils {
 		}
 		return count;
 		
-    }*/
+    }
 }
