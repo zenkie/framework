@@ -113,7 +113,7 @@ public class RequestProcessor  implements ServletContextActor, java.io.Serializa
                 	}
                 }
                 
-                v = scc.handleEvent(event);
+                v = scc.handleEvent((DefaultWebEvent)event);
                 if( v !=null) {
                     //logger.debug("Valueholder (msg="+v.get("message")+") returned from EJB controller, attach it to Request for further handler");
                     request.setAttribute(WebKeys.VALUE_HOLDER, v);// attach to request, so the next screen page can get and display it
