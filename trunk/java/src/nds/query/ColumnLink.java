@@ -49,7 +49,7 @@ public class ColumnLink implements java.io.Serializable, JSONString {
     private void setup(String[] columnNames)throws QueryException {
         try{
         	TableManager tm= TableManager.getInstance();
-        
+        //logger.debug("setup columnNames :"+String.valueOf(columnNames));
         int[] columnIDs= new int[columnNames.length ];
         if ( columnNames.length > 0) {
             String s= columnNames[0];
@@ -62,6 +62,8 @@ public class ColumnLink implements java.io.Serializable, JSONString {
         for(int i=1;i< columnIDs.length ;i++){
             pc=tm.getColumn(columnIDs[i-1]);
             if (pc==null) throw new QueryException("Not found column named as: "+ columnIDs[i-1]);
+            //System.out.print(pc.getReferenceTable(true).getName());
+            //System.out.print(columnNames[i]);
             columnIDs[i]= tm.getColumn( pc.getReferenceTable(true).getName() , columnNames[i] ).getId();
         }
         setup(columnIDs);
@@ -83,6 +85,7 @@ public class ColumnLink implements java.io.Serializable, JSONString {
      * @throws QueryException
      */
     public ColumnLink(String columns) throws QueryException {
+    	//logger.debug("ColumnLink is "+columns);
     	StringTokenizer st= new StringTokenizer(columns,";:");
     	ArrayList al=new ArrayList();
     	while(st.hasMoreTokens()){
