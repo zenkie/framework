@@ -13,13 +13,17 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
 import javax.servlet.http.HttpServletRequest;
-
+import nds.control.web.ClientControllerWebImpl;
+import nds.control.web.ServletContextManager;
+import nds.control.web.WebUtils;
+import nds.query.QueryEngine;
+import nds.schema.TableManager;
 import org.apache.struts.taglib.tiles.ComponentConstants;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.*;
 
-
+/*
 import com.liferay.portal.language.LanguageUtil_IW;
 import com.liferay.portal.language.UnicodeLanguageUtil_IW;
 import com.liferay.portal.model.Theme;
@@ -52,7 +56,7 @@ import com.liferay.util.StringUtil_IW;
 import com.liferay.util.UnicodeFormatter_IW;
 import com.liferay.util.Validator;
 import com.liferay.util.velocity.VelocityResourceListener;
-
+*/
 /**
  * Initialize variables used in velocity templates
  * @author yfzhu
@@ -60,19 +64,38 @@ import com.liferay.util.velocity.VelocityResourceListener;
 public class VelocityUtils {
 	
 	 
-	
+	public static VelocityContext createContext() throws Exception {
+		VelocityContext context = new VelocityContext();
+		insertHelperUtilities(context);
+
+		return context;
+	}
 	
 	public static String evaluate(String input) throws Exception {
 		Velocity.init();
 
 		VelocityContext context = new VelocityContext();
-
+		insertHelperUtilities(context);
 		StringWriter output = new StringWriter();
 
 		Velocity.evaluate(context, output, VelocityUtils.class.getName(), input);
 
 		return output.toString();
 	}
+	
+	
+	       public static void insertHelperUtilities(VelocityContext vc) throws Exception {
+	    	   vc.put("arrayutil", ArrayUtil.class);
+	    	   vc.put("getutil", GetterUtil.class);
+	    	   vc.put("stringutil", StringUtil.class);
+	    	   vc.put("webutil", WebUtils.class);
+	    	   vc.put("dateutil", DateUtil.getInstance());
+		     
+	    	   vc.put("v", DateUtil.getInstance());
+	    	   vc.put("engine", QueryEngine.getInstance());
+	    	   vc.put("manager", TableManager.getInstance());
+	    	   vc.put("controller", (ClientControllerWebImpl)WebUtils.getServletContextManager().getActor("nds.web.webController"));
+		       }
 	
 	/*public static void insertVariables(
 			VelocityContext vc, int adClientId, String serverRootURL) {
@@ -87,7 +110,7 @@ public class VelocityUtils {
 			// Insert custom vm variables
 
 	}*/
-	
+	/*
 	public static void insertHelperUtilities(VelocityContext vc) {
 
 		// Array util
@@ -144,6 +167,6 @@ public class VelocityUtils {
 
 		vc.put("unicodeFormatter", UnicodeFormatter_IW.getInstance());
 
-	}
+	}*/
 	
 }
