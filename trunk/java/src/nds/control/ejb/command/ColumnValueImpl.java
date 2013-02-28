@@ -67,7 +67,7 @@ public class ColumnValueImpl implements ColumnValue{
      * 设置好的其他的字段的值 2008-07-22
       */
      event.put("ColumnValueHashMap",hasMsp);
-     
+     logger.debug("ColumnValueHashMap  "+hasMsp);
      String tableName = table.getName() ;
      Vector value = new Vector();
      //支持sheetNo字段包含其他字段的内容作为一部分，例如：商品编号需要包含大类，小类信息，则写法为：
@@ -129,6 +129,12 @@ public class ColumnValueImpl implements ColumnValue{
      /**
       * 逐列取出值
       */
+     
+             ArrayList ShtNolist = new ArrayList();
+             Object localObject1 = null;
+               Object localObject3;   
+               
+               
      while(ite.hasNext() ){
          Column column = (Column)ite.next();
          if( fixedColumns.get( new Integer(column.getId()))!=null){
@@ -144,9 +150,19 @@ public class ColumnValueImpl implements ColumnValue{
              continue;
          }else if(obtainManner.equals("pk") ){
              co = new PKColumnObtain();
+             co.setConnection(conn);
+             if(isBestEffort){
+                co.enableBestEffort(isBestEffort);
+                co.setInvalidRows(invalidRows) ;
+             }
+             value = co.getColumnValue(event,table,column,length);
+             hasMsp.put(columnName,value);
+             //localObject1 = column;
          }else if(obtainManner.equals("sheetNo") ){
-             co = new ShtNoColumnObtain();
-         }else if(obtainManner.equals("byPage") || obtainManner.equals("select") ){
+            // co = new ShtNoColumnObtain();
+        	 ShtNolist.add(column);
+         }else{
+               if(obtainManner.equals("byPage") || obtainManner.equals("select") ){
              co = new DirectColumnObtain();
          }else if(obtainManner.equals("password") ){
              co = new PwdColumnObtain();
@@ -177,11 +193,41 @@ public class ColumnValueImpl implements ColumnValue{
          	if(maxRecordCount<((Object[])value.elementAt(0)).length)
          		maxRecordCount=((Object[])value.elementAt(0)).length;
          }*/
+         }
          }catch(Exception e2){
              logger.error("内部错误:在设置"+ column+ "("+obtainManner+")时出现异常:", e2);
              throw new NDSEventException("内部错误:在设置"+ column.getDescription(event.getLocale())+ "时出现异常:"+ e2.getMessage());
          }
      }
+     
+     
+     
+     
+		for (Iterator shtno = ShtNolist.iterator(); shtno.hasNext();) {
+			localObject3 = (Column) shtno.next();
+			try {
+				ColumnObtain co = null;
+				co = new ShtNoColumnObtain();
+				co.setConnection(conn);
+
+				if (isBestEffort) {
+					co.enableBestEffort(isBestEffort);
+					co.setInvalidRows(invalidRows);
+				}
+				value = co.getColumnValue(event, table, (Column) localObject3,
+						length);
+				hasMsp.put(((Column) localObject3).getName(), value);
+
+			} catch (Exception e3) {
+				logger.error("内部错误:在设置" + localObject3 + "时出现异常:", e3);
+				throw new NDSEventException("内部错误:在设置"
+						+ ((Column) localObject3).getDescription(event
+								.getLocale()) + "时出现异常:" + e3.getMessage());
+			}
+
+		}
+     
+      
      
      
    return hasMsp;
