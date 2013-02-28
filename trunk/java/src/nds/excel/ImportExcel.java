@@ -429,8 +429,9 @@ public class ImportExcel implements Runnable{
 
         Column col;
         String cv;
-
-        ArrayList columns=table.getColumns(new int[]{Column.MASK_CREATE_EDIT}, false, 0);
+        //考虑到导入的时候应符合导入模版的匹配 所以获取字段时强制字段级别为最大2147483647
+        ArrayList columns=table.getColumns(new int[]{Column.MASK_CREATE_EDIT}, false,2147483647);
+        
         ArrayList directColumnOfData= new ArrayList(); // if column is fk, the fk table's ak will be set here, so make it easier check input data type
 
         ArrayList colNames=new ArrayList();// if column is FK, the name will be like "col_ak", such as "product(id)_no"
@@ -452,6 +453,7 @@ public class ImportExcel implements Runnable{
                 directColumnOfData.add( col);
             }
         }
+        logger.debug("colNames is:"+String.valueOf(colNames));
         
         try{
         
@@ -584,6 +586,7 @@ public class ImportExcel implements Runnable{
 	                    col= (Column) directColumnOfData.get(j);
 	                    Cell cell = row.getCell((j+startColumn));
 	                    cv= getCellValue(i, cell, col);
+	                    logger.debug("Cell data is:["+String.valueOf(j)+"]["+String.valueOf(i-startRow)+"]"+cv);
 	                    colData[j][i-startRow]= cv;
 	                }
 	            }
@@ -599,6 +602,8 @@ public class ImportExcel implements Runnable{
 		        		}else
 		        			event.setParameter( (String)colNames.get(j) ,colData[j] );
 	             }
+	             System.out.print(colData);
+	             logger.debug("imp data is:"+colData.toString());
 		
 		        
 	        }
