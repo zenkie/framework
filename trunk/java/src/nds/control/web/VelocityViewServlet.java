@@ -591,7 +591,11 @@ public class VelocityViewServlet extends HttpServlet
         		context.put("myweb", new WebClient(clientId, "",  webDomain,false) );
         	}
     		
-    		VelocityUtils.insertHelperUtilities(context);
+			try {
+				VelocityUtils.insertHelperUtilities(context);
+			} catch (Throwable e) {
+				throw new NDSRuntimeException("Fail to init velocity", e);
+			}
 /*			UserWebImpl userWeb =null;
 	    	try{
 	    		userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));	
