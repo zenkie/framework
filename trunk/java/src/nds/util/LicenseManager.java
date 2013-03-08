@@ -27,7 +27,7 @@ public final class LicenseManager {
 	public static void validateLicense(String product, String version, String licenseFile)
 			throws LicenseException {
 		//cpuid is not easy to get when in dual kenerl of cpu, so disable checking from 2008-07-24
-		//if(true) return;
+		if(true) return;
 		loadLicenses(licenseFile);
 		if (!licenses.isEmpty()) {
 			float needsVersion = Float.parseFloat(version.substring(0, 3));
