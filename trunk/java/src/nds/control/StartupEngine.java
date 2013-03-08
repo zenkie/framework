@@ -86,7 +86,7 @@ public class StartupEngine extends HttpServlet // implements javax.servlet.Servl
         String footer = context.getInitParameter("footerPage");
 
         */
-		Tools.loadNativeLibrary(Tools.class.getClassLoader());
+		//Tools.loadNativeLibrary(Tools.class.getClassLoader());
 
         ServletContext context = this.getServletContext();
         String path = context.getInitParameter("nds.config.path");
