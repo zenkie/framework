@@ -48,6 +48,10 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
 	 * Store names of the queues
 	 */
 	private String[] allowedQueues;
+	/**
+	 * 
+	 */
+	private String serverId;
 	
 	public void destroy() {
         try {
@@ -101,11 +105,12 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
 	/**
      * We do not put the body of this method in Constructor, because sometimes the
      * ModelManager will be reinitialized, so the controller bean should also be reinstalled.
-     *
+     * 增加任务系统参数server.id 指定服务器执行任务
      */
     public void init(ServletContext context) {
         Configurations conf=(Configurations)WebUtils.getServletContextManager().getActor(WebKeys.CONFIGURATIONS);
         //nds.util.LicenseManager.validateLicense("Agile ERP","2.0",  EJBUtils.getApplicationConfigurations().getProperty("license","/license.xml") );        
+        serverId = conf.getProperty("server.id", String.valueOf(System.currentTimeMillis()));
         try{
         	int i= Tools.getInt(conf.get("process.transaction.timeout"),-1);
         	if(i>0) piTransactionTimeout= i*60;
@@ -189,8 +194,8 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
     	Scheduler scheduler = schedulerFactory.getScheduler();
     	scheduler.resumeJob(queueName,JOB_GROUP_NAME );
     }
-    private final static String GET_QUEUE_INFO="select t.name,t.cron, q.proctype,q.id from ad_processqueue q, ad_trigger t where t.id=q.ad_trigger_id and q.name=? and q.isactive='Y'";
-    private final static String GET_QUEUE_INFOS="select t.name,t.cron, q.proctype,q.id,q.name from ad_processqueue q, ad_trigger t where t.id=q.ad_trigger_id and q.isactive='Y'";
+    private final static String GET_QUEUE_INFO="select t.name,t.cron, q.proctype,q.id from ad_processqueue q, ad_trigger t where t.id=q.ad_trigger_id and q.name=? and (instr(q.svrs||',',?)>0 or q.svrs is null) and q.isactive='Y'";
+    private final static String GET_QUEUE_INFOS="select t.name,t.cron, q.proctype,q.id,q.name from ad_processqueue q, ad_trigger t where t.id=q.ad_trigger_id and (instr(q.svrs||',',?)>0 or q.svrs is null) and q.isactive='Y'";
 
     /**
      * Check cron expression valid and find next fire time relate to current time
@@ -209,6 +214,7 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
      * Load queue job and start it
      * @param queueName
      * @throws Exception
+     * add 增加服务器指定参数  判断多web服务器 
      */
     public void loadQueueJob(String queueName) throws Exception{
     	Class jobClass=null;
@@ -222,6 +228,7 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
 			conn=QueryEngine.getInstance().getConnection();
 			pstmt= conn.prepareStatement(GET_QUEUE_INFO);
 			pstmt.setString(1,queueName);
+			pstmt.setString(2,serverId + ",");
 			rs= pstmt.executeQuery();
 			if(rs.next()){
 				triggerName= rs.getString(1);
@@ -277,6 +284,7 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
     /**
      * Create jobs for ad_processqueues and schedule them
      * @throws Exception
+     * * add 增加服务器指定参数  判断多web服务器 
      */
     public void loadQueueJobs() throws Exception{
     	Class jobClass=null;
@@ -291,6 +299,7 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
 		try{
 			conn=QueryEngine.getInstance().getConnection();
 			pstmt= conn.prepareStatement(GET_QUEUE_INFOS);
+			pstmt.setString(1, serverId + ",");
 			rs= pstmt.executeQuery();
 			while(rs.next()){
 				triggerName= rs.getString(1);
