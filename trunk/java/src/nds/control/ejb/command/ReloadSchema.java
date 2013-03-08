@@ -3,7 +3,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.rmi.RemoteException;
 import java.util.Properties;
-
+import java.util.Date;
 import nds.control.ejb.Command;
 import nds.control.event.DefaultWebEvent;
 import nds.control.util.EJBUtils;
@@ -12,12 +12,16 @@ import nds.schema.TableManager;
 import nds.util.NDSException;
 import bsh.EvalError;
 import bsh.Interpreter;
+import nds.monitor.MonitorManager;
 
 /**
  *  Reload Schema from db
  */
 public class ReloadSchema extends Command{
 
+	    private static boolean jdField_a_of_type_Boolean = false;
+	    private static Date jdField_a_of_type_JavaUtilDate = null;
+	
     public synchronized ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
     	// check permission
     	event.setParameter("directory","RELOAD_SCHEMA");
@@ -36,6 +40,14 @@ public class ReloadSchema extends Command{
 	    	 */
 	    	TableManager.getTmpInstance().init(props, true);
 	    	TableManager.replacePublicInstance();
+	     
+			try {
+				if (MonitorManager.getInstance().isMonitorPluginInstalled())
+					MonitorManager.getInstance().reloadObjectActionListeners();
+			} catch (Exception e) {
+				throw new NDSException("Fail to load monitors", e);
+			}
+	    	    
 	    	v.put("message","@complete@,@consumed-to@"+ (System.currentTimeMillis()-t)/1000.0 +" @seconds@!") ;
         }
     	return v;
