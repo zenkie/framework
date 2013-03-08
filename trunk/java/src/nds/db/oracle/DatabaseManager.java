@@ -369,36 +369,42 @@ public class DatabaseManager implements DBManager{
 			logger.debug("colCount is "+colCount);
 			logger.debug("paramInt is "+paramInt);
 			if (colCount == 1) {
-				while (rs.next()) {
-					if(paramInt == i)break;
-					local = rs.getObject(1);
-					if (rs.wasNull())
-						jor_arry.put(JSONObject.NULL);
-					else {
-						jor_arry.put(local);
-					}
+				while (i != paramInt) {
 					i++;
+					while (rs.next()) {
+						local = rs.getObject(1);
+						if (rs.wasNull())
+							jor_arry.put(JSONObject.NULL);
+						else {
+							jor_arry.put(local);
+						}
+					}
+					if (paramInt <= i)
+						break;
 				}
 			} else {
 				logger.debug("do while");
-				while (rs.next()) {
-					//logger.debug("get rs");
-					if(paramInt == i)break;
-					JSONArray rs_jor = new JSONArray();
-					for (int m = 1; m <= colCount; m++) {
-						Object localObject = rs.getObject(m);
-						//logger.debug("get g");
-						//logger.debug(String.valueOf(rs.getObject(m)));
-						if (rs.wasNull()){
-							//logger.debug("get null");
-							rs_jor.put(JSONObject.NULL);
-						}else{
-							//logger.debug("get object");
-							rs_jor.put(rs.getObject(m));
-						}
-					}
-					jor_arry.put(rs_jor);
+				while (i != paramInt) {
 					i++;
+					while (rs.next()) {
+						// logger.debug("get rs");
+						JSONArray rs_jor = new JSONArray();
+						for (int m = 1; m <= colCount; m++) {
+							Object localObject = rs.getObject(m);
+							// logger.debug("get g");
+							// logger.debug(String.valueOf(rs.getObject(m)));
+							if (rs.wasNull()) {
+								// logger.debug("get null");
+								rs_jor.put(JSONObject.NULL);
+							} else {
+								// logger.debug("get object");
+								rs_jor.put(rs.getObject(m));
+							}
+						}
+						jor_arry.put(rs_jor);
+					}
+					if (paramInt <= i)
+						break;
 				}
 			}
 			logger.debug("jor_arry "+jor_arry.toString());
@@ -559,26 +565,31 @@ public class DatabaseManager implements DBManager{
 	
 			int colCount = rs.getMetaData().getColumnCount();
 			int i=0;
+			logger.debug("colCount is:"+String.valueOf(colCount));
 			if (colCount == 1) {
-				 
-				while (rs.next()) {
-					if(paramInt == i)break;
-					al.add(rs.getObject(1));
+				while (i != paramInt) {
 					i++;
-				} 
- 			
-				  
-			} else {
-				while (rs.next()) {
-					//logger.debug("get rs");
-					if(paramInt == i)break;
-					List rec = new java.util.ArrayList();
-					for (int m = 0; m <= colCount;m++) {
-						rec.add(rs.getObject(m));
+					while (rs.next()) {
+						al.add(rs.getObject(1));
 					}
-					al.add(rec);
+					if (paramInt <= i)
+						break;
+					
+				}
+			} else {
+				while (i != paramInt) {
 					i++;
-				    
+					while (rs.next()) {
+						// logger.debug("get rs");
+						List rec = new java.util.ArrayList();
+						for (int m = 1; m <= colCount; m++) {
+							rec.add(rs.getObject(m));
+						}
+						al.add(rec);
+					}
+					if (paramInt <= i)
+						break;
+					
 				}
 			}
 			if (duration > logDuration)
