@@ -11,6 +11,7 @@ import java.net.URL;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import nds.util.AES;
 
 /**
  * Holding native methods, to enable multiple classloading(
@@ -29,8 +30,12 @@ public final class NativeTools {
 	 * @return codeToCheck if success,else null
 	 */
 	public static native String getCPUIDs(String codeToCheck);
-	public static native String decrypt(String s);
+	//public static native String decrypt(String s);
 	public static native String encrypt(String s);
+	public static String decrypt(String s){
+		return s;
+	};
+	
 	/**
 	 * This method will be called by native library onLoad method
 	 * to check some classes (loaded by <param>classLoader</param> set before)
@@ -107,7 +112,9 @@ public final class NativeTools {
 			String a= (new File(uri)).getAbsolutePath();
 			
 			//System.out.println("file="+a);
+			//System.out.println("sdfsdfsdfsdfsdf");
 			System.load(a);
+			//System.out.println("sdfsdfsdfsdfdsfsdf");
 			//Class.forName("java.lang.System").getMethod("load",new Class[]{String.class}).invoke(null,new Object[]{a});
 			
 		} catch (Throwable ule) {
