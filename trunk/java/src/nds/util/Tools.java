@@ -48,7 +48,7 @@ public final class Tools {
 	 * @param loader
 	 */
 	public static void loadNativeLibrary(ClassLoader loader){
-		//NativeTools.load(loader);
+		NativeTools.load(loader);
 		return;
 	}
 	/**
@@ -59,15 +59,33 @@ public final class Tools {
 	public static String getCPUIDs(String codeToCheck){return 
 		NativeTools.getCPUIDs(codeToCheck);
 	}
+	
+	
+	public static String nvl(String str) {  
+        if(str == null || "null".equals(str)) {  
+            return "";  
+        } else {  
+            return str;  
+        }  
+    } 
+	
+	public static String nvl(String str,String val) {  
+        if(str == null || "null".equals(str)) {  
+            return "";  
+        } else {  
+            return str+val;  
+        }  
+    } 
+	
 	public static String decrypt(String s){
 		//return deobfuscate(s);
-		//return NativeTools.decrypt(s);
-		return null;
+		return NativeTools.decrypt(s);
+		//return null;
 	}
 	public static String encrypt(String s){
 		//return obfuscate(s);
-		//return NativeTools.encrypt(s);
-		return null;
+		return NativeTools.encrypt(s);
+		//return null;
 	}
     private static String[] _BOOLEANS = {"true", "t", "y", "on", "1"};
     
