@@ -38,6 +38,8 @@ public class ArrayUtil {
 
 		return newArray;
 	}
+	
+
 
 	public static Long[] append(Long[] array, Long obj) {
 		Long[] newArray = new Long[array.length + 1];
@@ -126,6 +128,16 @@ public class ArrayUtil {
 		return newArray;
 	}
 
+	
+	public static int[] append(int[] array1, int[] array2) {
+		int[] newArray = new int[array1.length + array2.length];
+
+		System.arraycopy(array1, 0, newArray, 0, array1.length);
+		System.arraycopy(array2, 0, newArray, array1.length, array2.length);
+
+		return newArray;
+	}
+	
 	public static Long[] append(Long[] array1, Long[] array2) {
 		Long[] newArray = new Long[array1.length + array2.length];
 
