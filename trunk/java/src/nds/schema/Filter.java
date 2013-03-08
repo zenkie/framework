@@ -51,7 +51,7 @@ expr，封装的Expression 表达式
  * @since 4.0
  * 
  */
-public class Filter implements java.io.Serializable {
+public class Filter implements java.io.Serializable,JSONString {
     private static Logger logger= LoggerManager.getInstance().getLogger(Filter.class.getName());
     private static ThreadLocal lxh=new ThreadLocal(){
     	protected synchronized Object initialValue() {
@@ -72,6 +72,13 @@ public class Filter implements java.io.Serializable {
 	private String sql;
 	private String expression;
 	public Filter(){}
+	
+	
+	public Filter(JSONObject jor) {
+		this.sql = jor.optString("sql");
+		this.description = jor.optString("description");
+		this.expression = jor.optString("expression");
+	}
 	/**
 	 * 如果希望处理xml发生异常时能抛出错误，应使用 #parse 方法，本构造方法不会抛出异常
 	 * @param xml
@@ -164,6 +171,26 @@ public class Filter implements java.io.Serializable {
 	}
 	public void setSql(String sql) {
 		this.sql = sql;
+	}
+	
+	public JSONObject toJSONObject() throws JSONException {
+		JSONObject jo = new JSONObject();
+		if (this.description != null)
+			jo.put("description", this.description);
+		if (this.sql != null)
+			jo.put("sql", this.sql);
+		if (this.expression != null)
+			jo.put("expression", this.expression);
+		return jo;
+	}
+
+	public String toJSONString() {
+		try {
+			return toJSONObject().toString();
+		} catch (JSONException e) {
+			logger.error("fail to convert to json", e);
+		}
+		return "{}";
 	}
 	
 }
