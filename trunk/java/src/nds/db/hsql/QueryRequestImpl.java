@@ -94,6 +94,7 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
     private ArrayList paramValues;// Where clause in SQL, elements: String
 
     private int[] orderColumn=null;
+    private int[] orderColumnlink=null;
     private boolean orderAscending=false;
 
     private String orderbyClause=null;
@@ -988,6 +989,10 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
     }
     public int[] getOrderColumnLink() {
         return orderColumn;
+    }
+    
+    public int[] getOrderColumnLinks() {
+        return orderColumnlink;
     }
     /**
      * Similiar to #getDisplayColumnIndices, except that when
