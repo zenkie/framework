@@ -81,8 +81,35 @@ public class RegexTest {
         return isGB2312; 
     }
     
+    
+    public static void print(int temp[]) {  
+    	for (int i=0; i<temp.length; i++ ) {     
+    		System.out.print(temp[i] + "\t");
+    	}
+    }
+    
+    public static int[]  expandArray(int[]  a,  int  size)  {  
+        if  (size  <=  a.length)  {  
+                return  a;  
+        }  
+        int[]  t  =  new  int[size];  
+        System.arraycopy(a,  0,  t,  0,  a.length);  
+        return  t;  
+ }  
+    
     public static void main(String args[]) {
     //    test3();
-    	System.out.println("²âÊÔ");
+    	int i1[] = {1,2};
+    	int i2[]={3,4};
+    	//int i2[] = {25,48,68,96,47,36,54};
+    	//System.out.println(i1);
+    	 //int[] c=new int[i1.length -1];
+         //System.arraycopy(i1, 0, c, 0, i1.length -1);
+    	//System.arraycopy(i1,0,i2,1,i2.length-1); 
+    	i1=expandArray(i1,i2.length);
+    	System.arraycopy(i2, 0, i1, 1, i2.length);
+    	print(i1);
+    	//System.out.println(i2);
+    	//System.out.println("²âÊÔ");
     }
 }
