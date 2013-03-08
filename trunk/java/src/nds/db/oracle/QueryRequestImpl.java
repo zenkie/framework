@@ -57,6 +57,7 @@ import nds.util.Base64;
 import nds.util.MessagesHolder;
 import nds.util.Tools;
 import nds.util.Validator;
+import nds.velocity.ArrayUtil;
 
 
 
@@ -106,8 +107,10 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
     // following param is only addParam()'s argument, while <code>whereClause</code> is parsed one
     private ArrayList paramColumns;// Where clause in SQL, elements:int[]
     private ArrayList paramValues;// Where clause in SQL, elements: String
-
+    //orderColumn lenth=1
     private int[] orderColumn=null;
+    //support orderColumnlink 
+    private int[] orderColumnlink=null;
     private boolean orderAscending=false;
 
     private String orderbyClause=null;
@@ -643,9 +646,9 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
         if( cols.length == 1) {
             Column col= manager.getColumn(cols[0]);
             if( col.isVirtual()== false){
-                orderbyClause= col.getTable().getName()+"."+col.getName()+(ascending?" asc":" desc");
+            	addOrderByClause(col.getTable().getName()+"."+col.getName()+(ascending?" asc":" desc"));
             }else{
-                orderbyClause= col.getName()+(ascending?" asc":" desc");
+            	addOrderByClause(col.getName()+(ascending?" asc":" desc"));
             }
             return;
         }
@@ -657,15 +660,16 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
         // add table alias if needed
         String tableAlias=addAliasTable(clink);
         if(clink.getLastColumn().isVirtual()== false) {
-        	orderbyClause= tableAlias+"."+manager.getColumn(cols[cols.length-1]).getName()+(ascending?" asc":" desc");
+        	addOrderByClause(tableAlias+"."+manager.getColumn(cols[cols.length-1]).getName()+(ascending?" asc":" desc"));
         }else{
-        	orderbyClause= clink.getLastColumn().getName()+(ascending?" asc":" desc");
+        	addOrderByClause(clink.getLastColumn().getName()+(ascending?" asc":" desc"));
         }
 
     }
     /**
      * Add more order by clause to query, you can call this to replace setOrderBy.
      * Note only the first order by will be returned as getOrderAscending, or getOrderColumn
+     * support orderColumnlink and orderColumn not return first order
      * @param cols
      * @param ascending
      * @throws QueryException
@@ -675,10 +679,34 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
         if ( cols==null || cols.length ==0) return;
         if( manager ==null)
             manager=TableManager.getInstance();
-        if(orderColumn ==null){
-	        orderAscending=ascending;
-	        orderColumn=cols;
-        }
+        //set orderColumnlink
+		if (orderColumnlink == null) {
+			orderAscending = ascending;
+			if (cols.length > 1) {
+				orderColumnlink = cols;
+			}
+		} else {
+			ArrayUtil a = new ArrayUtil();
+			if (cols.length > 1) {
+				int[] newArray = a.append(orderColumnlink, cols);
+				orderColumnlink = newArray;
+			}
+
+		}
+		// set orderColumn
+		if (orderColumn == null) {
+			orderAscending = ascending;
+			if (cols.length == 1) {
+				orderColumn = cols;
+			}
+		} else {
+			ArrayUtil a = new ArrayUtil();
+			if (cols.length == 1) {
+				int[] newArray = a.append(orderColumn, cols);
+				orderColumn = newArray;
+			}
+		}
+		
         cols=expandColumns(cols); 
         
         if( cols.length == 1) {
@@ -1335,10 +1363,19 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
     }
     /**
      * @return boolean if has serveral order columns, this only return the first one
+     * change renturn all
      */
     public int[] getOrderColumnLink() {
         return orderColumn;
     }
+    
+   /**
+    *  @return boolean if has serveral order columns, this only return the all
+    */
+    public int[] getOrderColumnLinks() {
+        return orderColumnlink;
+    }
+    
     /**
      * Similiar to #getDisplayColumnIndices, except that when
      * pk and ak are set not show, the indices will also be excluded.
