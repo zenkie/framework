@@ -8,6 +8,7 @@ import net.sf.jasperreports.engine.util.JRLoader;
 import javax.servlet.http.*;
 import java.util.*;
 import java.io.*;
+
 import nds.util.*;
 import nds.log.Logger;
 import nds.log.LoggerManager;
@@ -45,7 +46,33 @@ public class ReportPrinter {
 		String where=q.addParam( query.getParamExpression());
 		//fixme: should be modified, since query support more than one order by column (@see QueryRequestImpl#addOrderBy)
 		//follwing setOrder only retrieve the first order by clause in query object
-		q.setOrderBy(query.getOrderColumnLink(), query.isAscendingOrder());
+		//add not only support first order by clause
+		//ordercoloumns
+		int[] ids=query.getOrderColumnLink();
+        if(ids !=null) {
+            boolean b= query.isAscendingOrder();
+    		int pos=0;
+    		for(int i=0;i<ids.length;i++){
+    			int[] e={0};
+    			System.arraycopy(ids, i, e, 0, 1);
+    			q.setOrderBy(e, b);
+    			
+    		}
+        }
+        //orderoloumnlink
+		int[] idcs=query.getOrderColumnLinks();
+        if(ids !=null) {
+            boolean b= query.isAscendingOrder();
+    		int pos=0;
+    		for(int i=0;i<idcs.length/2;i++){
+    			int[] e={0,0};
+    			System.arraycopy(ids, i, e, 0, 1);
+    			q.setOrderBy(e, b);
+    			pos=pos+2;
+    		}
+        }
+        
+		//q.setOrderBy(query.getOrderColumnLink(), query.isAscendingOrder());
 		q.setRange(0,  Integer.MAX_VALUE);
 		String sql= q.toSQL();
 		logger.debug(sql);
