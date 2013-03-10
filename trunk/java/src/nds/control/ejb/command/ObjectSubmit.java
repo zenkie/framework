@@ -11,6 +11,9 @@ import nds.control.event.NDSEventException;
 import nds.control.util.AuditUtils;
 import nds.control.util.SecurityUtils;
 import nds.control.util.ValueHolder;
+import nds.monitor.MonitorManager;
+import nds.monitor.ObjectActionEvent;
+import nds.monitor.ObjectActionEvent.ActionType;
 import nds.query.QueryEngine;
 import nds.query.QueryUtils;
 import nds.query.SPResult;
@@ -127,6 +130,29 @@ public class ObjectSubmit extends Command{
         
 	        v=new ValueHolder();
         
+	        
+			if ("check_submit".equals(s.getTag())) {
+				JSONObject jop = new JSONObject();
+				jop.put("check_submit",s.getMessage());
+				v.put("data", jop);
+				v.put("code",String.valueOf(s.getCode()));
+				v.put("message",s.getMessage());
+				return v;
+			}
+			
+			if ("submitted".equals(s.getTag())) {
+     		   //monitor plugin
+     		   JSONObject cxt=new JSONObject();
+     		   cxt.put("source", this);
+     		   cxt.put("connection", conn);
+     		   cxt.put("statemachine", this.helper.getStateMachine());
+     		   cxt.put("javax.servlet.http.HttpServletRequest", 
+     		   event.getParameterValue("javax.servlet.http.HttpServletRequest", true));
+     		   ObjectActionEvent oae=new ObjectActionEvent(table.getId(),
+     				  pid, usr.adClientId,ActionType.SUBMIT, usr, cxt);
+     		   MonitorManager.getInstance().dispatchEvent(oae);
+			}
+	        
 	        // will print now? a parameter decide that: printAfterSubmit( "Y" | "N" )
 	        // and if print, will generate a file and return that file name to client in parameter "printfile"
 	        boolean bPrintAfterSubmit=Tools.getYesNo( event.getParameterValue("printAfterSubmit"), false);
@@ -158,7 +184,11 @@ public class ObjectSubmit extends Command{
 	
 	        }
             logger.debug("submit code is"+String.valueOf(s.getCode()));
-            
+			if ("check_submit".equals(s.getTag())) {
+				JSONObject jop = new JSONObject();
+				jop.put("check_submit",s.getMessage());
+				 v.put("data", jop);
+			}
 	        v.put("code", String.valueOf(s.getCode()));
 	        v.put("message",s.getMessage() ) ;
 	        v.put("next-screen", "/html/nds/info.jsp");
