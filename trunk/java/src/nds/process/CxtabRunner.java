@@ -50,6 +50,11 @@ public class CxtabRunner extends SvrProcess
 				prclist.add(b[i]);
 		}
 	}
+	
+	public boolean internalTransaction()
+	{
+		return true;
+	}
 	/**
 	 *  Parameters:
 	 *    filter_expr, filter_sql (if set, will take privilege over filter_expr), 
