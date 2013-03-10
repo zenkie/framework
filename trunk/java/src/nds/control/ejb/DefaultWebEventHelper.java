@@ -88,6 +88,10 @@ public class DefaultWebEventHelper {
     public void setStateMachine(StateMachine machine){
     	this.machine= machine;
     }    
+    
+	public StateMachine getStateMachine() {
+		return this.machine;
+	}
     /**
      * Initialize table manager
      * @return table manager
@@ -1383,6 +1387,7 @@ public class DefaultWebEventHelper {
         if (processId==-1 || "A".equals(state)){
         	// do submit 
         	result = submitObject(table, id, operatorId, event);
+        	result.setTag("submitted");
         }
         if( result.getCode()!=0 && result.getCode()!=2/*set by #submitOne*/){
         	// set status of object to 1 if that column exists and status =3
@@ -1405,11 +1410,48 @@ public class DefaultWebEventHelper {
      * @param event
      * @return
      */
-    public SPResult auditOrSubmitObject(Table table, int id, int operatorId, DefaultWebEvent event,Connection conn)  {
-    	String state=null;
-    	SPResult result=null;
-    	try{
-       	QueryUtils.checkVoid(table, id, "Y", conn);
+    public SPResult auditOrSubmitObject(Table table, int id, int operatorId,
+    		DefaultWebEvent event, Connection conn) {
+    	String state = null;
+    	SPResult result = null;
+    	try {
+    		QueryUtils.checkVoid(table, id, "Y", conn);
+    		Object par;
+    		if (table.getJSONProps() != null) {
+    			String procName = table.getJSONProps().optString(
+    					"before_submit");
+    			ArrayList params = new ArrayList();
+    			if (Validator.isNotNull(procName)) {
+
+    				params.add(new Integer(id));
+    				QueryEngine.getInstance().executeStoredProcedure(procName,
+    						params, false, conn);
+    			}
+    			procName = table.getJSONProps().optString("check_submit");
+    			if (Validator.isNotNull(procName)) {
+
+    				params.add(new Integer(id));
+
+    				if ((par = (String) event.getParameterValue(
+    						"check_submit.msg", false)) == null)
+    					par = "";
+    				params.add(par);
+    				SPResult spr = QueryEngine.getInstance()
+    						.executeStoredProcedure(procName, params, false,
+    								conn);
+    				if (spr.getCode() != 0) {
+
+    					result = new SPResult(0, new SPResult(spr.getCode(),
+    							spr.getMessage()).toJSONString());
+    					result.setTag("check_submit");
+    					logger.debug("spresult:code=" + result.getCode()
+    							+ ", message=" + result.getMessage());
+    					return result;
+    				}
+    			}
+    		}
+       	
+       	
    	 	/**
          * Check is this object shall do audit process
          */
@@ -1542,6 +1584,7 @@ public class DefaultWebEventHelper {
               logger.error("Could not submit record(table="+tableName+",id="+ pid+")", e );
               return new SPResult(-1,e.getMessage());
           }
-      }    
+      }
+ 
 }
 
