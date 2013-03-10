@@ -204,9 +204,17 @@ public interface QueryRequest extends Serializable {
     /**
      * 查询语句中order by部分的column，如果order by 语句中有多个字段，返回第一个
      * 返回的int[] 的每一项是Column.getId()
+     * 扩展返回OrderColumn 里面包含所有的排序字段 而不是第一个，此为本表字段排序
      */
     public int[] getOrderColumnLink();
 
+    /**
+     * 查询语句中order by部分的column，如果order by 语句中有多个字段，返回第一个
+     * 返回的int[] 的每一项是Column.getId()
+     * 扩展返回OrderColumnlink 里面包含所有的排序字段 而不是第一个，此为link字段长度大于1
+     */
+    public int[] getOrderColumnLinks();
+    
     /**
      * Similiar to #getDisplayColumnIndices, except that when
      * pk and ak are set not show, the indices will also be excluded.
