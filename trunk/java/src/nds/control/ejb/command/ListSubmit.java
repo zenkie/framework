@@ -18,6 +18,7 @@ import nds.security.User;
 import nds.util.JNDINames;
 import nds.util.NDSException;
 import nds.util.Tools;
+import nds.util.Validator;
 
 /**
  * 当表的提交处理动作设置为java 类时，需要将处理过程移交给此类（目前不支持java类的groupsubmit)。
@@ -43,9 +44,15 @@ public class ListSubmit extends Command{
      * 		
      */
     public ValueHolder execute(DefaultWebEvent event) throws NDSException ,RemoteException{
-         TableManager manager = helper.getTableManager() ;
-         Table table = manager.findTable(event.getParameterValue("table",true));
-         int tableId = table.getId();
+		TableManager manager = helper.getTableManager();
+		Table table = manager.findTable(event.getParameterValue("table", true));
+		int tableId = table.getId();
+		String prop = null;
+		if (table.getJSONProps() != null)
+			prop = table.getJSONProps().optString("check_submit");
+		if (Validator.isNotNull(prop)) {
+			throw new NDSException("@pls-submit-one-by-one@");
+		}
          String[] itemidStr = event.getParameterValues("itemid",true);
          User user= helper.getOperator(event);
          String operatorDesc=user.getDescription();
