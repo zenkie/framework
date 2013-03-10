@@ -54,11 +54,7 @@
 package nds.query;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.*;
-import java.util.StringTokenizer;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -84,6 +80,7 @@ import nds.schema.Table;
 import nds.schema.TableManager;
 import nds.util.*;
 import nds.web.*;
+//import nds.test.*;
 /**
  * 根据页面输入建立QueryRequest，并产生显示页面。
  * //from 2003-09-06 do not support 调用QueryEngine生成QueryResult，
@@ -337,12 +334,31 @@ public class QueryInputHandler extends HttpServlet {
                 }
             }
             /** --added above for sub-total --*/
-
-            // order
+            // order column 
             ids=QueryUtils.parseIntArray(getRequestParameter(req,"order/columns"));
             if(ids !=null) {
                 boolean b= parseBoolean(getRequestParameter(req,"order/asc"),true);
-                query.setOrderBy(ids, b);
+        		int pos=0;
+        		for(int i=0;i<ids.length;i++){
+        			int[] e={0};
+        			System.arraycopy(ids, i, e, 0, 1);
+        			//arraytest.print(e);
+        			query.setOrderBy(e, b);
+        		}
+            }
+            // order columnlink
+            ids=QueryUtils.parseIntArray(getRequestParameter(req,"order/columnlink"));
+            if(ids !=null) {
+                boolean b= parseBoolean(getRequestParameter(req,"order/asc"),true);
+        		int pos=0;
+        		for(int i=0;i<ids.length/2;i++){
+        			int[] e={0,0};
+        			System.arraycopy(ids, pos, e, 0, 2);
+        			//print(e);
+        			query.setOrderBy(e, b);
+        			pos=pos+2;
+        		}
+      	
             } else {
                 int orderIdx=Tools.getInt(getRequestParameter(req,"order_select"), -1);
                 //logger.debug("using order of selection:"+ orderIdx );
