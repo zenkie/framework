@@ -25,6 +25,7 @@ import bsh.Interpreter;
 import nds.control.check.ColumnCheckImpl;
 import nds.control.event.NDSEventException;
 import nds.control.util.SecurityUtils;
+import nds.control.web.UserWebImpl;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.schema.*;
@@ -617,6 +618,7 @@ public final class QueryUtils {
      *      <input type='hidden' name='param/0/value' value='encode(>=100)'> // value 用encode防止有编码问题
      *      ...
      *      <input type='hidden' name='order/columns' value='COLUMN1/COLUMN2..'>//order对应的列
+     *      <input type='hidden' name='order/columnlink' value='COLUMN1:COLUMN2..'>//order对应的columnlink
      *      <input type='hidden' name='order/asc' value='true'> //是否升序，缺省不设
      *      <input type='hidden' name='resulthandler' value='../query.jsp'> // result 的显示页面
      * // </form>
@@ -703,10 +705,29 @@ public final class QueryUtils {
             writer.println("<input id='"+nameSpace+"param_expr' type='hidden' name='param_expr' value='"+
                            ( userExpr.toHTMLInputElement())+"'>");
         }
+        //getOrderColumnLinks
+        if( req.getOrderColumnLinks() !=null) {//Hawke add 'id'
+            writer.print("<input type='hidden' id='"+nameSpace+"list_form_ordercolumnlink' name='order/columnlink' value='");
+            clink=req.getOrderColumnLinks();
+            for( int j=0;j< clink.length;j++) {
+            	logger.debug("order by clink:"+String.valueOf(clink[j]));
+                writer.print( (j>0?",":"")+clink[j]);
+            }
+            writer.print("'>");//Hawke add 'id'
+            writer.println("<input type='hidden' id='"+nameSpace+"list_form_orderasc' name='order/asc' value='"+
+                           (req.isAscendingOrder()?"true":"false")+"'>");
+        }else{
+            // let a null value there
+            writer.println("<input type='hidden' id='"+nameSpace+"list_form_ordercolumnlink'  name='order/columnlink' value=''>");
+            writer.println("<input type='hidden' id='"+nameSpace+"list_form_orderasc'  name='order/asc' value='false'>");
+        }
+        //getOrderColumns
         if( req.getOrderColumnLink() !=null) {//Hawke add 'id'
             writer.print("<input type='hidden' id='"+nameSpace+"list_form_ordercolumns' name='order/columns' value='");
             clink=req.getOrderColumnLink();
+            
             for( int j=0;j< clink.length;j++) {
+            	logger.debug("order by clink:"+String.valueOf(clink[j]));
                 writer.print( (j>0?",":"")+clink[j]);
             }
             writer.print("'>");//Hawke add 'id'
@@ -745,6 +766,19 @@ public final class QueryUtils {
         writer.println("<input type='hidden' name='range' value='"+
                        req.getRange()+"'>");
         int[] clink;
+        //getOrderColumnLinks
+        if( req.getOrderColumnLinks() !=null) {//Hawke add 'id'
+            writer.print("<input type='hidden' id='ordercolumnlink' name='order/columnlink' value='");
+            clink=req.getOrderColumnLinks();
+            for( int j=0;j< clink.length;j++) {
+            	logger.debug("order by clink:"+String.valueOf(clink[j]));
+                writer.print( (j>0?",":"")+clink[j]);
+            }
+            writer.print("'>");//Hawke add 'id'
+            writer.println("<input type='hidden' id='orderAsc' name='order/asc' value='"+
+                           (req.isAscendingOrder()?"true":"false")+"'>");
+        }
+        //getOrderColumn
         if( req.getOrderColumnLink() !=null) {//Hawke add 'id'
             writer.println("<input type='hidden' id='orderColumns' name='order/columns' value='");
             clink=req.getOrderColumnLink();
@@ -1824,4 +1858,59 @@ public final class QueryUtils {
 		return count;
 		
     }
+
+	public static List getViewableCxtabs(Table paramTable, UserWebImpl user)
+			throws Exception {
+		TableManager manager = TableManager.getInstance();
+		QueryRequestImpl query = QueryEngine.getInstance().createRequest(
+				user.getSession());
+		Table tab = manager.getTable("ad_cxtab");
+		query.setMainTable(tab.getId());
+		query.addSelection(tab.getPrimaryKey().getId());
+
+		query.addOrderBy(new int[] { tab.getAlternateKey().getId() }, true);
+		Expression expr=new Expression(new ColumnLink("ad_cxtab.ad_table_id"),"="+ paramTable.getId(),null);
+    	expr=expr.combine(new Expression(new ColumnLink("ad_cxtab.isactive"),"=Y",null),nds.query.SQLCombination.SQL_AND, null);
+    	expr=expr.combine( new Expression(new ColumnLink("ad_cxtab.ispublic"),"=Y",null),nds.query.SQLCombination.SQL_AND, null);
+    	expr=expr.combine( user.getSecurityFilter(tab.getName(), 1),nds.query.SQLCombination.SQL_AND, null);
+		
+		
+		query.addParam(expr);
+
+		List rs = QueryEngine.getInstance().doQueryList(query.toSQL());
+
+		String sql_cx = "select distinct x.id,x.name from ad_cxtab x, users u where x.ad_table_id=? and x.ad_client_id=? and x.reporttype='S' and u.id=x.ownerid and (x.id=? or (x.parent_id=? and u.name='root'))";
+
+		ArrayList rs_cxtab = new ArrayList();
+		for (int i = 0; i < rs.size(); i++) {
+			int j = Tools.getInt(rs.get(i), -1);
+			List localList = QueryEngine.getInstance().doQueryList(
+					sql_cx,
+					new Object[] { Integer.valueOf(paramTable.getId()),
+							Integer.valueOf(user.getAdClientId()),
+							Integer.valueOf(j), Integer.valueOf(j) });
+
+			rs_cxtab.addAll(localList);
+		}
+
+		return rs_cxtab;
+	}
+
+	public static String parseClobOrString(Object paramObject)
+			throws NDSException {
+		if (paramObject == null)
+			return null;
+
+		if (paramObject instanceof Clob)
+			try {
+				paramObject = ((Clob) paramObject).getSubString(1L,
+						(int) ((Clob) paramObject).length());
+			} catch (Throwable e) {
+				throw new NDSException(e.getMessage(), e);
+			}
+		else
+			paramObject = paramObject.toString();
+		return (String)paramObject;
+	}
+    
 }
