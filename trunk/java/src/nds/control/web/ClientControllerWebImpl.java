@@ -216,7 +216,7 @@ public class ClientControllerWebImpl implements java.io.Serializable,ServletCont
 
     public StateMachine getStateMachine()
     {
-      return ((ClientControllerBean)threadPool).getStateMachine();
+      return ((ClientControllerBean)ccInstance).getStateMachine();
     }
     /**
      * feeds the specified event to the state machine of the business logic.
