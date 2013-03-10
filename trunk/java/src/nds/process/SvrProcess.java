@@ -31,6 +31,11 @@ public abstract class SvrProcess implements ProcessCall {
 
 	private ProcessInfo m_pi;
 	
+	public boolean internalTransaction()
+	{
+		return false;
+	}
+	
 	/**
 	 * Server Process. Note that the class is initiated by startProcess.
 	 */
@@ -76,6 +81,7 @@ public abstract class SvrProcess implements ProcessCall {
 		ValueHolder holder=new ValueHolder();
 		try {
 			prepare();
+			log.debug("process do it !!!!!!!!!");
 			msg = doIt();
 			if(msg==null)msg="Finished at "+(new java.util.Date());
 		} catch (Throwable e) {
