@@ -12,7 +12,6 @@ import nds.process.ProcessInfo;
 import nds.process.ProcessInfoUtil;
 import nds.process.ProcessUtils;
 import nds.query.QueryEngine;
-import nds.util.ServletContextActor;
 import nds.util.*;
 
 import java.sql.Connection;
@@ -22,6 +21,8 @@ import java.util.*;
 
 import javax.servlet.ServletContext;
 
+import nds.log.Logger;
+import nds.log.LoggerManager;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 /**
@@ -224,15 +225,24 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
 		Connection conn=null;
 		PreparedStatement pstmt= null;
 		ResultSet rs=null;
+		//System.out.print("1111");
 		try{
+			//System.out.print("2222");
+			//logger.debug("loadjob !");
 			conn=QueryEngine.getInstance().getConnection();
+			//logger.debug("loadjob !");
 			pstmt= conn.prepareStatement(GET_QUEUE_INFO);
 			pstmt.setString(1,queueName);
 			pstmt.setString(2,serverId + ",");
+			//logger.debug("loadjob !");
 			rs= pstmt.executeQuery();
+			//logger.debug("loadjob !");
+			//System.out.print("2222");
 			if(rs.next()){
 				triggerName= rs.getString(1);
 				cron=rs.getString(2);
+				//System.out.print(triggerName);
+				//System.out.print(cron);
 				if("O".equals(rs.getString(3))){
 					// one time
 					jobClass= OneTimeQueueExecuterJob.class;
@@ -241,6 +251,21 @@ public class JobManager implements java.io.Serializable,ServletContextActor,Dest
 			}else{
 				throw new ObjectNotFoundException("Process Queue named "+queueName +" not found or not active.");
 			}
+			if (rs != null)
+				try {
+					rs.close();
+				} catch (Exception e) {
+				}
+			if (pstmt != null)
+				try {
+					pstmt.close();
+				} catch (Exception e) {
+				}
+			if (conn != null)
+				try {
+					conn.close();
+				} catch (Exception e) {
+				}
 			
 		}finally{
 			if(rs!=null) try{rs.close();}catch(Exception e){}
