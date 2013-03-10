@@ -8,17 +8,24 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.JSONObject;
+
 import java.util.*;
 
 import nds.audit.Program;
 import nds.control.ejb.Command;
 import nds.control.event.NDSEventException;
+import nds.control.web.ClientControllerWebImpl;
 import nds.control.web.UserWebImpl;
 import nds.control.web.WebUtils;
 import nds.log.*;
+import nds.monitor.MonitorManager;
+import nds.monitor.ObjectActionEvent;
+import nds.monitor.ObjectActionEvent.ActionType;
 import nds.query.*;
 import nds.util.*;
 import nds.schema.*;
+import nds.security.User;
 
 import java.sql.*;
 
@@ -361,7 +368,18 @@ public class AuditUtils {
 			if("R".equals(action)){
 				vh.put("message","@rejected@,@audit-process-name@:"+processName+",@audit-phase-name@:"+ phaseName);
 				vh.put("code", "-2"); // so can let object do submit again
-				break;
+				//break;
+				if (MonitorManager.getInstance().isMonitorPluginInstalled()) {
+					//monitor plugin
+					JSONObject cxt=new JSONObject();
+					cxt.put("source", "AuditUtils.executeProcess");
+					cxt.put("connection", conn);
+					cxt.put("statemachine", ((ClientControllerWebImpl)WebUtils.getServletContextManager().getActor("nds.web.webController"))
+							.getStateMachine());
+					User usr = SecurityUtils.getUser(userId);
+					ObjectActionEvent oae=new ObjectActionEvent(table.getId(),objectId, usr.adClientId,ActionType.REJECT, usr, cxt);
+					MonitorManager.getInstance().dispatchEvent(oae);
+				}
 			}else if("A".equals(action)){
 				//move to next
 				vh.put("message", "@accepted@");
@@ -370,7 +388,18 @@ public class AuditUtils {
 				vh.put("message","@wait-for-approve@,@audit-process-name@:"+processName+",@audit-phase-name@:"+ phaseName);
 				vh.put("code", "0");
 				//stop
-				break;
+				//break;
+				if (MonitorManager.getInstance().isMonitorPluginInstalled()) {
+					//monitor plugin
+					JSONObject cxt=new JSONObject();
+					cxt.put("source", "AuditUtils.executeProcess");
+					cxt.put("connection", conn);
+					cxt.put("statemachine", ((ClientControllerWebImpl)WebUtils.getServletContextManager().getActor("nds.web.webController"))
+							.getStateMachine());
+					User usr = SecurityUtils.getUser(userId);
+					ObjectActionEvent oae=new ObjectActionEvent(table.getId(),objectId, usr.adClientId,ActionType.AUDITING, usr, cxt);
+					MonitorManager.getInstance().dispatchEvent(oae);
+				}
 			}else{
 				throw new NDSException("Unsupported action:"+ action);
 			}				
@@ -381,6 +410,16 @@ public class AuditUtils {
 		}
 		//update record status
 		return vh;
+	}
+	
+	public static boolean hasPhaseInstance(int paramInt1, int paramInt2,
+			int paramInt3) throws Exception {
+		return QueryEngine
+				.getInstance()
+				.doQueryInt(
+						"select p.id from au_phaseinstance p where ad_table_id=? and record_id=? and rownum<2",
+						new Object[] { Integer.valueOf(paramInt1),
+								Integer.valueOf(paramInt2) }) > 0;
 	}
 	/**
 	 * 获取 tableId,objectId 所指向的表的物理记录上，对应的clink 字段所指向的user
