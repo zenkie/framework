@@ -22,6 +22,9 @@ import nds.control.event.NDSEventException;
 import nds.control.util.ValueHolder;
 import nds.control.web.WebUtils;
 import nds.mail.NotificationManager;
+import nds.monitor.MonitorManager;
+import nds.monitor.ObjectActionEvent;
+import nds.monitor.ObjectActionEvent.ActionType;
 import nds.query.*;
 import nds.schema.*;
 import nds.security.User;
@@ -230,7 +233,22 @@ public class ObjectModify extends Command{
 
  	   
        helper.doTrigger("AM", parent, poids, con);
-
+       try{
+		   //monitor plugin
+    	   logger.debug("monitor plugin");
+		   JSONObject cxt=new JSONObject();
+		   cxt.put("source", this);
+		   cxt.put("connection", con);
+		   cxt.put("statemachine", this.helper.getStateMachine());
+		   cxt.put("javax.servlet.http.HttpServletRequest", 
+		   event.getParameterValue("javax.servlet.http.HttpServletRequest", true));
+		   ObjectActionEvent oae=new ObjectActionEvent(table.getId(),
+				   objectId, usr.adClientId,ObjectActionEvent.ActionType.AM, usr, cxt);
+		   MonitorManager.getInstance().dispatchEvent(oae);
+       }catch(Exception t){
+			if(t instanceof NDSException) throw (NDSException)t;
+	  		throw new NDSException(t.getMessage(), t);
+       }
        ValueHolder v = new ValueHolder();
       String message  ="@total-records-updated@: "+ realCount ;
        v.put("message",message) ;
