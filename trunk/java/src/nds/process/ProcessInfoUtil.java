@@ -191,6 +191,7 @@ public class ProcessInfoUtil
 			conn= QueryEngine.getInstance().getConnection();
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, pi.getAD_PInstance_ID());
+			//System.out.println("After : " + sql+pi.getAD_PInstance_ID());
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
