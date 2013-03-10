@@ -3,13 +3,19 @@ package nds.web.action;
 
 import nds.log.Logger;
 import nds.log.LoggerManager;
+import nds.monitor.MonitorManager;
+import nds.monitor.ObjectActionEvent;
+import nds.monitor.ObjectActionEvent.ActionType;
 import nds.query.*;
 import nds.schema.*;
+import nds.security.User;
 import nds.util.*;
 import nds.control.web.*;
+import nds.control.ejb.StateMachine;
 import nds.control.util.*;
 
 import org.json.*;
+
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 
@@ -236,6 +242,46 @@ public abstract class WebActionImpl implements WebAction{
 			break;
 		default:
 			throw new NDSException("Not supported action type in execute:"+ actionType.getType());
+		}
+		
+		if ((this.displayType == WebAction.DisplayTypeEnum.ObjButton)
+				|| (this.displayType == WebAction.DisplayTypeEnum.ObjMenuItem)) {
+
+			int i = Tools.getInt(
+					getValueFromMap("objectid", params, Integer.valueOf(-1),
+							false), -1);
+			if (i == -1) {
+				JSONObject jor = (JSONObject) getValueFromMap("query",
+						params, null, false);
+				if (jor != null) {
+					XML.toString(jor);
+					logger.debug("WebAction query:"+XML.toString(jor));
+					i = jor.optInt("id", -1);
+				}
+			}
+			if (i > -1) {
+				logger.debug("dispatch event for object id=" + i
+						+ " of table =" + this.getTableId()
+						+ " over action id=" + this.getId());
+				User usr = (User) getValueFromMap("user", params, null, true);
+				Connection con = (Connection) getValueFromMap("connection",
+						params, null, true);
+				StateMachine statemachine = (StateMachine) getValueFromMap(
+						"statemachine", params, null, true);
+        		   //monitor plugin
+     		   JSONObject cxt=new JSONObject();
+     		   cxt.put("source", this);
+     		   cxt.put("connection", con);
+     		   cxt.put("statemachine", statemachine);
+     		   cxt.put("javax.servlet.http.HttpServletRequest", getValueFromMap("httpservletrequest", params, null, false));
+     		   ObjectActionEvent oae=new ObjectActionEvent(getTableId(),
+     				   i, usr.adClientId,getId(), usr, cxt);
+     		   MonitorManager.getInstance().dispatchEvent(oae);
+
+			} else {
+				logger.debug("Not find object id from env");
+			}
+
 		}
 		return map;
 	}
