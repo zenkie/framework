@@ -31,5 +31,8 @@ public interface ProcessCall {
 	 *  @param pi				Process Info
 	 *  @return true if the next process should be performed
 	 */
-	public ValueHolder startProcess (Properties ctx, ProcessInfo pi);
+	public abstract ValueHolder startProcess (Properties ctx, ProcessInfo pi);
+
+	public abstract boolean internalTransaction();
+
 }
