@@ -5,7 +5,9 @@
 package nds.process;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,7 +15,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Map;
 import javax.transaction.UserTransaction;
-
+import nds.io.PluginController;
 import nds.control.event.NDSEventException;
 import nds.control.util.EJBUtils;
 import nds.control.util.ValueHolder;
@@ -40,7 +42,7 @@ public class ProcessUtils {
 	
 	public static int createAdProcessInstance( int processId, String ad_processqueue_name,
 			String recordno, User user, List params, 
-			Map event, java.sql.Connection conn) throws Exception{
+			Map event, Connection conn) throws Exception{
 		return createAdProcessInstance(-1, processId,ad_processqueue_name,recordno,user,params,event,conn);
 	}
 	/**
@@ -58,7 +60,7 @@ public class ProcessUtils {
 	 */
 	public static int createAdProcessInstance(int pi_id,int processId, String ad_processqueue_name,
 			String recordno, User user, List params, 
-			Map event, java.sql.Connection conn) throws Exception{
+			Map event, Connection conn) throws Exception{
 	  	PreparedStatement pstmt=null;
 	  	
 		String pClassName=(String) QueryEngine.getInstance().doQueryOne("select nvl(CLASSNAME,PROCEDURENAME) from ad_process where id="+processId, conn);
@@ -135,7 +137,13 @@ public class ProcessUtils {
 	        		
 	        	}else throw new NDSException("@fail-to-create-task@:unknown value type="+ valueType);
 	        	pstmt.setInt(9, orderno);
-	        	pstmt.executeUpdate();
+	        	//pstmt.executeUpdate();
+	        	try {
+	        		pstmt.executeUpdate();
+	        	} catch (SQLException e) {
+	        		logger.error("Fail to do insert in ad_pinstance_para: name=" + name + ", valuetype=" + valueType + ", value=" + value, e);
+	        		throw e;
+	        	}
         	}
         }else{
         	throw new NDSEventException("@fail-to-create-task@:pinstanceid=-1");
@@ -207,45 +215,101 @@ public class ProcessUtils {
 		ProcessCall myObject = null;
     	UserTransaction ut=null;
     	ValueHolder holder=null;
-		try
-		{
-			if(doTransaction){
-				//how long will it run for most, in minutes, default to 1 day
-				int timeout=Tools.getInt(ctx.get(TRANSACTION_TIMEOUT), 14400);
-	            ut= EJBUtils.getUserTransaction();
-	            ut.setTransactionTimeout(timeout); // forever, different to handleEvent in ClientController
-	            ut.begin();
-			}
-			//try plugin path first, then local one
-			nds.io.PluginController pc=(nds.io.PluginController) WebUtils.getServletContextManager().getActor(nds.util.WebKeys.PLUGIN_CONTROLLER);
-			myObject= pc.newPluginProcess(ClassName);
-			if(myObject==null){
-				//load in local
-				Class myClass = Class.forName(ClassName);
-				myObject = (ProcessCall)myClass.newInstance();
-			}
-			
-			if (myObject == null){
-				holder = new ValueHolder();
-				holder.put("code","-1");
-				holder.put("message", ClassName+ " not valid");
-			}else{
-				holder = myObject.startProcess(ctx, pi);
-			}
-			// commit transaction
-			if(doTransaction)
-				ut.commit();			
-		}catch (Throwable e){
-            try{ if(ut!=null && doTransaction)ut.rollback();}catch(Throwable e2){
-                logger.error("Could not rollback.", e2);
-            }
-			pi.setSummary("Error Start Class " + ClassName, true);
-			logger.error("ProcessCtl.startClass - " + ClassName, e);
-			holder =new  ValueHolder();
-			holder.put("code","-1");
-			holder.put("message", "Error Start Class " + ClassName+":"+e);
-		}
 
+    	logger.debug("startClass "+ClassName);
+    	//try plugin path first, then local one
+    	PluginController pc=(PluginController) WebUtils.getServletContextManager().getActor(nds.util.WebKeys.PLUGIN_CONTROLLER);
+    	myObject= pc.newPluginProcess(ClassName);
+    	try{
+
+    		if(myObject==null){
+    			//load in local
+    			Class myClass = Class.forName(ClassName);
+    			myObject = (ProcessCall)myClass.newInstance();
+    		}
+    	}catch (Throwable e) {
+    		logger.error("Fail to load class " + ClassName, e);
+    		pi.setSummary("Error Start Class " + ClassName + ":" + e.getMessage(), true);
+    	}
+
+    	if (myObject == null){
+    		holder = new ValueHolder();
+    		holder.put("code","-1");
+    		holder.put("message", ClassName+ " not valid");
+    	}else if ((!doTransaction) && (((ProcessCall)myObject).internalTransaction()))
+    	{
+    		pi.setSummary("Transaction conflict", true);
+    		holder = new ValueHolder();
+    		holder.put("code", "-1");
+    		holder.put("message", "Transaction conflict");
+    	}
+    	try
+    	{
+    		if ((doTransaction) && (!((ProcessCall)myObject).internalTransaction())){
+    			//how long will it run for most, in minutes, default to 1 day
+    			int timeout=Tools.getInt(ctx.get(TRANSACTION_TIMEOUT), 14400);
+    			ut= EJBUtils.getUserTransaction();
+    			ut.setTransactionTimeout(timeout); // forever, different to handleEvent in ClientController
+    			ut.begin();
+    			ctx.put("javax.transaction.UserTransaction", ut);
+    		}
+    		//当任务线程 new 新的 Transaction是 插件设置了 autocomit问题
+    		holder = myObject.startProcess(ctx, pi);
+    		// commit transaction
+    		if(ut!=null)
+    			ut.commit();		
+
+    	}catch (Throwable e){
+    		try{ if(ut!=null && doTransaction)ut.rollback();}catch(Throwable e2){
+    			logger.error("Could not rollback.", e2);
+    		}
+    		pi.setSummary("Error Start Class " + ClassName, true);
+    		logger.error("ProcessCtl.startClass - " + ClassName, e);
+    		holder =new  ValueHolder();
+    		holder.put("code","-1");
+    		holder.put("message", "Error Start Class " + ClassName+":"+e);
+    	}
+	 /*
+
+    	try
+    	{
+    		if(doTransaction){
+    			//how long will it run for most, in minutes, default to 1 day
+    			int timeout=Tools.getInt(ctx.get(TRANSACTION_TIMEOUT), 14400);
+    			ut= EJBUtils.getUserTransaction();
+    			ut.setTransactionTimeout(timeout); // forever, different to handleEvent in ClientController
+    			ut.begin();
+    		}
+    		//try plugin path first, then local one
+    		nds.io.PluginController pc=(nds.io.PluginController) WebUtils.getServletContextManager().getActor(nds.util.WebKeys.PLUGIN_CONTROLLER);
+    		myObject= pc.newPluginProcess(ClassName);
+    		if(myObject==null){
+    			//load in local
+    			Class myClass = Class.forName(ClassName);
+    			myObject = (ProcessCall)myClass.newInstance();
+    		}
+
+    		if (myObject == null){
+    			holder = new ValueHolder();
+    			holder.put("code","-1");
+    			holder.put("message", ClassName+ " not valid");
+    		}else{
+    			holder = myObject.startProcess(ctx, pi);
+    		}
+    		// commit transaction
+    		if(doTransaction)
+    			ut.commit();	
+    			
+    	}catch (Throwable e){
+    		try{ if(ut!=null && doTransaction)ut.rollback();}catch(Throwable e2){
+    			logger.error("Could not rollback.", e2);
+    		}
+    		pi.setSummary("Error Start Class " + ClassName, true);
+    		logger.error("ProcessCtl.startClass - " + ClassName, e);
+    		holder =new  ValueHolder();
+    		holder.put("code","-1");
+    		holder.put("message", "Error Start Class " + ClassName+":"+e);
+    	}	*/	
 		return holder;
 	}   //  startClass
 
