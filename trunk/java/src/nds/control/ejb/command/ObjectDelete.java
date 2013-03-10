@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Vector;
 
+import org.json.JSONObject;
+
 import nds.control.ejb.Command;
 import nds.control.ejb.command.pub.Pub;
 import nds.control.event.DefaultWebEvent;
@@ -14,6 +16,9 @@ import nds.control.event.NDSEventException;
 import nds.control.util.ValueHolder;
 import nds.mail.MailMsg;
 import nds.mail.NotificationManager;
+import nds.monitor.MonitorManager;
+import nds.monitor.ObjectActionEvent;
+import nds.monitor.ObjectActionEvent.ActionType;
 import nds.query.QueryEngine;
 import nds.query.QueryUtils;
 import nds.schema.Table;
@@ -83,6 +88,17 @@ public class ObjectDelete extends Command{
         * Lock first
         */
        QueryUtils.lockRecord(table, objectid, con);
+	   //monitor plugin
+	   JSONObject cxt=new JSONObject();
+	   cxt.put("source", this);
+	   cxt.put("connection", con);
+	   cxt.put("statemachine", this.helper.getStateMachine());
+	   cxt.put("javax.servlet.http.HttpServletRequest", 
+	   event.getParameterValue("javax.servlet.http.HttpServletRequest", true));
+	   ObjectActionEvent oae=new ObjectActionEvent(table.getId(),
+			   objectid, usr.adClientId,ActionType.BD, usr, cxt);
+	   MonitorManager.getInstance().dispatchEvent(oae);
+       
        helper.doTrigger("BD", table, objectid, con);
        Table parent= helper.getParentTable(table,event);
        int[] poids= helper.getParentTablePKIDs( table, new int[]{objectid}, con);
