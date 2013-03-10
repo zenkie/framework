@@ -130,9 +130,11 @@ public class ExecuteWebAction extends Command {
     	webActionEnv.put("connection",conn);
     	webActionEnv.put("httpservletrequest",request);
     	webActionEnv.put("userweb",userWeb);
+    	webActionEnv.put("user",usr);
     	webActionEnv.put("userid",usr.id);
     	webActionEnv.put("webaction",action);
     	webActionEnv.put("objectid",objectId);
+    	webActionEnv.put("statemachine", this.helper.getStateMachine());
     	
     	// convert internal query object, which can be read by AjaxUtils.parseQuery, to sql like:
     	// select id from m_product where name like ¡®adf%¡¯ and isactive=¡¯Y¡¯
@@ -200,7 +202,7 @@ public class ExecuteWebAction extends Command {
 		logger.info("webaction table="+ table+", id="+objectId+" by "+ usr.name+" of id "+ usr.id);
 	  	return holder;
   	}catch(Throwable t){
-  		logger.error("exception",t);
+  		//logger.error("exception",t);
   		if(t instanceof NDSException) throw (NDSException)t;
   		else
   			throw new NDSException(t.getMessage(), t);
