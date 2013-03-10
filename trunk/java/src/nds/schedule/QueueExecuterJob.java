@@ -135,12 +135,13 @@ public class QueueExecuterJob implements InterruptableJob,StatefulJob {
 				String proc=rs.getString(4);
 				ProcessInfo pi= new ProcessInfo("", processId);
 				pi.setAD_PInstance_ID(instanceId);
+				//now set setParameterFromDB
 				ProcessInfoUtil.setParameterFromDB(pi);
 				long startTime= System.currentTimeMillis();
 				nds.control.util.ValueHolder hd=null;
 				if(Validator.isNotNull(clazz)){
+					//线程处理任务如果是class类型的 程序问题
 					hd= ProcessUtils.startClass(ctx, clazz, pi, true );
-					
 					failed += (hd.isOK()?0:1);
 				}else if(Validator.isNotNull(proc)){
 					hd=ProcessUtils.startProcedure(proc, pi );
