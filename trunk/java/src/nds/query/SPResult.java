@@ -38,6 +38,8 @@ import org.json.*;
 public class SPResult implements JSONString {
     private int code;
     private String msg="";
+    private Object tag;
+    
     public SPResult(CallableStatement stmt, int paramIndex) throws SQLException{
         code = stmt.getInt( paramIndex);
         String returnMsg = stmt.getString( paramIndex + 1);
@@ -88,4 +90,12 @@ public class SPResult implements JSONString {
     		return  JSONObject.NULL.toString();
     	}
     }
+
+	public Object getTag() {
+		return this.tag;
+	}
+
+	public void setTag(Object tag) {
+		this.tag = tag;
+	}
 }
