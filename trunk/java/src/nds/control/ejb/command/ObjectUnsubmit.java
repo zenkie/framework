@@ -1,7 +1,10 @@
 package nds.control.ejb.command;
 import java.rmi.RemoteException;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Vector;
+
+import org.json.JSONObject;
 
 import nds.control.ejb.Command;
 import nds.control.event.DefaultWebEvent;
@@ -9,6 +12,9 @@ import nds.control.event.NDSEventException;
 import nds.control.util.AuditUtils;
 import nds.control.util.SecurityUtils;
 import nds.control.util.ValueHolder;
+import nds.monitor.MonitorManager;
+import nds.monitor.ObjectActionEvent;
+import nds.monitor.ObjectActionEvent.ActionType;
 import nds.query.QueryEngine;
 import nds.query.SPResult;
 import nds.schema.*;
@@ -48,7 +54,9 @@ public class ObjectUnsubmit extends Command{
         
         tableName=table.getRealTableName();
         QueryEngine engine = QueryEngine.getInstance() ;
-        
+        Connection conn = helper.getConnection(event);
+        try
+       {
         int status = engine.getSheetStatus(tableName,pid );
         if(status!=2){
             throw new NDSEventException("@object-not-submitted@" );
@@ -92,11 +100,21 @@ public class ObjectUnsubmit extends Command{
             ArrayList list = new ArrayList();
             list.add(new Integer(pid));
             s=engine.executeStoredProcedure(spName,list,true);
+ 		   //monitor plugin
+ 		   JSONObject cxt=new JSONObject();
+ 		   cxt.put("source", this);
+ 		   cxt.put("connection", conn);
+ 		   cxt.put("statemachine", this.helper.getStateMachine());
+ 		   cxt.put("javax.servlet.http.HttpServletRequest", 
+ 		   event.getParameterValue("javax.servlet.http.HttpServletRequest", true));
+ 		   ObjectActionEvent oae=new ObjectActionEvent(table.getId(),
+ 				  pid, usr.adClientId,ActionType.UNSUBMIT, usr, cxt);
+ 		   MonitorManager.getInstance().dispatchEvent(oae);
         }catch(Exception e){
-        	     	
             if( e instanceof NDSException) throw (NDSException)e;
         	else throw new NDSEventException(e.getMessage(), e );
         }
+
         if(s.getCode()!=0){
         	throw new NDSEventException(s.getMessage());
         }
@@ -107,5 +125,12 @@ public class ObjectUnsubmit extends Command{
         
         return v;
 
-    }
+		} finally {
+			if (conn != null)
+				try {
+					helper.closeConnection(conn, event);
+				} catch (Throwable e) {
+				}
+		}
+	}
 }
