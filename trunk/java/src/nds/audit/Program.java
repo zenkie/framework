@@ -9,6 +9,8 @@ package nds.audit;
  * @author yfzhu@agilecontrol.com
  */
 
-public interface Program {
-	public String execute(int phaseInstanceId) throws Exception;
+public abstract interface Program
+{
+  public abstract String execute(int paramInt) throws Exception;
+  
 }
