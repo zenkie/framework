@@ -456,7 +456,7 @@ public class CxtabReport {
 		vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(sql)+" where name='filter' and ad_pinstance_id="+processInstanceId );
 		vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(filePath)+" where name='filename' and ad_pinstance_id="+processInstanceId );
 		QueryEngine.getInstance().doUpdate(vec, conn);
-		
+		//logger.debug("writeCSVFile :"+sql);
         rs= conn.createStatement().executeQuery(sql); //load from oracle
         
 		FileWriter fw=new FileWriter(filePath,false);
@@ -843,7 +843,9 @@ public class CxtabReport {
 		Matcher m = pt.matcher(f);
 		while (m.find()) {
 			String v=m.group();
-			String colname=null;Column col;
+			int j = m.start();
+			String colname=null;
+			Column col;
 			//get measure column for this value(alias)
 			for(int i=0;i< measures.size();i++){
 				List line= (List)measures.get(i);
@@ -859,6 +861,11 @@ public class CxtabReport {
 				colname= v;// so no replacement
 			}
 			if(isSumAvg){
+
+				if ((j > 0) && (f.substring(j - 1, j).equals("/")))
+				{
+					colname = "decode(sum(" + colname + "),0,1,sum(" + colname + "))";
+				}else
 				// add sum
 				colname= "sum("+ colname+")";
 			}
