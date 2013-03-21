@@ -4,7 +4,6 @@
 
 package com.liferay.portal.action;
 
-import java.sql.Connection;
 import java.sql.*;
 import java.util.regex.Pattern;
 
@@ -46,6 +45,7 @@ import com.liferay.util.servlet.SessionParameters;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -71,8 +71,15 @@ import javax.sql.DataSource;
 
 
 import nds.control.event.NDSEventException;
+import nds.schema.TableManager;
+import nds.util.LicenseManager;
+import nds.util.LicenseWrapper;
 import nds.util.SysLogger;
+import nds.util.Tools;
 import nds.portal.auth.*;
+import nds.query.QueryEngine;
+import nds.query.QueryUtils;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import java.security.*;
@@ -452,16 +459,24 @@ public class LoginAction extends Action {
 		    	}
 		    	// 是否当前处于禁止登录状态
 		    	if(!checkInactiveUser(req)){
+		    		logger.debug("checkInactiveUser");
 		    		return mapping.findForward("portal.login");
 		    	}
 		    	// USBKEY的校验
 		    	if(!checkUSBKey(req)){
+		    		logger.debug("checkUSBKey");
 		    		return mapping.findForward("portal.login");
 		    	}
-		    	
-				
-		    	login(req, res);
+		    	// 检查mac keyfile是否存在或有效
+		    	if(!check_mac(req)){
+		    		logger.debug("check_mac");
+		    		return mapping.findForward("portal.vaildkey");
+		    	}
 
+		    	
+		    	login(req, res);
+		    	redirect=check_num();
+		   
 				if (GetterUtil.getBoolean(
 						PropsUtil.get(PropsUtil.PORTAL_JAAS_ENABLE))) {
 					//logger.debug("ccc");
@@ -473,8 +488,23 @@ public class LoginAction extends Action {
 					 */
 					//res.sendRedirect(themeDisplay.getPathMain());
 					//return null;
-					//logger.debug("ddd");
+					logger.debug("redirect is "+redirect);
+					if(redirect!=null){
+					res.sendRedirect(redirect);
+		        	Thread t=new Thread(new Runnable(){
+		        		public void run(){
+		        			try{
+		        				Thread.sleep(60*60*1000);
+		        				logger.error("users or pos limit number!, will exit.");
+		        				System.exit(1099);
+		        			}catch(Throwable e){
+		        			}
+		        		}
+		        	});
+		        	t.start();
+					}else{
 					res.sendRedirect("/html/nds/portal/index.jsp?"+redirect);
+					}
 					return null;
 					//return mapping.findForward("/nds/portal/index.jsp");
 				}
@@ -832,8 +862,98 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 		}		
 		return authResult;
 	}	
-}
 
+	/**
+	 * return check usenum posnum
+	 * @param res 
+	 * @param req 
+	 */
+	private String check_num(){
+	    int user_num=0;
+	    int pos_num=0;
+	    int  cut_usr=0;
+	    int  cut_pos=0;
+	    String redirect="";
+	  	try{
+	  	// logger.debug("upload keyfile is"+mac);
+	    Iterator b=LicenseManager.getLicenses();
+
+	    while (b.hasNext()) {
+	    	LicenseWrapper o = (LicenseWrapper)b.next();
+	    	user_num=o.getNumUsers();
+	    	pos_num=o.getNumPOS();
+	    }
+		Connection conn= nds.query.QueryEngine.getInstance().getConnection();
+		QueryEngine engine=QueryEngine.getInstance();
+		cut_usr=Tools.getInt(engine.doQueryOne("select count(*) from users t where t.isactive='Y'", conn), -1);
+		cut_pos=Tools.getInt(engine.doQueryOne("select count(*) from c_store t where t.isactive='Y' and t.isretail='Y'", conn), -1);
+		logger.debug("cut_usr is "+cut_usr);
+		logger.debug("cut_pos is "+cut_pos);
+		if(cut_usr>user_num||cut_pos>pos_num){
+			
+			redirect="/html/prg/cutinfo.jsp?cu="+cut_usr+"&cs="+cut_pos+"&un="+user_num+"&pn="+pos_num;
+			//redirect="redirect="+java.net.URLEncoder.encode(redirect,"UTF-8");
+		}
+	   } catch (Exception e) {
+		   logger.debug("check mackey invaild",e);
+	   }
+		return redirect;
+	}
+
+	
+
+	/**
+	 * return check_mac address
+	 * @param req 
+	 * 
+	 */
+	private boolean check_mac(HttpServletRequest req){
+
+		Connection conn = null; 
+		Object sc=null;
+		String mac =null;
+		ResultSet rs = null;
+		PreparedStatement pstmt = null;
+		//if mac pass exists
+		//get mac file to check it
+		try{
+			conn= nds.query.QueryEngine.getInstance().getConnection();
+			pstmt= conn.prepareStatement("select mac from users where id=?");
+			pstmt.setInt(1, 893);
+			rs= pstmt.executeQuery();
+			if(rs.next()){
+				sc=rs.getObject(1);
+				if(sc instanceof java.sql.Clob) {
+					mac=((java.sql.Clob)sc).getSubString(1, (int) ((java.sql.Clob)sc).length());
+	        	}else{
+	        		mac=(String)sc;
+	        	}	
+			}
+			logger.debug("keyfile :"+mac);
+			if(mac==null){
+				SessionErrors.add(req, "VERIFY_KEYFILE_ERROR");
+				return false;
+				}
+		}catch(Throwable t){
+
+			return false;
+		}finally{
+			try{if(rs!=null) rs.close();}catch(Throwable t){}
+			try{if(pstmt!=null) pstmt.close();}catch(Throwable t){}
+			try{if(conn!=null) conn.close();}catch(Throwable t){}
+		}	
+		//else
+		nds.util.Configurations conf=(nds.util.Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+		try{
+			LicenseManager.validateLicense("jackrain","5.0", mac);
+			return true;
+		} catch (Exception e) {
+			logger.debug("check mackey invaild",e);
+			SessionErrors.add(req, "VERIFY_KEY_ERROR");
+			return false;
+		}
+	}
+}
 class HMAC_MD5
 {
 	
@@ -1021,4 +1141,7 @@ class HMAC_MD5
 
 		return r.toString();
 	}
+	
+
+	
 }
