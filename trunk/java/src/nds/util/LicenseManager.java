@@ -7,7 +7,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jdom.JDOMException;
 
-
+import com.getMAC.checkMACAddr;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -15,7 +15,7 @@ import java.security.KeyFactory;
 import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
-
+import nds.util.AES;
 
 public final class LicenseManager {
 	private static final Log logger = LogFactory.getLog(LicenseManager.class);
@@ -24,11 +24,20 @@ public final class LicenseManager {
 	
 	private LicenseManager() {
 	}
-	public static void validateLicense(String product, String version, String licenseFile)
+	
+	public static void validateLicense(String product, String version, String licenseFile){
+		
+		validateLicense( product,  version,  licenseFile, false);
+	}
+	
+	public static void validateLicense(String product, String version, String licenseFile,boolean update)
 			throws LicenseException {
 		//cpuid is not easy to get when in dual kenerl of cpu, so disable checking from 2008-07-24
-		if(true) return;
-		loadLicenses(licenseFile);
+		if (update) {
+			reloadLicenses(licenseFile);
+		} else {
+			loadLicenses(licenseFile);
+		}
 		if (!licenses.isEmpty()) {
 			float needsVersion = Float.parseFloat(version.substring(0, 3));
 			for (int i = 0; i < licenses.size(); i++) {
@@ -91,8 +100,8 @@ public final class LicenseManager {
 			licenseProxies.add(new LicenseWrapper((License) licenses.get(i)));
 
 		return licenseProxies.iterator();
-	}
-
+	}  
+	
 
 	static boolean validate(License license) throws Exception {
 		// nds public key should be set fixed here, encoded using 
@@ -114,33 +123,35 @@ public final class LicenseManager {
 	private static synchronized void loadLicenses(String licenseFile) {
 
 		int i;
+		int chekmac;
+		
 		if (licenses != null)
 			return;
 		licenses = new ArrayList();
-		File file;
+		//File file;
 
-		file = new File(licenseFile);
+		//file = new File(licenseFile);
 		License license;
-		logger.debug("Found potential license " + file.getName());
+		//logger.debug("Found potential license " + file.getName());
+//		
+//			BufferedReader in = new BufferedReader(new FileReader(file));
+//			StringBuffer text = new StringBuffer();
+//			char buf[] = new char[1024];
+//			int len;
+//			while ((len = in.read(buf)) >= 0) {
+//				int j = 0;
+//				while (j < len) {
+//					char ch = buf[j];
+//					if (Character.isLetter(ch) || Character.isDigit(ch)
+//							|| ch == '+' || ch == '/' || ch == '=')
+//						text.append(ch);
+//					j++;
+//				}
+//			} 
+//			in.close();
 		try {
-			BufferedReader in = new BufferedReader(new FileReader(file));
-			StringBuffer text = new StringBuffer();
-			char buf[] = new char[1024];
-			int len;
-			while ((len = in.read(buf)) >= 0) {
-				int j = 0;
-				while (j < len) {
-					char ch = buf[j];
-					if (Character.isLetter(ch) || Character.isDigit(ch)
-							|| ch == '+' || ch == '/' || ch == '=')
-						text.append(ch);
-					j++;
-				}
-			} 
-			in.close();
-
-			String xml = B64Code.decode(Tools.decrypt(text.toString()));
-			//System.out.println(xml);
+			String xml = B64Code.decode(Tools.decrypt(licenseFile));
+			System.out.println(xml);
 			//logger.debug(xml);
 			license = License.fromXML(xml);
 			logger.debug("creationDate=" + license.getCreationDate());
@@ -156,27 +167,27 @@ public final class LicenseManager {
 			logger.debug("numOnlineUsers="+ license.getNumOnlineUsers());
 			logger.debug("numPOS="+ license.getNumPOS());
 			logger.debug("product=" + license.getProduct());
+			logger.debug("cuscode=" + license.getCuscode());
 
 			if (license.getLicenseID() == 1L) {
-				logger.error("The license \"" + file.getName()
-						+ "\" is out of date and is no longer "
+				logger.error("The license is out of date and is no longer "
 						+ "valid. Please use a new license file.");
 				return;
 
 			}
 			if(license.getExpiresDate() ==null ){
-				logger.error("The license \"" + file.getName()+"\" has no expiration date.");
-				return;
+				logger.error("The license  has no expiration date.");
+				//return;
 			}
 			if(license.getCreationDate() ==null ||  license.getCreationDate().getTime() > System.currentTimeMillis()){
-				logger.error("The license \"" + file.getName()+"\" has no creation date or invalid creation date.");
+				logger.error("The license  has no creation date or invalid creation date.");
 				return;
 			}
 			long now = System.currentTimeMillis();
-			if (license.getExpiresDate().getTime() < now) {
-				logger.error("The license \"" + file.getName()+"\" is expired.");
-				return;
-			}
+//			if (license.getExpiresDate().getTime() < now) {
+//				logger.error("The license is expired.");
+//				return;
+//			}
 			if( license.getMachineCode()!=null){
 				String currentCodes= Tools.getCPUIDs(license.getMachineCode());
 				boolean match=false;
@@ -192,8 +203,7 @@ public final class LicenseManager {
 					}
 				}*/ // no more tokens
 				if(!match){
-					logger.error("The license \"" + file.getName()
-							+ "\" is not valid for machine code.");
+					logger.error("The license is not valid for machine code.");
 					logger.debug("server code is :"+ currentCodes);
 					return;
 				}
@@ -205,8 +215,7 @@ public final class LicenseManager {
 				
 			}else{
 				if(license.getLicenseType()==License.LicenseType.COMMERCIAL){
-					logger.error("The license \"" + file.getName()
-							+ "\" should contain machine code.");
+					logger.error("The license should contain machine code.");
 					return;
 				}else if(license.getLicenseType()==License.LicenseType.NON_COMMERCIAL){
 					//Non-Commercial should not have valid duration over 100 days
@@ -216,18 +225,28 @@ public final class LicenseManager {
 					}
 				}else if(license.getLicenseType()==License.LicenseType.EVALUATION){
 					// Evaluation should not have valid duration over 31 days
-					if(license.getExpiresDate().getTime() - license.getCreationDate().getTime() > 1L * 31 * 24 * 3600* 1000  ){
-						logger.error("Evaluation license valid duration should not be greater than 30 days");
-						return;
-					}
+					logger.debug("Evaluation should not have valid duration over");
+//					if(license.getExpiresDate().getTime() - license.getCreationDate().getTime() > 1L * 31 * 24 * 3600* 1000  ){
+//						logger.error("Evaluation license valid duration should not be greater than 30 days");
+//						//return;
+//					}
 				}
 			}
+			/*
 			if (!validate(license)) {
-				logger.error("The license \"" + file.getName()
-						+ "\" is not valid.");
+				logger.error("The license is not valid.");
 				return;
 			}
-			
+			*/
+			/*
+			 * add check mac address is vaild
+			 * */
+			AES aes=new AES("burgeon");
+			chekmac = checkMACAddr.checkMAC(aes.decrypt(license.getCuscode()));
+			if(chekmac==0){
+				logger.error("The license is not valid for this machine!!!");
+				return;
+			}
 			licenses.add(license);
 			if (licenses.isEmpty())
 				logger.error("Not valid license file "+ licenseFile );
