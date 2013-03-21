@@ -5,26 +5,13 @@
 package nds.util;
 
 import java.io.*;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.PrintStream;
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.JarURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
 import java.util.*;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -76,7 +63,7 @@ public final class Tools {
             return str+val;  
         }  
     } 
-	
+	/*
 	public static String decrypt(String s){
 		//return deobfuscate(s);
 		return NativeTools.decrypt(s);
@@ -86,7 +73,53 @@ public final class Tools {
 		//return obfuscate(s);
 		return NativeTools.encrypt(s);
 		//return null;
+	}*/
+	
+	public static String encrypt(String s) {
+		StringBuffer buf = new StringBuffer();
+		byte[] b = s.getBytes();
+
+		synchronized (buf)
+		{
+			for (int i = 0; i < b.length; i++)
+			{
+				byte b1 = b[i];
+				byte b2 = b[(s.length() - (i + 1))];
+				int i1 = b1 + b2 + 127;
+				int i2 = b1 - b2 + 127;
+				int i0 = i1 * 256 + i2;
+				String x = Integer.toString(i0, 36);
+
+				switch (x.length()) {
+				case 1:
+					buf.append('0');
+				case 2:
+					buf.append('0');
+				case 3:
+					buf.append('0');
+				}buf.append(x);
+			}
+
+			return buf.toString();
+		}
 	}
+
+	public static String decrypt(String s)
+	{
+		byte[] b = new byte[s.length() / 2];
+		int l = 0;
+		for (int i = 0; i < s.length(); i += 4)
+		{
+			String x = s.substring(i, i + 4);
+			int i0 = Integer.parseInt(x, 36);
+			int i1 = i0 / 256;
+			int i2 = i0 % 256;
+			b[(l++)] = ((byte)((i1 + i2 - 254) / 2));
+		}
+
+		return new String(b, 0, l);
+	}
+	
     private static String[] _BOOLEANS = {"true", "t", "y", "on", "1"};
     
     private final static boolean isDebug=false;
