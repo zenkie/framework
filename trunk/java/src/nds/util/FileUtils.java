@@ -177,8 +177,8 @@ public class FileUtils {
             try {
                 fOut.close();
                 fIn.close();
-                fcOut.close();
-                fcIn.close();
+               // fcOut.close();
+               // fcIn.close();
             } catch (Exception e) {
                 logger.debug( "Cannot close some i/o which are open.", e);
             }
