@@ -472,14 +472,28 @@ public class LoginAction extends Action {
 		    		logger.debug("check_mac");
 		    		return mapping.findForward("portal.vaildkey");
 		    	}
-
-		    	
 		    	login(req, res);
-		    	redirect=check_num();
-		   
+		    	String limtnum=check_num();
+				logger.debug("redirect is "+limtnum);
+				if(limtnum!=null){
+	        	Thread t=new Thread(new Runnable(){
+	        		public void run(){
+	        			try{
+	        				Thread.sleep(60*60*1000);
+	        				logger.error("users or pos limit number!, will exit.");
+	        				System.exit(1099);
+	        			}catch(Throwable e){
+	        			}
+	        		}
+	        	});
+	        	t.start();
+	        	res.sendRedirect(limtnum);
+	        	return null;
+				}
+				
 				if (GetterUtil.getBoolean(
 						PropsUtil.get(PropsUtil.PORTAL_JAAS_ENABLE))) {
-					//logger.debug("ccc");
+					logger.debug("ccc");
 					return mapping.findForward("/portal/touch_protected.jsp");
 				}
 				else {
@@ -488,24 +502,9 @@ public class LoginAction extends Action {
 					 */
 					//res.sendRedirect(themeDisplay.getPathMain());
 					//return null;
-					logger.debug("redirect is "+redirect);
-					if(redirect!=null){
-					res.sendRedirect(redirect);
-		        	Thread t=new Thread(new Runnable(){
-		        		public void run(){
-		        			try{
-		        				Thread.sleep(60*60*1000);
-		        				logger.error("users or pos limit number!, will exit.");
-		        				System.exit(1099);
-		        			}catch(Throwable e){
-		        			}
-		        		}
-		        	});
-		        	t.start();
-					}else{
 					res.sendRedirect("/html/nds/portal/index.jsp?"+redirect);
-					}
 					return null;
+					
 					//return mapping.findForward("/nds/portal/index.jsp");
 				}
 			}
@@ -873,7 +872,7 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 	    int pos_num=0;
 	    int  cut_usr=0;
 	    int  cut_pos=0;
-	    String redirect="";
+	    String redirect=null;
 	  	try{
 	  	// logger.debug("upload keyfile is"+mac);
 	    Iterator b=LicenseManager.getLicenses();
@@ -890,9 +889,7 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 		logger.debug("cut_usr is "+cut_usr);
 		logger.debug("cut_pos is "+cut_pos);
 		if(cut_usr>user_num||cut_pos>pos_num){
-			
 			redirect="/html/prg/cutinfo.jsp?cu="+cut_usr+"&cs="+cut_pos+"&un="+user_num+"&pn="+pos_num;
-			//redirect="redirect="+java.net.URLEncoder.encode(redirect,"UTF-8");
 		}
 	   } catch (Exception e) {
 		   logger.debug("check mackey invaild",e);
