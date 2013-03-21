@@ -17,6 +17,7 @@ public final class License {
 
 	private String product;
 
+	private String cus_code; 
 	private String version;
 
 	private LicenseType licenseType;
@@ -53,6 +54,7 @@ public final class License {
 		this.product = product;
 		this.version = version;
 		this.licenseType = licenseType;
+		cus_code=null;
 		//this.licenseType = new LicenseType("Commercial");
 		name = null;
 		company = null;
@@ -65,6 +67,14 @@ public final class License {
 		licenseSignature = null;
 	}
 
+	//add cus_code
+	public String getCuscode() {
+		return cus_code;
+	}
+
+	public void setCuscode(String cus_code) {
+		this.cus_code = cus_code;
+	}
 	
 
 	public long getLicenseID() {
@@ -177,6 +187,7 @@ public final class License {
 		buf.append(numUsers).append(seperator);
 		buf.append(numOnlineUsers).append(seperator);
 		buf.append(numPOS).append(seperator);
+		buf.append(cus_code).append(seperator);
 		try {
 			if (expiresDate != null)
 				buf.append(formatter.format(expiresDate)).append(seperator);;
@@ -237,7 +248,8 @@ public final class License {
 				+ license.getNumOnlineUsers()));
 		el.addContent((new Element("numPOS")).addContent(""
 				+ license.getNumPOS()));
-
+		el.addContent((new Element("cuscode")).addContent(""
+				+ license.getCuscode()));
 		el.addContent((new Element("url"))
 				.addContent(license.getURL() != null ? license.getURL() : ""));
 		el.addContent((new Element("expiresDate")).addContent(license
@@ -262,7 +274,7 @@ public final class License {
 	}
 
 	public static License fromXML(String xml) throws Exception {
-		System.out.println(xml);
+		//System.out.println(xml);
 		SAXBuilder builder = new SAXBuilder();
 		StringReader in = new StringReader(xml);
 		Document doc = builder.build(in);
@@ -272,10 +284,14 @@ public final class License {
 		int licenseID = Integer.parseInt(el.getChild("licenseID").getText());
 		String product = el.getChild("product").getText();
 		String version = el.getChild("version").getText();
+		String cuscode = el.getChild("cuscode").getText();
 		LicenseType licenseType = LicenseType.fromString(el.getChild(
 				"licenseType").getText());
 		License license = new License(licenseID, product, version, licenseType);
+		
 		String name = el.getChild("name").getText();
+		if (cuscode != null && !cuscode.equals(""))
+			license.setCuscode(cuscode);
 		if (name != null && !name.equals(""))
 			license.setName(name);
 		String company = el.getChild("company").getText();
@@ -323,6 +339,7 @@ public final class License {
 				+ licenseType + ", name='" + name + "'" + ", company='"
 				+ company + "'" +", machineCode='"
 				+ machineCode + "'"+ ", numUsers=" + numUsers +", numOnlineUsers="+ numOnlineUsers
+				+ ", cuscode="+ cus_code
 				+ ", numPOS="+ numPOS
 				+ ", url='" + url
 				+ "'" + ", expiresDate=" + expiresDate
