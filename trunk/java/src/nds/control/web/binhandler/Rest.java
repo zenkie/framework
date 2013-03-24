@@ -239,7 +239,7 @@ public class Rest implements BinaryHandler{
         			   */
        				  jo.put("parsejson","Y");  
         		  }
-        		  if(singleTransaction) jo.put("nds.control.ejb.UserTransaction","Y");
+        		  if(singleTransaction&&!jo.has("nds.control.ejb.UserTransaction")) jo.put("nds.control.ejb.UserTransaction","Y");
 
     			  ValueHolder vh=AjaxUtils.process(jo, usr.getSession(), usr.getUserId(), usr.getLocale());
 	    		  trs.setCode(Tools.getInt( vh.get("code"), 0));
