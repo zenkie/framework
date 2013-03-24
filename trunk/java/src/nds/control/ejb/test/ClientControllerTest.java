@@ -124,7 +124,7 @@ public class ClientControllerTest {
     // Methods that use Remote interface methods to access data through the bean
     //----------------------------------------------------------------------------
 
-    public ValueHolder handleEvent(NDSEvent ese) {
+    public ValueHolder handleEvent(DefaultWebEvent ese) {
         ValueHolder returnValue = null;
         if (clientController == null) {
             System.out.println("Error in handleEvent(): " + ERROR_NULL_REMOTE);
