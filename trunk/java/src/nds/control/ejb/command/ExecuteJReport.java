@@ -1,5 +1,6 @@
 package nds.control.ejb.command;
 
+import java.io.File;
 import java.net.URLEncoder;
 import java.rmi.RemoteException;
 import java.sql.Connection;
@@ -62,23 +63,24 @@ public class ExecuteJReport extends Command {
 		int userId=user.getId().intValue();
 		JSONObject jo= event.getJSONObject();
 		
-		Table table = TableManager.getInstance().findTable(jo.get("table"));
-		int tableId= table.getId();
-		String dir= table.getSecurityDirectory();
-		event.setParameter("directory",  dir);	
-	  	helper.checkDirectoryReadPermission(event, user);
+		//Table table = TableManager.getInstance().findTable(jo.get("table"));
+		//int tableId= table.getId();
+		//String dir= table.getSecurityDirectory();
+		//event.setParameter("directory",  dir);	
+	  	//helper.checkDirectoryReadPermission(event, user);
 		
 	  	//default file type to html
+		logger.debug(jo.toString());
 	  	String fileType= jo.getString("filetype");
 	  	
 	  	List list;
 	  	String cxtabName= jo.getString("cxtab");
 	  	int cxtabId =Tools.getInt(cxtabName, -1);
 	  	if(cxtabId==-1){
-	  		list=engine.doQueryList("select c.ad_processqueue_id, q.name , c.isbackground,c.name,c.pre_procedure,c.AD_PI_COLUMN_ID from ad_cxtab c, ad_processqueue q where q.id= c.ad_processqueue_id and c.name="+ QueryUtils.TO_STRING(cxtabName),conn);
+	  		list=engine.doQueryList("select c.ad_processqueue_id, q.name , c.isbackground,c.name,c.pre_procedure,c.AD_PI_COLUMN_ID,c.ad_table_id  from ad_cxtab c, ad_processqueue q where q.id= c.ad_processqueue_id and c.name="+ QueryUtils.TO_STRING(cxtabName),conn);
 	  		cxtabId=Tools.getInt( engine.doQueryOne("select id from ad_cxtab where ad_client_id="+ user.adClientId +" and c.name="+ QueryUtils.TO_STRING(cxtabName),conn), -1);
 	  	}else{
-	  		list=engine.doQueryList("select c.ad_processqueue_id, q.name , c.isbackground,c.name,c.pre_procedure,c.AD_PI_COLUMN_ID from ad_cxtab c, ad_processqueue q where q.id= c.ad_processqueue_id and c.id="+ cxtabName,conn);
+	  		list=engine.doQueryList("select c.ad_processqueue_id, q.name , c.isbackground,c.name,c.pre_procedure,c.AD_PI_COLUMN_ID,c.ad_table_id  from ad_cxtab c, ad_processqueue q where q.id= c.ad_processqueue_id and c.id="+ cxtabName,conn);
 	  	}
 	  	
 	  	if(list.size()==0) throw new NDSException("@parameter-error@:(cxtab="+ cxtabName+")" );		
@@ -90,7 +92,11 @@ public class ExecuteJReport extends Command {
 	  	
 	  	String preProcedure=(String) ((List)list.get(0)).get(4);
 	  	int piColumnId=Tools.getInt( ((List)list.get(0)).get(5), -1);//AD_PI_COLUMN_ID
-
+	  	int Tableid = Tools.getInt(((List)list.get(0)).get(6), -1);//ad_table_id
+	  	Table table=TableManager.getInstance().getTable(Tableid);
+		String dir= table.getSecurityDirectory();
+		event.setParameter("directory",  dir);	
+	  	helper.checkDirectoryReadPermission(event, user);	  	
 	  	
 //	  cxtab name must be name, not pk in process
 		JSONObject query=new JSONObject( jo.getString("query"));
@@ -116,6 +122,10 @@ public class ExecuteJReport extends Command {
 		List params= engine.doQueryList("select name, valuetype,nullable,orderno from ad_process_para where ad_process_id="+pid+" order by orderno asc", conn);
 		HashMap map=new HashMap();
 		String filterDesc=null;
+		QuerySession qs;
+		if ((qs = event.getQuerySession()) == null)
+			qs = QueryUtils.createQuerySession(userId, user.getSecurityGrade(), "EXECUTECXTAB", event.getLocale());
+
 		if(Validator.isNotNull(preProcedure)){
 			
 			piId = engine.getSequence("ad_pinstance");
@@ -124,7 +134,7 @@ public class ExecuteJReport extends Command {
 			Expression expr=null;
 			if (piColumnId !=-1) expr=new Expression(new ColumnLink( new int[]{piColumnId}),"="+ piId,null);
 			else logger.debug("find ad_pi_column_id=-1 for cxtab id="+ cxtabId);
-			req=ExecuteCxtab.constructQuery(table,event.getQuerySession(), userId, event.getLocale(),expr);
+			req=ExecuteCxtab.constructQuery(table,qs, userId, event.getLocale(),expr);
 			
 			// 将ad_cxtab_jpara里的参数定义构造到 params 里，并将界面上传入的参数值放置到map 里
 			String cs=query.optString("param_str");
@@ -138,10 +148,10 @@ public class ExecuteJReport extends Command {
 		    	}
 		    	//logger.debug( Tools.toString(csMap));
 		    	
-		    	filterDesc=ExecuteCxtab.addJparams(params, map, cxtabId,csMap,event.getQuerySession(), userId,event.getLocale(), conn);
+		    	filterDesc=ExecuteCxtab.addJparams(params, map, cxtabId,csMap,qs, userId,event.getLocale(), conn);
 			}
 		}else{
-			req=nds.control.util.AjaxUtils.parseQuery(query, event.getQuerySession(), userId, event.getLocale());
+			req=nds.control.util.AjaxUtils.parseQuery(query, qs, userId, event.getLocale());
 		}	  	
 	  	// cxtab name must be name, not pk in process
 	  	String queryStr=jo.getString("query");
@@ -165,11 +175,15 @@ public class ExecuteJReport extends Command {
 		String filename="CXR_"+cxtabId+sdf.format(new Date());
 		map.put("FILENAME", filename);
 		map.put("FILETYPE", fileType);
-		
+
+		String folder = jo.optString("folder");
+		if (Validator.isNotNull(filename) ){
+			map.put("FOLDER", folder);
+		}		
 	    piId=ProcessUtils.createAdProcessInstance(piId,pid,queueName, "",user,params,map,conn);
 	    ValueHolder hd=null;
 	    JSONObject returnObj=new JSONObject();
-	    if(isBg){
+	    if((!jo.optBoolean("forcerun", false))&&isBg){
 	    	hd=new ValueHolder();
 	    	hd.put("code","0");
 	    	returnObj.put("message", MessagesHolder.getInstance().translateMessage("@cxtab-task-generated@",event.getLocale()));
@@ -179,10 +193,19 @@ public class ExecuteJReport extends Command {
 
 	  		/**
 	  		 * For htm type, will direct to print page, for xls, direct download
+	  		 * add empty .jsp
 	  		 */
 	  		String url;
 	  		//url = "/html/nds/cxtab/viewrpt.jsp?file="+URLEncoder.encode(filename+"."+ fileType,"UTF-8");
-	  		if( "htm".equals(fileType) ){
+	  		Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+	  		String exportRootPath=conf.getProperty("export.root.nds","/act/home");	  
+	  		String filePath =Validator.isNull(folder)?exportRootPath + File.separator+user.getClientDomain()+File.separator+ user.getName():folder;
+			
+	 		File f=new File(filePath+File.separator+filename+"."+ fileType);
+	 		if(!f.exists()||(f.length() == 0L)) {
+	  			url = "/html/nds/cxtab/empty.jsp";
+	  		}
+	  		else if( "htm".equals(fileType) ){
 	  			url = "/html/nds/cxtab/viewrpt.jsp?file="+URLEncoder.encode(filename+"."+ fileType,"UTF-8");
 	  		}else{
 	  			url= "/html/nds/cxtab/downloadrpt.jsp?file="+URLEncoder.encode(filename+"."+ fileType,"UTF-8");
