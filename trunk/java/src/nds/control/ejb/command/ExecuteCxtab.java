@@ -234,12 +234,15 @@ public class ExecuteCxtab extends Command {
 		    	cx_usr_FILTER = String.valueOf(userId) + "#" + cxtabName + "#" + cs + "#" + fileType;
 			}
 		}else{
-
+			QuerySession qs = event.getQuerySession();
+			if (qs==null) {
+				qs = QueryUtils.createQuerySession(userId, user.getSecurityGrade(), "EXECUTECXTAB", event.getLocale());
+			}
 			if(isRest){
 				logger.debug("parse as rest query");
-				req=nds.control.util.AjaxUtils.parseRestQuery(query, event.getQuerySession(), userId, event.getLocale());
+				req=nds.control.util.AjaxUtils.parseRestQuery(query,qs, userId, event.getLocale());
 			}else
-				req=nds.control.util.AjaxUtils.parseQuery(query, event.getQuerySession(), userId, event.getLocale());
+				req=nds.control.util.AjaxUtils.parseQuery(query, qs, userId, event.getLocale());
 		
 				cx_usr_FILTER = String.valueOf(userId) + "#" + cxtabName + "#" + req.getParamExpression() + "#" + fileType;
 		}
