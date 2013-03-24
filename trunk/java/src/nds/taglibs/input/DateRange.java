@@ -28,6 +28,8 @@ public class DateRange extends TagSupport {
     
     private String showDefaultRange; // "Y" or "N"(default) set default start and end date
     
+    private String showtime;
+    
     public void release() {
         super.release();
         id = null;
@@ -133,8 +135,13 @@ public class DateRange extends TagSupport {
 	public void setShowDefaultRange(String showDefaultRange) {
 		this.showDefaultRange = showDefaultRange;
 	}
+	
+	public String getShowTime() {
+		return this.showtime;
+	}
 
-    
-
+	public void setShowTime(String paramString) {
+		this.showtime = paramString;
+	}
 
 }
