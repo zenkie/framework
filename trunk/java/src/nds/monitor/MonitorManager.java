@@ -51,7 +51,7 @@ public class MonitorManager
 
 	public void checkMonitorPlugin()
 	{
-		System.out.print("asdfasdfasd");
+		//System.out.print("asdfasdfasd");
 		if (!this.isMonitorPluginInstalled) {
 			logger.debug("not install");
 			throw new NDSRuntimeException("@monitor-not-installed@");
@@ -210,7 +210,7 @@ public class MonitorManager
 				"ad_monitor.ad_table_id"), "=" + paramTable.getId(), null), 1,
 				null);
 		query.addParam(localExpression);
-
+		logger.debug("getModifiableMonitors sql is:"+query.toSQL());
 		return QueryEngine.getInstance().doQueryList(query.toSQL());
 	}
 
