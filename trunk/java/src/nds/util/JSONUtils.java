@@ -5,6 +5,7 @@
 package nds.util;
 
 import java.lang.reflect.Array;
+import java.net.URLEncoder;
 import java.text.*;
 import java.util.*;
 
@@ -18,6 +19,30 @@ import org.json.*;
  */
 
 public class JSONUtils {
+	
+	/**
+	 *  toURLQuery not support more child is JSONObject/JSONArray
+	 */
+	public static String toURLQuery(JSONObject jo) throws Exception {
+		if (jo == null)
+			return "";
+		StringBuffer url_b = new StringBuffer();
+		for (Iterator localIterator = jo.keys(); localIterator.hasNext();) {
+			String str = (String) localIterator.next();
+			Object jor = jo.get(str);
+			if ((jor instanceof JSONObject) || (jor instanceof JSONArray))
+				throw new NDSException(
+						"Unexpected JSONObject/JSONArray found as property in JSONObject:"
+								+ jo);
+			str = URLEncoder.encode(str, "UTF-8");
+			Object val = URLEncoder.encode(jor.toString(), "UTF-8");
+			url_b.append(str).append("=").append(val).append("&");
+		}
+		if (url_b.length() > 1)
+			url_b.deleteCharAt(url_b.length() - 1);
+		return url_b.toString();
+	}
+	
 	/**
 	 * Replace variable in <param>sqlWithVariable</param> by attributes
 	 * in session.
