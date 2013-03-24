@@ -8,6 +8,7 @@ import javax.rmi.PortableRemoteObject;
 
 import nds.control.ejb.ClientController;
 import nds.control.ejb.ClientControllerHome;
+import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEvent;
 import nds.control.util.ValueHolder;
 
@@ -108,7 +109,7 @@ public class ClientControllerTestClient1 {
     // Methods that use Remote interface methods to access data through the bean
     //----------------------------------------------------------------------------
 
-    public ValueHolder handleEvent(NDSEvent ese) {
+    public ValueHolder handleEvent(DefaultWebEvent ese) {
         ValueHolder returnValue = null;
         if (clientController == null) {
             System.out.println("Error in handleEvent(): " + ERROR_NULL_REMOTE);
