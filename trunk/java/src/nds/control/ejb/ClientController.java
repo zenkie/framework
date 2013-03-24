@@ -23,6 +23,7 @@ import java.rmi.RemoteException;
 
 import javax.ejb.EJBObject;
 
+import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEvent;
 import nds.control.util.ValueHolder;
 import nds.util.NDSException;
@@ -32,6 +33,6 @@ public interface ClientController extends EJBObject {
      * Feeds the specified event to the state machine of the business logic.
      * @return ValueHolder of returned values
      */
-    public ValueHolder handleEvent(NDSEvent ese) throws NDSException, RemoteException;
+    public ValueHolder handleEvent(DefaultWebEvent ese) throws NDSException, RemoteException;
 
 }
