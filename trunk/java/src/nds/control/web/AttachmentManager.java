@@ -449,6 +449,31 @@ public class AttachmentManager implements nds.util.ServletContextActor,java.io.S
     }
     
     /**
+     * if object=-1 then modify tmp_attDir = object_attDir
+     *
+     *  @since 1.9.31
+     */
+    public void renameattDir(String parentPath, String tmp_attDir, String objectid)
+    		throws IOException, NDSException {
+    	Attachment att = new Attachment(parentPath, tmp_attDir);
+    	File dir = findAttachmentDir(att);
+    	if (dir.exists()) {
+    		File to = new File( findPageDir(parentPath), 
+    				(String.valueOf(objectid)+ATTDIR_EXTENSION) );
+
+    		//Rename
+    		if (dir.renameTo(to))
+    			logger.debug("renameattDir Success!");
+    		else
+    			logger.error("renameattDir Error");
+
+    		// return null;
+    	}else{
+    		logger.debug("tmp_attDir dir not found - thus no attachment can exist.");
+    	}
+    }
+    
+    /**
      *  Accepts only files that are actual versions, no control files.
      */
     public class AttachmentVersionFilter
