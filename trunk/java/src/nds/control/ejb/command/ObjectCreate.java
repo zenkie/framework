@@ -11,6 +11,7 @@ import java.sql.Statement;
 import java.util.*;
 
 import nds.util.*;
+import nds.control.web.AttachmentManager;
 import nds.control.web.WebUtils;
 import nds.control.ejb.Command;
 import nds.control.ejb.DefaultWebEventHelper;
@@ -34,6 +35,7 @@ import nds.schema.RefByTable;
 import nds.schema.Table;
 import nds.schema.TableManager;
 import nds.security.User;
+import nds.util.Attachment;
 import nds.util.NDSException;
 import nds.util.PairTable;
 import nds.util.Tools;
@@ -298,7 +300,7 @@ public class ObjectCreate extends Command{
                    row= (ArrayList) sqlData.get(i);
                    //if(i< 10)logger.debug(sql); // only first 10 records will be displayed
                    
-                   setData(stmt,row,sqlDataColumnTypes );
+                   setData(stmt,row,sqlDataColumnTypes,usr,table);
                    
                    // check if attribute detail support table, since 3.0 at 2007-05-30
                    if(createAttributeDetailByJson){
@@ -573,7 +575,7 @@ public class ObjectCreate extends Command{
    * @return execute result
    * @throws Exception
    */
-  private void setData(PreparedStatement pstmt, ArrayList rowData, int[] columnTypes) throws Exception{
+  private void setData(PreparedStatement pstmt, ArrayList rowData, int[] columnTypes,User userWeb,Table table) throws Exception{
 	  Object v;
 	  for(int i=0;i< columnTypes.length;i++){
 		  v=rowData.get(i);
@@ -586,7 +588,27 @@ public class ObjectCreate extends Command{
 				  pstmt.setBigDecimal(i+1,(BigDecimal)v);
 				  break;
 			  case Column.STRING:
-				  pstmt.setString(i+1,(String)v );
+				  String valueOne=(String)v;
+				  if(valueOne!=null){
+		            	if(valueOne.indexOf("&objectpath=")>0){
+		            	String tmpath=valueOne.substring(valueOne.indexOf("&objectpath=")+12);
+		            	int colpos=valueOne.indexOf("&column=");
+		            	int objpos=valueOne.indexOf("&objectid=");
+		            	int colid=Integer.parseInt(valueOne.substring(colpos+8,objpos));
+		            	valueOne=valueOne.substring(0,objpos+10)+String.valueOf(rowData.get(0));
+		            	/*
+		            	System.out.print("!!!!!!!!!!!!!!!!!!!!!!!id"+rowData.get(0));     
+		            	System.out.print("!!!!!!!!!!!!!!!!!!!!!!!colid"+colid); 
+		            	System.out.print("!!!!!!!!!!!!!!!!!!!!!!!valueOne"+valueOne);
+		            	System.out.print("!!!!!!!!!!!!!!!!!!!!!!!!"+tmpath); 
+		            	*/  
+		            	Column col=table.getColumn(colid);
+		            	AttachmentManager attm=(AttachmentManager)WebUtils.getServletContextManager().getActor(nds.util.WebKeys.ATTACHMENT_MANAGER);
+		        		attm.renameattDir(userWeb.getClientDomain()+"/" + table.getRealTableName()+"/"+col.getName(),tmpath,String.valueOf(rowData.get(0)));
+
+		            	}
+				  }
+				  pstmt.setString(i+1,valueOne);
 				  break;
 			  case Column.DATE:
 				  if( v==null) pstmt.setNull(i+1, java.sql.Types.TIMESTAMP);
