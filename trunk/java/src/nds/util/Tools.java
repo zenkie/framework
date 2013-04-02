@@ -174,6 +174,26 @@ public final class Tools {
 
         return new String(b,0,l);
     }
+    
+    public void renameDirectory(String fromDir, String toDir) {
+
+        File from = new File(fromDir);
+
+        if (!from.exists() || !from.isDirectory()) {
+
+         logger.error("Directory does not exist: " + fromDir);
+          return;
+        }
+
+        File to = new File(toDir);
+
+        //Rename
+        if (from.renameTo(to))
+        	logger.debug("Success!");
+        else
+        	logger.error("Error");
+     
+      }
     	    
     public static void writeFile(String fileName, String content, String encoding) throws IOException{
     	writeFile(fileName, false, content, encoding);
