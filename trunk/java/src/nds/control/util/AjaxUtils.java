@@ -286,7 +286,12 @@ public class AjaxUtils {
 		
 			// directory perm
 			int dirPerm= jo.optInt("dir_perm", nds.security.Directory.READ);
-			expr2 =SecurityUtils.getSecurityFilter(table.getName(), dirPerm, userId, qsession);
+			//skip item permission check over parent table, @see AjaxUtils.parseQuery
+			if ((jo.optBoolean("nea.tabitems", false)) && (table.getParentTable() != null) && (!table.isMenuObject()))
+			{
+				expr2 = null;
+			}
+			else expr2 =SecurityUtils.getSecurityFilter(table.getName(), dirPerm, userId, qsession);
 			//logger.debug("fixedColumns:"+ expr2.toString());
 			if(expr2!=null && !expr2.isEmpty()){
 	        	expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
