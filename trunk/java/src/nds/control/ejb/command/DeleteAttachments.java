@@ -52,7 +52,8 @@ public class DeleteAttachments extends Command {
     try{
         engine.doUpdate(sqls);
     }catch(Exception e){
-        throw new NDSEventException(e.getMessage() );
+       // throw new NDSEventException(e.getMessage() );
+    	logger.debug("DeleteAttachments is:"+e.getMessage());
     }
     /**
      * ejb layer should be seperated from web layer
@@ -61,8 +62,9 @@ public class DeleteAttachments extends Command {
     AttachmentManager attm=(AttachmentManager)WebUtils.getServletContextManager().getActor(WebKeys.ATTACHMENT_MANAGER);
 	Attachment att= attm.getAttachmentInfo(usr.getClientDomain()+"/" + table.getRealTableName()+"/"+col.getName(),  ""+event.getParameterValue("objectid",true), -1);
     if(att!=null)attm.deleteAttachment(att);
-	
+    v.put("next-screen", "/html/nds/objext/upload.jsp?table=" + event.getParameterValue("table") + "&column=" + event.getParameterValue("column") + "&objectid=" + event.getParameterValue("objectid") + "&input=" + event.getParameterValue("input"));
 	v.put("message", "@clear-additional-links@");
+	v.put("url", "");
 	return v;
   }
 }
