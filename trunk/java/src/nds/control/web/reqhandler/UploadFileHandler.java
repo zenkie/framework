@@ -65,7 +65,7 @@ public class UploadFileHandler extends RequestHandlerSupport {
             Configurations conf=(Configurations)WebUtils.getServletContextManager().getActor(WebKeys.CONFIGURATIONS);
             AttachmentManager attm=(AttachmentManager)WebUtils.getServletContextManager().getActor(WebKeys.ATTACHMENT_MANAGER);
             UserWebImpl user= ((UserWebImpl)WebUtils.getSessionContextManager(session).getActor(WebKeys.USER));
-            
+            String objectpath=null;
             String operatorName= user.getUserName() ; // this will be the sub directory name
             
             DiskFileUpload  fu = new DiskFileUpload();
@@ -104,14 +104,24 @@ public class UploadFileHandler extends RequestHandlerSupport {
         		Table table= manager.findTable( event.getParameterValue("table"));
         		Column col= manager.getColumn( Tools.getInt(event.getParameterValue("column"), -1));
             	int objectId= Tools.getInt( event.getParameterValue("objectid"),-1);
+            	
+            	//add objectId=-1 first add file 
+            	if(objectId==-1){
+            		//tmpobjectId
+            		long Temp=Math.round(Math.random()*89999+10000);
+            		objectpath="tmp"+Temp;
+            	}else{
+            		objectpath=""+objectId;
+            	}
+            	
                 if(!user.hasObjectPermission(table.getName(),objectId,  nds.security.Directory.WRITE)){
                 	throw new NDSException("È¨ÏÞ²»×ã£¡");
                 }
             	
-            	Attachment att= attm.getAttachmentInfo(user.getClientDomain()+"/" + table.getRealTableName()+"/"+col.getName(),  ""+objectId, -1);
+            	Attachment att= attm.getAttachmentInfo(user.getClientDomain()+"/" + table.getRealTableName()+"/"+col.getName(),  objectpath, -1);
             	if (att==null){
             		// create it
-            		att= new Attachment( user.getClientDomain()+"/" + table.getRealTableName()+"/"+col.getName(),  objectId+"" );
+            		att= new Attachment( user.getClientDomain()+"/" + table.getRealTableName()+"/"+col.getName(), objectpath);
             		att.setAuthor(user.getUserName());
             		att.setVersion(0);
             		att.setExtension(attm.getFileExtension(fileName));
@@ -130,6 +140,7 @@ public class UploadFileHandler extends RequestHandlerSupport {
             		Tools.copyFile(f, f2, true, true);
             	}
             }
+            if(objectpath!=null)event.put("objectpath",objectpath);
             if(user !=null && user.getSession()!=null)
             	event.put("nds.query.querysession",user.getSession());
             return event;
