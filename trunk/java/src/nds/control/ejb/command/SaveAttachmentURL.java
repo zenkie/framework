@@ -48,10 +48,11 @@ public class SaveAttachmentURL extends Command {
 		String url="";
 		if(isUploadFile){ 
 			url= "/servlets/binserv/Attach?table="+ event.getParameterValue("table")+
-			"&column="+ event.getParameterValue("column")+"&objectid="+ event.getParameterValue("objectid");
+			"&column="+ event.getParameterValue("column")+"&objectid="+ event.getParameterValue("objectid")+
+			"&objectpath=" + event.getParameterValue("objectpath");
 			// redirect to reload page
-			v.put("next-screen", WebKeys.NDS_URI+"/objext/upload.jsp?table="+ event.getParameterValue("table")+
-			"&column="+ event.getParameterValue("column")+"&objectid="+ event.getParameterValue("objectid"));
+//			v.put("next-screen", WebKeys.NDS_URI+"/objext/upload.jsp?table="+ event.getParameterValue("table")+
+//			"&column="+ event.getParameterValue("column")+"&objectid="+ event.getParameterValue("objectid"));
 		}else{
 			// default will goto info screen
 			url= (String)event.getParameterValue("fileurl");
@@ -72,8 +73,11 @@ public class SaveAttachmentURL extends Command {
         }catch(Exception e){
             throw new NDSEventException(e.getMessage() );
         }
-		
-		
+        v.put("next-screen", WebKeys.NDS_URI+"/objext/upload.jsp?table=" + event.getParameterValue("table") + 
+        		"&column=" + event.getParameterValue("column") + "&objectid=" + event.getParameterValue("objectid") + 
+        		"&input=" + event.getParameterValue("input"));
+    	v.put("url", url);
+    	v.put("objectpath",event.getParameterValue("objectpath"));
 		v.put("message", "@additional-links-success@");
 		return v;
     }
