@@ -137,10 +137,15 @@ public final class QueryUtils {
      * Generate sql like '%xxx%'(both, default) or 'xxx%'(left) for string query
      */
 	private static boolean isLeftSideMatchOnly= false; 
+	/**
+	 * 
+	 */
+	private static boolean isfastlike= false; 
 	static{
 		// for webclient.multiple=true, will try to figure out which client currently searching on
 		 nds.util.Configurations conf= (nds.util.Configurations)nds.control.web.WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
 		 isLeftSideMatchOnly= ! ("both".equals(conf.getProperty("query.wildcard.match","both")));
+		 isfastlike= Tools.getBoolean(conf.getProperty("query.wildcard.fast","fasle"), false);
 		 int r= Tools.getInt(conf.getProperty("query.date.range"), 7);
 		 if(r>0)DEFAULT_DATE_RANGE=r;
 		 try{
@@ -332,8 +337,26 @@ public final class QueryUtils {
 	            		//}else if( input.contains("%")|| input.contains("_") ){
 	            		}else if( input.contains("%")){
 	            			ret= " ("+columnName+" LIKE '"+input+"') ";
+	            			/**
+	            			 * %a方式：instr(t.chr_bmdm,'110101')=length(t.chr_bmdm)-length('110101')+1
+	            			 */
+	            			
+	            			/**
+	            			 * a%方式：instr(t.chr_bmdm,'11010101')=1
+	            			 */
+	            			/*对于instr的效率为考虑清楚！
+	            			 * 
+	            			 * 1。尽量不要使用 like '%%'
+
+								2。对于 like '%' (不以 % 开头)，Oracle可以应用 colunm上的index
+								
+								3。对于 like '%…' 的 (不以 % 结尾)，可以利用reverse + function index 的形式，变化成 like '%'
+								
+								4.非用like'%%'不可时，使用Oracle内部函数：INSTR()解决。
+	            			 * */
 	            		}else{
 		            		ret= " ("+columnName+" LIKE '"+(isLeftSideMatchOnly?"":"%")+input+"%') ";
+		            		if(isfastlike)ret= " ("+columnName+" LIKE '"+input+"%') ";
 	            		}
 	            	}
 	            }
