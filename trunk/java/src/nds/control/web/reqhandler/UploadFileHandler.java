@@ -114,7 +114,7 @@ public class UploadFileHandler extends RequestHandlerSupport {
             		objectpath=""+objectId;
             	}
             	
-                if(!user.hasObjectPermission(table.getName(),objectId,  nds.security.Directory.WRITE)){
+                if(objectId!=-1&&!user.hasObjectPermission(table.getName(),objectId,  nds.security.Directory.WRITE)){
                 	throw new NDSException("È¨ÏÞ²»×ã£¡");
                 }
             	
