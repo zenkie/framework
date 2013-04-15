@@ -477,12 +477,12 @@ public class SubSystemView {
 			    	for(int j=0;j< children.size();j++){
 			    		if(children.get(j) instanceof Table){
 			    			table=(Table)children.get(j);
-			    			logger.debug("getAccordid~~~~~~~~~~"+String.valueOf(table.getAccordid()));
+			    			//logger.debug("getAccordid~~~~~~~~~~"+String.valueOf(table.getAccordid()));
 			    			if(!table.isMenuObject()){
 			                	continue;
 			                }
 			    			else if(ACCORDION!=table.getAccordid()){
-			    				logger.debug(String.valueOf(ACCORDION)+"!="+String.valueOf(table.getAccordid()));
+			    				//logger.debug(String.valueOf(ACCORDION)+"!="+String.valueOf(table.getAccordid()));
 			    				continue;
 			    			}
 			    			try{
@@ -496,9 +496,14 @@ public class SubSystemView {
 			    		}else if(children.get(j) instanceof WebAction){
 			        		if(includeAction){	
 				    			action=(WebAction)children.get(j);
-				        		if(action.canDisplay(webActionEnv)&&(action.getAcordionId()==ACCORDION))
+				        		if(action.canDisplay(webActionEnv)&&(action.getAcordionId()==ACCORDION)){
 				        			logger.debug("add action"+String.valueOf(ACCORDION));
+//				        			System.out.print("add action"+String.valueOf(ACCORDION));
+//				        			System.out.print("action name"+String.valueOf(action.getName()));
+//				        			System.out.print("ACCORDION name"+String.valueOf(ACCORDION));
+//				        			System.out.print("action name"+String.valueOf(action.getAcordionId()));
 				        			catschild.add(action);
+				        		}
 			        		}
 			    		}else{
 			    			throw new NDSRuntimeException("Unsupported element in TableCategory children:"+ 
