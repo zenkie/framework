@@ -873,6 +873,7 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 	    int  cut_usr=0;
 	    int  cut_pos=0;
 	    String redirect=null;
+	    Connection conn = null; 
 	  	try{
 	  	// logger.debug("upload keyfile is"+mac);
 	    Iterator b=LicenseManager.getLicenses();
@@ -882,9 +883,9 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 	    	user_num=o.getNumUsers();
 	    	pos_num=o.getNumPOS();
 	    }
-		Connection conn= nds.query.QueryEngine.getInstance().getConnection();
+		conn= nds.query.QueryEngine.getInstance().getConnection();
 		QueryEngine engine=QueryEngine.getInstance();
-		cut_usr=Tools.getInt(engine.doQueryOne("select count(*) from users t where t.isactive='Y' and t.IS_SYS_USER='Y'", conn), -1);
+		cut_usr=Tools.getInt(engine.doQueryOne("select count(*) from users t where t.isactive='Y' and t.IS_SYS_USER!='Y'", conn), -1);
 		cut_pos=Tools.getInt(engine.doQueryOne("select count(*) from c_store t where t.isactive='Y' and t.isretail='Y'", conn), -1);
 		logger.debug("cut_usr is "+cut_usr);
 		logger.debug("cut_pos is "+cut_pos);
@@ -893,7 +894,9 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 		}
 	   } catch (Exception e) {
 		   logger.debug("check mackey invaild",e);
-	   }
+	    }finally{
+	    	try{if(conn!=null) conn.close();}catch(Throwable t){}
+		}
 		return redirect;
 	}
 
