@@ -3,7 +3,7 @@ import  nds.var.VAROrder;
 
 import java.util.List;
 
-import com.sun.java.swing.plaf.windows.WindowsBorders.ToolBarBorder;
+//import com.sun.java.swing.plaf.windows.WindowsBorders.ToolBarBorder;
 import nds.query.QueryEngine;
 import nds.query.QueryException;
 import nds.util.Configurations;
