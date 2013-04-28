@@ -2,9 +2,66 @@ package nds.util;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Date;
 
 public class SQLUtils {
     public SQLUtils() {
+    }
+    
+    /**
+
+    2      * 获得PreparedStatement向数据库提交的SQL语句
+
+    3      * @param sql
+
+    4      * @param params
+
+    5      * @return
+
+    6      */
+
+    public static String getPreparedSQL(String sql, Object[] params) {
+
+    	//1 如果没有参数，说明是不是动态SQL语句
+
+    	int paramNum = 0;
+
+    	if (null != params)  paramNum = params.length;
+
+    	if (1 > paramNum) return sql;
+
+    	//2 如果有参数，则是动态SQL语句
+
+    	StringBuffer returnSQL = new StringBuffer();
+
+    	String[] subSQL = sql.split("\\?");
+
+    	for (int i = 0; i < paramNum; i++) {
+
+    		if (params[i] instanceof Date) {
+
+    			returnSQL.append(subSQL[i]).append(" '").append(new Timestamp(
+						((Date) params[i]).getTime())).append("' ");
+
+    		} else {
+
+    			returnSQL.append(subSQL[i]).append(" '").append(params[i]).append("' ");
+
+    		}
+
+    	}
+
+
+
+    	if (subSQL.length > params.length) {
+
+    		returnSQL.append(subSQL[subSQL.length - 1]);
+
+    	}
+
+    	return returnSQL.toString();
+
     }
     /**
      * Value stored in db is number
