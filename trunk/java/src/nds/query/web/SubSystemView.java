@@ -591,14 +591,16 @@ public class SubSystemView {
 		try{
 		UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
 		int userid=userWeb.getUserId();
-		List al=QueryEngine.getInstance().doQueryList("select t.ad_table_id,t.menu_no,t.fa_menu,t.menu_re from MU_FAVORITE t where t.ownerid="+String.valueOf(userid)+" group by t.ad_table_id,t.menu_no,t.fa_menu,t.menu_re order by t.menu_no");		
+		List al=QueryEngine.getInstance().doQueryList("select t.ad_table_id,t.fa_menu,t.menu_re,t.IS_REPORT from MU_FAVORITE t where t.ownerid="
+		+String.valueOf(userid)+" group by t.ad_table_id,t.menu_no,t.fa_menu,t.menu_re,t.IS_REPORT order by t.menu_no");		
 		logger.debug("MU_FAVORITE size is "+String.valueOf(al.size()));
 		if(al.size()>0){
 			for(int i=0;i<al.size();i++){
-				ArrayList catschild= new ArrayList();
+				//ArrayList catschild= new ArrayList();
 				List als= (List)al.get(i);
 				String	fa_menu=(String)als.get(1);
 				String	menu_re=(String)als.get(2);
+				String  isreport=(String)als.get(3);
 				int  table_id=Tools.getInt( als.get(0), -1);
 				Table table=manager.getTable(table_id);
 				logger.debug(table.getName());
@@ -612,19 +614,13 @@ public class SubSystemView {
                   }catch(NDSSecurityException e){
                     continue;
                 }
-
-				catschild.add(table);
 				logger.debug("add_table    ->"+table.getName());
-		 
-        	if(catschild.size()>0){
-        		// show this category
-        		ArrayList row= new ArrayList();
+				ArrayList row= new ArrayList();
                 row.add(fa_menu);
                 row.add(menu_re);
-                row.add(catschild);
-                logger.debug("fa_menu    ->"+fa_menu);
+                row.add(isreport);
+                row.add(table);
                 mufavorite.add(row);
-        	    }
 		      }
 			}
         }catch(Throwable t){
