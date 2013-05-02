@@ -267,27 +267,28 @@ public class PrintJasper extends Command{
 				}
     			//JasperExportManager.exportReportToPdfFile(jasperPrint, destFile);
     			//更新打印次数
-    			String print_col=table.getJSONProps().optString("printcnt_column");
-    			if (table.getJSONProps() != null && !Validator.isNull(print_col))
-    			{
-    				String vsql = "UPDATE "+table.getRealTableName()+" SET "+print_col+"=nvl("+print_col+",0)+1 WHERE ID=";
-    				//PreparedStatement stmt=null;
-    				//stmt = conn.prepareStatement(vsql);
-                	
-    				if (!is_printlist)
-    				{
-    					//stmt.setInt(1, objectId);
-    					//stmt.executeUpdate();
-    					QueryEngine.getInstance().executeUpdate(vsql+String.valueOf(objectId));
-    				} else
-    				{
+    			String print_col = null;
+    			if (table.getJSONProps() != null) {
+    				print_col = table.getJSONProps().optString("printcnt_column");
+    			}
+    			if (Validator.isNotNull(print_col)) {
+    				String vsql = "UPDATE " + table.getRealTableName()
+    						+ " SET " + print_col + "=nvl(" + print_col
+    						+ ",0)+1 WHERE ID=";
+    				// PreparedStatement stmt=null;
+    				// stmt = conn.prepareStatement(vsql);
+    				if (!is_printlist) {
+    					// stmt.setInt(1, objectId);
+    					// stmt.executeUpdate();
+    					QueryEngine.getInstance().executeUpdate(
+    							vsql + String.valueOf(objectId));
+    				} else {
     					for (int j = 0; j < objectIds.length; j++)
-    					//stmt.setInt(1, objectIds[j]);
-    					//stmt.executeUpdate();
-    					QueryEngine.getInstance().executeUpdate(vsql+String.valueOf(objectIds[j]));
-    							
+    						// stmt.setInt(1, objectIds[j]);
+    						// stmt.executeUpdate();
+    						QueryEngine.getInstance().executeUpdate(
+    								vsql + String.valueOf(objectIds[j]));
     				}
-    				
     			}
     	
     		}else if("xls".equalsIgnoreCase(fileType)){
