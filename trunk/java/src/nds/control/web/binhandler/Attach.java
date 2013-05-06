@@ -25,6 +25,7 @@ public class Attach implements BinaryHandler{
      *  column* - (int) column id
      *  objectid* - (int) record id
      *  version - (int ) -1 if not found
+     *  thum (String) if not found get thum img file
      */
 	public void process(HttpServletRequest request,HttpServletResponse  response)  throws Exception{
 		UserWebImpl userWeb =null;
@@ -35,6 +36,8 @@ public class Attach implements BinaryHandler{
 		int columnId =ParamUtils.getIntAttributeOrParameter(request, "column", -1);
 		int objectId= ParamUtils.getIntAttributeOrParameter(request, "objectid", -1);
 		int version= ParamUtils.getIntAttributeOrParameter(request, "version", -1);
+		String thum=ParamUtils.getAttributeOrParameter(request, "thum");
+		InputStream is=null;
 		Table table;
 		if( tableId == -1) {
 	        	throw new IllegalArgumentException("object type not set");
@@ -54,7 +57,6 @@ public class Attach implements BinaryHandler{
 			String fileName= table.getName()+ "_"+ tableManager.getColumn(columnId).getName()+"_"+ objectId+"_"+att.getVersion()+"."+ att.getExtension();
 	        String ct= Tools.getContentType(att.getExtension(), "application/octetstream");
 	        response.setContentType(ct+"; charset=GBK");
-	        response.setContentLength((int)att.getSize());
 	        //if(ct.indexOf("text/")>-1|| ct.indexOf("image")>-1)
 	        /*
 	         * 其实按照RFC2231的定义，多语言编码的Content-Disposition应该这么定义：
@@ -71,8 +73,14 @@ Content-Disposition: attachment; filename*="utf8''%E4%B8%AD%E6%96%87%20%E6%96%87
 	         */
         	response.setHeader("Content-Disposition","inline;"+ 
         			WebUtils.getContentDispositionFileName(att.getOrigFileName(), request));
-        	
-			InputStream is=attm.getAttachmentData(att);
+        	//add get thum image file
+        	if(thum!=null&&thum.equals("Y")){
+        		is=attm.getAttachmentData(att,thum);
+        	}else{
+        		is=attm.getAttachmentData(att);
+        	}
+        	response.setContentLength((int)att.getSize());
+        	 
 			ServletOutputStream os = response.getOutputStream();
 	            byte[] b = new byte[8192];
 	            int bInt;
