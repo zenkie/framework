@@ -25,11 +25,10 @@ import nds.log.LoggerManager;
 import nds.schema.Column;
 import nds.schema.Table;
 import nds.schema.TableManager;
-import nds.util.Configurations;
 import nds.util.*;
-import nds.util.WebKeys;
 
 import org.apache.commons.fileupload.*;
+import org.json.JSONObject;
 
 
 
@@ -50,6 +49,9 @@ upload.root/$clientdomain/tablename/columnname/objectId-dir,
 
 如果指明参数:copytoroot - 表示需要将文件拷贝到upload.root/$clientdomain/tablename/columnname
 目录，这种情况仅适用于文件上传。这种方式可用于上传文件互相需要协助的情况，例如：报表
+－－增加
+当上传文件为jpg 或 png图片上传时 考虑根据参数生成对应缩略图在界面展示
+
  */
 public class UploadFileHandler extends RequestHandlerSupport {
     private static Logger logger=LoggerManager.getInstance().getLogger(UploadFileHandler.class.getName());
@@ -76,6 +78,7 @@ public class UploadFileHandler extends RequestHandlerSupport {
             Iterator iter = fileItems.iterator();
             InputStream in=null;
             String fileName="";
+            File f=null;
             while (iter.hasNext()) {
                     FileItem item = (FileItem) iter.next();
 
@@ -130,8 +133,16 @@ public class UploadFileHandler extends RequestHandlerSupport {
             		//add att new file name
             		att.setOrigFileName(fileName);
             	}
-            	File f=attm.putAttachmentData(att, in);
-            	
+            	//判断上传字段是否含有图片缩放属性
+            	if(col.getJSONProps()!=null){
+            		JSONObject jor=col.getJSONProps();
+            		if(jor.has("thumg")){
+    					JSONObject jo=col.getJSONProps().getJSONObject("thumg");
+    					int width=jo.optInt("width",9999);
+    					att.setWithimg(width);
+            		}
+            	}
+            		f=attm.putAttachmentData(att, in);
             	//if copytoroot, will copy file to 
             	//upload.root/$clientdomain/tablename/columnname
             	if( Tools.getBoolean(event.getParameterValue("copytoroot"),false)==true){
