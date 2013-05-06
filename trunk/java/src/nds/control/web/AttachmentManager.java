@@ -216,12 +216,9 @@ public class AttachmentManager implements nds.util.ServletContextActor,java.io.S
      * @param att
      * @param data
      * @return the newly created file
-     * @throws NDSException
-     * @throws IOException
+     * @throws Exception 
      */
-    public File putAttachmentData( Attachment att, InputStream data )
-        throws NDSException,
-               IOException
+    public File putAttachmentData( Attachment att, InputStream data ) throws Exception
     {
         OutputStream out = null;
         File attDir = findAttachmentDir( att );
@@ -245,13 +242,23 @@ public class AttachmentManager implements nds.util.ServletContextActor,java.io.S
 
             logger.info("Uploading attachment "+att.getFileName()+" to page "+att.getParentName());
             logger.info("Saving attachment contents to "+newfile.getAbsolutePath());
+           
             out = new FileOutputStream(newfile);
 
             copyContents( data, out );
 
             out.close();
-
-
+            
+            if(att.getExtension().equals("jpg")||att.getExtension().toLowerCase().equals("png")){
+            	String imgType = "JPEG";
+        		if (att.getExtension().toLowerCase().equals(".png")) {
+        			imgType = "PNG";
+        		}
+            	File thumfile= new File( attDir, versionNumber+"_thu."+props.getProperty("ext",att.getExtension()) );
+            	ImageUtils.createThumbnail(thumfile,newfile,att.getWithimg(),imgType);
+            	props.setProperty(versionNumber+".thu","thu_"+att.getOrigFileName() );
+            }
+            
             String author = att.getAuthor();
 
             if( author == null )
@@ -262,6 +269,7 @@ public class AttachmentManager implements nds.util.ServletContextActor,java.io.S
             props.setProperty( versionNumber+".author", author );
             if( att.getExtension() !=null) props.setProperty("ext", props.getProperty("ext",att.getExtension()) );
             props.setProperty(versionNumber+".filename", att.getOrigFileName());
+            
             
             putAttachmentProperties( att, props );
             return newfile;
@@ -277,7 +285,29 @@ public class AttachmentManager implements nds.util.ServletContextActor,java.io.S
         }
     }
 
-   
+    private File findthuFile(File dir, Attachment att)
+    		throws FileNotFoundException, NDSException, IOException {
+    	// TODO find thum image file
+    	int version = att.getVersion();
+    	if (version == -1) {
+    		version = findLatestVersion(att);
+    	}
+    	Properties props = getAttachmentProperties(att);
+    	String ext = props.getProperty("ext", att.getExtension());
+    	File f = new File(dir, version + "_thu." + ext);
+    	if (!f.exists()) {
+    		if ("bin".equals(ext)) {
+    			File fOld = new File(dir, version + ".");
+    			if (fOld.exists())
+    				f = fOld;
+    		}
+    		if (!f.exists()) {
+    			throw new FileNotFoundException("No such file: "
+    					+ f.getAbsolutePath() + " exists.");
+    		}
+    	}
+    	return f;
+    }
 
     private File findFile( File dir, Attachment att )
         throws FileNotFoundException,
@@ -309,18 +339,27 @@ public class AttachmentManager implements nds.util.ServletContextActor,java.io.S
 
         return f;
     }
+    
+	public InputStream getAttachmentData(Attachment att) 
+			throws IOException, NDSException {
+		   return getAttachmentData(att ,null);
+	}
 
-    public InputStream getAttachmentData( Attachment att )
-        throws IOException,
-               NDSException
-    {
-        File attDir = findAttachmentDir( att );
+	public InputStream getAttachmentData(Attachment att, String thum)
+			throws IOException, NDSException {
+		File attDir = findAttachmentDir(att);
+		File f = null;
+		if (thum!=null&&thum.equals("Y")) {
+			f = findthuFile(attDir, att);
+			att.setSize( f.length() );
+		} else {
+			f = findFile(attDir, att);
+		}
+		return new FileInputStream(f);
+	}
+	
 
-        File f = findFile( attDir, att );
-
-        return new FileInputStream( f );
-    }
-    public File getAttachmentFile(Attachment att )
+	public File getAttachmentFile(Attachment att )
         throws IOException,
                NDSException
     {
@@ -484,4 +523,6 @@ public class AttachmentManager implements nds.util.ServletContextActor,java.io.S
             return !name.equals( PROPERTY_FILE );
         }
     }
+
+
 }
