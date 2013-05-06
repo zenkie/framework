@@ -91,6 +91,31 @@ public class ImageUtils {
 					 RenderingHints.VALUE_INTERPOLATION_BILINEAR,true,true); // VALUE_INTERPOLATION_BICUBIC
 		 ImageIO.write(srcImage, imgType, saveFile);
 	}
+	
+	public static void createThumbnail(File saveFile,File data , int width,String imgtype) throws Exception {
+		BufferedImage srcImage;
+		/*
+		String imgType = "JPEG";
+		if (fromFileStr.toLowerCase().equals(".png")) {
+			imgType = "PNG";
+		}
+		*/
+		//File saveFile = new File(saveToFileStr);
+		srcImage = ImageIO.read(data);
+		 int origWidth= srcImage.getWidth();
+		 int origHeight= srcImage.getHeight();
+		 double sx = (double) width/ origWidth;
+		 if(sx>1) {
+			 //keep original one
+			 sx=1;//throw new java.lang.IllegalArgumentException("Found thumbnail width ("+widths[i]+") greater than original image width "+origWidth);
+		 }
+		 int height= (int)(origHeight * sx);
+		srcImage = getScaledInstance(srcImage, width, height,
+				RenderingHints.VALUE_INTERPOLATION_BILINEAR, true, true); // VALUE_INTERPOLATION_BICUBIC
+		ImageIO.write(srcImage, imgtype, saveFile);
+	}
+	
+	
 	 /**
 	     * Convenience method that returns a scaled instance of the
 	     * provided {@code BufferedImage}.
