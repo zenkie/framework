@@ -21,11 +21,35 @@ public class Attachment {
     private HashMap      m_attributes = new HashMap();
     private String m_author;
     private String m_ext;
+    private String t_name; //this thumbnail image name
+    private int t_width =9999; //this thumbnail image width
     public static final int CREATED       = 0;
     public static final int UPLOADING     = 1;
     public static final int COMPLETE      = 2;
     
     private String origFileName; // uploaded file name
+    //add thumwidth 
+    public int getWithimg()
+    {
+        return t_width;
+    }
+
+    public void setWithimg( int width )
+    {
+    	t_width = width;
+    }
+    
+    
+    // add thumbnail  name
+    public String getThuName()
+    {
+        return( t_name );
+    }
+
+    public void setThuName( String name )
+    {
+    	t_name = name;
+    }
     
     public Attachment( String parentDir, String fileName)
     {
