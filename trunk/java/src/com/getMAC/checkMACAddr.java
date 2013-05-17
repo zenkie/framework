@@ -18,10 +18,12 @@ public class checkMACAddr {
     	String[] strOrigin = str.split(",");
     	String cpuNum = strOrigin[0];
     	// 判断CPU核数是否相同
-    	if(currentCpuNum.endsWith(cpuNum)){
+    	if(currentCpuNum.endsWith(cpuNum.trim())){
     		// 相同的个数
     		double sameNum = findSameNum(currentMACAry,strOrigin);
-    		if ((sameNum/(strOrigin.length-1)) >= 0.5){
+    		//System.out.println(sameNum );
+    		//System.out.println(currentMACAry.length-1);
+    		if ((sameNum/(currentMACAry.length-1)) >= 0.5){
     			return 1;
     		} else {
     			return 0;
