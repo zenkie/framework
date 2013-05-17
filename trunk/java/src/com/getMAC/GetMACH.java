@@ -71,7 +71,7 @@ public class GetMACH {
      */
     public static String  get_maconly() throws Exception{
     	AES aes=new AES("burgeon");
-    	String str = aes.encrypt(GetMACH.getMach());
+    	String str = aes.encrypt(GetMACH.getMach()+";");
     	return str;
     }
 }

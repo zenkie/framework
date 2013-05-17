@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jdom.JDOMException;
 
 import com.getMAC.checkMACAddr;
+import com.getMAC.multiMac;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -242,7 +243,7 @@ public final class LicenseManager {
 			 * add check mac address is vaild
 			 * */
 			AES aes=new AES("burgeon");
-			chekmac = checkMACAddr.checkMAC(aes.decrypt(license.getCuscode()));
+			chekmac = multiMac.multiMacJun(aes.decrypt(license.getCuscode()));
 			if(chekmac==0){
 				logger.error("The license is not valid for this machine!!!");
 				return;
