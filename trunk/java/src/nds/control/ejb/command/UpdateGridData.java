@@ -320,6 +320,8 @@ public class UpdateGridData extends Command {
 	  		
 	  		Expression expr=new Expression(new ColumnLink(new int[]{table.getPrimaryKey().getId()}), sb.toString(), null);
 	  		qr.put("param_expr",expr );
+	  		//add param_Str2 列表修改user filter 传入
+	  		qr.put("param_str2", q.optString("param_str2"));
 	  		qr.put("start",0);
 	  		qr.put("range", Integer.MAX_VALUE);
 	  		
@@ -352,10 +354,18 @@ public class UpdateGridData extends Command {
   private DefaultWebEvent createPartialUpdateEvent(JSONArray row, ArrayList colNames, DefaultWebEvent template ) throws JSONException{
   	DefaultWebEvent e=(DefaultWebEvent)template.clone();
   	Object value;
+  	TableManager manager=TableManager.getInstance();
+  	//logger.debug("Partial table is"+String.valueOf(template.getParameterValue("table")));
+  	Table tb= manager.getTable(Integer.valueOf((String)template.getParameterValue("table")));
   	for(int i=0;i< colNames.size();i++){
   		value=     row.get(i+3); //skip first 3
   		if(JSONObject.NULL.equals(value)) value=null;
-  		e.put( (String)colNames.get(i),value); // since row(0) is always row index 
+  		//logger.debug("Partial col "+(String)colNames.get(i));
+  		Column col=tb.getColumn((String)colNames.get(i));
+  		String colName=col.getName();
+  		if(col.getReferenceTable()!=null) colName+="__"+col.getReferenceTable().getAlternateKey().getName();
+  		e.put( colName,value); // since row(0) is always row index 
+  		logger.debug("Partial col"+colName);
   	}
 	e.put("JSONROW", row);// this could be used by some special command, such as B_V2_PRJ_TOKEModify
   	return e;
