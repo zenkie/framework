@@ -70,15 +70,18 @@ public class ObjectModifyImpl{
 			 * Only columns set in event will get updated, just like sql update "set" clause
 			 * This used mainly for REST request, and must allow for includeUIControllerAndSpecialDisplayType
 			 */
-			
+			logger.debug("isPartialUpdate is"+String.valueOf(isPartialUpdate));
 			modifiableColumns= table.getColumns(new int[]{Column.MASK_MODIFY_EDIT}, true, event.getSecurityGrade());
 			for(int i=modifiableColumns.size()-1;i>=0;i--){
 				Column col= (Column)modifiableColumns.get(i);
 				String colName=col.getName();
 				if(col.getReferenceTable()!=null) colName+="__"+col.getReferenceTable().getAlternateKey().getName();
 				boolean isInEvent=event.hasParameter(colName);
-				
-				if(!isInEvent) modifiableColumns.remove(i);
+				//logger.debug("colName is"+colName);
+				if(!isInEvent) {
+					modifiableColumns.remove(i);
+				logger.debug("isInEvent is"+colName);
+				}
 			}
 		}else{
 			Object masks= event.getParameterValue("column_masks"); // JSONArray
