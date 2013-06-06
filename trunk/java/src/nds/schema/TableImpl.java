@@ -704,9 +704,9 @@ public class TableImpl implements Table {
      * @return elements are array
      * @since 3.0
      */
-    /*public ArrayList getColumns(int[] columnMasks ,boolean includeUIControllerAndSpecialDisplayType){
-    	return getColumns(columnMasks,includeUIControllerAndSpecialDisplayType,0 );
-    }*/
+    public ArrayList getColumns(int[] columnMasks ,boolean includeUIControllerAndSpecialDisplayType,int securityGrade){
+    	return getColumns(columnMasks,includeUIControllerAndSpecialDisplayType,securityGrade,false);
+    }
     /**
      * Get columns which has any of the bit masks set in specified positions.
      * For instance, getColumns([0,3]) will return columns which
@@ -719,7 +719,7 @@ public class TableImpl implements Table {
      * @return elements are array
      * @since 3.0
      */
-    public ArrayList getColumns(int[] columnMasks ,boolean includeUIControllerAndSpecialDisplayType, int securityGrade){
+    public ArrayList getColumns(int[] columnMasks ,boolean includeUIControllerAndSpecialDisplayType, int securityGrade,boolean includeCheck){
     	ArrayList cls=new ArrayList();
     	int j;
     	for(int i=0;i<columns.size();i++ ){
@@ -730,6 +730,10 @@ public class TableImpl implements Table {
         		int t=col.getDisplaySetting().getObjectType();
         		if(/*t==DisplaySetting.OBJ_CLOB || clob must be taken as common control(u_news.content)*/t==DisplaySetting.OBJ_FILE 
         				|| t==DisplaySetting.OBJ_IMAGE /*|| t==DisplaySetting.OBJ_XML*/)continue;
+        	//add includecheck
+        	if(includeCheck){            
+        		if(t==DisplaySetting.OBJ_CHECK) continue;
+        	}
         	}
         	for(j=0;j< columnMasks.length;j++){
         		if(  col.isMaskSet(columnMasks[j]) ) {
