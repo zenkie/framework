@@ -76,7 +76,7 @@ public interface Table extends Serializable  {
      * @return elements are Column
      * @since 3.0
      */
-    //public ArrayList getColumns(int[] columnMasks, boolean includeUIController);
+    public ArrayList getColumns(int[] columnMasks, boolean includeUIController,int securityGrade);
     /**
 	 Get columns which has any of the bit masks set in specified positions.
      * For instance, getColumns([0,3]) will return columns which
@@ -86,8 +86,9 @@ public interface Table extends Serializable  {
      * @param includeUIController if false, will not add column that getDisplaySetting().isUIController()==true
      * @param securityGrade return column's security grade should not be greater than this one
      * @return elements are Column
+     * add includecheck
      */
-    public ArrayList getColumns(int[] columnMasks, boolean includeUIController, int securityGrade);
+    public ArrayList getColumns(int[] columnMasks, boolean includeUIController, int securityGrade,boolean includeCheck);
     /**
      * 
      * @param showAction either Column.QUERY_SUBLIST or Column.Modify
