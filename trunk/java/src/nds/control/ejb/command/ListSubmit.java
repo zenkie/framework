@@ -91,9 +91,12 @@ public class ListSubmit extends Command{
 	  	         for(int i = 0;i<itemidStr.length ;i++){
 	  	             int itemid = Tools.getInt(itemidStr[i],-1) ;
 	  	             //
-	  	             
 	  	             SPResult r=helper.auditOrSubmitObject(table,itemid,operaorID.intValue(),event);
-	  	             if (r.getCode() !=0) {
+	  	            /**
+	  	             * 修改submit 方法支持rcode 返回
+	  	             * 101 刷新不关闭
+	  	             */
+	  	             if (r.getCode() !=0&& r.getCode()!=101) {
 	  	                 res += r.getMessage()+ "<br>";
 	  	                 errCount ++;
 	  	             }else{
