@@ -1324,6 +1324,14 @@ public class DefaultWebEventHelper {
 		return ad_client_id;
     }
 
+    
+    public boolean isObjectInTable(Table table, Integer objectId, Connection conn)
+    		throws NDSException
+    		{
+    	String sql = "select id from " + table.getRealTableName() + " " + table.getName() + " where id=" + objectId;
+    	if (table.getFilter() != null) sql+= " and " + table.getFilter();
+    	return Tools.getInt(QueryEngine.getInstance().doQueryOne(sql, conn), -1) == objectId.intValue();
+    		}
     /**
      * Check is the specified object in the status that table specified
      * @param table
@@ -1338,6 +1346,7 @@ public class DefaultWebEventHelper {
     	return Tools.getInt(QueryEngine.getInstance().doQueryOne(sql), -1)== objectId.intValue();
     	 
     }
+    
     /**
      * 
      * @param table
@@ -1460,12 +1469,14 @@ public class DefaultWebEventHelper {
         	// shall do audit process
         	ValueHolder v= AuditUtils.executeProcess(table.getId(),id, processId, operatorId,-1,conn);
         	state= (String)v.get("state");
-        	logger.debug(v.toDebugString());
+        	logger.debug("audit process"+v.toDebugString());
        		result =new SPResult(Tools.getInt(v.get("code"),-1), (String)v.get("message"));
         }
         if (processId==-1 || "A".equals(state)){
         	// do submit 
         	result = submitObject(table, id, operatorId, event,conn);
+        	result.setTag("submitted");
+        	
         }
         if( result.getCode()!=0 && result.getCode()!=2/*set by #submitOne*/){
         	// set status of object to 1 if that column exists and status =3
