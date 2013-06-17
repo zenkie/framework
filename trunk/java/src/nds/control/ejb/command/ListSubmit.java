@@ -1,5 +1,7 @@
 package nds.control.ejb.command;
 import java.rmi.RemoteException;
+import java.sql.Connection;
+import java.sql.Savepoint;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Vector;
@@ -10,6 +12,7 @@ import nds.control.event.NDSEventException;
 import nds.control.util.SecurityUtils;
 import nds.control.util.ValueHolder;
 import nds.query.QueryEngine;
+import nds.query.QueryUtils;
 import nds.query.SPResult;
 import nds.schema.Table;
 import nds.schema.TableManager;
@@ -75,23 +78,32 @@ public class ListSubmit extends Command{
          	logger.error("Fail",e);
          	throw new NDSException("@error-in-permission-check@:"+ e.getMessage(), e);
          }
+         Connection conn = null;
+        try{     	 
   		if (!b){
   			v.put("message","@no-submit-permission-on-all-pls-submit-one-by-one@");
   		}else{
+	        	conn = QueryEngine.getInstance().getConnection();
+	        	conn.setAutoCommit(false);
   	         // has permssion
   	         if (itemidStr==null) itemidStr= new String[0];
   	         String res = "", s; int errCount=0;
   	         // so if only one item selected, it will call Submit instead of GroupSubmit
   	         if (itemidStr.length > 1 && table.isActionEnabled(Table.GROUPSUBMIT)){
   	             // group submit, added by yfzhu 20040531
-  	             s=groupSubmit(tableName+"GroupSubmit", table, itemidStr, operatorDesc, operaorID);
-  	             if( s !=null) throw new NDSException(s);
-  	         }else{
+  	             //s=groupSubmit(tableName+"GroupSubmit", table, itemidStr, operatorDesc, operaorID);
+  	        	
+  	            // if( s !=null) throw new NDSException(s);
+  	        	throw new NDSException("Not supported any more for group submit");
+  	         }
   	         	 // submit one by one
 	  	         for(int i = 0;i<itemidStr.length ;i++){
 	  	             int itemid = Tools.getInt(itemidStr[i],-1) ;
 	  	             //
-	  	             SPResult r=helper.auditOrSubmitObject(table,itemid,operaorID.intValue(),event);
+	  	           Savepoint localSavepoint = conn.setSavepoint();
+	  	           
+	  	         QueryUtils.lockRecord(table, itemid, conn);
+	  	             SPResult r=helper.auditOrSubmitObject(table,itemid,operaorID.intValue(),event,conn);
 	  	            /**
 	  	             * 修改submit 方法支持rcode 返回
 	  	             * 101 刷新不关闭
@@ -99,22 +111,28 @@ public class ListSubmit extends Command{
 	  	             if (r.getCode() !=0&& r.getCode()!=101) {
 	  	                 res += r.getMessage()+ "<br>";
 	  	                 errCount ++;
+	  	                 conn.rollback(localSavepoint);
 	  	             }else{
 	  	            	 if(nds.util.Validator.isNotNull(r.getMessage())){
 	  	            		 res+=r.getMessage()+ "<br>";
 	  	            	 }
 	  	             }
 	  	         }
-  	         }
   	         String message = null;
 
   	         message ="@total-lines@:"+itemidStr.length;
   	         message +=",@failed-count@:"+ errCount +",@detail-msg@:<br>" + res;
   	         v.put("message",message) ;
+  	         conn.commit();
   		}
          return v;
 
-  }
+         }catch (Exception e){
+	            throw new NDSException(e.getMessage(), e);
+	            }finally{
+	            if (conn != null) try { conn.close(); } catch (Throwable e) { }  
+	           }
+	  }
 	
   private String groupSubmit(String spName,Table table,String[] ids, String operatorDesc, Integer operaorID) {
     String tableName= table.getRealTableName();  
