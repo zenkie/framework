@@ -766,6 +766,13 @@ public class QueryEngine {
         int status= Tools.getInt(this.doQueryOne("select status from "+ tableName+" where id="+ tableId), 0);
     	return status;
     }
+    
+    public int getSheetStatus(String paramString, int paramInt, Connection paramConnection)
+    	    throws QueryException
+    	  {
+    	    int status = Tools.getInt(doQueryOne("select status from " + paramString + " where id=?", new Object[] { Integer.valueOf(paramInt) }, paramConnection), 0);
+    	    return status;
+    	  }
 
     public Collection executeFunction ( String fncName, Collection params, Collection results) throws QueryException {
         Connection conn=null;
