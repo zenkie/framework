@@ -8,6 +8,7 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -331,23 +332,26 @@ public class AuditUtils {
 			if (Validator.isNotNull(exprXML)){
 				Expression exp=new Expression(exprXML);
 				expr= expr.combine(exp, SQLCombination.SQL_AND, null);
+				logger.debug("flow condition"+exprXML);
 			}
 			query=engine.createRequest(null);
 			query.setMainTable(tableId,false); // do not include filter, since many view table use status as filter (=1) item.
 			query.addParam(expr);
 			
+			logger.debug(query.toSQL());
+			
 			int cnt=Tools.getInt(engine.doQueryOne(query.toCountSQL(),conn),0);
 			
 			String action, program;
-			boolean isSuccessAction;
+			//boolean isSuccessAction;
 			if(cnt > 0){
 				action= (String)p.get(2);
 				program=(String)p.get(3);
-				isSuccessAction=true;
+				//isSuccessAction=true;
 			}else{
 				action= (String)p.get(4);
 				program=(String)p.get(5);
-				isSuccessAction=false;
+				//isSuccessAction=false;
 			}
 
 			if("P".equals(action)){
@@ -376,14 +380,17 @@ public class AuditUtils {
 					cxt.put("connection", conn);
 					cxt.put("statemachine", ((ClientControllerWebImpl)WebUtils.getServletContextManager().getActor("nds.web.webController"))
 							.getStateMachine());
+					cxt.put("phaseinstanceid",phaseInstanceId);
 					User usr = SecurityUtils.getUser(userId);
 					ObjectActionEvent oae=new ObjectActionEvent(table.getId(),objectId, usr.adClientId,ActionType.REJECT, usr, cxt);
 					MonitorManager.getInstance().dispatchEvent(oae);
 				}
+				break;
 			}else if("A".equals(action)){
 				//move to next
 				vh.put("message", "@accepted@");
 				vh.put("code", "0");
+				//break;
 			}else if("W".equals(action)){
 				vh.put("message","@wait-for-approve@,@audit-process-name@:"+processName+",@audit-phase-name@:"+ phaseName);
 				vh.put("code", "0");
@@ -396,15 +403,18 @@ public class AuditUtils {
 					cxt.put("connection", conn);
 					cxt.put("statemachine", ((ClientControllerWebImpl)WebUtils.getServletContextManager().getActor("nds.web.webController"))
 							.getStateMachine());
+					cxt.put("phaseinstanceid",phaseInstanceId);
 					User usr = SecurityUtils.getUser(userId);
 					ObjectActionEvent oae=new ObjectActionEvent(table.getId(),objectId, usr.adClientId,ActionType.AUDITING, usr, cxt);
 					MonitorManager.getInstance().dispatchEvent(oae);
 				}
+				break;
 			}else{
 				throw new NDSException("Unsupported action:"+ action);
 			}				
 			
 		}//end phases iteration
+		try { if (!connFromOut) conn.close();  } catch (Throwable t) { }
 		}finally{
 			try{if(!connFromOut)conn.close();}catch(Throwable t){}
 		}
@@ -420,6 +430,57 @@ public class AuditUtils {
 						"select p.id from au_phaseinstance p where ad_table_id=? and record_id=? and rownum<2",
 						new Object[] { Integer.valueOf(paramInt1),
 								Integer.valueOf(paramInt2) }) > 0;
+	}
+	
+	public static JSONArray getPhaseAuditUsers(int phaseId, Table paramTable,
+			int objectId) throws Exception {
+		QueryEngine engine = QueryEngine.getInstance();
+		Connection conn = null;
+		try {
+			conn = engine.getConnection();
+			StringBuffer sb = new StringBuffer();
+			String ufSQL = getFilterProperty(
+					engine.doQueryOne(
+							"select userfilter from au_phase where id="
+									+ phaseId, conn), "sql");
+			if (Validator.isNotNull(ufSQL)) {
+				sb.append("select distinct id ad_user_id from users where id "
+								+ (String) ufSQL + " union ");
+			}
+
+			sb.append("select distinct ad_user_id from au_phase_user where isactive='Y' and ad_user_id is not null and exists(select 1 from users u where u.id=au_phase_user.ad_user_id) and au_phase_id="
+							+ phaseId);
+
+			sb.append(" union select distinct g.userid from au_phase_user p, groupuser g where p.isactive='Y' and p.groupid=g.groupid and exists(select 1 from users u where u.id=g.userid) and p.au_phase_id="
+							+ phaseId);
+
+			Object localObject = engine
+					.doQueryList(
+							"select userlink from au_phase_user where isactive='Y' and userlink is not null and au_phase_id="
+									+ phaseId, conn);
+			StringBuffer localStringBuffer2 = new StringBuffer();
+			for (int i = 0; i < ((List) localObject).size(); i++) {
+				String str2;
+				int j;
+				str2 = (String) ((List) localObject).get(0);
+				j = getUserIdByColumnLink(str2, paramTable, objectId, conn);
+				if (j != -1)
+					localStringBuffer2.append(j).append(",");
+			}
+			if (localStringBuffer2.length() > 0) {
+				localStringBuffer2.deleteCharAt(localStringBuffer2.length() - 1);
+				sb.append(" union select distinct id from users where id in("+ localStringBuffer2.toString() + ")");
+			}
+			String str1 = "select id, truename from users where id in("+ sb.toString() + ")";
+			logger.debug("getPhaseAuditUsers(phase=" + phaseId + ", table="+ paramTable + ", id=" + objectId + "):" + str1);
+			return engine.doQueryObjectArray(str1, null, conn, false);
+			} finally {
+				if (conn != null)
+					try {
+						conn.close();
+					} catch (Throwable e) {
+					}
+			}
 	}
 	/**
 	 * 获取 tableId,objectId 所指向的表的物理记录上，对应的clink 字段所指向的user
@@ -555,6 +616,17 @@ public class AuditUtils {
 				
 				vh.put("message", docno+" rejected.");
 				vh.put("state", "R");
+				if (MonitorManager.getInstance().isMonitorPluginInstalled()) {
+					//monitor plugin
+					JSONObject cxt=new JSONObject();
+					cxt.put("source", "AuditUtils.executePhaseInstance");
+					cxt.put("connection", conn);
+					cxt.put("statemachine", ((ClientControllerWebImpl)WebUtils.getServletContextManager().getActor("nds.web.webController"))
+							.getStateMachine());
+					User usr = SecurityUtils.getUser(userId);
+					ObjectActionEvent oae=new ObjectActionEvent(table.getId(),objectId, usr.adClientId,ActionType.REJECT, usr, cxt);
+					MonitorManager.getInstance().dispatchEvent(oae);
+				}
 			}else if("W".equals(state)){
 				// still wait
 				vh.put("message", docno+" still wait.");
@@ -639,12 +711,24 @@ public class AuditUtils {
 				
 				vh.put("message", res.getMessage());
 				vh.put("state", "R");
+				if (MonitorManager.getInstance().isMonitorPluginInstalled()) {
+					//monitor plugin
+					JSONObject cxt=new JSONObject();
+					cxt.put("source", "AuditUtils.doAudit");
+					cxt.put("connection", conn);
+					cxt.put("statemachine", ((ClientControllerWebImpl)WebUtils.getServletContextManager().getActor("nds.web.webController"))
+							.getStateMachine());
+					User usr = SecurityUtils.getUser(userId);
+					ObjectActionEvent oae=new ObjectActionEvent(table.getId(),objectId, usr.adClientId,ActionType.REJECT, usr, cxt);
+					MonitorManager.getInstance().dispatchEvent(oae);
+				}
 			}else if(res.getCode()==2){
 				// still wait
 				vh.put("message", res.getMessage());
 				vh.put("state", "W");
 			}else if(res.getCode()==3){
 				syncObject(table, objectId, phaseInstanceId, "A", conn);
+				logger.debug("accepted accepted, so do next phase,if not exists, whole process ends");
 				// accepted, so do next phase, if exists. if not exists, whole process ends
 				vh=executeProcess(tableId, objectId,processId, userId,orderno,conn );
 				vh.put("table", table); // this value will be used by "ExecuteAudit" Command or "ExecuteAuditTimeout" Command
