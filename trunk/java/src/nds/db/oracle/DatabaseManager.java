@@ -170,10 +170,11 @@ public class DatabaseManager implements DBManager{
 			int m = 0;
 			long startTime = System.currentTimeMillis();
 			pstmt = createStatement(sql, paramArrayOfObject, conn);
-			ResultSetMetaData rs_metadata=rs.getMetaData();
 			rs = pstmt.executeQuery();
+			ResultSetMetaData rs_metadata=rs.getMetaData();
 			int colCount = rs.getMetaData().getColumnCount();
-			
+			logger.debug("colCount is "+colCount);
+
 			while (rs.next()) {
 				JSONObject jor = new JSONObject();
 				for (int k = 1; k <= colCount; k++) {
@@ -263,8 +264,8 @@ public class DatabaseManager implements DBManager{
 			int m = 0;
 			long startTime = System.currentTimeMillis();
 			pstmt = createStatement(sql, paramArrayOfObject, conn);
-			ResultSetMetaData rs_metadata=rs.getMetaData();
 			rs = pstmt.executeQuery();
+			ResultSetMetaData rs_metadata=rs.getMetaData();
 			int colCount = rs.getMetaData().getColumnCount();
 
 			while (rs.next()) {
@@ -471,7 +472,8 @@ public class DatabaseManager implements DBManager{
 			Object[] paramArrayOfObject, Connection conn) throws SQLException,
 			QueryException {
 		PreparedStatement pstmt = conn.prepareStatement(sql);
-		if (paramArrayOfObject != null)
+		//logger.debug("paramArrayOfObject is"+ String.valueOf(paramArrayOfObject));
+		if (paramArrayOfObject != null){
 			logger.debug("createStatement now!");
 			for (int i = 0; i < paramArrayOfObject.length; i++) {
 				Object parm = paramArrayOfObject[i];
@@ -544,6 +546,7 @@ public class DatabaseManager implements DBManager{
 							+ parm.getClass() + ",value=" + parm);
 				}
 			}
+		}
 		return pstmt;
 	}
 
