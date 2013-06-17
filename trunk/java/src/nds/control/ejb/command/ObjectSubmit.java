@@ -76,18 +76,22 @@ public class ObjectSubmit extends Command{
         QueryEngine engine = QueryEngine.getInstance() ;
         Connection conn=null;
         ValueHolder v = null;
+        User user=helper.getOperator(event);
+        int userId=user.getId().intValue()  ;
+        conn = this.helper.getConnection(event);
+        try{
+        QueryUtils.lockRecord(table, pid, conn);
         
-        int status = engine.getSheetStatus(tableName,pid );
+        int status = engine.getSheetStatus(tableName,pid,conn );
         if(status!=1){
             throw new NDSEventException("@object-already-submitted@" );
         }
         // addtional check, is the object in the status of the table limited to.
-        if(!helper.isObjectInTable(table, pid)){
+        if(!helper.isObjectInTable(table, pid,conn)){
         	//object no longer in table , so abort
         	throw new NDSEventException("@object-status-error-may-submitted-or-deleted@" );
         }
-        User user=helper.getOperator(event);
-        int userId=user.getId().intValue()  ;
+
         
         // security check
         boolean b=false;
@@ -101,11 +105,11 @@ public class ObjectSubmit extends Command{
         
         String state=null;
         SPResult s=null;
-        conn=engine.getConnection();
-        try{
+        //conn=engine.getConnection();
+        //try{
 	        /**
 	         * add check before submit, this is procedure
-	         */
+	           write in auditOrSubmitObject
 	        String onSubmit= null;
 	        if(table.getJSONProps()!=null ){
 	        	onSubmit= table.getJSONProps().optString("before_submit");
@@ -115,6 +119,7 @@ public class ObjectSubmit extends Command{
 	    			engine.executeStoredProcedure(onSubmit, params, false ,conn);
 	        	}
 	        }
+	        */
 	        Vector sqls= new Vector();
 	        sqls.addElement("update "+tableName+" set modifierid="+ userId+ ", modifieddate=sysdate where id="+pid);
             engine.doUpdate(sqls,conn);
