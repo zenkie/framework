@@ -4,6 +4,7 @@ import java.rmi.RemoteException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,6 +30,8 @@ import nds.query.*;
 import nds.schema.*;
 import nds.security.User;
 import nds.util.Configurations;
+import nds.util.LicenseManager;
+import nds.util.LicenseWrapper;
 import nds.util.NDSException;
 import nds.util.Tools;
 /**
@@ -209,6 +212,44 @@ public class ObjectModify extends Command{
        // call proc after modify
        // after modify, first doing triggers on the current table
        // then do trigger on parent table, if exists.
+       //add licenses c_store and users check
+       try{
+       LicenseManager.validateLicense("jackrain","5.0","",false);
+		Iterator b=LicenseManager.getLicenses();
+		ResultSet rs=null;
+		int un=0,pn = 0;
+	    while (b.hasNext()) {
+	    	LicenseWrapper o = (LicenseWrapper)b.next();
+	    	un=o.getNumUsers();
+			pn=o.getNumPOS();
+	    }
+
+       if(table.getRealTableName().equals("C_STORE")){
+       	rs= con.createStatement().executeQuery("select count(*) from c_store t where t.isactive='Y' and t.isretail='Y'");
+         	rs.next();
+	    	int cpos=rs.getInt(1);
+	    	if(cpos>pn){
+	    		logger.debug("now pos:"+String.valueOf(cpos));
+	    		logger.debug("licences pos:"+String.valueOf(pn));
+	    		throw new NDSEventException("当前pos点数已超！请联系商家！");
+	    	}
+			   
+       }else if(table.getRealTableName().equals("USERS")){
+       	rs= con.createStatement().executeQuery("select count(*) from users t where t.isactive='Y' and t.IS_SYS_USER!='Y'");
+         	rs.next();
+	    	int cus=rs.getInt(1);
+	    	if(cus>pn){
+	    		logger.debug("now users:"+String.valueOf(cus));
+	    		logger.debug("licences users:"+String.valueOf(pn));
+	    		throw new NDSEventException("当前用户点数已超！请联系商家！");
+	    	}
+		    
+	   }
+       }catch(Exception t){
+    	   if(t instanceof NDSException) throw (NDSException)t;
+    	   throw new NDSEventException(t.getMessage(),t);
+       }
+       
        SPResult spr=helper.doTrigger("AM", table, oids, con);
 
        Configurations conf= (Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
