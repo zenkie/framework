@@ -353,7 +353,7 @@ public class ObjectCreate extends Command{
                 	        	rs= con.createStatement().executeQuery("select count(*) from users t where t.isactive='Y' and t.IS_SYS_USER!='Y'");
                 	          	rs.next();
                 		    	int cus=rs.getInt(1);
-                		    	if(cus>pn){
+                		    	if(cus>un){
                 		    		logger.debug("now users:"+String.valueOf(cus));
                 		    		logger.debug("licences users:"+String.valueOf(pn));
                 		    		throw new NDSEventException("当前用户点数已超！请联系商家！");
