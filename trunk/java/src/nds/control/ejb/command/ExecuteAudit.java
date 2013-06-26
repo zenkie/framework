@@ -87,6 +87,8 @@ public class ExecuteAudit extends Command {
 	ValueHolder holder= new ValueHolder();
 	
     Connection con=null;
+    Connection localcon=null;
+    
     boolean bool2 = false;
     
 		try {
@@ -164,7 +166,7 @@ public class ExecuteAudit extends Command {
 		    	Savepoint localSavepoint = con.setSavepoint();
 		    	try{
 			    	Locale local = event.getLocale(); 
-			    	Connection localcon = engine.getConnection(); 
+			        localcon = engine.getConnection(); 
 			    	assigneeId = ids[i];
 					List au_phaselist = QueryEngine.getInstance().doQueryList(
 					"select pi.ad_table_id, pi.record_id,pi.AU_PROCESS_ID,p.orderno,pi.RECORD_DOCNO from au_phaseinstance pi, au_phase p where p.id=pi.au_phase_id and pi.id=?",
@@ -251,6 +253,8 @@ public class ExecuteAudit extends Command {
   		else throw new NDSException("@exception@:"+ e.getMessage(), e);
   	}finally{
   		try{if(con!=null)con.close();}catch(Throwable t){}
+  		try{if(localcon!=null)localcon.close();}catch(Throwable t){}
+  		
   	}
 	return holder;
   }
