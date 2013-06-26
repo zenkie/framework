@@ -213,10 +213,10 @@ public class ObjectModify extends Command{
        // after modify, first doing triggers on the current table
        // then do trigger on parent table, if exists.
        //add licenses c_store and users check
+		ResultSet rs=null;
        try{
        LicenseManager.validateLicense("jackrain","5.0","",false);
 		Iterator b=LicenseManager.getLicenses();
-		ResultSet rs=null;
 		int un=0,pn = 0;
 	    while (b.hasNext()) {
 	    	LicenseWrapper o = (LicenseWrapper)b.next();
@@ -245,10 +245,14 @@ public class ObjectModify extends Command{
 	    	}
 		    
 	   }
+
        }catch(Exception t){
     	   if(t instanceof NDSException) throw (NDSException)t;
     	   throw new NDSEventException(t.getMessage(),t);
-       }
+   
+       }finally{
+			try{if(rs!=null) rs.close();}catch(Throwable t){}
+		}	
        
        SPResult spr=helper.doTrigger("AM", table, oids, con);
 

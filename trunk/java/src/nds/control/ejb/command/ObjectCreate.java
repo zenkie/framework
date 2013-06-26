@@ -165,6 +165,7 @@ public class ObjectCreate extends Command{
       PreparedStatement stmtIDByUdx=null; // select id from xxx where c=?
       SPResult spr=null; // trigger result
       boolean shouldAddModifierIdToUpdateStatement=false;
+      ResultSet rs=null;// check key result
       //Table sheetTable=null;int sheetId=-1;
        try{
        	   con= helper.getConnection(event);
@@ -243,6 +244,7 @@ public class ObjectCreate extends Command{
            String psql=createImpl.getPreparedStatementSQL();
            logger.debug(psql);
            stmt=con.prepareStatement(psql);
+
            QueryEngine engine = QueryEngine.getInstance() ;
            
            boolean createAttributeDetail=table.supportAttributeDetail();
@@ -284,6 +286,7 @@ public class ObjectCreate extends Command{
            int realPos;
            
            //String sql;
+    	   
            ArrayList row;
            java.sql.Savepoint  sp=null;
            int[] sqlDataColumnTypesForUpdate=null, sqlDataColumnTypesForUdx=null; // elements: Column.STRING/NUMBER/DATENUMBER
@@ -331,7 +334,6 @@ public class ObjectCreate extends Command{
                 		    stmt.executeUpdate();
             			    LicenseManager.validateLicense("jackrain","5.0","",false);
             				Iterator b=LicenseManager.getLicenses();
-            				ResultSet rs=null;
             				int un=0,pn = 0;
             			    while (b.hasNext()) {
             			    	LicenseWrapper o = (LicenseWrapper)b.next();
@@ -593,6 +595,7 @@ public class ObjectCreate extends Command{
            try{if(stmt !=null) stmt.close(); }catch(Exception eee2){}
            try{if(stmtUpdate !=null) stmtUpdate.close(); }catch(Exception eee2){}
            try{if(stmtIDByUdx !=null) stmtIDByUdx.close(); }catch(Exception eee2){}
+           try{if(rs!=null) rs.close();}catch(Throwable t){}
            
            helper.closeConnection(con, event);
        }
