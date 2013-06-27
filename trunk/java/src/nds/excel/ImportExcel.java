@@ -602,7 +602,7 @@ public class ImportExcel implements Runnable{
 		        		}else
 		        			event.setParameter( (String)colNames.get(j) ,colData[j] );
 	             }
-	             System.out.print(colData);
+	            // System.out.print(colData);
 	             logger.debug("imp data is:"+colData.toString());
 		
 		        
