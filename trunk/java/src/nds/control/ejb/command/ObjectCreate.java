@@ -332,36 +332,36 @@ public class ObjectCreate extends Command{
                 	   //normal update and ac procedure
                 	   try{
                 		    stmt.executeUpdate();
-            			    LicenseManager.validateLicense("jackrain","5.0","",false);
-            				Iterator b=LicenseManager.getLicenses();
-            				int un=0,pn = 0;
-            			    while (b.hasNext()) {
-            			    	LicenseWrapper o = (LicenseWrapper)b.next();
-            			    	un=o.getNumUsers();
-            					pn=o.getNumPOS();
-            			    }
-
-                	        if(table.getName().equals("C_STORE")){
-                	        	rs= con.createStatement().executeQuery("select count(*) from c_store t where t.isactive='Y' and t.isretail='Y'");
-                	          	rs.next();
-                		    	int cpos=rs.getInt(1);
-                		    	if(cpos>pn){
-                		    		logger.debug("now pos:"+String.valueOf(cpos));
-                		    		logger.debug("licences pos:"+String.valueOf(pn));
-                		    		throw new NDSEventException("当前pos点数已超！请联系商家！");
-                		    	}
-                				   
-                	        }else if(table.getName().equals("USERS")){
-                	        	rs= con.createStatement().executeQuery("select count(*) from users t where t.isactive='Y' and t.IS_SYS_USER!='Y'");
-                	          	rs.next();
-                		    	int cus=rs.getInt(1);
-                		    	if(cus>un){
-                		    		logger.debug("now users:"+String.valueOf(cus));
-                		    		logger.debug("licences users:"+String.valueOf(pn));
-                		    		throw new NDSEventException("当前用户点数已超！请联系商家！");
-                		    	}
-                			    
-                		   }
+//            			    LicenseManager.validateLicense("jackrain","5.0","",false);
+//            				Iterator b=LicenseManager.getLicenses();
+//            				int un=0,pn = 0;
+//            			    while (b.hasNext()) {
+//            			    	LicenseWrapper o = (LicenseWrapper)b.next();
+//            			    	un=o.getNumUsers();
+//            					pn=o.getNumPOS();
+//            			    }
+//
+//                	        if(table.getName().equals("C_STORE")){
+//                	        	rs= con.createStatement().executeQuery("select count(*) from c_store t where t.isactive='Y' and t.isretail='Y'");
+//                	          	rs.next();
+//                		    	int cpos=rs.getInt(1);
+//                		    	if(cpos>pn){
+//                		    		logger.debug("now pos:"+String.valueOf(cpos));
+//                		    		logger.debug("licences pos:"+String.valueOf(pn));
+//                		    		throw new NDSEventException("当前pos点数已超！请联系商家！");
+//                		    	}
+//                				   
+//                	        }else if(table.getName().equals("USERS")){
+//                	        	rs= con.createStatement().executeQuery("select count(*) from users t where t.isactive='Y' and t.IS_SYS_USER!='Y'");
+//                	          	rs.next();
+//                		    	int cus=rs.getInt(1);
+//                		    	if(cus>un){
+//                		    		logger.debug("now users:"+String.valueOf(cus));
+//                		    		logger.debug("licences users:"+String.valueOf(pn));
+//                		    		throw new NDSEventException("当前用户点数已超！请联系商家！");
+//                		    	}
+//                			    
+//                		   }
                 		   
                 		   spr=helper.doTrigger("AC", table, oids[realPos], con);
                 		  // Edit by Robin 2010-07-30
