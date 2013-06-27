@@ -245,7 +245,7 @@ public class ObjectColumnObtain extends ColumnObtain{
 	                  }else{
 	                  	// find data from event
 		                  if(isUpperCase) objectStr[i]= objectStr[i].toUpperCase();
-		                  logger.debug(objectStr[i]);
+		                  //logger.debug(objectStr[i]);
 		                  pstmt.setString(1,objectStr[i] );
 		                  int cidx=1;
 		                  if(ak2Column!=null)pstmt.setString(++cidx,objectStr[i] );
