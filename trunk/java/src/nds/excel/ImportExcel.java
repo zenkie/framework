@@ -33,6 +33,10 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;  
 import org.apache.poi.ss.usermodel.Sheet;  
 import org.apache.poi.ss.usermodel.Workbook;  
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
@@ -100,11 +104,82 @@ public class ImportExcel implements Runnable{
     public void setParameter(String paramName, String paramValue){
         params.setProperty(paramName, paramValue);
     }
+    /**
+    * Get cell value which should be defined in by column, note col may not
+    * be maintable's column, it can be fk_table's ak column.
+    * for xxcel 2007
+    */
+   private String getxxCellValue(int rowNum, XSSFCell  cell, Column col){
+       if( cell==null) return "";
+       String s="",t; int colType; long l;double d;
+       try{
+           if( col.isValueLimited()){
+               t=cell.getStringCellValue();
+               s= (t==null?"":t.trim());
+               s= TableManager.getInstance().getColumnValueByDescription(col.getId(),s,locale);
+           }else{
+           	int cellType= cell.getCellType();
+           	if(cellType== Cell.CELL_TYPE_BLANK){
+           		s="";// empty;
+           	}else{
+           	switch(col.getType() ){
+           	case Column.STRING :
+	                try{t=cell.getStringCellValue();}
+	                catch(NumberFormatException e2){
+	                    // cell is a number format, so try using numeric
+	                    d = cell.getNumericCellValue();
+	                    if((long)d==d) t=( (long)d)+"";
+	                	else t= d+"";
+	                }
+	                //字符类型的字段值，所对应的EXCEL 可能是数字型的错误补货
+	                catch(IllegalStateException e3){
+	                    d = cell.getNumericCellValue();
+	                    if((long)d==d) t=( (long)d)+"";
+	                	else t= d+"";
+	                }
+	                s= (t==null?"":t.trim());
+	                break;
+               case Column.NUMBER:
+                   if( cellType== Cell.CELL_TYPE_STRING) s = cell.getStringCellValue();
+               	else {
+               		d= cell.getNumericCellValue();
+                     s= String.valueOf(d); // null will be '0'
+               	}
+                   break;
+               case Column.DATENUMBER:
+                   try{
+                   	java.util.Date dt= cell.getDateCellValue();
+                   	s=(dt==null?"":((java.text.SimpleDateFormat)QueryUtils.dateNumberFormatter.get()).format( dt));
+                   }catch(Exception ed){
+                   	// not a date format, try using string 
+                   	s= cell.getStringCellValue();
+                   }
+                   break;
+               case Column.DATE:
+                   try{
+                   	java.util.Date dt= cell.getDateCellValue();
+                   	s=(dt==null?"":((java.text.SimpleDateFormat)QueryUtils.dateFormatter.get()).format( dt));
+                   }catch(Exception ed){
+                   	// not a date format, try using string 
+                   	s= cell.getStringCellValue();
+                   }
+                   break;
+               default:
+                   logger.error("Unsupported column type:"+ col.getType());
+           	}
+           	}
+           }
+       }catch(Exception e){
+           logger.error("Error parsing cell(" +rowNum+","+ cell.getColumnIndex() + ") as column " + col+":"+ e+"-"+cell.getCellType());
+       }
+       //logger.debug(" cell(" +rowNum+","+ cell.getCellNum() + ")="+ s);
+       return s;
+   }
       /**
      * Get cell value which should be defined in by column, note col may not
      * be maintable's column, it can be fk_table's ak column.
      */
-    private String getCellValue(int rowNum, Cell cell, Column col){
+    private String getCellValue(int rowNum, HSSFCell cell, Column col){
         if( cell==null) return "";
         String s="",t; int colType; long l;double d;
         try{
@@ -362,29 +437,31 @@ public class ImportExcel implements Runnable{
 	        	
 	        }else{
 	        	//xls file handling
-	        	Workbook wb = null; 
+	        	//Workbook wb = null; 
 	        	if (srcFile.endsWith(".xls")) {  
 	            POIFSFileSystem fs ;
 	            // check input stream first, if not found, use srcFile name
 	            if ( this.excelStream !=null) fs= new POIFSFileSystem(excelStream);
 	            else fs=new POIFSFileSystem(new FileInputStream(srcFile));
 	               // inp = new FileInputStream(FilePath);  
-	                wb = (Workbook) new HSSFWorkbook(fs);  
-	            } else if (srcFile.endsWith(".xlsx")) {   
-	                wb = (Workbook) new XSSFWorkbook(excelStream);  
-	            }
-	        	Sheet sheet = wb.getSheetAt(0);
+	               // wb = (Workbook) new HSSFWorkbook(fs);  
+//	            } else if (srcFile.endsWith(".xlsx")) {   
+//	                wb = (Workbook) new XSSFWorkbook(excelStream);  
+//	            }
+	        	//Sheet sheet = wb.getSheetAt(0);
+	            HSSFWorkbook wb = new HSSFWorkbook(fs);
+	            HSSFSheet sheet = wb.getSheetAt(0);
 	            logger.debug("Last row num:"+  sheet.getLastRowNum());
 //	            String[][] colData= new String[columns.size()][1+sheet.getLastRowNum() -startRow];
 	            logger.debug("Create array["+columns.size()+"]["+ (sheet.getLastRowNum() -startRow)+"]" );
 	            for ( int i= startRow; i<= sheet.getLastRowNum();i++){
-	                Row row = sheet.getRow(i);
+	            	HSSFRow row = sheet.getRow(i);
 	                if( row==null) continue;
 	                DefaultWebEvent dwe=createRowModifyEvent();
 	                dwe.setParameter("nds.row.index",String.valueOf(i));
 	                for( int j=0;j< colNames.size();j++){
 	                    col= (Column) directColumnOfData.get(j);
-	                    Cell cell = row.getCell((j+startColumn)); //列从startColumn开始
+	                    HSSFCell cell = row.getCell((j+startColumn)); //列从startColumn开始
 	                    cv= getCellValue(i, cell, col);
 	                    dwe.setParameter((String)colNames.get(j), cv);
 	                }
@@ -392,9 +469,29 @@ public class ImportExcel implements Runnable{
 	            }
 		
 		        
+	        }else if (srcFile.endsWith(".xlsx")) {   
+	        	XSSFWorkbook  wb =(XSSFWorkbook)WorkbookFactory.create(excelStream);
+	        	XSSFSheet  sheet = wb.getSheetAt(0);
+	            logger.debug("Last row num:"+  sheet.getLastRowNum());
+//	            String[][] colData= new String[columns.size()][1+sheet.getLastRowNum() -startRow];
+	            logger.debug("Create array["+columns.size()+"]["+ (sheet.getLastRowNum() -startRow)+"]" );
+	            for ( int i= startRow; i<= sheet.getLastRowNum();i++){
+	            	XSSFRow  row = sheet.getRow(i);
+	                if( row==null) continue;
+	                DefaultWebEvent dwe=createRowModifyEvent();
+	                dwe.setParameter("nds.row.index",String.valueOf(i));
+	                for( int j=0;j< colNames.size();j++){
+	                    col= (Column) directColumnOfData.get(j);
+	                    XSSFCell cell = row.getCell((j+startColumn)); //列从startColumn开始
+	                    cv= getxxCellValue(i, cell, col);
+	                    dwe.setParameter((String)colNames.get(j), cv);
+	                }
+	                rows.add(dwe);
+	            }
+	        	
 	        }
 	       
-    		
+	        }
 
         }catch(Exception e){
             logger.error("Error exporting to excel" , e);
@@ -558,8 +655,8 @@ public class ImportExcel implements Runnable{
 	        	}
 	        }else{
 	        	//xls file handling
-	        	//suport xlsx 2007
-	        	Workbook wb = null; 
+	        	
+	        	//Workbook wb = null; 
 	            logger.debug(srcFile);
 	        	if (srcFile.endsWith(".xls")) {  
 	            POIFSFileSystem fs ;
@@ -568,23 +665,23 @@ public class ImportExcel implements Runnable{
 	            if ( this.excelStream !=null) fs= new POIFSFileSystem(excelStream);
 	            else fs=new POIFSFileSystem(new FileInputStream(srcFile));
 	               // inp = new FileInputStream(FilePath);  
-	                wb = (Workbook) new HSSFWorkbook(fs);  
-	            } else if (srcFile.endsWith(".xlsx")) {   
+	               // wb = (Workbook) new HSSFWorkbook(fs);  
+	             //else if (srcFile.endsWith(".xlsx")) {   
 	            //if ( this.excelStream !=null) fs= new POIFSFileSystem(excelStream);
-	                wb = (Workbook) new XSSFWorkbook(excelStream);  
-	            }
-	        	Sheet sheet = wb.getSheetAt(0);
-	           // HSSFWorkbook wb = new HSSFWorkbook(fs);
-	            //HSSFSheet sheet = wb.getSheetAt(0);
+	                //wb = (Workbook) new XSSFWorkbook(excelStream);  
+	            //}
+	        	//Sheet sheet = wb.getSheetAt(0);
+	            HSSFWorkbook wb = new HSSFWorkbook(fs);
+	            HSSFSheet sheet = wb.getSheetAt(0);
 	            logger.debug("Last row num:"+  sheet.getLastRowNum());
 	            String[][] colData= new String[columns.size()][1+sheet.getLastRowNum() -startRow];
 	            logger.debug("Create array["+columns.size()+"]["+ (sheet.getLastRowNum() -startRow)+"]" );
 	            for ( int i= startRow; i<= sheet.getLastRowNum();i++){
-	                Row row = sheet.getRow(i);
+	            	HSSFRow row = sheet.getRow(i);
 	                if( row==null) continue;
 	                for( int j=0;j< directColumnOfData.size();j++){
 	                    col= (Column) directColumnOfData.get(j);
-	                    Cell cell = row.getCell((j+startColumn));
+	                    HSSFCell cell = row.getCell((j+startColumn));
 	                    cv= getCellValue(i, cell, col);
 	                    logger.debug("Cell data is:["+String.valueOf(j)+"]["+String.valueOf(i-startRow)+"]"+cv);
 	                    colData[j][i-startRow]= cv;
@@ -603,13 +700,42 @@ public class ImportExcel implements Runnable{
 		        			event.setParameter( (String)colNames.get(j) ,colData[j] );
 	             }
 	            // System.out.print(colData);
-	             logger.debug("imp data is:"+colData.toString());
-		
-		        
+	             logger.debug("imp data xls is:"+colData.toString());        
+	        }else if (srcFile.endsWith(".xlsx")) {   
+	        	//suport xlsx 2007
+	        	XSSFWorkbook  wb =(XSSFWorkbook)WorkbookFactory.create(excelStream);
+	        	XSSFSheet  sheet = wb.getSheetAt(0);
+	            logger.debug("Last row num:"+  sheet.getLastRowNum());
+	            String[][] colData= new String[columns.size()][1+sheet.getLastRowNum() -startRow];
+	            logger.debug("Create array["+columns.size()+"]["+ (sheet.getLastRowNum() -startRow)+"]" );
+	            for ( int i= startRow; i<= sheet.getLastRowNum();i++){
+	            	XSSFRow  row = sheet.getRow(i);
+	                if( row==null) continue;
+	                for( int j=0;j< directColumnOfData.size();j++){
+	                    col= (Column) directColumnOfData.get(j);
+	                    XSSFCell  cell = row.getCell((j+startColumn));
+	                    cv= getxxCellValue(i, cell, col);
+	                    logger.debug("Cell data is:["+String.valueOf(j)+"]["+String.valueOf(i-startRow)+"]"+cv);
+	                    colData[j][i-startRow]= cv;
+	                }
+	            }
+	             for( int j=0;j< columns.size();j++){
+	            	 	//filter no permission rows
+	            	 	Column cl=(Column)columns.get(j);
+	            	 	if(cl.getSecurityGrade()> user.getSecurityGrade())continue;
+	            	 
+	//                 logger.debug("param for "+ columns.get(j)+ ":"+ (String)colNames.get(j));
+//	            	处理倍增请求
+		        		if(multiplyColumnIndex==j){
+		        			event.setParameter( (String)colNames.get(j) ,multiply(colData[j],multiplyNum)  );
+		        		}else
+		        			event.setParameter( (String)colNames.get(j) ,colData[j] );
+	             }
+	            // System.out.print(colData);
+	             logger.debug("imp data xlsx is:"+colData.toString());        
 	        }
-	       
-    		
-
+	     	
+	       }
         }catch(Exception e){
             logger.error("Error exporting to excel" , e);
             throw new NDSException("在处理请求时出现异常："+ e.getLocalizedMessage() );
