@@ -349,7 +349,6 @@ public class ImportExcel implements Runnable{
 	             */
 	        	if(excelStream==null) throw new NDSException("must set inputstream");
 	        	BufferedReader  isr=new BufferedReader(new InputStreamReader(excelStream, "GBK"));
-	        	
 	        	boolean txtLineTypeIsToken;
 	        	if( "pandian".equals(params.getProperty("file_format"))){
 	        		txtLineTypeIsToken=false;
@@ -434,7 +433,7 @@ public class ImportExcel implements Runnable{
 	        		line= isr.readLine();
 	        	}
 	        	isr.close();
-	        	
+	        	if ( this.excelStream !=null)excelStream.close();
 	        }else{
 	        	//xls file handling
 	        	//Workbook wb = null; 
@@ -467,7 +466,7 @@ public class ImportExcel implements Runnable{
 	                }
 	                rows.add(dwe);
 	            }
-		
+	           
 		        
 	        }else if (srcFile.endsWith(".xlsx")) {   
 	        	XSSFWorkbook  wb =(XSSFWorkbook)WorkbookFactory.create(excelStream);
@@ -490,11 +489,12 @@ public class ImportExcel implements Runnable{
 	            }
 	        	
 	        }
-	       
+	        	if ( this.excelStream !=null)excelStream.close();
 	        }
 
         }catch(Exception e){
             logger.error("Error exporting to excel" , e);
+            if ( this.excelStream !=null)excelStream.close();
             throw new NDSException("在处理请求时出现异常："+ e.getLocalizedMessage() );
         }
         event.put("rows", rows);
@@ -734,10 +734,11 @@ public class ImportExcel implements Runnable{
 	            // System.out.print(colData);
 	             logger.debug("imp data xlsx is:"+colData.toString());        
 	        }
-	     	
+	        	if ( this.excelStream !=null)excelStream.close();
 	       }
         }catch(Exception e){
             logger.error("Error exporting to excel" , e);
+            
             throw new NDSException("在处理请求时出现异常："+ e.getLocalizedMessage() );
         }
         return event;
