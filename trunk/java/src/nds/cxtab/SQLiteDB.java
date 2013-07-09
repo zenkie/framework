@@ -376,7 +376,11 @@ public class SQLiteDB {
 		ResultSetMetaData rsmetadata;
 		try{
 			//int j = (resultsetmetadata = (resultset = oraConn.createStatement().executeQuery(sql)).getMetaData()).getColumnCount();
-			ora_stmt=oraConn.createStatement();
+			//ora_stmt=oraConn.createStatement(,);
+			//fast cursor
+			ora_stmt=oraConn.createStatement(java.sql.ResultSet.TYPE_FORWARD_ONLY,
+                    java.sql.ResultSet.CONCUR_READ_ONLY);
+			ora_stmt.setFetchSize(200);
 			rs=ora_stmt.executeQuery(sql);
 			rsmetadata =rs.getMetaData();
 			int colCount = rs.getMetaData().getColumnCount();
