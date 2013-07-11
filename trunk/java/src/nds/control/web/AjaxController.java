@@ -133,6 +133,7 @@ public class AjaxController {
 			JSONObject jo= new JSONObject(jsonObj);
 
 			Table table= TableManager.getInstance().findTable(jo.get("table"));
+			
 			//必须具有查询的权限 20091213 yfzhu
 			usr.checkPermission(table.getSecurityDirectory(), nds.security.Directory.READ);
 			
@@ -172,7 +173,30 @@ public class AjaxController {
 				// handle buttons that defined to show in this query, will convert to html code here
 				AjaxUtils.convertButtonHtml((QueryResultImpl)qr, request);
 				
-				jr= qr.toJSONObject(true);
+				//add wgrade to set  readonly
+				
+		        JSONObject jopro=table.getJSONProps()==null?new JSONObject():table.getJSONProps();
+		        JSONArray wjor=null;
+		       // logger.debug("getWgraderow");
+		        if(jopro.has("wgrade")){
+		        	//logger.debug("getWgraderow");
+		         	JSONObject jor=jopro.getJSONObject("wgrade");
+		        	if(jor.has("colname")){
+		        	Column wcol=(Column)table.getColumn(jor.getString("colname"));
+		        	int wgrade=jor.optInt("sgrd",99);
+		        	logger.debug("wgrade is"+String.valueOf(wgrade));
+		        	logger.debug("sgrade is"+String.valueOf(usr.getSecurityGrade()));
+		        	if(usr.getSecurityGrade()<wgrade){
+		        	 wjor=AjaxUtils.getWgraderow((QueryResultImpl)qr,wcol);
+		        	}
+		        	}
+		        }
+		        
+		        jr= qr.toJSONObject(true);
+				if(wjor!=null){
+					jr.put("wrow", wjor);
+				}
+				logger.debug("wrow is "+jr.toString());
 				
 				if(jo.optBoolean("show_alert", false)){
 			    	// row style

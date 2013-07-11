@@ -32,6 +32,7 @@ import nds.web.config.*;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.directwebremoting.WebContextFactory;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 //import org.directwebremoting.WebContextFactory;
@@ -268,6 +269,16 @@ public class AjaxUtils {
 					query.addSelection(cids, false, c.getDescription(locale));
 			}
 		}
+		//add wgrade to set  readonly
+		
+		JSONObject jopro=table.getJSONProps()==null?new JSONObject():table.getJSONProps();
+	    
+        if(jopro.has("wgrade")){
+        	JSONObject jor=jopro.getJSONObject("wgrade");
+        	if(jor.has("colname")){
+        		query.addSelection((int)table.getColumn(jor.getString("colname")).getId());
+        	}
+        }
 		// Where
 		Expression expr=null,expr2;
 		String cs;
@@ -848,6 +859,27 @@ public class AjaxUtils {
     		map.put(key, parser.getParameterValues(key));
     	}
     	return QueryUtils.parseCondition(map, locale);
+    }
+    
+    /***
+     * 
+     */
+    public static  JSONArray  getWgraderow(QueryResultImpl qr,Column col) throws Exception{
+    	
+    	int pos = qr.getMetaData().findPositionInSelection(col);
+    	JSONArray jor=new JSONArray();
+    	 for(int row=0;row< qr.getRowCount();row++){
+	        	qr.next();
+	        	String ws=qr.getString(pos+1);
+	        	try {
+	        	JSONObject jo=new JSONObject(ws);
+	        	jor.put(jo);
+	        	} catch (JSONException e) {
+	        		jor.put(JSONObject.NULL);
+	    		}
+	        }
+    	 logger.debug("getWgraderow is"+jor.toString());
+		return jor;
     }
     
     /**
