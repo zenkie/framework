@@ -22,6 +22,9 @@
 ********************************************************************/
 package nds.util.test;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -31,6 +34,22 @@ public class AllTests {
 	}
 
 	public static Test suite() {
+		String beanValue=null;
+		JSONObject jo= new JSONObject();
+		if(jo.has("sdfsdf"))
+		System.out.print(jo);
+		System.out.print("{val:true,type:\"readonly\"}");
+		Object val=jo.optBoolean("val");
+		//System.out.print(val);
+		if((Boolean)val){
+			System.out.print("asdfasdfsadf");
+		}
+		if (val instanceof Integer) {
+		beanValue=String.valueOf(val);
+		}else{
+			//beanValue=(String)val;
+		}
+		System.out.print(beanValue);
 		TestSuite suite= new TestSuite("NDS util tests");
 /*                suite.addTestSuite(nds.util.test.NDSExceptionTest.class);
 		suite.addTestSuite(nds.util.test.IntHashtableTest.class);*/
