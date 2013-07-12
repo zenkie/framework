@@ -318,8 +318,12 @@ public class CheckProductAttribute extends Command {
 		  				String storedata=(String)jo.getString("storedata");
 		  				int dest_colId=Tools.getInt((String)jo.getString("dest_colId"),-1);
 		  				String destdata=(String)jo.getString("destdata");
-		  				String url=WebKeys.NDS_URI+"/pdt/itemdetail.jsp?compress=f&table="+tableId+"&pdtid="+productId+"&asid="+asId+"&storedata="+storedata+"&store_colId="+store_colId+"&dest_colId="+dest_colId+"&destdata="+destdata+"&fixedColumns="+fixedColumns.toString();
-                          //Edit by Robin 20101207 新增判断系统参数“单对象中款号输入是否需要定制化界面”如果为true 且参与定制化的“表名”包含此表 则弹出界面为定制界面（参数：portal.pdtMatrix.CustomJSP.JSPURL）如：奥康的发货订单的配码功能
+		  				//System.out.print(" fixedColumns is"+fixedColumns.toString());
+		  				String url=WebKeys.NDS_URI+"/pdt/itemdetail.jsp?compress=f&table="+tableId+"&pdtid="+productId+"&asid="+asId+"&storedata="+storedata+"&store_colId="+store_colId+"&dest_colId="+dest_colId+"&destdata="+destdata+"&fixedColumns="
+		  				+(fixedColumns==null?"":fixedColumns.toString());
+		  				//System.out.print(" url is"+url);
+			  			  
+		  				//Edit by Robin 20101207 新增判断系统参数“单对象中款号输入是否需要定制化界面”如果为true 且参与定制化的“表名”包含此表 则弹出界面为定制界面（参数：portal.pdtMatrix.CustomJSP.JSPURL）如：奥康的发货订单的配码功能
                         boolean customJSP=Tools.getBoolean(engine.doQueryOne("select value from ad_param where name='portal.pdtMatrix.CustomJSP'"),false);
                         if(customJSP){
                              String tables=String.valueOf(engine.doQueryOne("select value from ad_param where name='portal.pdtMatrix.tables'"));
