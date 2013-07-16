@@ -394,19 +394,25 @@ public final class QueryUtils {
                     String date= parseStringExcludeOperator(input);
                     if( ! oper.trim().equals("")) {
                         //ret=" ( trunc("+columnName+") "+oper+toDate(date) +") ";
-                        ret=" ("+columnName+oper+toDate(date) +") ";
-                    } else {
-                        // no date range, we will make whole day as range
-                        //ret=" ( trunc("+ columnName+")= "+ toDate(date)+") ";
-                        ret=" ( "+ columnName+" BETWEEN "+ toDate(date)+" AND "+toDate(date) + "+ .99999) ";
-
+                        //ret=" ("+columnName+oper+toDate(date) +") ";
+                    	if (isDateNumber(date)) {
+                    		ret = " (" + ret + " BETWEEN " + numberToDateTime(date, false) + " AND " + numberToDateTime(date, true) + ") ";
+                    	}
+                    	else
+                    	{
+                    		ret = " (" + ret + "=" + toDateTime(date, false) + ") ";
+                    	}
+                    } else if (isDateNumber(date)) {
+                    	if (oper.contains("<")) ret = " (" + ret + oper + numberToDateTime(date, true) + ") "; else
+                    		ret = " (" + ret + oper + numberToDateTime(date, false) + ") ";
                     }
-                } else {
+                    else ret = " (" + ret + oper + toDateTime(date, false) + ") ";
+
+                     }else {
                     // two date
                     //ret=" (trunc("+columnName+") BETWEEN "+ toDate(input.substring(0,hyphen))+" AND "+
                     //    toDate(input.substring(hyphen+1))+") ";
-                    ret=" ("+columnName+" BETWEEN "+ toDate(input.substring(0,hyphen))+" AND "+
-                        toDate(input.substring(hyphen+1))+"+ .99999) ";
+                    ret=" ("+columnName+" BETWEEN "+ toDateTime(input.substring(0,hyphen),false)+" AND "+toDateTime(input.substring(hyphen+1),true)+ ") ";
                 }
                 break;
              default:
@@ -415,7 +421,63 @@ public final class QueryUtils {
         }
         return ret;
     }
-    /**
+
+	/**
+	 *  date is yyyymmdd return  boolean
+	 * */
+	public static boolean isDateNumber(String paramString) {
+		if ((paramString == null) || (paramString.length() != 8))
+			return false;
+
+		return Tools.getInt(paramString, -1) >= 0;
+	}
+	
+	/**
+	 *  number8 date to  datetime
+	 * 
+	 **/
+	         private static String numberToDateTime(String date, boolean paramBoolean)
+	         {
+	         if (paramBoolean) {
+	           return "to_date('" + date.trim() + " 23:59:59','YYYYMMDD HH24:MI:SS')";
+	           }
+	         return "to_date('" + date + "','YYYYMMDD')";
+	         }
+	       /**
+	        * 
+	        *  to datetime
+	        **/
+			private static String toDateTime(String date, boolean paramBoolean) {
+				try {
+					SimpleDateFormat sdf;
+					if (date.indexOf(':') > 0) {
+						if (date.indexOf('/') > 0) {
+							(sdf = (SimpleDateFormat) dateTimeSecondsFormatter
+									.get()).parse(date);
+							return "to_date('" + date
+									+ "','YYYY/MM/DD HH24:MI:SS')";
+						}
+						(sdf = (SimpleDateFormat) dateTimeNumberFormatter
+								.get()).parse(date);
+						return "to_date('" + date + "','YYYY/MM/DD HH24:MI:SS')";
+					}
+		
+					try {
+						Integer.parseInt(date);
+						(sdf = (SimpleDateFormat) dateNumberFormatter
+								.get()).parse(date);
+						return numberToDateTime(date, paramBoolean);
+					} catch (NumberFormatException localNumberFormatException) {
+						return date;
+					}
+				} catch (Exception localException) {
+				}
+				return date;
+			}
+	
+	
+	
+	/**
      * Get description of input parameter
      * @param column the column which has the type, and accept the input, normally the last element of column link
      * @param columnDesc column description, not name
