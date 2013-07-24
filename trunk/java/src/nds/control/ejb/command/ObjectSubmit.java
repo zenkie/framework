@@ -54,11 +54,13 @@ public class ObjectSubmit extends Command{
         }
         logger.debug("table name="+ tableName +", table="+ table);
         String origTableName= tableName;
-        if(table==null) table=TableManager.getInstance().findTable(tableName);
+        if(table==null) {table=TableManager.getInstance().findTable(tableName);}else{
+        	tableName = table.getName();}
         if(nds.util.Validator.isNotNull(tableName)){
         	tableName= table.getName();
         	origTableName= tableName;	
         } 
+        logger.debug("table name="+ tableName +", origtable="+ origTableName);
         User usr= helper.getOperator(event);	
         int pid =event.getObjectId(table, usr.adClientId);
         //Integer pid = new Integer(Tools.getInt(event.getParameterValue("id") ,-1));
@@ -99,6 +101,7 @@ public class ObjectSubmit extends Command{
         	b=SecurityUtils.hasObjectPermission(userId, user.getName(), origTableName, 
         			pid,Directory.SUBMIT, event.getQuerySession());
         }catch(Exception e){
+        	//e.printStackTrace();
             throw new NDSEventException(e.getMessage() );
         }
         if (!b) throw new NDSEventException("@no-permission@!" );
