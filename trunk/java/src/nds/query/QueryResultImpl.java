@@ -79,6 +79,7 @@ import nds.log.LoggerManager;
 import nds.schema.Column;
 import nds.schema.SQLTypes;
 import nds.schema.SumMethodFactory;
+import nds.schema.Table;
 import nds.schema.TableManager;
 import nds.util.CollectionValueHashtable;
 import nds.util.StringUtils;
@@ -113,7 +114,6 @@ public class QueryResultImpl implements QueryResult , JSONString{
         this.totalRowCount=totalRowCount;
         meta=new QueryResultMetaDataImpl(req);
         request=req;
-
         displayColumnIndices=req.getDisplayColumnIndices();
         rows=new ArrayList();
         /*Will take only a subset of records from resultset. QueryRequest designate
@@ -518,6 +518,51 @@ public class QueryResultImpl implements QueryResult , JSONString{
             Locale locale;
             if(request!=null&& request.getSession()!=null ) locale= request.getSession().getLocale();
             else locale= TableManager.getInstance().getDefaultLocale();
+            //if col prpo set is {INTERPRETER byobjid} then push id to INTERPRETER 
+            JSONObject jopro=col.getJSONProps()==null?new JSONObject():col.getJSONProps();
+        	
+            if(jopro.has("intbyid")){
+            	try {
+            		JSONObject jor=jopro.getJSONObject("intbyid");
+            		JSONObject jo= new JSONObject();
+//            		Table maintb=request.getMainTable();
+//            		int indexcol=-1;
+//            		if(jor.has("cp")){
+//            			String cpname=jor.getString("cp");
+//            			Column cp_col=maintb.getColumn(cpname);
+//            			indexcol=meta.findPositionInSelection(cp_col);
+//            			System.out.print(indexcol);
+//            			Object val=((ArrayList)rows.get(cursor)).get(indexcol);
+//            			//cp_col.getReferenceTable().getName()
+//            			jo.put("cptb",cp_col.getReferenceTable().getName());
+//            			jo.put("cp",(Integer)val);
+//            			//get query by objectid
+//            			//jo.put("objid",request.getParamValue(1));
+//            		}
+//            		if(jor.has("mailno")){
+//            			String mailno=jor.getString("mailno");
+//            			Column cp_col=maintb.getColumn(mailno);
+//            			indexcol=meta.findPositionInSelection(cp_col);
+//            			System.out.print(indexcol);
+//            			Object val=((ArrayList)rows.get(cursor)).get(indexcol);
+//            			//cp_col.getReferenceTable().getName()
+//            			jo.put("mailno",val.toString());
+//            			//get query by objectid
+//            			//jo.put("objid",request.getParamValue(1));
+//            		}
+            		jo.put("colid",col.getId());
+            		jo.put("objid",request.getParamValue(1));
+            		jo.put("tbid",request.getMainTable().getId());
+           			ret=jo.toString();
+            	} catch (JSONException e) {
+            		// TODO Auto-generated catch block
+            		//e.printStackTrace();
+            		logger.error("col set intbyid"+e,e);
+            	}
+
+
+            }
+            
         	ret=manager.getColumnValueDescription(col.getId(), ret,locale);
             // yfzhu 2005-03-01 add direct return so interpreters such as
             // URLInterpreter generated value will not be escaped from html tag
