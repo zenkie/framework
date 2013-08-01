@@ -93,6 +93,8 @@ public final class tsmanger {
 		if(cp=="null"||mailno=="null") return;
 		URL url = new URL("http://api.ickd.cn/?id=EA08B368D6C199E50704D412EB3B5DEA&com="+cp+"&nu="+mailno+"&type=json");  
         URLConnection connection = url.openConnection(); 
+        connection.setConnectTimeout(20000);
+        connection.setReadTimeout(20000);
         //connection.connect(); 
         InputStream l_urlStream;  
         l_urlStream = connection.getInputStream();  
