@@ -386,7 +386,7 @@ public class ExecuteCxtab extends Command {
    * @return filter description for all parameters
    * @throws Exception
    */
-  static String addJparams(List params, HashMap map, int cxtabId, HashMap jo,QuerySession qession,int userId, Locale locale,Connection conn) throws Exception{
+  public static String addJparams(List params, HashMap map, int cxtabId, HashMap jo,QuerySession qession,int userId, Locale locale,Connection conn) throws Exception{
 	  	StringBuffer descs=new StringBuffer();
 	  	// always set param value in ad_pinstance_para.INFO_TO, so set ad_process_para.VALUETYPE is set to 'B' (Blob Data)
 	  	// first 4 selection must be in accordance with 
@@ -487,7 +487,7 @@ public class ExecuteCxtab extends Command {
    * @return sql in format like "select id from fk_table where xxxx"
    * @throws Exception
    */
-  static String constructSQLByAKInput(Column col, String akData,QuerySession qsession, int userId, Locale locale )throws Exception{
+  private static String constructSQLByAKInput(Column col, String akData,QuerySession qsession, int userId, Locale locale )throws Exception{
 	  TableManager tm=TableManager.getInstance();
 	  QueryEngine engine=QueryEngine.getInstance();
 	  
@@ -522,7 +522,7 @@ public class ExecuteCxtab extends Command {
    * @return
    * @throws Exception
    */
-  static QueryRequestImpl constructQuery(Table table, QuerySession qsession, int userId, Locale locale,Expression expr) throws Exception{
+  public static QueryRequestImpl constructQuery(Table table, QuerySession qsession, int userId, Locale locale,Expression expr) throws Exception{
 		QueryEngine engine =QueryEngine.getInstance();
 		QueryRequestImpl query = engine.createRequest(qsession);
 		
