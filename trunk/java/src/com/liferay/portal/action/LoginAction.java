@@ -271,7 +271,6 @@ public class LoginAction extends Action {
 
 			while (enu2.hasMoreElements()) {
 				String value = (String)enu2.nextElement();
-
 				headers.add(value);
 			}
 
@@ -282,8 +281,16 @@ public class LoginAction extends Action {
 
 		/**
 		 * yfzhu add check login ip at 2005-12-26
+		 * add server url
 		 */
 		String remoteAddress=req.getRemoteAddr();
+		String serverUrl="";//= Tools.toString(req);
+		Enumeration  enu=req.getHeaders("Origin"); 
+		if(enu.hasMoreElements()){ 
+			serverUrl=(String)enu.nextElement(); 
+			   if(nds.control.web.WebUtils.getServerUrl()!=null)nds.control.web.WebUtils.setServerUrl(serverUrl);
+		}
+		//System.out.print("serverUrl "+serverUrl);
 		try{
 			/*authResult= authenticateByLoginIPRule(remoteAddress, userId);
 			if (authResult != Authenticator.SUCCESS) {
@@ -382,6 +389,8 @@ public class LoginAction extends Action {
 		
 		//		 add ip to session attribute for later use
 		req.getSession().setAttribute("IP_ADDRESS", remoteAddress);
+		//req.getSession().setAttribute("SERVERURL", serverUrl);
+     
 		}catch(Exception exp2){
 			logger.debug("Exception for login of "+ userId+" from "+remoteAddress, exp2);
 			SysLogger.getInstance().error("SEC","login",userId,remoteAddress,"Fail:"+exp2 ,-1);
