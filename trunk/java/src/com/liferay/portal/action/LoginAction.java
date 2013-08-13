@@ -288,7 +288,7 @@ public class LoginAction extends Action {
 		Enumeration  enu=req.getHeaders("Origin"); 
 		if(enu.hasMoreElements()){ 
 			serverUrl=(String)enu.nextElement(); 
-			   if(nds.control.web.WebUtils.getServerUrl()!=null)nds.control.web.WebUtils.setServerUrl(serverUrl);
+			   if(nds.control.web.WebUtils.getServerUrl()==null)nds.control.web.WebUtils.setServerUrl(serverUrl);
 		}
 		//System.out.print("serverUrl "+serverUrl);
 		try{
