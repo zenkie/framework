@@ -85,7 +85,10 @@ public final class WebUtils {
 										// load from propery file
 
 	private static ServletContext context = null;
-
+	
+	//add server_url
+	
+	private static String serverUrl = null;
 	/**
 	 * For accelerating locating adclient from domain name, make cache here Key:
 	 * web_client.DOMAIN(String), value: [ad_client.id (Integer),
@@ -104,6 +107,21 @@ public final class WebUtils {
 	public static void setSystemDebugMode(boolean f) {
 		systemMode = (f ? 1 : 2);
 	}
+	
+	/**
+	 * 
+	 * @param f
+	 * set serverurl
+	 */
+	public static void setServerUrl(String url) {
+	  serverUrl=url;
+	}
+	
+	public static String getServerUrl() {
+		  return serverUrl;
+	}
+	
+	
 
 	/**
 	 * Unloading adclient from adClientDomainCache
