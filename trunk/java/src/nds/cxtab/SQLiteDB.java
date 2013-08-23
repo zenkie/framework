@@ -7,6 +7,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
 
+import javax.servlet.ServletContext;
+
 import nds.control.web.ServletContextManager;
 import nds.control.web.WebUtils;
 import nds.log.Logger;
@@ -69,7 +71,7 @@ public class SQLiteDB {
 			System.out.print(counter);
 			connection = DriverManager.getConnection("jdbc:sqlite:s.db");
 			Statement stat = connection.createStatement();
-			stat.setQueryTimeout(30);
+			stat.setQueryTimeout(3600);
 			stat.executeUpdate("insert into person values(1, '朱叶峰')");
 			ResultSet rs = stat.executeQuery("select * from person");
 			while (rs.next()) {
@@ -128,12 +130,15 @@ public class SQLiteDB {
 		String filesdb=String.valueOf(counter);
 		try { 
 			// 由于rename 文件没有残留
+			//ServletContext contex =nds.control.web.WebUtils.getServletContext();
+			//System.out.print(nds.control.web.WebUtils.getServerUrl());
 			conn = DriverManager.getConnection("jdbc:sqlite:"+filename+".sdb");
 			stmt=conn.createStatement();
 			//优化SQLITE
 			stmt.executeUpdate("PRAGMA synchronous = OFF;");
 			migrateFacts(conn);
 			datacount = migrateData(conn);
+			putCxtabpar(conn);
 			logger.debug("datacount is"+String.valueOf(datacount) );
 			connb = conn; 
 			SQLiteDB localSQLiteDB = this; 
@@ -361,6 +366,32 @@ public class SQLiteDB {
 		}
 			}
 	/**
+     * @param conn
+	 * @return
+	 * @throws Exception  
+	 * put server loaclstation insert to cxtab_param
+	 */
+	private void putCxtabpar(Connection conn) throws Exception {
+		Statement stmt = null;
+		PreparedStatement ptmt=null;
+		try {
+			stmt = conn.createStatement();
+			stmt.executeUpdate("create table ad_cxtab_param(name, description, value)");
+			String url=nds.control.web.WebUtils.getServerUrl();
+			ptmt = conn.prepareStatement("insert into ad_cxtab_param(name, description, value)values(?,?,?)");
+			ptmt.setString(1,"serverurl");
+			ptmt.setString(2,"服务器地址");
+			ptmt.setString(3,url);
+			ptmt.executeUpdate();
+			//user
+			if (stmt != null) try { stmt.close(); } catch (Throwable e) {} 
+			if (ptmt != null) try { ptmt.close(); }catch (Throwable e){}
+		} finally {
+			if (stmt != null) try { stmt.close(); } catch (Throwable e) {} 
+			if (ptmt != null) try { ptmt.close(); }catch (Throwable e){}
+		}
+	}
+	/**
 	 * 
 	 * @param conn
 	 * @return
@@ -376,11 +407,11 @@ public class SQLiteDB {
 		ResultSetMetaData rsmetadata;
 		try{
 			//int j = (resultsetmetadata = (resultset = oraConn.createStatement().executeQuery(sql)).getMetaData()).getColumnCount();
-			//ora_stmt=oraConn.createStatement(,);
+			ora_stmt=oraConn.createStatement();
 			//fast cursor
-			ora_stmt=oraConn.createStatement(java.sql.ResultSet.TYPE_FORWARD_ONLY,
-                    java.sql.ResultSet.CONCUR_READ_ONLY);
-			ora_stmt.setFetchSize(200);
+//			ora_stmt=oraConn.createStatement(java.sql.ResultSet.TYPE_FORWARD_ONLY,
+//                    java.sql.ResultSet.CONCUR_READ_ONLY);
+//			ora_stmt.setFetchSize(200);
 			rs=ora_stmt.executeQuery(sql);
 			rsmetadata =rs.getMetaData();
 			int colCount = rs.getMetaData().getColumnCount();
