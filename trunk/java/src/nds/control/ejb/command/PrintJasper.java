@@ -122,8 +122,11 @@ public class PrintJasper extends Command{
 	    	logger.debug("reportType!!!!!!!"+reportType);
 	    	/*
 	    	 * 支持打印多选结果
+	    	 * 增加支持string 类型参数传入
 	    	 * */
 	    	Object object_ids=params.opt("id");
+	    	String objstr=params.optString("objstr","null");
+	    	logger.debug("objstr is: "+objstr);
 	    	int objectId = -1;
 	    	//logger.debug(typeof(object_ids))
 	    	logger.debug("object_ids!!!!!!!"+String.valueOf(object_ids));
@@ -200,6 +203,7 @@ public class PrintJasper extends Command{
 	    	if(!is_printlist){
 	    		//判断是否为单对象打印
 	        	parameters.put("objectid", new Integer(objectId));
+	        	parameters.put("objstr", objstr);
 	    		if(!isCxtabJReport){
 	    			// will create several sql for internal usage
 	    			addSQLParam(parameters,table.getId(),objectId,userWeb);
