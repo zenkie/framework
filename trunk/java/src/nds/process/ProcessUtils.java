@@ -112,6 +112,11 @@ public class ProcessUtils {
 	        	pstmt.setInt(3, processInstanceId);
 	        	pstmt.setString(4, name);
 	        	if("S".equals(valueType)){// String
+	              if (value.getBytes().length > 4000) {
+		                logger.warning("param name=" + name + " value too long, cut for ad_pinstance_para:" + value);
+		      
+		                value = StringUtils.shortenInBytes(value, 2000, "..");
+		                }
 	        		pstmt.setString(5, value);
 	        		pstmt.setNull(6, Types.DOUBLE);
 	        		pstmt.setNull(7, Types.NUMERIC); // date is now number(8)
