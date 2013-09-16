@@ -321,6 +321,7 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
         this.isStartingExpr = startNewExpr;
 
         if (expr.isLeaf() == false){
+        	//logger.debug(" isleaf node");
             Expression exprLeft , exprRight;
             int oper;
 
@@ -346,9 +347,10 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
             s += constructWhereClause(exprRight, true) + ") ";
             paramDesc.append(")" );
         }else{ // is single leaf node
-            if(expr.getColumnLink()!=null)
+            if(expr.getColumnLink()!=null){
+        		//logger.debug(" is single leaf node");
             	s = addParam(expr.getColumnLink().getColumnIDs() , expr.getCondition(), false, expr.getDescription() );
-            else{
+            }else{
             	// only add condition to where clause
             	logger.debug("Not found column link, construct exists clause");
                 startNewParamDesc(SQLCombination.SQL_AND );
@@ -391,6 +393,7 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
         int[] columnLinks= this.parseColumnsToColumnLink(columns);
         if( columnLinks.length < 1)
             throw new QueryException("Size of columns "+Tools.toString(columnLinks)+" should be greater than 1");
+        //logger.debug("columnLinks.length is "+columnLinks.length);
         if( columnLinks.length == 1) {
             return addParam(columnLinks[0],value, bAddToWhereClause,desc);
         } else {
@@ -1120,11 +1123,16 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
         return this.replaceVariables(sql.toString());    	
     }
     
+     public String toSQL() throws QueryException {
+        return toSQL(true);
+   }
+    
+    
     /**
      * This first column must be PK of the main table, which will not count in display columns
      * @roseuid 3B8AFCFB0083
      */
-    public String toSQL() throws QueryException {
+    public String toSQL(boolean paramBoolean) throws QueryException {
         if(directSQL !=null)
             return directSQL;
         // assemble SQL
@@ -1141,7 +1149,9 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
 	            // 	check security grade,yfzhu 20100501
                 if(this.securityGrade<c.getLastColumn().getSecurityGrade()){
                 	//do not load this column
-                	sql.append("null b"+i);
+                	if (paramBoolean) sql.append("null b" + i); else
+                		 sql.append("null ").append(((ColumnLink)c).toString('_'));
+                	//sql.append("null b"+i);
                 }else{
 		            if( c.getColumns().length > 1) {
 		                // has alias for table
