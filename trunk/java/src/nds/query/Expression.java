@@ -170,6 +170,17 @@ public class Expression implements SQLCombination, Serializable{
 	
 		StringTokenizer paramString1 = new StringTokenizer(paramString, " ,\t");
 		Object fe = EMPTY_EXPRESSION;
+		//fe=new Expression(cl, "in ('a','b','c')", null);
+		//logger.debug("paramString1 is"+paramString1.countTokens());
+		if(paramString1.countTokens()>20){
+			String pstrin="";
+			while (paramString1.hasMoreTokens()) {
+				String str;
+				if (!(str = paramString1.nextToken()).trim().equals(""))
+					pstrin+="'"+str+"',";
+			}
+			return new Expression(cl, "in ("+pstrin.substring(0,pstrin.length()-1)+")", null);
+		}
 		while (paramString1.hasMoreTokens()) {
 			String str;
 			if (!(str = paramString1.nextToken()).trim().equals(""))
@@ -461,7 +472,13 @@ public class Expression implements SQLCombination, Serializable{
     	else if("or".equalsIgnoreCase(cmb)) return SQL_OR;
     	else if("and not".equalsIgnoreCase(cmb)) return SQL_AND_NOT;
     	else if("or not".equalsIgnoreCase(cmb)) return SQL_OR_NOT;
-    	else
+		try {
+			int i;
+			if (((i = Integer.parseInt(cmb)) > 0) && (i < 5))
+				return i;
+		} catch (NumberFormatException localNumberFormatException) {
+		}
+    	  
     		throw new java.lang.IllegalArgumentException(cmb);
     }
     /*-------- following is for xml ------------ */
