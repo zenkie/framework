@@ -26,7 +26,7 @@ import nds.security.Directory;
 import nds.security.User;
 import nds.control.util.SecurityUtils;
 import nds.control.web.*;
-import nds.control.event.*;
+//import nds.control.event.*;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.query.*;
@@ -142,11 +142,15 @@ public class CxtabReport {
 				File p= new File(filePath);
 				if(!p.exists())p.mkdirs();
 		    	String filename=filePath+File.separator+file;
+		    	/* 
+		    	 *  sqlvalue is too long
 				ArrayList vec=new ArrayList();
 				vec.add("update ad_pinstance_para set p_clob="+ QueryUtils.TO_STRING(sql)+" where name='filter' and ad_pinstance_id="+processInstanceId );
 				vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(filePath)+" where name='filename' and ad_pinstance_id="+processInstanceId );
 				QueryEngine.getInstance().doUpdate(vec, conn);
-
+				*/
+		    	QueryEngine.getInstance().executeUpdate("update ad_pinstance_para set p_clob=? where name='filter' and ad_pinstance_id=?", new Object[] { new StringBuffer(sql), Integer.valueOf(((CxtabReport)this).processInstanceId) },conn);
+		    	QueryEngine.getInstance().executeUpdate("update ad_pinstance_para set info=? where name='filename' and ad_pinstance_id=?", new Object[] { filename, Integer.valueOf(processInstanceId) },conn);
 				SQLiteDB sqldb = new SQLiteDB(processInstanceId, dimCount, sql,
 						filename, cxtabId, cxtabName, filterDesc, user, conn);
 				recordsCount=sqldb.save();
