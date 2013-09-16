@@ -231,6 +231,19 @@ public class ColumnLink implements java.io.Serializable, JSONString {
         return s.toString();
     }
     
+    
+          
+	public String toString(char paramChar) {
+		if (columns.length == 0)
+			return "";
+		StringBuilder s;
+		(s = new StringBuilder()).append(columns[0].getName());
+		for (int i = 1; i < columns.length; i++) {
+			s.append(paramChar).append(columns[i].getName());
+		}
+		return s.toString();
+	}
+    
     public int hashCode() {
         return hashCode;
     }
