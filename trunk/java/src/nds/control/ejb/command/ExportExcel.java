@@ -29,6 +29,8 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;  
 import org.apache.poi.ss.usermodel.Sheet;  
 import org.apache.poi.ss.usermodel.Workbook;  
+import org.json.JSONException;
+import org.json.JSONObject;
 //import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 //import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -38,6 +40,7 @@ import nds.control.event.NDSEventException;
 import nds.control.util.ValueHolder;
 import nds.query.*;
 import nds.schema.Column;
+import nds.schema.Table;
 import nds.schema.TableManager;
 import nds.util.NDSException;
 import nds.util.Validator;
@@ -487,10 +490,45 @@ public class ExportExcel extends Command {
           //logger.debug(clink.toString());
           /**
            * 在主表中查找与clink 一致的字段，如果有，以主表字段名称显示
+           * 9.34 add 关联名称输出 扩展属性{reflable:{"tabid":12853,"ref_id":1853}} 支持
            */
           for(int j=0;j< cls.size();j++){
         	  col= (Column ) cls.get(j);
         	  ColumnLink colLink=col.getColumnLink();
+        	  JSONObject jo;
+				try {
+					jo = col.getJSONProps().getJSONObject("reflable");
+					int lable_id = jo.optInt("ref_id", 0);
+					int lable_tabid = jo.optInt("tabid", 0);
+					TableManager manager = TableManager.getInstance();
+					Table reftable = manager.getTable(lable_tabid);
+					QueryRequestImpl query = QueryEngine.getInstance()
+							.createRequest(req.getSession());
+					query.setMainTable(lable_tabid);
+					query.addSelection(reftable.getAlternateKey().getId());
+					query.addParam(reftable.getPrimaryKey().getId(), ""+ lable_id);
+					QueryResult rs = QueryEngine.getInstance().doQuery(query);
+					if (lable_id != 0|| (rs != null && rs.getTotalRowCount() > 0)) {
+						while (rs.next()) {
+							logger.debug(rs.getObject(1).toString());
+							dcns[i] = rs.getObject(1).toString();
+						}
+					}
+		        	  if(col.getReferenceColumn()!=null){ // 对于 FK表，需要获取FK.AK
+		        		  colLink.addColumn(col.getReferenceTable().getAlternateKey());
+		        	  }
+		        	  if( clink.equals(colLink)){
+		        		  //dcns[i]= col.getDescription(locale);
+		        		  //logger.debug("get equals: "+ col);
+		        		  break;
+		        	  }
+					if(dcns[i]!=null) continue;
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					// e.printStackTrace();
+					//logger.debug("col get reflable is null");
+				}
+
         	  if(col.getReferenceColumn()!=null){ // 对于 FK表，需要获取FK.AK
         		  colLink.addColumn(col.getReferenceTable().getAlternateKey());
         	  }
