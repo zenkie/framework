@@ -16,8 +16,10 @@ import nds.log.Logger;
 import nds.log.LoggerManager;
 //import nds.portlet.util.*; 
 import nds.control.web.*;
-import net.sf.jasperreports.engine.*;
+//import net.sf.jasperreports.engine.*;
 import nds.report.*;
+import java.net.URLEncoder;
+
 
 /**
  * Return JasperReport
