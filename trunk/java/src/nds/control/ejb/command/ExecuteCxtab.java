@@ -269,8 +269,10 @@ public class ExecuteCxtab extends Command {
 		//文件增加到秒单位
 		SimpleDateFormat sdf = new SimpleDateFormat("MMddHHmmss");
 		//String filename="CXR_"+table.getName()+sdf.format(new Date());
-		String filename="CXR_"+cxtabId+"_"+sdf.format(new Date());
 		
+		//增加指定报表生成的文件名称
+		String filename = jo.optString("filename");
+		if (Validator.isNull(filename)) filename="CXR_"+cxtabId+"_"+sdf.format(new Date());
 		map.put("FILENAME", filename);
 		//map.put("FILETYPE", isBg?"xls":"htm");
 		map.put("FILETYPE", fileType);
