@@ -96,7 +96,7 @@ public class CxtabReport {
 			boolean isSystemInDebug=false;// "develope".equals( conf.getProperty("schema.mode", "production"));
 			
 			user= SecurityUtils.getUser( userId);    
-			String filePath =exportRootPath + File.separator+user.getClientDomain()+File.separator+ user.getName();
+			String filePath =Validator.isNull(folder)?exportRootPath + File.separator+user.getClientDomain()+File.separator+ user.getName():folder;
 			if("xls".equalsIgnoreCase(fileType)){
 				QueryRequest query=this.prepareReport(conn,true, false,false,false); // generate sql only
 				
