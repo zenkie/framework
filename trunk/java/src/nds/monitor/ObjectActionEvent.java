@@ -75,10 +75,12 @@ public class ObjectActionEvent extends EventObject
 	}
 
 	public static enum ActionType{
-		
-		AC("ac",0), AM("am",1), BD("bd",2),
-		BC("bc",3),BM("bm",4),SUBMIT("submit",5),UNSUBMIT("unsubmit",6),
-		WEBACTION("action",7),TASK("task",8),AUDITING("auditing",9),REJECT("reject",10);
+		//AC("ac",1), AM("am",2), BD("bd",3), BC("bc",4), BM("bm",5), 
+    	//SUBMIT("submit",6), UNSUBMIT("unsubmit",7), TASK("task",8), WEBACTION("action",0) 
+			    
+		AC("ac",1), AM("am",2), BD("bd",3),
+		BC("bc",4),BM("bm",5),SUBMIT("submit",6),UNSUBMIT("unsubmit",7),
+		TASK("task",8),AUDITING("auditing",9),REJECT("reject",10),WEBACTION("action",0);
 		
 		public static final int MAX_ORDINAL = 10;
 		private String actionType;
