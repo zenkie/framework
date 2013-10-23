@@ -18,7 +18,7 @@ import nds.query.QueryException;
 import nds.query.QueryUtils;
 import nds.security.User;
 import nds.util.*;
-
+//import nds.util.test.Sevenzip;
 import org.json.JSONArray;
 
 
@@ -305,6 +305,9 @@ public class SQLiteDB {
 		//调用7z合并生成打印文件
 		CommandExecuter cmd= new CommandExecuter(log);
 		int err=cmd.run(exec_cmd);
+		//Sevenzip S7z = new Sevenzip();
+		//S7z.StreamingEncoder(destfile,filename);
+		
 		if (sdfile.exists())sdfile.delete();	
 		
 		return datacount;
