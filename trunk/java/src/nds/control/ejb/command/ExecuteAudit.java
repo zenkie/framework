@@ -104,13 +104,15 @@ public class ExecuteAudit extends Command {
 					if ((i2 = Tools
 							.getInt(engine
 									.doQueryOne(
-											"select pi.id from au_phaseinstance pi, au_pi_user u where u.au_pi_id=pi.id and pi.id=? and pi.state='W' and ((u.ad_user_id=? and u.assignee_id is null ) or (u.assignee_id=?)) and u.state='W' order by id desc",
+											"select pi.id from au_phaseinstance pi, au_pi_user u where u.au_pi_id=pi.id and pi.id=? and pi.state='W' " +
+											"and ((u.ad_user_id=? and u.assignee_id is not null ) or (u.ad_user_id=? and u.assignee_id is null ) or (u.assignee_id=?)) and u.state='W' order by id desc",
 											new Object[] {
 													Integer.valueOf(ids[i1]),
 													Integer.valueOf(userId),
-													Integer.valueOf(userId) }), -1)) != ids[i1])
-						throw new NDSException("@audit-record-changed@:("
-								+ ids[i1] + ")");
+													Integer.valueOf(userId),
+													Integer.valueOf(userId) }), -1)) != ids[i1]){
+						throw new NDSException("@audit-record-changed@:("+ ids[i1] + ")");
+					}
 				}
 			} else {
 				Table localTable;
