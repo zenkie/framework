@@ -27,7 +27,7 @@ import nds.schema.*;
 <input type=’hidden’ name=”column_1232” id=”column_1232” value=””>
 <input class='ipt-3-2' type=’text’ readonly id=”column_1232_fd” value=”公司=1产品包含(1,2,3)”> （1行）或
 <textarea class='ipt-3-2' id=”column_1232_fd” READONLY>公司=1产品包含(1,2,3)</textarea>
-<span onaction="dq.toggle('/html/nds/query/filterobj.jsp?
+<span onclick="dq.toggle('/html/nds/query/filterobj.jsp?
 table=12710&amp;return_type=s&amp;column=23994&amp;accepter_id=column_23994&amp;
 qdata='+encodeURIComponent(document.getElementById('column_23994').value),'column_23994')" 
 id="cbt_23994" class="coolButton"><img width="16" height="16" border="0" align="absmiddle" 
@@ -125,7 +125,7 @@ public class Filter extends TagSupport {
             /**
 包含以下信息：
 “type”: 当前xml 的用途，目前仅支持 filter 类型
-“tablesrc”: 表的来源，”F” – 固定值，从 “table” 参数上获取；”V” – 变化值，从”tableinput” 指明的input 的输入项目获取; 缺省为“F”
+“tablesrc”: 表的来源，"F"  固定值，从 “table” 参数上获取；"V"  变化值，从”tableinput” 指明的input 的输入项目获取; 缺省为“F”
 “table”: 可选项，过滤器针对的表的name，如m_product。此用法在业务表上设定时使用。
 “tableinput”: 可选项，且与”table” 两者有且只能有一个。指明ad_table_id 的输入字段，如”ad_filter.ad_table_id”, 此字段只能来源于当前字段所在表，故可省略表名，系统将根据”column_{id}” 的规则从界面上获取字段的设定值，作为table的name。此用法主要在工作流定义的设定上使用。
 “filter”: 可选项，搜索时的过滤条件，将写在where 条件之后，注意所有的字段都必须写 table的名称做前缀。
@@ -172,7 +172,7 @@ public class Filter extends TagSupport {
             }
             imageurl=nds.util.Validator.isNotNull(desc)?"clear.gif":"filterobj.gif";
             popflag=nds.util.Validator.isNotNull(desc)?"clear":"popup";         
-			out.print("<span class='coolButton' id=\""+Util.quote(id)+"_link\" title="+popflag+" onaction=\""+checkScript+toggle+ action+", '"+this.id+"'"+(options==null?"":","+options)+");\"><img id='"+this.id+"_img' border=0 width=16 height=16 align=absmiddle src='/html/nds/images/"+imageurl+"'></span>");
+			out.print("<span class='coolButton' id=\""+Util.quote(id)+"_link\" title="+popflag+" onclick=\""+checkScript+toggle+ action+", '"+this.id+"'"+(options==null?"":","+options)+");\"><img id='"+this.id+"_img' border=0 width=16 height=16 align=absmiddle src='/html/nds/images/"+imageurl+"'></span>");
             out.print("<script>createButton(document.getElementById('"+ Util.quote(id) +"_link'));</script>");           
         } catch (Exception ex) {
             throw new JspTagException(ex.getMessage());
