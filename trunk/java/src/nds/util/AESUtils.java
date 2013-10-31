@@ -83,15 +83,11 @@ public class AESUtils{
 	 * @param key	二进制密钥
 	 * @return 密钥
 	 */
-	private static Key toaesKey(byte[] key){
+	private static Key toKey(byte[] key) throws Exception{
 		//生成密钥
 		return new SecretKeySpec(key, KEY_ALGORITHM);
 	}
-	
-	
-	private static void setpwdkey (byte[] key){
-		toaesKey(key);
-	}
+
 	
 	/**
 	 * 加密
@@ -129,7 +125,7 @@ public class AESUtils{
 	 */
 	public static byte[] encrypt(byte[] data,byte[] key,String cipherAlgorithm) throws Exception{
 		//还原密钥
-		Key k = toaesKey(key);
+		Key k = toKey(key);
 		return encrypt(data, k, cipherAlgorithm);
 	}
 	
@@ -188,7 +184,7 @@ public class AESUtils{
 	 */
 	public static byte[] decrypt(byte[] data,byte[] key,String cipherAlgorithm) throws Exception{
 		//还原密钥
-		Key k = toaesKey(key);
+		Key k = toKey(key);
 		return decrypt(data, k, cipherAlgorithm);
 	}
 
@@ -228,7 +224,7 @@ public class AESUtils{
 		byte[] key = initSecretKey();
 		System.out.println("key："+showByteArray(key));
 		
-		Key k = toaesKey(key);
+		Key k = toKey(key);
 		//System.out.println(k.toString());
 		String data ="中国你好么 什么时候啊！我想你了啊！";
 		String pky="44203d0987be73627e17da94fe34c72fa5de8942ae137a24a459f703433556ca45c430eb01965728ac36ce61fe7ce3bf";
