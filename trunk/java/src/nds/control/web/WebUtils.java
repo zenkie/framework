@@ -59,6 +59,7 @@ import nds.security.Directory;
 import nds.security.NDSSecurityException;
 import nds.security.User;
 import nds.util.*;
+import nds.util.License.LicenseType;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -89,6 +90,7 @@ public final class WebUtils {
 	//add server_url
 	
 	private static String serverUrl = null;
+	
 	/**
 	 * For accelerating locating adclient from domain name, make cache here Key:
 	 * web_client.DOMAIN(String), value: [ad_client.id (Integer),
@@ -1184,5 +1186,58 @@ public final class WebUtils {
 			DOM_DOMAIN = getConfigurations().getProperty("im.domain");
 		return DOM_DOMAIN;
 	}
+
+	// 获取license 界面通知消息
+	public static String getMms() {
+		//return mmS;
+		String mms=null;
+		Iterator b=LicenseManager.getLicenses();
+	    while (b.hasNext()) {
+	    LicenseWrapper o = (LicenseWrapper)b.next();
+	    mms=o.getMms();
+	    }
+		return mms;
+		
+	}
+	
+
+
+	// 获取license 证书类型
+	public static LicenseType getLtype() {
+		// TODO Auto-generated method stub
+		LicenseType ltype=null;
+		Iterator b=LicenseManager.getLicenses();
+	    while (b.hasNext()) {
+	    LicenseWrapper o = (LicenseWrapper)b.next();
+	    ltype=o.getLicenseType();
+	    }
+		return ltype;
+	}
+	
+	// 获取license 里面公司名称
+	public static String  getCompany() {
+		// TODO Auto-generated method stub
+		String cp=null;
+		Iterator b=LicenseManager.getLicenses();
+	    while (b.hasNext()) {
+	    LicenseWrapper o = (LicenseWrapper)b.next();
+	    cp= o.getName();
+	    }
+		return cp;
+	}
+	
+	// 获取license 测试key 是否过期
+	public static boolean  getExpdate() {
+		// TODO Auto-generated method stub
+		boolean cp=false;
+		Iterator b=LicenseManager.getLicenses();
+	    while (b.hasNext()) {
+	    LicenseWrapper o = (LicenseWrapper)b.next();
+	    cp= o.getExpdate();
+	    }
+		return cp;
+	}
+	
+	
 	     
 }
