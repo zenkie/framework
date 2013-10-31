@@ -36,6 +36,7 @@ public class Image implements BinaryHandler{
 	public void process(HttpServletRequest request,HttpServletResponse  response)  throws Exception{
 		String image=  request.getParameter("image");
 		String dir= request.getParameter("dir");
+		if(image.equals("apt")) image="test";
 		if(Validator.isNotNull(dir)){
 			String path= ((Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS)).getProperty("dir.tmp","/act/tmp");
 			File f=new File(path+"/"+ dir+"/"+image);
