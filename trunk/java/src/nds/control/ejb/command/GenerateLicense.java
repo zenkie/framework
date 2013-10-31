@@ -2,7 +2,9 @@ package nds.control.ejb.command;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.lang.reflect.Method;
 import java.rmi.RemoteException;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.Signature;
@@ -28,11 +30,13 @@ import nds.util.Attachment;
 import nds.util.B64Code;
 import nds.util.Configurations;
 import nds.util.FileUtils;
+import nds.util.Hex;
 import nds.util.License;
 import nds.util.NDSException;
 import nds.util.StringUtils;
 import nds.util.Tools;
 import nds.util.Validator;
+import nds.util.AESUtils;
 
 public class GenerateLicense extends Command
 {
@@ -59,36 +63,59 @@ public class GenerateLicense extends Command
     String url = null;
     try {
       conn = engine.getConnection();
-      List al = engine.doQueryList("select t.id,t.d_buyer_id,t.d_customer_id,g.name,nvl(t.USE_USER,0) as USE_USER,nvl(t.USE_POS,0) as USE_POS,t.expiresDate,to_char(t.creationDate,'yyyymmdd'),cuscode from D_CUSBOOK t,c_product g where t.c_product_id=g.id and t.status=2 and t.id=" + 
-    	        licenseId, conn);
+      List al = engine.doQueryList("SELECT t.id,t.d_buyer_id,e.name as cusname,t.d_customer_id,g.name,NVL(t.USE_USER,0) AS USE_USER,NVL(t.USE_POS,0)  AS USE_POS,"
+    		  +"t.expiresDate,TO_CHAR(t.creationDate,'yyyymmdd'),cuscode,t.ptype"
+    		  +" FROM D_CUSBOOK t,c_product g,D_CUSTOMER e WHERE t.c_product_id=g.id AND t.status=2 and t.D_CUSTOMER_ID=e.id  and t.id=" + licenseId, conn);
       //select t.id,t.d_buyer_id,t.d_customer_id,g.name,t.USE_USER,t.USE_POS from D_CUSBOOK t,c_product g where t.c_product_id=g.id
 //      List al = engine.doQueryList("select licensetype,machinecode,name,'burgeon',versionNO,num_users,num_onlineuser,num_pos,urladdr,expires_date,creation_date from p_license where status=1 and id=" + 
 //        licenseId, conn);
       if (al.size() == 0) throw new NDSException("License id=" + licenseId + " not found or submitted already");
       StringBuffer sb = new StringBuffer("<?xml version=\"1.0\" encoding=\"UTF-8\"?><license> ");
       sb.append("<licenseID>").append(licenseId).append("</licenseID>")
-        .append("<product>").append("jackrain").append("</product>")
+        //.append("<product>").append(Hex.encodeHexStr(nvl(((List)al.get(0)).get(4)).getBytes())).append("</product>")
+      .append("<product>").append(nvl(((List)al.get(0)).get(4))).append("</product>")
         //.append("<licenseType>").append(nvl(((List)al.get(0)).get(0))).append("</licenseType>")
-        .append("<licenseType>").append("burgeon").append("</licenseType>")
+        .append("<licenseType>").append(nvl(((List)al.get(0)).get(10))).append("</licenseType>")
         .append("<machineCode>").append("").append("</machineCode>")
-        .append("<name>").append(nvl(((List)al.get(0)).get(3))).append("</name>")
-        .append("<company>").append(nvl(((List)al.get(0)).get(2))).append("</company>")
+        //.append("<name>").append(Hex.encodeHexStr(nvl(((List)al.get(0)).get(2)).getBytes())).append("</name>")
+        .append("<name>").append(nvl(((List)al.get(0)).get(2))).append("</name>")
+        .append("<company>").append(nvl(((List)al.get(0)).get(3))).append("</company>")
         .append("<version>").append("5.0").append("</version>")
-        .append("<numUsers>").append(nvl(((List)al.get(0)).get(4))).append("</numUsers>")
-        .append("<numOnlineUsers>").append(nvl(((List)al.get(0)).get(4))).append("</numOnlineUsers>")
-        .append("<numPOS>").append(nvl(((List)al.get(0)).get(5))).append("</numPOS>")
+        .append("<numUsers>").append(nvl(((List)al.get(0)).get(5))).append("</numUsers>")
+        .append("<numOnlineUsers>").append(nvl(((List)al.get(0)).get(5))).append("</numOnlineUsers>")
+        .append("<numPOS>").append(nvl(((List)al.get(0)).get(6))).append("</numPOS>")
         .append("<url>").append("").append("</url>")
-        .append("<expiresDate>").append("</expiresDate>")
-        .append("<creationDate>").append(todate(nvl(((List)al.get(0)).get(7)))).append("</creationDate>")
+        .append("<expiresDate>").append(todate(nvl(((List)al.get(0)).get(7)))).append("</expiresDate>")
+        .append("<creationDate>").append(todate(nvl(((List)al.get(0)).get(8)))).append("</creationDate>")
         //add cus_code
-        .append("<cuscode>").append(nvl(((List)al.get(0)).get(8))).append("</cuscode>")
+        .append("<cuscode>").append(nvl(((List)al.get(0)).get(9))).append("</cuscode>")
         .append("<signature>").append("</signature></license>");
-
+      System.out.print(sb.toString());
       License license = License.fromXML(sb.toString());
+      //password=burgeon123
+      // 取消原先的aes dsa 算法 因无法支持中文
+     // password="burgeon123";
       String fileContent = generateLicense(license, password);
 
-      String xml = B64Code.decode(decrypt(fileContent));
+      //String xml = B64Code.decode(decrypt(fileContent));
+      //instead of util.AESUtils
+      AESUtils aes=new AESUtils();
+      aes.setPwd(password);
+	  byte[] key = aes.initSecretKey(); 
+	  Key k = null;
+	  Class clazz = nds.util.AESUtils.class;
+	  for (Method method : clazz.getDeclaredMethods()) {
+		  if ("toKey".equals(method.getName())) {
+			  // System.out.print("sadsfasd");
+			  method.setAccessible(true);
+			  k = (Key) method.invoke(clazz.newInstance(), key);
+			  break;
+		  }
+	  }
 
+      byte[] decryptData = AESUtils.decrypt(Hex.decodeHex(fileContent.toCharArray()), k);
+      String xml =new String(decryptData);
+      System.out.print(xml);
       license = License.fromXML(xml);
       this.logger.debug("creationDate=" + license.getCreationDate());
       this.logger.debug("expiresDate=" + license.getExpiresDate());
@@ -117,7 +144,7 @@ public class GenerateLicense extends Command
         att.setAuthor(user.name);
         att.setVersion(0);
         att.setExtension("dat");
-        att.setOrigFileName("portal.license.dat");
+        att.setOrigFileName("newbos.license.dat");
       }
       File file = attm.putAttachmentData(att, new ByteArrayInputStream(fileContent.getBytes("UTF-8")));
       if (Validator.isNull(license.getMachineCode())) {
@@ -145,6 +172,7 @@ public class GenerateLicense extends Command
   public String generateLicense(License license, String secretKey)
     throws Exception
   {
+	 
     AES aes = new AES(secretKey);
     String privateKey = aes.decrypt(aesKeyEncoded);
     KeyFactory keyFactory = KeyFactory.getInstance("DSA");
@@ -162,7 +190,23 @@ public class GenerateLicense extends Command
 
     String signed = License.toXML(license);
 
-    return encrypt(B64Code.encode(signed));
+    //return encrypt(B64Code.encode(signed));
+    
+	  AESUtils nws=new AESUtils();
+	  nws.setPwd(secretKey);
+	  byte[] key = nws.initSecretKey(); 
+	  Key k = null;
+	  Class clazz = nds.util.AESUtils.class;
+	  for (Method method : clazz.getDeclaredMethods()) {
+		  if ("toKey".equals(method.getName())) {
+			  // System.out.print("sadsfasd");
+			  method.setAccessible(true);
+			  k = (Key) method.invoke(clazz.newInstance(), key);
+			  break;
+		  }
+	  }
+	  byte[] encryptData = nws.encrypt(signed.getBytes(), k);
+	  return Hex.encodeHexStr(encryptData);
   }
 
   private String encrypt(String s) {
