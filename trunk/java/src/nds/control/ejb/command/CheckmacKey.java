@@ -4,6 +4,8 @@ import java.rmi.RemoteException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -53,6 +55,7 @@ public class CheckmacKey extends Command {
 	    int user_num=0;
 	    int pos_num=0;
 	    String company=null;
+	    String expdate=null;
 	  	try{
 		   
 	  		conn= nds.query.QueryEngine.getInstance().getConnection();
@@ -73,24 +76,27 @@ public class CheckmacKey extends Command {
 		  	LicenseManager.validateLicense("jackrain","5.0", mac,true);
 		    vailed=true;
 		    Iterator b=LicenseManager.getLicenses();
-
+		    
 		    while (b.hasNext()) {
 		    	LicenseWrapper o = (LicenseWrapper)b.next();
 		    	user_num=o.getNumUsers();
 		    	pos_num=o.getNumPOS();
-		    	company=o.getCompany();
-
+		    	company=o.getName();
+		    	SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		    	expdate = df.format(o.getExpiresDate());
 		    }
 		    
 		   } catch (Exception e) {
 			   logger.debug("check mackey invaild",e);
 		   }
 		    if(vailed){
-		    	checmak="/html/prg/regSuccess.jsp?cp="+company+"&user="+user_num+"&pos="+pos_num;
+		    	checmak="/html/prg/regSuccess.jsp?cp="+company+"&user="+user_num+"&pos="+pos_num+"&exp="+expdate;
 		    	
 		    }else{
 		    	checmak="/html/prg/regFail.jsp";
 		    }
+
+
 		    JSONObject returnObj = new JSONObject();
 			returnObj.put("url", checmak);
 	  		ValueHolder holder= new ValueHolder();
