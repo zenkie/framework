@@ -72,6 +72,7 @@ import javax.sql.DataSource;
 
 import nds.control.event.NDSEventException;
 import nds.schema.TableManager;
+import nds.util.License;
 import nds.util.LicenseManager;
 import nds.util.LicenseWrapper;
 import nds.util.SysLogger;
@@ -83,6 +84,7 @@ import nds.query.QueryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import java.security.*;
+import java.text.SimpleDateFormat;
 
 /**
  * 
@@ -408,6 +410,7 @@ public class LoginAction extends Action {
 		
 		HttpSession ses = req.getSession();
 		String redirect=req.getParameter("redirect");
+		
 		if (nds.util.Validator.isNotNull(redirect)) redirect="redirect="+java.net.URLEncoder.encode(redirect,"UTF-8");
 		else redirect="";
 		
@@ -496,6 +499,8 @@ public class LoginAction extends Action {
 	        		}
 	        	});
 	        	t.start();
+	        	//limtnum=java.net.URLEncoder.encode(limtnum,"UTF-8");
+	        	//logger.debug("redirect is "+limtnum);
 	        	res.sendRedirect(limtnum);
 	        	return null;
 				}
@@ -883,6 +888,9 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 	    int  cut_pos=0;
 	    String redirect=null;
 	    Connection conn = null; 
+	    String company=null;
+	    String expdate=null;
+	    boolean isexp=false;
 	  	try{
 	  	// logger.debug("upload keyfile is"+mac);
 	    Iterator b=LicenseManager.getLicenses();
@@ -891,6 +899,10 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 	    	LicenseWrapper o = (LicenseWrapper)b.next();
 	    	user_num=o.getNumUsers();
 	    	pos_num=o.getNumPOS();
+	    	company=o.getName();
+	    	SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+	    	expdate = df.format(o.getExpiresDate());
+	    	isexp=o.getExpdate();
 	    }
 		conn= nds.query.QueryEngine.getInstance().getConnection();
 		QueryEngine engine=QueryEngine.getInstance();
@@ -898,9 +910,12 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 		cut_pos=Tools.getInt(engine.doQueryOne("select count(*) from c_store t where t.isactive='Y' and t.isretail='Y'", conn), -1);
 		logger.debug("cut_usr is "+cut_usr);
 		logger.debug("cut_pos is "+cut_pos);
-		if(cut_usr>user_num||cut_pos>pos_num){
-			redirect="/html/prg/cutinfo.jsp?cu="+cut_usr+"&cs="+cut_pos+"&un="+user_num+"&pn="+pos_num;
-		}
+		if(isexp){
+			 redirect="/html/prg/expFail.jsp?exp="+expdate;
+	    }else if(cut_usr>user_num||cut_pos>pos_num){
+			redirect="/html/prg/cutinfo.jsp?cp="+java.net.URLEncoder.encode(company,"UTF-8")+"&cu="+cut_usr+"&cs="+cut_pos+"&un="+user_num+"&pn="+pos_num+"&exp="+expdate;
+		} 
+		logger.debug("redirect is"+redirect);
 	   } catch (Exception e) {
 		   logger.debug("check mackey invaild",e);
 	    }finally{
@@ -955,6 +970,35 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 		nds.util.Configurations conf=(nds.util.Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
 		try{
 			LicenseManager.validateLicense("jackrain","5.0", mac);
+			/*
+		    Iterator b=LicenseManager.getLicenses();
+		    while (b.hasNext()) {
+		    LicenseWrapper o = (LicenseWrapper)b.next();
+	    	logger.debug("ltype :"+o.getLicenseType().toString());
+	   
+	    	if(o.getLicenseType()==License.LicenseType.COMMERCIAL){
+				//logger.error("The license should contain machine code.");
+				//return;
+				//if(license.getExpiresDate().getTime() - license.getCreationDate().getTime() > 1L * 100 * 24 * 3600* 1000  ){
+					if(System.currentTimeMillis() >o.getExpiresDate().getTime()  ){
+					//logger.error("Non-Commercial license valid duration should not be greater than 100 days");
+					logger.error("your company service day is old!!!!!!!");
+					o.setMms(LicenseManager.sendmss(o.getName(),o.getExpiresDate()));
+					//nds.control.web.WebUtils.setMms(o.getMms());
+				}
+		    }else if(o.getLicenseType()==License.LicenseType.EVALUATION){
+				// Evaluation should not have valid duration over 31 days
+				logger.debug("Evaluation should not have valid duration over");
+				//if(license.getExpiresDate().getTime() - license.getCreationDate().getTime() > 1L * 31 * 24 * 3600* 1000  ){
+				if(System.currentTimeMillis() >o.getExpiresDate().getTime()  ){
+					logger.error("Evaluation license valid duration should not be greater than 30 days");
+					o.setExpdate(true);
+			    	//nds.control.web.WebUtils.setLtype(o.getLicenseType());
+					//return;
+				}
+		    }
+		    }
+		    */
 			return true;
 		} catch (Exception e) {
 			logger.debug("check mackey invaild",e);
