@@ -88,6 +88,11 @@ public class AESUtils{
 		return new SecretKeySpec(key, KEY_ALGORITHM);
 	}
 	
+	
+	private static void setpwdkey (byte[] key){
+		toaesKey(key);
+	}
+	
 	/**
 	 * º”√‹
 	 * 
