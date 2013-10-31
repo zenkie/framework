@@ -163,21 +163,23 @@ public final class LicenseManager {
 			AESUtils nes = new AESUtils();
 			nes.setPwd(B64Code.decode(pwd));
 			byte[] key = nes.initSecretKey();
+			Key k=nes.setpwdkey(key);
+			/*
 			Key k = null;
 			Class clazz = nds.util.AESUtils.class;
 			for (Method method : clazz.getDeclaredMethods()) {
-				if ("toKey".equals(method.getName())) {
-					// System.out.print("sadsfasd");
+				if ("toaesKey".equals(method.getName())) {
+					System.out.print("sadsfasd");
 					method.setAccessible(true);
 					k = (Key) method.invoke(clazz.newInstance(), key);
 					break;
 				}
 			}
-
+			 */
 			byte[] decryptData = AESUtils.decrypt(
 					Hex.decodeHex(licenseFile.toCharArray()), k);
 			String xml = new String(decryptData);
-			System.out.println(xml);
+			//System.out.println(xml);
 			//logger.debug(xml);
 			license = License.fromXML(xml);
 			logger.debug("creationDate=" + license.getCreationDate());

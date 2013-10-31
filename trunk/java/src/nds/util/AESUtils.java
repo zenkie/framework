@@ -83,11 +83,15 @@ public class AESUtils{
 	 * @param key	二进制密钥
 	 * @return 密钥
 	 */
-	private static Key toKey(byte[] key) throws Exception{
+	private static Key toKey(byte[] key){
 		//生成密钥
 		return new SecretKeySpec(key, KEY_ALGORITHM);
 	}
-
+	
+	
+	public static  Key setpwdkey (byte[] key) throws Exception{
+		return toKey(key);
+	}
 	
 	/**
 	 * 加密
