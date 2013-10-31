@@ -45,6 +45,10 @@ public final class License {
 	
 	private int numPOS=0; // pos count in db
 
+	private String mms;//send notice to company when first in portal
+
+	private boolean Expdate;//ÊÇ·ñ¹ıÆÚ
+
 	private static SimpleDateFormat formatter = new SimpleDateFormat(
 			"yyyy/MM/dd");	
 
@@ -402,6 +406,36 @@ public final class License {
 
 	public void setNumUsers(int numUsers) {
 		this.numUsers = numUsers;
+	}
+	
+	public String getMms() {
+		
+		if(this.licenseType==License.LicenseType.COMMERCIAL){
+				if(System.currentTimeMillis() >this.expiresDate.getTime()  ){
+				 return LicenseManager.sendmss(this.name,this.expiresDate);
+				}
+		}		
+		return null;
+	}
+
+	public void setMms(String mms) {
+		this.mms = mms;
+	}
+
+	public void setExpdate(boolean b) {
+		// TODO Auto-generated method stub
+		this.Expdate=b;
+	}
+	
+	public boolean getExpdate() {
+		// TODO Auto-generated method stub
+		 
+		if(this.licenseType==License.LicenseType.EVALUATION){
+			if(System.currentTimeMillis() >this.expiresDate.getTime()  ){
+				return true;
+			}
+		}
+		return false;
 	}
 
 

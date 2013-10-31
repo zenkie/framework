@@ -84,6 +84,25 @@ public final class LicenseWrapper {
 	public String toString() {
 		return lic.toString();
 	}
+	
+	public boolean getExpdate() {
+		// TODO Auto-generated method stub
+		return lic.getExpdate();
+	}
+	
+	public String getMms() {
+		return lic.getMms();
+	}
+
+	public void setMms(String sendmss) {
+		// TODO Auto-generated method stub
+		lic.setMms(sendmss);
+	}
+
+	public void setExpdate(boolean b) {
+		// TODO Auto-generated method stub
+		lic.setExpdate(b);
+	}
 
 }
 

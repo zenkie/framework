@@ -12,9 +12,11 @@ import com.getMAC.multiMac;
 
 import java.io.*;
 import java.lang.reflect.Method;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import nds.util.AES;
 
@@ -22,6 +24,8 @@ public final class LicenseManager {
 	private static final Log logger = LogFactory.getLog(LicenseManager.class);
 
 	private static List licenses = null;
+	
+	private static String pwd="eXFxbG1nczFjNg==";
 	
 	private LicenseManager() {
 	}
@@ -60,7 +64,8 @@ public final class LicenseManager {
 							validVersion = true;
 					} catch (Exception e) {
 					}*/
-				if (isValidProduct(product, license) && validVersion)
+				//取消产品名称对比
+				//if (isValidProduct(product, license) && validVersion)
 					return;
 			}
 
@@ -151,7 +156,27 @@ public final class LicenseManager {
 //			} 
 //			in.close();
 		try {
-			String xml = B64Code.decode(Tools.decrypt(licenseFile));
+			/**
+			 * 取消原先加密模式增加nds.util.aesutils方法解密
+			 */
+			//String xml = B64Code.decode(Tools.decrypt(licenseFile));
+			AESUtils nes = new AESUtils();
+			nes.setPwd(B64Code.decode(pwd));
+			byte[] key = nes.initSecretKey();
+			Key k = null;
+			Class clazz = nds.util.AESUtils.class;
+			for (Method method : clazz.getDeclaredMethods()) {
+				if ("toKey".equals(method.getName())) {
+					// System.out.print("sadsfasd");
+					method.setAccessible(true);
+					k = (Key) method.invoke(clazz.newInstance(), key);
+					break;
+				}
+			}
+
+			byte[] decryptData = AESUtils.decrypt(
+					Hex.decodeHex(licenseFile.toCharArray()), k);
+			String xml = new String(decryptData);
 			System.out.println(xml);
 			//logger.debug(xml);
 			license = License.fromXML(xml);
@@ -216,8 +241,14 @@ public final class LicenseManager {
 				
 			}else{
 				if(license.getLicenseType()==License.LicenseType.COMMERCIAL){
-					logger.error("The license should contain machine code.");
-					return;
+					//logger.error("The license should contain machine code.");
+					//return;
+					//if(license.getExpiresDate().getTime() - license.getCreationDate().getTime() > 1L * 100 * 24 * 3600* 1000  ){
+						if(System.currentTimeMillis() >license.getExpiresDate().getTime()  ){
+						//logger.error("Non-Commercial license valid duration should not be greater than 100 days");
+						logger.error("your company service day is old!!!!!!!");
+						//license.setMms(sendmss(license.getName(),license.getExpiresDate()));
+					}
 				}else if(license.getLicenseType()==License.LicenseType.NON_COMMERCIAL){
 					//Non-Commercial should not have valid duration over 100 days
 					if(license.getExpiresDate().getTime() - license.getCreationDate().getTime() > 1L * 100 * 24 * 3600* 1000  ){
@@ -227,10 +258,12 @@ public final class LicenseManager {
 				}else if(license.getLicenseType()==License.LicenseType.EVALUATION){
 					// Evaluation should not have valid duration over 31 days
 					logger.debug("Evaluation should not have valid duration over");
-//					if(license.getExpiresDate().getTime() - license.getCreationDate().getTime() > 1L * 31 * 24 * 3600* 1000  ){
-//						logger.error("Evaluation license valid duration should not be greater than 30 days");
-//						//return;
-//					}
+					//if(license.getExpiresDate().getTime() - license.getCreationDate().getTime() > 1L * 31 * 24 * 3600* 1000  ){
+					if(System.currentTimeMillis() >license.getExpiresDate().getTime()  ){
+						logger.error("Evaluation license valid duration should not be greater than 30 days");
+						//license.setExpdate(true);
+						//return;
+					}
 				}
 			}
 			/*
@@ -260,7 +293,15 @@ public final class LicenseManager {
                            "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", e);
 		}
 	}
-
+/**
+ *   正式客户如果发现超过截止日期 则发送系统消息 给用户提示 服务期到了
+ */
+	public static String sendmss(String cp,Date exp){
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		String cont=cp+">您的服务期已与"+df.format(exp)+"到期!请与产品客户联系！";
+		String mss="art.dialog.notice({title: '系统消息',width: 220,content: '尊敬的客户<"+cont+"',icon: 'warning',time: 5});";
+		return mss;
+	}
 	/**
 	 * License contains <product>Jive Forums Basic</product> as <param>product</param> specified
 	 * @param product
