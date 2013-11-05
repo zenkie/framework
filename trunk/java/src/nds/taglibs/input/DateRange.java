@@ -50,7 +50,7 @@ public class DateRange extends TagSupport {
              */
             boolean defaultRange=nds.util.Tools.getYesNo(showDefaultRange, false);
             boolean ishowtime=nds.util.Tools.getYesNo(showTime, false);
-            System.out.print("ishowtime is "+ishowtime);
+            //System.out.print("ishowtime is "+ishowtime);
             String startDate=null, endDate=null;
             if(defaultRange){
             	/**
