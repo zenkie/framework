@@ -9,6 +9,8 @@ import java.io.PrintStream;
 import java.util.*;
 import bsh.EvalError;
 import bsh.Interpreter;
+import bsh.ParseException;
+import bsh.TargetError;
 
 /**
  * 
@@ -51,7 +53,7 @@ public class BshScriptUtils {
 	
 	public static Object evalScript(
             String script, StringBuffer scriptOutput, boolean captureOutErr, Map params)
-            throws EvalError
+            throws EvalError, NDSException
     {
         // Create a PrintStream to capture output
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -78,6 +80,13 @@ public class BshScriptUtils {
         try {
             // Eval the user text
             result = bsh.eval( script );
+        } catch (ParseException pe) {
+        	pe.printStackTrace();
+        	} catch (TargetError te) {
+        		if(te.getTarget() instanceof NDSException) throw (NDSException)te.getTarget();
+        } catch (EvalError ee) {
+        	//throw new NDSException(ee.getMessage());
+        	ee.printStackTrace();
         } finally {
             if ( captureOutErr ) {
                 System.setOut( sout );
