@@ -602,11 +602,16 @@ public class LoginAction extends Action {
 			pstmt= conn.prepareStatement("select isactive from users where email=?");
 			pstmt.setString(1, login);
 			rs= pstmt.executeQuery();
+			int rowCount = 0;
 			if(rs.next()){
 				isactive=rs.getString(1);
-			}
+				rowCount++;
 			if(!"Y".equals(isactive)) {
 				SessionErrors.add(req, "INACTIVE_USER");
+				return false;
+			}
+			}else if(rowCount==0){
+				SessionErrors.add(req, NoSuchUserException.class.getName());
 				return false;
 			}
 			
