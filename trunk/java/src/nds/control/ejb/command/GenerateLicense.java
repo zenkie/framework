@@ -102,6 +102,8 @@ public class GenerateLicense extends Command
       AESUtils aes=new AESUtils();
       aes.setPwd(password);
 	  byte[] key = aes.initSecretKey(); 
+	  Key k= aes.setpwdkey(key);
+	  /*
 	  Key k = null;
 	  Class clazz = nds.util.AESUtils.class;
 	  for (Method method : clazz.getDeclaredMethods()) {
@@ -112,7 +114,7 @@ public class GenerateLicense extends Command
 			  break;
 		  }
 	  }
-
+	*/
       byte[] decryptData = AESUtils.decrypt(Hex.decodeHex(fileContent.toCharArray()), k);
       String xml =new String(decryptData);
       System.out.print(xml);
@@ -195,6 +197,8 @@ public class GenerateLicense extends Command
 	  AESUtils nws=new AESUtils();
 	  nws.setPwd(secretKey);
 	  byte[] key = nws.initSecretKey(); 
+	  Key k= nws.setpwdkey(key);
+	  /*
 	  Key k = null;
 	  Class clazz = nds.util.AESUtils.class;
 	  for (Method method : clazz.getDeclaredMethods()) {
@@ -205,6 +209,7 @@ public class GenerateLicense extends Command
 			  break;
 		  }
 	  }
+	  */
 	  byte[] encryptData = nws.encrypt(signed.getBytes(), k);
 	  return Hex.encodeHexStr(encryptData);
   }
