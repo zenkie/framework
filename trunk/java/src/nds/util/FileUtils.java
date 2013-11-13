@@ -122,6 +122,54 @@ public class FileUtils {
             throw new NDSException(err, e);
         }
     }
+    
+ 
+    
+    /**
+	 * 读取文件所有数据<br>
+	 * 文件的长度不能超过Integer.MAX_VALUE
+	 * @param file 文件
+	 * @return 字节码
+	 * @throws IOException
+	 */
+	public static byte[] readBytes(File file) throws IOException {
+		//check
+		if (! file.exists()) {
+			throw new FileNotFoundException("File not exist: " + file);
+		}
+		if (! file.isFile()) {
+			throw new IOException("Not a file:" + file);
+		}
+		
+		long len = file.length();
+		if (len >= Integer.MAX_VALUE) {
+			throw new IOException("File is larger then max array size");
+		}
+
+		byte[] bytes = new byte[(int) len];
+		FileInputStream in = null;
+		try {
+			in = new FileInputStream(file);
+			in.read(bytes);
+		}finally {
+			in.close();
+		}
+
+		return bytes;
+	}
+    
+	/**
+	 * 读取文件所有数据<br>
+	 * @param 文件名
+	 * @return 字节码
+	 * @throws IOException
+	 */
+    public static byte[] getFileContent(String src) throws IOException {
+    	 
+    	    byte[] b =  readBytes(new File(src));
+    	 
+    	    return b;
+    	  }
     /**
      * Get file extension, such as "pdf", "doc" 
      * @param fileName
