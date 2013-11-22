@@ -56,7 +56,7 @@ public class RestUtils {
         return vh;
 	}
 
-	private static String getChareset(String contentType) {
+	public static String getChareset(String contentType) {
 		int i = contentType == null ? -1 : contentType.indexOf("charset=");
 		return i == -1 ? "UTF-8" : contentType.substring(i + 8);
 	}
