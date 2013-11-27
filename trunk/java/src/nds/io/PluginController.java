@@ -3,6 +3,7 @@ import java.util.*;
 import javax.servlet.ServletContext;
 
 import nds.control.web.WebUtils;
+import nds.control.web.binhandler.BinaryHandler;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.util.Configurations;
@@ -20,6 +21,7 @@ public class PluginController implements ServletContextActor{
 	private PluginManager<Command> cmdManager;
 	private PluginManager<ProcessCall> psManager;
 	private PluginManager<ShellCmd> shellManager;
+	private PluginManager<BinaryHandler> binhander;
 	
 	private PluginScanner scanner;
 	public void init(Director director) {
@@ -71,6 +73,9 @@ Caused by: java.io.FileNotFoundException: JAR entry META-INF/services/nds.contro
         shellManager=new PluginManager<ShellCmd>(ShellCmd.class, scanner);
         shellManager.init();
         
+        binhander=new PluginManager<BinaryHandler>(BinaryHandler.class, scanner);
+        binhander.init();
+        
     }
 	/**
 	 * Usage:
@@ -85,6 +90,10 @@ Caused by: java.io.FileNotFoundException: JAR entry META-INF/services/nds.contro
 	   {
 	    return scanner;
 	   }
+	    
+	 public BinaryHandler findPluginBinhandle(String name){
+			return binhander.findPlugin(name);
+	}
 	
 	public Command findPluginCommand(String name){
 		return cmdManager.findPlugin(name);
@@ -118,6 +127,7 @@ Caused by: java.io.FileNotFoundException: JAR entry META-INF/services/nds.contro
     	try{cmdManager.destroy();}catch(Throwable t){}
     	try{psManager.destroy();}catch(Throwable t){}
     	try{shellManager.destroy();}catch(Throwable t){}
+    	try{binhander.destroy();}catch(Throwable t){}
     	scanner.destroy();
     	
         logger.debug("PluginController destroied.");
