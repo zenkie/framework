@@ -16,6 +16,7 @@ import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.security.LoginFailedException;
 import nds.util.WebKeys;
+import nds.control.ejb.Command;
 import nds.control.event.NDSEventException;
 import nds.control.web.binhandler.*;
 /**
@@ -51,6 +52,7 @@ public class BinaryServlet extends HttpServlet {
 	        	String pathInfo= request.getPathInfo();
 	        	BinaryHandler handler= getBinaryHandler(pathInfo);
 	        	handler.process(request, response);
+	        	//System.out.print("1111111");
 	        	return;
 	        } catch (LoginFailedException ex){
 	            request.setAttribute("error",ex);
@@ -100,10 +102,19 @@ public class BinaryServlet extends HttpServlet {
 	    	}
 	        BinaryHandler handler=(BinaryHandler) handlers.get(name);
 	        if( handler == null) {
+	        	
 	            Class c=null;
                 // try figure the special handler name, such as PromotionAShtSubmit
+	            nds.io.PluginController pc=(nds.io.PluginController) WebUtils.getServletContextManager().getActor(nds.util.WebKeys.PLUGIN_CONTROLLER);
+	            BinaryHandler mm=pc.findPluginBinhandle(name.trim().replaceAll("/",""));
+	            //System.out.print("1111111111"+name);
+	            if(mm!=null){
+	            	logger.debug("pc.findPluginBinhandle"+name);
+	            	handler=mm;
+	            }else{
                 c= Class.forName("nds.control.web.binhandler."+ name.trim().replaceAll("/",""));
                 handler=(BinaryHandler) c.newInstance();
+	            }
                 handlers.put(name, handler);
                 logger.debug("BinaryHandler :"+ name +" created and ready for handling.");
 	        }
