@@ -921,6 +921,7 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 			redirect="/html/prg/cutinfo.jsp?cp="+java.net.URLEncoder.encode(company,"UTF-8")+"&cu="+cut_usr+"&cs="+cut_pos+"&un="+user_num+"&pn="+pos_num+"&exp="+expdate;
 		} 
 		logger.debug("redirect is"+redirect);
+		try{if(conn!=null) conn.close();}catch(Throwable t){}
 	   } catch (Exception e) {
 		   logger.debug("check mackey invaild",e);
 	    }finally{
@@ -963,8 +964,8 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 				SessionErrors.add(req, "VERIFY_KEYFILE_ERROR");
 				return false;
 				}
+			try{if(conn!=null) conn.close();}catch(Throwable t){}
 		}catch(Throwable t){
-
 			return false;
 		}finally{
 			try{if(rs!=null) rs.close();}catch(Throwable t){}
