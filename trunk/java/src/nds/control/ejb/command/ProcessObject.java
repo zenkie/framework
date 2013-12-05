@@ -108,7 +108,7 @@ public class ProcessObject extends Command {
   	DefaultWebEvent evt,template;
   	ValueHolder vh;
   	int rowIdx, objectId;
-  	String errorMsg;
+  	String errorMsg=null;
   	User usr=helper.getOperator(event);
   	java.util.Locale locale= event.getLocale();
   	template=(DefaultWebEvent)event.clone();
@@ -485,13 +485,17 @@ public class ProcessObject extends Command {
   		throw new NDSException(nds.util.StringUtils.getRootCause(t).getMessage(), t);
   	}
   	ValueHolder holder= new ValueHolder();
-  	if(errorFound)
+  	if(errorFound){
+  		holder.put("code","-1");
+  		if(errorMsg!=null){
+  			holder.put("message", errorMsg);
+  		}else{
   		holder.put("message", mh.translateMessage("@contains-error@",locale));
-  	else{
-  		
+  		}
+  	}else{
+  		holder.put("code","0");
   		holder.put("message",(returnMsg==null? mh.translateMessage("@complete@",locale):returnMsg) );
   	}
-	holder.put("code","0");
 	holder.put("data",returnObj );
 	return holder;
   }
