@@ -203,4 +203,15 @@ url=¡±¡¯PATH?...& wfc_<×Ö¶Îid>=¡±+ oc.getMainTableColumnInput(<×Ö¶Îid>)+¡±&wfc_<
 	public void setQueryindex(int queryindex) {
 		this.queryindex = queryindex;
 	}
+	
+	public void setWfcfixcol(PairTable fixcol) {
+		String wfc_fixcol=null;
+		try {
+			 wfc_fixcol=(fixcol==null?"":"+'&wfc_fixcol="+ java.net.URLEncoder.encode(fixcol.toURLQueryString(""), "UTF-8")+"'");
+		} catch (UnsupportedEncodingException e) {
+		    // The system should always have the platform default "UTF-8"
+			logger.error("Fail to encode using UTF-8", e);
+		}
+		this.url+=wfc_fixcol;
+	}
 }
