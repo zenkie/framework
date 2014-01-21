@@ -785,8 +785,11 @@ public final class WebUtils {
 		Column wfc_rc;
 		String wfc_rcv;
 		for (int i = 0; i < wfc_rcs.size(); i++) {
+			
 			wfc_rc = (Column) wfc_rcs.get(i);
+			logger.debug("wfc_rc is "+wfc_rc.getName());
 			wfc_rcv = request.getParameter("wfc_" + wfc_rc.getId());
+			logger.debug("wfc_rcv is "+wfc_rcv);
 			if (wfc_rcv != null) {
 				// input value is ak, not id
 				if (wfc_rc.getReferenceTable() != null) {
@@ -804,12 +807,42 @@ public final class WebUtils {
 				}
 			} else {
 				if (!wfc_rc.isNullable()) {
+					/*
 					String msg = MessagesHolder.getInstance().getMessage(
 							locale, "pls-input");
 					throw new NDSException(msg.replace("0",
 							wfc_rc.getDescription(locale)));
+					*/
+					/**
+					 * wfc_fixcol 支持popup_window 界面@@关联字段解析
+					 */
+					PairTable fixedColumns=null;
+					Expression fixedExpr=new Expression();
+					QueryEngine engine =QueryEngine.getInstance();
+					QueryRequestImpl query = engine.createRequest(userWeb.getSession());
+					TableManager manager =TableManager.getInstance();
+					//wfc_rcv = request.getParameter("wfc_fix" + wfc_rc.getId());
+					fixedColumns= PairTable.parseIntTable(request.getParameter("wfc_fixcol"),null );
+					if(fixedColumns!=null){
+					for( Iterator it=fixedColumns.keys();it.hasNext();){
+			        	Integer key=(Integer) it.next();
+			            //Column col=manager.getColumn( key.intValue());
+			            ColumnLink cl= wfc_rc.getTable().getPrimaryKey().getColumnLink();     
+			            //new ColumnLink( col.getTable().getName()+"."+ col.getName());
+			            fixedExpr= new Expression(cl,"="+ fixedColumns.get(key),null);
+			        }
+					query.setMainTable(wfc_rc.getTable().getId());
+					query.addSelection(wfc_rc.getId());
+					query.addParam(fixedExpr);
+					QueryResult result= QueryEngine.getInstance().doQuery(query);
+					for(int j=0;j< result.getRowCount();j++){
+						result.next();
+						logger.debug("wfc_rc is"+String.valueOf(result.getObject(1)));
+						wfc_rcv=String.valueOf(result.getObject(1));
+					}
+					}
 				}
-				wfc_rcv = "NULL";// replaced with null
+				//wfc_rcv = "NULL";// replaced with null
 			}
 			filter = filter.replaceAll("@" + wfc_rc.getTable().getName() + "."
 					+ wfc_rc.getName() + "@", wfc_rcv);
