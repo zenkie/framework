@@ -41,4 +41,13 @@ public interface ColumnInterpreter {
     * @throws ColumnInterpretException if input string is not valid
     */
     public Object getValue(String str, Locale locale) throws ColumnInterpretException;
+    /**
+     * parse input string to change save db
+     * @param str
+     * @param locale
+     * @return
+     * @throws ColumnInterpretException
+     */
+    public String changeValue(String str, Locale locale) throws ColumnInterpretException;
+    
 }
