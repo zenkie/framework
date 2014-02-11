@@ -2,7 +2,6 @@
 package nds.web.interpreter;
 import java.util.Locale;
 import nds.schema.TableManager;
-import nds.util.ColumnInterpretException;
 import nds.util.*;
 /**
  * 内容是链接url, 在web上显示为 <a href='$url'>url</a> 的形式 
@@ -37,4 +36,10 @@ public class URLInterpreter implements ColumnInterpreter,java.io.Serializable {
     public Object getValue(String str,Locale locale) {
         return str;
     }
+	@Override
+	public String changeValue(String str, Locale locale)
+			throws ColumnInterpretException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

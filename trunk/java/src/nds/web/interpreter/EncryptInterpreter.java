@@ -2,7 +2,6 @@
 package nds.web.interpreter;
 import java.util.Locale;
 
-import nds.util.ColumnInterpretException;
 import nds.util.*;
 /**
  * Encrypt column content and show only password masks on web
@@ -22,4 +21,10 @@ public class EncryptInterpreter implements ColumnInterpreter,java.io.Serializabl
     public Object getValue(String str,Locale locale) {
         return str;
     }
+	@Override
+	public String changeValue(String str, Locale locale)
+			throws ColumnInterpretException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

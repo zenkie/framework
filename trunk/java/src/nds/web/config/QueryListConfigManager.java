@@ -3,12 +3,14 @@ package nds.web.config;
 import java.util.Hashtable;
 
 import javax.servlet.ServletContext;
+
 import java.sql.*;
 import java.util.*;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.shiftone.cache.Cache;
+
 import nds.query.*;
 import nds.schema.*;
 import nds.control.web.WebUtils;
@@ -80,7 +82,11 @@ public class QueryListConfigManager{
      * @return
      */
     public QueryListConfig getMetaDefault(int tableId, int sgrade) throws NDSException{
+    	
     	QueryListConfig qlc= metaConfig.get(tableId);
+    	if(qlc!=null) return qlc;
+    	
+    	qlc=getModalDefaultQueryListConfig(tableId,sgrade);
     	if(qlc!=null) return qlc;
     	
     	TableManager manager=TableManager.getInstance();
@@ -297,6 +303,103 @@ public class QueryListConfigManager{
     public static QueryListConfigManager getInstance(){
     	if(instance==null) instance=new QueryListConfigManager();
     	return instance;
+    }
+    
+    /**
+     * 
+     * @param tableId
+     * @param securityGrade
+     * @return
+     * paco add
+     */
+    public QueryListConfig getModalDefaultQueryListConfig(int tableId, int sgrade) throws NDSException{
+     	
+    	QueryListConfig qlc=new QueryListConfig();
+    	qlc.setId(-1); // not in db
+    	qlc.setName("DEFAULT");
+    	qlc.setTableId(tableId);
+    	qlc.setDefault(false);
+
+    	
+    	Column column=null;
+    	JSONArray showJson=null;
+    	ArrayList<ColumnLink> cls=new ArrayList<ColumnLink>();
+    	TableManager tManager=TableManager.getInstance();
+    	Table table=tManager.getTable(tableId);
+    	
+    	
+    	//conditions
+    	ArrayList al=table.getIndexedColumns();
+    	for(int i=0;i<al.size();i++){
+    		Column col=(Column) al.get(i);
+    		if(col.getSecurityGrade()> sgrade) continue;
+    		ColumnLink cl=new ColumnLink(new int[]{col.getId()});
+    		cls.add(cl);
+    	}
+    	qlc.setConditions(cls);
+    	
+    	//selections
+    	cls=new ArrayList<ColumnLink>();
+    	JSONObject tExtendPro=table.getJSONProps();
+    	if(tExtendPro==null || !tExtendPro.has("showColumns")){
+    		logger.debug("tExtendPro is null");
+    		return null;
+    		}
+    	if(tExtendPro!=null && tExtendPro.has("showColumns")){
+    		showJson=tExtendPro.optJSONArray("showColumns");
+    		for(int i=0;i<showJson.length();i++){
+    			logger.debug("showColumns is append"); 
+    			logger.debug("showColumns is :"+showJson.optString(i)); 
+    			column=table.getColumn(showJson.optString(i));
+    			if(column==null)logger.debug("cloumn is null"); 
+    			if(column.getSecurityGrade()> sgrade) continue;
+    			ColumnLink cl=new ColumnLink(new int[]{column.getId()});
+        		cls.add(cl);
+    		}
+    	}	
+    	
+    	if(tExtendPro!=null && tExtendPro.has("moveShowColumns")){
+    		showJson=tExtendPro.optJSONArray("moveShowColumns");
+    		for(int i=0;i<showJson.length();i++){
+    			logger.debug("moveShowColumns is append"); 
+    			column=table.getColumn(showJson.optString(i));
+    			logger.debug("showColumns is :"+showJson.optString(i)); 
+    			if(column.getSecurityGrade()> sgrade) continue;
+    			ColumnLink cl=new ColumnLink(new int[]{column.getId()});
+    			if(!cls.contains(cl))cls.add(cl);
+    		}
+    	}
+    	
+    	if(cls!=null){qlc.setSelections(cls);};
+    	
+    	//orderbys
+    	cls=new ArrayList<ColumnLink>();
+    	JSONArray orderby=null;
+    	if( table.getJSONProps()!=null) orderby=table.getJSONProps().optJSONArray("orderby");
+    	if(orderby!=null){
+    		for(int i=0;i<orderby.length();i++){
+    			try{
+        			JSONObject od= orderby.getJSONObject(i);
+        			ColumnLink cl= new ColumnLink(table.getName()+"."+ od.getString("column"));
+    				cl.setTag(od.optBoolean("asc",true));
+    				cls.add(cl);
+    			}catch(Throwable t){
+    				logger.error("fail to load order by of "+ table.getName()+", pos="+i , t);
+    				//throw new NDSException("order by column error:"+ od.optString("column"));
+    			}
+    			
+    		}
+        	
+    		
+    	}else if( table.getColumn("orderno")!=null){
+    		ColumnLink cl= new ColumnLink(new int[]{table.getColumn("orderno").getId()});
+    		cl.setTag(true);
+    		cls.add(cl);
+    	}
+    	qlc.setOrderBys(cls);
+    	
+    	if(qlc!=null){metaConfig.put(tableId, qlc);}else{logger.debug("qlc is null");}
+    	return qlc;
     }
 
 }

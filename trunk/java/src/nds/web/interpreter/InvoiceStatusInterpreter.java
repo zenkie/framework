@@ -6,7 +6,6 @@ package nds.web.interpreter;
 
 import java.util.Locale;
 
-import nds.util.ColumnInterpretException;
 import nds.util.*;
 
 /**
@@ -36,4 +35,10 @@ public class InvoiceStatusInterpreter implements ColumnInterpreter,java.io.Seria
     public Object getValue(String str,Locale locale) {
         return str;
     }
+	@Override
+	public String changeValue(String str, Locale locale)
+			throws ColumnInterpretException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

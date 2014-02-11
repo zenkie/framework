@@ -34,4 +34,11 @@ public class transportStatus implements ColumnInterpreter,java.io.Serializable {
     public Object getValue(String str,Locale locale) {
     	 throw new Error("Not supported");
     }
+
+	@Override
+	public String changeValue(String str, Locale locale)
+			throws ColumnInterpretException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
