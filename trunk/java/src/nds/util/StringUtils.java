@@ -50,17 +50,11 @@ package nds.util;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.*;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Random;
-import java.util.StringTokenizer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 /**
@@ -1213,4 +1207,62 @@ public class StringUtils {
         return new String(b,0,l);
     }	
 	*/
+	/**
+	 * 全角转半角
+	 * @param QJstr
+	 * @return
+	 * @throws UnsupportedEncodingException
+	 */
+	public static final String full2HalfChange(Object QJstr)
+			{
+
+		StringBuffer outStrBuf = new StringBuffer("");
+
+		String Tstr = "";
+
+		byte[] b = null;
+       try{
+		for (int i = 0; i < ((String)QJstr).length(); i++) {
+
+			Tstr = ((String)QJstr).substring(i, i + 1);
+
+			// 全角空格转换成半角空格
+
+			if (Tstr.equals("　")) {
+
+				outStrBuf.append(" ");
+
+				continue;
+
+			}
+
+			b = Tstr.getBytes("unicode");
+
+			// 得到 unicode 字节数据
+
+			if (b[2] == -1) {
+
+				// 表示全角？
+
+				b[3] = (byte) (b[3] + 32);
+
+				b[2] = 0;
+
+				outStrBuf.append(new String(b, "unicode"));
+
+			} else {
+
+				outStrBuf.append(Tstr);
+
+			}
+
+		} // end for.
+  
+		
+       }catch (Exception e) {
+    	  // throws UnsupportedEncodingException 
+    	   logger.warn(((String)QJstr)+" full2HalfChange unchange!");
+       }
+       return outStrBuf.toString();
+	}
 }
