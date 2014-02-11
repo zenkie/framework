@@ -11,7 +11,6 @@ import nds.control.ejb.Trigger;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.query.*;
-import nds.query.QueryException;
 import nds.util.ColumnInterpretException;
 import nds.util.ColumnInterpreter;
 
@@ -172,5 +171,11 @@ public class PickBoxSht_AM implements Trigger, ColumnInterpreter{
         crc.setFilename("f:/bsh.dmp");
         System.out.println(crc.toString());
     }
+	@Override
+	public String changeValue(String str, Locale locale)
+			throws ColumnInterpretException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

@@ -53,4 +53,10 @@ public class DirectoryURLInterpreter implements ColumnInterpreter,java.io.Serial
     public Object getValue(String str,Locale locale) {
         return str;
     }
+	@Override
+	public String changeValue(String str, Locale locale)
+			throws ColumnInterpretException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

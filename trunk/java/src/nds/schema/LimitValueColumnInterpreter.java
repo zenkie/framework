@@ -25,13 +25,9 @@
 ********************************************************************/
 package nds.schema;
 
-import java.util.Enumeration;
 import java.util.*;
 
-import nds.util.ColumnInterpretException;
 import nds.util.*;
-import nds.util.StringHashtable;
-import nds.util.Tools;
 /**
  * Parse limit value of column, the column should has method <br>
  * Column.isValueLimited()=true
@@ -71,5 +67,11 @@ public class LimitValueColumnInterpreter implements nds.util.ColumnInterpreter, 
             		"' to a valid LimitValue, legal values are:"+column.getValues(locale));
         }
     }
+	@Override
+	public String changeValue(String str, Locale locale)
+			throws ColumnInterpretException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }
