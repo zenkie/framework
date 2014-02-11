@@ -1,6 +1,7 @@
 package nds.control.ejb.command;
 import java.math.BigDecimal;
 import java.rmi.RemoteException;
+import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Vector;
 
@@ -11,7 +12,6 @@ import nds.schema.DisplaySetting;
 import nds.schema.SQLTypes;
 import nds.schema.Table;
 import nds.schema.TableManager;
-import nds.util.NDSException;
 import nds.util.*;
 import nds.query.*;
 /**
@@ -21,7 +21,8 @@ import nds.query.*;
 
 public class DirectColumnObtain extends ColumnObtain{
 
-  public DirectColumnObtain() {
+   
+public DirectColumnObtain() {
   }
 
   public Vector getColumnValue(DefaultWebEvent event,Table table,Column col,int length) throws NDSException,RemoteException{
@@ -33,6 +34,7 @@ public class DirectColumnObtain extends ColumnObtain{
       ColumnCheckImpl checkImpl = new ColumnCheckImpl();
       value = event.getParameterValues(colName);
       String valueOne;
+   
       
       Object defaultValue=getDefaultValue(col, event);
       //Object[] result = null;
@@ -145,12 +147,25 @@ public class DirectColumnObtain extends ColumnObtain{
   
   /**
    * when col is LimitValue type, will check value for for description if it's not in value list
+   * Ôö¼Ó×Ö¶Î·­ÒëÆ÷Ö§³Ö
    */
   private String getString(int row, ColumnCheckImpl checkImpl, Column col, String valueOne)
    throws  NDSException,RemoteException{
       try{
       	checkImpl.isColumnValid(col,valueOne);
-      return valueOne;
+      	TableManager tm= TableManager.getInstance();
+      	ColumnInterpreter ci=null;
+      	String clsname=col.getValueInterpeter();
+      	if(clsname!=null){
+    	try{
+    	 ci=(ColumnInterpreter) Class.forName(clsname).newInstance();
+    	 if(ci!=null)valueOne=ci.changeValue(valueOne,tm.getDefaultLocale());
+    	} catch (Exception e) {
+    		logger.debug("@column-not-support-changeValue@:"+ col.getValueInterpeter());
+    	}
+      	//tm.getColumnValueDescription(col.getId(), valueOne,tm.getDefaultLocale());
+      	}
+        return valueOne;
       }catch(NDSException e){
           if( this.isBestEffort ){
               this.setRowInvalid(row,col.getDescription(Locale.CHINA)+"´íÎó£º"+ e.getMessage() );
