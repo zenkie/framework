@@ -159,7 +159,7 @@ public DirectColumnObtain() {
       	if(clsname!=null){
     	try{
     	 ci=(ColumnInterpreter) Class.forName(clsname).newInstance();
-    	 if(ci!=null)valueOne=ci.changeValue(valueOne,tm.getDefaultLocale());
+    	 if(ci!=null)valueOne=ci.changeValue(valueOne,tm.getDefaultLocale())==null?valueOne:ci.changeValue(valueOne,tm.getDefaultLocale());
     	} catch (Exception e) {
     		logger.debug("@column-not-support-changeValue@:"+ col.getValueInterpeter());
     	}
