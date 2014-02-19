@@ -776,8 +776,9 @@ public final class WebUtils {
 	public static Expression parseWildcardFilter(Column searchOnColumn,
 			javax.servlet.http.HttpServletRequest request, UserWebImpl userWeb)
 			throws Exception {
-		if (searchOnColumn == null || !searchOnColumn.isFilteredByWildcard())
+		if (searchOnColumn == null || !searchOnColumn.isFilteredByWildcard()){
 			return null;
+		}
 		Locale locale = userWeb.getLocale();
 
 		String filter = searchOnColumn.getFilter();
@@ -822,8 +823,9 @@ public final class WebUtils {
 					QueryRequestImpl query = engine.createRequest(userWeb.getSession());
 					TableManager manager =TableManager.getInstance();
 					//wfc_rcv = request.getParameter("wfc_fix" + wfc_rc.getId());
-					fixedColumns= PairTable.parseIntTable(request.getParameter("wfc_fixcol"),null );
-					if(fixedColumns!=null){
+					logger.debug("wfc_fixcol is "+request.getParameter("wfc_fixcol"));
+					if(request.getParameter("wfc_fixcol")!=null){
+						fixedColumns= PairTable.parseIntTable(request.getParameter("wfc_fixcol"),null );
 					for( Iterator it=fixedColumns.keys();it.hasNext();){
 			        	Integer key=(Integer) it.next();
 			            //Column col=manager.getColumn( key.intValue());
@@ -842,7 +844,8 @@ public final class WebUtils {
 					}
 					}
 				}
-				//wfc_rcv = "NULL";// replaced with null
+			
+				if(wfc_rcv==null) wfc_rcv= "NULL";// replaced with null
 			}
 			filter = filter.replaceAll("@" + wfc_rc.getTable().getName() + "."
 					+ wfc_rc.getName() + "@", wfc_rcv);
