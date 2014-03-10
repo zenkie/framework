@@ -1478,9 +1478,12 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
      * 
      * Shoudl consider user may has one default config that was deleted by administrator 
      * @param tableId
+     * jackrain add 2014310
+     * @param includeUIControllerAndSpecialDisplayType if false, will not add column that getDisplaySetting().isUIController()==true
+     *  and displaytype in {'xml','file','image'}
      * @return nerver be null
      */
-    public QueryListConfig getDefaultQueryListConf(int tableId) throws Exception{
+    public QueryListConfig getDefaultQueryListConf(int tableId,Boolean includeUIControllerAndSpecialDisplayType) throws Exception{
     	QueryListConfig qlc=null;
     	QueryListConfigManager qlcm=QueryListConfigManager.getInstance();
     	Table table=TableManager.getInstance().getTable(tableId);
@@ -1495,10 +1498,24 @@ public class UserWebImpl implements SessionContextActor, ModelUpdateListener, ja
     	//default setting
     	if(qlc==null){
     		qlc=qlcm.getDefaultQueryListConfig(tableId);
-    		if(qlc==null) qlc=qlcm.getMetaDefault(tableId,getSecurityGrade());
+    		if(qlc==null) qlc=qlcm.getMetaDefault(tableId,getSecurityGrade(),includeUIControllerAndSpecialDisplayType);
     	}
     	return qlc;
     	
+    }
+    
+    /**
+     * Get default one according to user and system preference.
+     * First will load user preference setting if he has one, if not found, will load
+     * from system default one.
+     * 
+     * user setting will be in "ad_user_pref"."qlc".tableid
+     * 
+     * Shoudl consider user may has one default config that was deleted by administrator 
+     * @param tableId
+     **/
+    public QueryListConfig getDefaultQueryListConf(int tableId) throws Exception{
+    	return getDefaultQueryListConf(tableId,false);
     }
     
     private class VisitTable{
