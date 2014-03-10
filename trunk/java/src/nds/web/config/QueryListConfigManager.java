@@ -74,14 +74,23 @@ public class QueryListConfigManager{
     public int getCacheSize(){
     	return cache.size();
     }
+    
+    
+    public QueryListConfig getMetaDefault(int tableId, int sgrade) throws NDSException{
+    	return getMetaDefault(tableId,sgrade,false); 
+    }
+    
+    
     /**
      * Query list configuration of meta data, retrieved definition from ad_table/ad_column
-     * 
+     * 2014 add jackrain
+     * @param includeUIControllerAndSpecialDisplayType if false, will not add column that getDisplaySetting().isUIController()==true
+     *  and displaytype in {'xml','file','image'}
      * @param tableId
        @param sgrade column with sgrade higher then this code, will not be selected
      * @return
      */
-    public QueryListConfig getMetaDefault(int tableId, int sgrade) throws NDSException{
+    public QueryListConfig getMetaDefault(int tableId, int sgrade,Boolean includeUIControllerAndSpecialDisplayType) throws NDSException{
     	
     	QueryListConfig qlc= metaConfig.get(tableId);
     	if(qlc!=null) return qlc;
@@ -109,7 +118,7 @@ public class QueryListConfigManager{
     	qlc.setConditions(cls);
     	//selections
     	cls=new ArrayList<ColumnLink>();
-    	al=table.getColumns(new int[]{Column.MASK_QUERY_LIST},false, sgrade ); //default sgrade
+    	al=table.getColumns(new int[]{Column.MASK_QUERY_LIST},includeUIControllerAndSpecialDisplayType, sgrade ); //default sgrade
     	for(int i=0;i<al.size();i++){
     		Column col=(Column) al.get(i);
     		ColumnLink cl=new ColumnLink(new int[]{col.getId()});
