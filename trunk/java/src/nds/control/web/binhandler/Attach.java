@@ -37,6 +37,13 @@ public class Attach implements BinaryHandler{
 		int objectId= ParamUtils.getIntAttributeOrParameter(request, "objectid", -1);
 		int version= ParamUtils.getIntAttributeOrParameter(request, "version", -1);
 		String thum=ParamUtils.getAttributeOrParameter(request, "thum");
+		String objectpath=ParamUtils.getAttributeOrParameter(request, "objectpath");
+		
+       	//add objectId=-1 first add file 
+    	if(objectId!=-1){
+    		objectpath=""+objectId;
+    	}
+    	
 		InputStream is=null;
 		Table table;
 		if( tableId == -1) {
@@ -52,9 +59,9 @@ public class Attach implements BinaryHandler{
 
 		Column col=tableManager.getColumn(columnId);
 		AttachmentManager attm=(AttachmentManager)WebUtils.getServletContextManager().getActor(nds.util.WebKeys.ATTACHMENT_MANAGER);
-		Attachment att= attm.getAttachmentInfo(userWeb.getClientDomain()+"/" + table.getRealTableName()+"/"+col.getName(),  objectId+"" , version);
+		Attachment att= attm.getAttachmentInfo(userWeb.getClientDomain()+"/" + table.getRealTableName()+"/"+col.getName(), objectpath , version);
 		if(att!=null){
-			String fileName= table.getName()+ "_"+ tableManager.getColumn(columnId).getName()+"_"+ objectId+"_"+att.getVersion()+"."+ att.getExtension();
+			String fileName= table.getName()+ "_"+ tableManager.getColumn(columnId).getName()+"_"+ objectpath+"_"+att.getVersion()+"."+ att.getExtension();
 	        String ct= Tools.getContentType(att.getExtension(), "application/octetstream");
 	        response.setContentType(ct+"; charset=GBK");
 	        //if(ct.indexOf("text/")>-1|| ct.indexOf("image")>-1)
@@ -80,7 +87,7 @@ Content-Disposition: attachment; filename*="utf8''%E4%B8%AD%E6%96%87%20%E6%96%87
         		is=attm.getAttachmentData(att);
         	}
         	response.setContentLength((int)att.getSize());
-        	 
+        	
 			ServletOutputStream os = response.getOutputStream();
 	            byte[] b = new byte[8192];
 	            int bInt;
