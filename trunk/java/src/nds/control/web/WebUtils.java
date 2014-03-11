@@ -1181,7 +1181,7 @@ public final class WebUtils {
 	public static String getContentDispositionFileName(String filename,
 			HttpServletRequest req) throws java.io.UnsupportedEncodingException {
 		int bt = WebUtils.getBrowserType(req);
-		logger.debug(bt);
+		logger.debug("getBrowserType->"+bt);
 		if (bt == 0) {
 			// ie
 			return "filename=\""
