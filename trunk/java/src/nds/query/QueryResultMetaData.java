@@ -56,4 +56,11 @@ public interface QueryResultMetaData extends Serializable {
      * @return position index, -1 means not found
      */
     public int findPositionInSelection(Column column);    
+    
+    /**
+     * Find column position in query select, start from 0
+     * @param column should be main table's columnlink
+     * @return position index, -1 means not found
+     */
+    public int findPositionInSelection(ColumnLink cl);    
 }

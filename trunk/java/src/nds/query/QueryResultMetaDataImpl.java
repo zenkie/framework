@@ -28,10 +28,14 @@
 package nds.query;
 import java.util.ArrayList;
 
+import nds.log.Logger;
+import nds.log.LoggerManager;
 import nds.schema.Column;
 /**
  */
 public class QueryResultMetaDataImpl implements QueryResultMetaData {
+	private static Logger logger= LoggerManager.getInstance().getLogger(QueryResultMetaDataImpl.class.getName());
+
     private int selectionColumnCount;// all columns selected, including both those to be
                                      // displayed and those work as Object ID link
     private int columnCount;// display columns
@@ -104,6 +108,22 @@ public class QueryResultMetaDataImpl implements QueryResultMetaData {
     	}
     	return -1;
     }
+    
+    /**
+     * Find column position in query select, start from 0
+     * @param columnlink
+     * @return position index
+     */
+    public int findPositionInSelection(ColumnLink cl){
+    	for(int i=0;i< columnLinks.length;i++){
+    		if(columnLinks[i].toString().equals(cl.toString())){
+    			logger.debug("findPositionInSelection ->cl is"+columnLinks[i].toString());
+    			return i;
+    		}
+    	}
+    	return -1;
+    }
+    
     /**
      * @param column starts from 1
      * @roseuid 3B8AFCFC0125
