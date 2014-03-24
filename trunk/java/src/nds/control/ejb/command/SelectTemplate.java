@@ -51,24 +51,31 @@ public class SelectTemplate extends Command {
 		 * 
 		 * 
 		 */
-		
+		//System.out.print("SelectTemplate is going!");
 	  	JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
 	  	JSONObject params=null;
 	  	java.util.Locale locale= event.getLocale();
   	    QueryEngine engine=QueryEngine.getInstance();
         Connection conn= engine.getConnection();
         PreparedStatement pstmt=null;
+   		int tmpid=-1;
+   		JSONObject rs=new JSONObject();
    		try{
 	   		params=jo.getJSONObject("params");
 	   		int clientId= usr.adClientId;  //params.getInt("clientId");
-	   		String template=params.getString("template");
-	   		List li=QueryEngine.getInstance().doQueryList("select id from ad_site_template where foldername='"+template+"'");
-	   		int  ad_site_template_id=Tools.getInt(li.get(0),-1);
-	   	//	System.out.print(ad_site_template_id);
-            pstmt= conn.prepareStatement("update web_client set ad_site_template_id=? where ad_client_id=?");		
-   			pstmt.setInt(1,ad_site_template_id);
+	   		String templateid=params.getString("templateid");
+
+	   		String colname="";
+	   		List li=QueryEngine.getInstance().doQueryList("select id,TPCLASS from ad_site_template where id='"+templateid+"'");
+	        if (li.size() > 0) {
+	        	tmpid = Tools.getInt(((List)li.get(0)).get(0), -1);
+	        	colname = String.valueOf(((List)li.get(0)).get(1)).trim()+"_TMP";
+	         }
+            pstmt= conn.prepareStatement("update WEB_CLIENT_TMP set "+colname+"=? where ad_client_id=?");		
+   			pstmt.setInt(1,tmpid);
    			pstmt.setInt(2,clientId);
 		    pstmt.executeUpdate();
+	   		rs.put("tmpid", tmpid);
 		   
    		}catch(Throwable t){
    	  		if(t instanceof NDSException) throw (NDSException)t;
@@ -78,9 +85,11 @@ public class SelectTemplate extends Command {
    	        try{pstmt.close();}catch(Exception ea){}
    	        try{conn.close();}catch(Exception e){}
    	  	} 
+
    	  	ValueHolder holder= new ValueHolder();
    		holder.put("message", nds.util.MessagesHolder.getInstance().translateMessage("@complete@",locale));
    		holder.put("code","0");
+   		holder.put("data",rs);
    		return holder;  
    	  }
    
