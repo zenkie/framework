@@ -105,6 +105,10 @@ url=¡±¡¯PATH?...& wfc_<×Ö¶Îid>=¡±+ oc.getMainTableColumnInput(<×Ö¶Îid>)+¡±&wfc_<
 		this(table.isDropdown(),isInTitleArea,table,acceptorId,searchOnColumn,fixedColumns);
 	}
 	public FKObjectQueryModel(Table table, String acceptorId,  Column searchOnColumn, PairTable fixedColumns, boolean isSingle){
+		this(table,acceptorId,searchOnColumn,fixedColumns,isSingle,null);
+	}
+	
+	public FKObjectQueryModel(Table table, String acceptorId,  Column searchOnColumn, PairTable fixedColumns, boolean isSingle,String fromtype){
 		if(isSingle)isDropdown= table.isDropdown();
 		else isDropdown=false;
 		this.acceptorId= acceptorId;
@@ -115,7 +119,8 @@ url=¡±¡¯PATH?...& wfc_<×Ö¶Îid>=¡±+ oc.getMainTableColumnInput(<×Ö¶Îid>)+¡±&wfc_<
 		}
 		try {
 			url="'" +WebKeys.NDS_URI+"/query/"+(isDropdown?"dropdown.jsp":"search.jsp") +"?table="+
-			table.getId()+"&return_type="+ (isSingle?"s":"m") + (searchOnColumn==null?"":"&column="+searchOnColumn.getId())+"&accepter_id="+acceptorId+
+			table.getId()+"&return_type="+ (isSingle?"s":"m") +"&fromtype="+fromtype
+			+(searchOnColumn==null?"":"&column="+searchOnColumn.getId())+"&accepter_id="+acceptorId+
 			(fixedColumns==null?"":"&fixedcolumns="+ 
 			java.net.URLEncoder.encode(fixedColumns.toURLQueryString(""), "UTF-8"))+
 			"&qdata='+encodeURIComponent(document.getElementById('"+acceptorId+"').value)";
@@ -134,7 +139,7 @@ url=¡±¡¯PATH?...& wfc_<×Ö¶Îid>=¡±+ oc.getMainTableColumnInput(<×Ö¶Îid>)+¡±&wfc_<
 	 * @see nds.query.Expression#paresePairTable
 	 */
 	public FKObjectQueryModel(Table table, String acceptorId,  Column searchOnColumn, PairTable fixedColumns){
-		this(table,acceptorId,searchOnColumn,fixedColumns,true );
+		this(table,acceptorId,searchOnColumn,fixedColumns,true,null);
 	}
 	/**
      * @param table foreign key table
