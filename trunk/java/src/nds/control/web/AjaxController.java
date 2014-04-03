@@ -169,6 +169,8 @@ public class AjaxController {
 			String resulthandler=jo.optString("resulthandler");
 			String condition=jo.optString("condition"); // "IN" | "NOT IN" USED BY search_result_filter.jsp
 			String returnType=jo.optString("returnType");  //"a" for not replaceing environment attribute ($xxx$), and vice vesa.  used in search_result_filter.jsp
+			String fromtype=jo.optString("fromtype"); // fromtype 来源权限
+			logger.debug("fromtype ->"+fromtype);
 			if(Validator.isNull(resulthandler)){
 				// handle buttons that defined to show in this query, will convert to html code here
 				AjaxUtils.convertButtonHtml((QueryResultImpl)qr, request);
@@ -267,7 +269,7 @@ public class AjaxController {
   					page=ctx.forwardToString( resulthandler+"?compress=f");
   				}else{
   					if(returnType!=null){
-  						page=ctx.forwardToString( resulthandler+"?compress=f&condition="+condition+"&type="+returnType);
+  						page=ctx.forwardToString( resulthandler+"?compress=f&condition="+condition+"&type="+returnType+"&fromtype="+fromtype);
   					}
   				}
 				/*
