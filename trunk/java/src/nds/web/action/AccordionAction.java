@@ -236,24 +236,21 @@ public class AccordionAction extends WebActionImpl {
 		{
 			String rpt_json = jo.optString("rpt");
 			List rpt_list = QueryEngine.getInstance().doQueryList(
-					"select ad_table_id,name from ad_cxtab where name="
-							+ rpt_json + " and ad_client_id="
+					"select ad_table_id,name from ad_cxtab where name='"
+							+ rpt_json + "' and ad_client_id="
 							+ Integer.valueOf(userweb.getAdClientId())
 							+ " and isactive='Y'");
 			if ((rpt_list != null) && (rpt_list.size() > 0)) {
 				try {
 					Table table = TableManager.getInstance().findTable(
 							((List) rpt_list.get(0)).get(0));
-					String cxtab_name = (String) ((List) rpt_list.get(0))
-							.get(1);
+					String cxtab_name = (String) ((List) rpt_list.get(0)).get(1);
 					userweb.checkPermission(table.getSecurityDirectory(), 1);
 					if (Validator.isNull((String) text_lable))
 						text_lable = cxtab_name;
 					if (Validator.isNull(ico_png))
-						ico_png = "/html/nds/images/jrpt.gif";
+						ico_png = "<img src=\"/html/nds/images/jrpt.gif\" style=\"height:16px;width:20px;\"></img>";
 					String action = "pc.qrpt('" + cxtab_name + "')";
-					
-					
 					accord_xml.append("<div class=\"accordion_headings")//.append(ico_png)
 					.append("\" onclick=\"javascript:").append(action)
 					.append("\">").append(ico_png)
