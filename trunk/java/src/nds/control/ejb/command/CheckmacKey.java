@@ -31,6 +31,7 @@ import nds.util.LicenseWrapper;
 import nds.util.MessagesHolder;
 import nds.util.NDSException;
 import nds.util.Tools;
+import nds.util.WebKeys;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.util.LicenseManager;
@@ -73,7 +74,7 @@ public class CheckmacKey extends Command {
 		
 		  	try{
 		  	// logger.debug("upload keyfile is"+mac);
-		  	LicenseManager.validateLicense("jackrain","5.0", mac,true);
+		  	LicenseManager.validateLicense(WebKeys.PRDNAME,"5.0", mac,true);
 		    vailed=true;
 		    Iterator b=LicenseManager.getLicenses();
 		    

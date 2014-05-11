@@ -40,6 +40,8 @@ import nds.util.NDSException;
 import nds.util.PairTable;
 import nds.util.Tools;
 import nds.util.Validator;
+import nds.util.WebKeys;
+
 import org.json.*;
 /**
  * Do object creation
@@ -332,7 +334,7 @@ public class ObjectCreate extends Command{
                 	   //normal update and ac procedure
                 	   try{
                 		    stmt.executeUpdate();
-            			    LicenseManager.validateLicense("jackrain","5.0","",false);
+            			    LicenseManager.validateLicense(WebKeys.PRDNAME,"5.0","",false);
             				Iterator b=LicenseManager.getLicenses();
             				int un=0,pn = 0;
             			    while (b.hasNext()) {

@@ -34,6 +34,7 @@ import nds.util.LicenseManager;
 import nds.util.LicenseWrapper;
 import nds.util.NDSException;
 import nds.util.Tools;
+import nds.util.WebKeys;
 /**
  * Title:        NDS Project
  * Description:  San gao shui yuan, mu xiang ren jia
@@ -215,7 +216,7 @@ public class ObjectModify extends Command{
        //add licenses c_store and users check
 		ResultSet rs=null;
        try{
-       LicenseManager.validateLicense("jackrain","5.0","",false);
+       LicenseManager.validateLicense(WebKeys.PRDNAME,"5.0","",false);
 		Iterator b=LicenseManager.getLicenses();
 		int un=0,pn = 0;
 	    while (b.hasNext()) {
