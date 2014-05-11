@@ -64,8 +64,8 @@ public final class LicenseManager {
 							validVersion = true;
 					} catch (Exception e) {
 					}*/
-				//取消产品名称对比
-				//if (isValidProduct(product, license) && validVersion)
+				//增加产品名称对比
+				if (isValidProduct(product, license))
 					return;
 			}
 
