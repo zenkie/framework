@@ -70,7 +70,7 @@ public class GetMACH {
      * @throws Exception 
      */
     public static String  get_maconly() throws Exception{
-    	AES aes=new AES("burgeon");
+    	AES aes=new AES("bosxe");
     	String str = aes.encrypt(GetMACH.getMach()+";");
     	return str;
     }

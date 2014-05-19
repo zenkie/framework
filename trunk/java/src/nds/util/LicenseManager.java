@@ -277,7 +277,7 @@ public final class LicenseManager {
 			/*
 			 * add check mac address is vaild
 			 * */
-			AES aes=new AES("burgeon");
+			AES aes=new AES("bosxe");
 			chekmac = multiMac.multiMacJun(aes.decrypt(license.getCuscode()));
 			if(chekmac==0){
 				logger.error("The license is not valid for this machine!!!");
