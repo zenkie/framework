@@ -1868,15 +1868,22 @@ public final class QueryUtils {
 
     public static int queryToFile(String sql, String filePath, Connection conn,boolean paramBoolean) throws Exception{
     	ResultSet rs=null;
-		OutputStreamWriter fw=new OutputStreamWriter(new FileOutputStream(filePath,false),"UTF-8");
+    	//byte[] bom ={(byte) 0xEF,(byte) 0xBB,(byte) 0xBF}; 
+    	FileOutputStream wrFile =new FileOutputStream(filePath,false);
+    	//wrFile.write(bom);
+		OutputStreamWriter fw=new OutputStreamWriter(wrFile,"GBK");
 		BufferedWriter outStream=null;
 		int count=0;
+		
+
  
 		try{
 			rs= conn.createStatement().executeQuery(sql);
 			 
 			//FileWriter fw=new FileWriter(filePath,false);
 			outStream=new BufferedWriter(fw, 512*1024); // default is 8kb cache, we expand to bigger one
+			// If you do not want a UTF-8 ,just replace the byte array.
+			//outStream.write(new String(bom)); 
 			int colcnt= rs.getMetaData().getColumnCount();       
 			Object obj;
 			
