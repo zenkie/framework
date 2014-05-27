@@ -1868,10 +1868,10 @@ public final class QueryUtils {
 
     public static int queryToFile(String sql, String filePath, Connection conn,boolean paramBoolean) throws Exception{
     	ResultSet rs=null;
-    	//byte[] bom ={(byte) 0xEF,(byte) 0xBB,(byte) 0xBF}; 
+    	byte[] bom ={(byte) 0xEF,(byte) 0xBB,(byte) 0xBF}; 
     	FileOutputStream wrFile =new FileOutputStream(filePath,false);
-    	//wrFile.write(bom);
-		OutputStreamWriter fw=new OutputStreamWriter(wrFile,"GBK");
+    	wrFile.write(bom);
+		OutputStreamWriter fw=new OutputStreamWriter(wrFile,"UTF-8");
 		BufferedWriter outStream=null;
 		int count=0;
 		
