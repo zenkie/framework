@@ -226,6 +226,11 @@ Specify SET NULL if you want db to convert dependent foreign key values to NULL.
 		case 15:
 			jType = Column.DATE;
 			break;
+	    case 17:
+	    case 18:
+	    case 19:
+	    case 20:
+	    case 21:
 		default:
 			jType = Column.OTHER;
 			break;

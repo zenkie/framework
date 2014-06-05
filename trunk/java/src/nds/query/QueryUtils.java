@@ -387,26 +387,28 @@ public final class QueryUtils {
                 /*---  yfzhu modified at 2003-07-16 for function will disable index feature --*/
                 input=input.trim();
                 hyphen= input.indexOf('~');
-                boolean isStartWithOperator="=><iI".indexOf(input.charAt(0))>-1;
+                boolean isStartWithOperator="=><".indexOf(input.charAt(0))>-1;
+                logger.debug("Clause isStartWithOperator"+isStartWithOperator);
                 if( hyphen <0 ||isStartWithOperator) {
                     // one date
                     String oper= parseOperator(input);
+                    logger.debug("Clause isStartWithOperator oper"+oper);
                     String date= parseStringExcludeOperator(input);
-                    if( ! oper.trim().equals("")) {
+                    if(oper.trim().equals("")) {
                         //ret=" ( trunc("+columnName+") "+oper+toDate(date) +") ";
                         //ret=" ("+columnName+oper+toDate(date) +") ";
                     	if (isDateNumber(date)) {
-                    		ret = " (" + ret + " BETWEEN " + numberToDateTime(date, false) + " AND " + numberToDateTime(date, true) + ") ";
+                    		ret = " (" + columnName + " BETWEEN " + numberToDateTime(date, false) + " AND " + numberToDateTime(date, true) + ") ";
                     	}
                     	else
                     	{
-                    		ret = " (" + ret + "=" + toDateTime(date, false) + ") ";
+                    		ret = " (" + columnName + "=" + toDateTime(date, false) + ") ";
                     	}
                     } else if (isDateNumber(date)) {
-                    	if (oper.contains("<")) ret = " (" + ret + oper + numberToDateTime(date, true) + ") "; else
-                    		ret = " (" + ret + oper + numberToDateTime(date, false) + ") ";
+                    	if (oper.contains("<")) ret = " (" + columnName + oper + numberToDateTime(date, true) + ") "; else
+                    		ret = " (" + columnName + oper + numberToDateTime(date, false) + ") ";
                     }
-                    else ret = " (" + ret + oper + toDateTime(date, false) + ") ";
+                    else ret = " (" + columnName + oper + toDateTime(date, false) + ") ";
 
                      }else {
                     // two date
