@@ -92,6 +92,8 @@ public class ColumnImpl implements Column {
     private JSONObject jsonProps=null;
     private String showcomment;
     private int securityGrade;
+	private Boolean showtitle;
+	private boolean isRowspan=false;
     /**
      * 
      * @param id
@@ -1046,4 +1048,24 @@ Specify SET NULL if you want db to convert dependent foreign key values to NULL.
     public void setShowcomment(String shcomment){
     	this.showcomment= shcomment;
     }    
+    
+    /***
+     * set in ad_column.showtitle as string
+     */
+    
+    public Boolean getShowtitle(){
+    	return showtitle;
+    }
+    public void setShowtitle(Boolean ishowtite){
+    	this.showtitle= ishowtite;
+    }
+	@Override
+	public Boolean getRowspan() {
+		// TODO Auto-generated method stub
+		return isRowspan;
+	}
+	
+    public void setRowspan(Boolean isRowspan){
+    	this.isRowspan= isRowspan;
+    }
 }
