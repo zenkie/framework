@@ -206,9 +206,10 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
         String columnName;
         if (! col.isVirtual() )columnName=mainTable.getName()+"."+ col.getName();
         else columnName= col.getName();
+       // logger.debug("columnName ->"+columnName+" value->"+value+" type->"+col.getType());
         String sub=QueryUtils.toSQLClause(columnName,value, col.getType());
         if (bAddToWhereClause) whereClause.add(sub);
-
+        
         String subDesc=(desc==null?QueryUtils.toSQLClauseDesc(col,col.getDescription(locale),
                 value, col.getType(),locale):desc);
         startNewParamDesc(SQLCombination.SQL_AND );
@@ -412,6 +413,7 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
             if(lastColumn.isUpperCase()) value=value.toUpperCase();
             
             String columnName=aliasTable+"."+ lastColumn.getName();
+            //logger.debug("columnName ->"+columnName+" value->"+value+" type->"+lastColumn.getType());
             String sub=QueryUtils.toSQLClause(columnName,value, lastColumn.getType());
 
             if (bAddToWhereClause){
@@ -617,6 +619,17 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
     		//add to param
     		Column adClientColumn= manager.getColumn(mainTable.getName(),"AD_CLIENT_ID");
     		// 2008-07-04 do not display client infor in filter description
+    		String usersname= (String) session.getAttribute("$USER_NAME$");
+    		//增加如果root时去掉公司数据的过滤问题
+ 			if(usersname!=null){
+	    			  if("root".equals(usersname)&&ad_client_id==37 ) {
+	    		            // root
+	    		            return;
+	    		        }
+ 			}else{
+ 				logger.debug("session is null"+session.toDebugString());
+ 				logger.debug("manager is null");
+ 			}
     		this.addParam(adClientColumn.getId(), ""+ad_client_id , true, "");//"("+ adClientColumn.getDescription(locale)+"="+ session.getAttribute("$AD_CLIENT_NAME$")+")");
     		}
     	}
@@ -1178,7 +1191,7 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
 
         sql.append(" FROM ");
         appendFromMainTableClause(sql);
-        
+        //logger.debug("FROM sql"+sql);
         Enumeration enu= rtables.keys();
 
         while(enu.hasMoreElements()) {
@@ -1187,6 +1200,7 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
             String alias=(String)rtables.get(clink);
             sql.append(","+ table.getRealTableName()+" "+alias);
         }
+        //logger.debug("whereClause1 sql"+sql);
         //  ######## yfzhu added code here for handling virtual column
         ArrayList aliasTables= mainTable.getAliasTables();
         AliasTable aliasTable=null;
@@ -1197,13 +1211,15 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
         	}
         }
         // ############ added above
-
+       
         if( whereClause.size()>0) {
             sql.append(" WHERE ("+whereClause.get(0)+")") ;
+            //logger.debug("whereClause2 sql"+sql);
             for(int i=1;i< whereClause.size();i++) {
                 sql.append(" AND ("+whereClause.get(i)+")" );
             }
         }
+        //logger.debug("whereClause3 sql"+sql);
         //  ######## yfzhu added code here for handling virtual column
         if ( aliasTables !=null && aliasTables.size()>0){
         	aliasTable=(AliasTable)aliasTables.get(0);
