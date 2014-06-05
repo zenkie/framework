@@ -1059,7 +1059,7 @@ Specify SET NULL if you want db to convert dependent foreign key values to NULL.
     public void setShowtitle(Boolean ishowtite){
     	this.showtitle= ishowtite;
     }
-	@Override
+	
 	public Boolean getRowspan() {
 		// TODO Auto-generated method stub
 		return isRowspan;
