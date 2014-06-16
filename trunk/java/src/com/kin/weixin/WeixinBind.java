@@ -4,12 +4,11 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
-import javax.swing.JOptionPane;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.httpclient.Cookie;
@@ -24,7 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class WeixinBind {
-	private final static Log log = LogFactory.getLog(Weixin.class);
+	private final static Log log = LogFactory.getLog(WeixinBind.class);
 	public final static String HOST = "http://mp.weixin.qq.com";
 	public final static String LOGIN_URL = "http://mp.weixin.qq.com/cgi-bin/login?lang=zh_CN";
 	public final static String EDIT_DEV_URL = "https://mp.weixin.qq.com/misc/skeyform?form=advancedswitchform&lang=zh_CN";
@@ -47,14 +46,11 @@ public class WeixinBind {
 	private String loginUser;
 	private String loginPwd;
 	public boolean isLogin = false;
-	
 
-
- 
-	public WeixinBind(String user, String pwd,String cookestr) {
+	public WeixinBind(String user, String pwd, String cookestr) {
 		this.loginUser = user;
 		this.loginPwd = pwd;
-		this.cookiestr=cookestr;
+		this.cookiestr = cookestr;
 	}
 
 	public Cookie[] getCookies() {
@@ -128,7 +124,7 @@ public class WeixinBind {
 	 */
 	public boolean login(String vcode) {
 		try {
-			//vcode = code();
+			// vcode = code();
 			PostMethod post = new PostMethod(LOGIN_URL);
 			post.setRequestHeader(REFERER_H, "https://mp.weixin.qq.com/");
 			post.setRequestHeader(USER_AGENT_H, USER_AGENT);
@@ -140,7 +136,7 @@ public class WeixinBind {
 			// post.setParameter("imgcode", "");
 			post.setParameter("f", "json");
 			int status = client.executeMethod(post);
-			//System.out.println("登录：" + post.getResponseBodyAsString());
+			// System.out.println("登录：" + post.getResponseBodyAsString());
 			if (status == HttpStatus.SC_OK) {
 				String ret = post.getResponseBodyAsString();
 				org.json.JSONObject json = new org.json.JSONObject(ret);
@@ -180,12 +176,12 @@ public class WeixinBind {
 				default:
 					this.loginErrMsg = "未知的返回";
 					return false;
-                
+
 				}
 			}
 		} catch (Exception e) {
 			String info = "【登录失败】【发生异常：" + e.getMessage() + "】";
-			//System.err.println(info);
+			// System.err.println(info);
 			log.debug(info);
 			log.info(info);
 			return false;
@@ -225,7 +221,7 @@ public class WeixinBind {
 			}
 		} catch (Exception e) {
 			String info = "【解析Token失败】【发生异常：" + e.getMessage() + "】";
-			//System.err.println(info);
+			// System.err.println(info);
 			log.debug(info);
 			log.info(info);
 			return null;
@@ -249,10 +245,10 @@ public class WeixinBind {
 		get.setQueryString(params);
 		int status = client.executeMethod(get);
 		if (status == HttpStatus.SC_OK) {
-			 //image = ImageIO.read(get.getResponseBodyAsStream());
-			//String checkCode = JOptionPane
-					//.showInputDialog(new ImageIcon(image));
-			//System.out.print("验证码：" + checkCode);
+			// image = ImageIO.read(get.getResponseBodyAsStream());
+			// String checkCode = JOptionPane
+			// .showInputDialog(new ImageIcon(image));
+			// System.out.print("验证码：" + checkCode);
 			this.cookies = client.getState().getCookies();
 			StringBuffer cookie = new StringBuffer();
 			for (Cookie c : client.getState().getCookies()) {
@@ -287,8 +283,8 @@ public class WeixinBind {
 		post.setParameter("url", application_url);
 
 		int status = client.executeMethod(post);
-		//System.out.println(post.getResponseBodyAsString());
-		//System.out.println("修改公众号接口配置信息，返回码：" + status);
+		// System.out.println(post.getResponseBodyAsString());
+		// System.out.println("修改公众号接口配置信息，返回码：" + status);
 	}
 
 	/**
@@ -310,8 +306,8 @@ public class WeixinBind {
 		post.setParameter("type", "2");
 		post.setParameter("token", token);
 		int status = client.executeMethod(post);
-		//System.out.println("status:  " + status);
-		//System.out.println("编辑开发模式:" + post.getResponseBodyAsString());
+		// System.out.println("status:  " + status);
+		// System.out.println("编辑开发模式:" + post.getResponseBodyAsString());
 
 	}
 
@@ -321,7 +317,7 @@ public class WeixinBind {
 	 * @param token
 	 * @throws Exception
 	 */
-	public void getQrcode(String token,String path) throws Exception {
+	public void getQrcode(String token, String path) throws Exception {
 
 		String GetUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
 				+ token + "&lang=zh_CN";
@@ -334,7 +330,7 @@ public class WeixinBind {
 		get.setRequestHeader(COOKIE, this.cookiestr);
 		int status = client.executeMethod(get);
 		if (status == HttpStatus.SC_OK) {
-			//System.err.println("正在跳转.....");
+			// System.err.println("正在跳转.....");
 			String si = get.getResponseBodyAsString();
 			Pattern p = Pattern
 					.compile("(?<=(src=\"))/misc/getqrcode\\?[^\"]*(?=\")");
@@ -344,12 +340,12 @@ public class WeixinBind {
 				rs += m.group();
 			}
 			rs = "https://mp.weixin.qq.com" + rs;
-			//System.out.println(rs);
-			getQrcodeImage(rs,path);// 下载二维码
+			// System.out.println(rs);
+			getQrcodeImage(rs, path);// 下载二维码
 		}
 	}
 
-	public void getQrcodeImage(String url,String path) throws Exception {
+	public void getQrcodeImage(String url, String path) throws Exception {
 		GetMethod get = new GetMethod(url);
 		get.setRequestHeader(USER_AGENT_H, USER_AGENT);
 		get.setRequestHeader(COOKIE, this.cookiestr);
@@ -357,20 +353,129 @@ public class WeixinBind {
 		BufferedImage image = ImageIO.read(get.getResponseBodyAsStream());
 		File file = new File(path);
 		ImageIO.write(image, "jpg", file);
-		//System.out.println(file.getAbsolutePath());
+		// System.out.println(file.getAbsolutePath());
+	}
+
+	/**
+	 * 得到微信公众号的原始ID
+	 * 
+	 * @param token
+	 * @param path
+	 * @return
+	 * @throws Exception
+	 */
+	public String getOriginalID(String token) throws Exception {
+		String GetUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
+				+ token + "&lang=zh_CN";
+		String HeadUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
+				+ token + "&lang=zh_CN";
+
+		GetMethod get = new GetMethod(GetUrl);
+		get.setRequestHeader(
+				"User-Agent",
+				"Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22");
+		get.setRequestHeader("Referer", HeadUrl);
+		get.setRequestHeader("Cookie", this.cookiestr);
+		int status = this.client.executeMethod(get);
+		if (status != 200)
+			return null;
+		String si = get.getResponseBodyAsString();
+		Pattern p = Pattern
+				.compile(
+						"<li[^>]+>\\s*[\\r\\n]*\\s*<\\s*h4\\s*>\\s*原始ID\\s*</h4>\\s*[\\r\\n]*\\s*<div[^>]*>\\s*[\\r\\n]*\\s*</div>\\s*[\\r\\n]*\\s*<div[^>]*>\\s*[\\r\\n]*\\s*<span>([^<]*)</span>\\s*[\\r\\n]*\\s*</div>\\s*[\\r\\n]*\\s*</li>",
+						java.util.regex.Pattern.MULTILINE);
+		Matcher m = p.matcher(si);
+		String rs = "";
+		while (m.find()) {
+			rs = rs + m.group(1);
+		}
+		return rs;
+	}
+
+	/**
+	 * 得到微信公众号的微信号
+	 * 
+	 * @param token
+	 * @param path
+	 * @return
+	 * @throws Exception
+	 */
+	public String getWeixinAccount(String token) throws Exception {
+		String GetUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
+				+ token + "&lang=zh_CN";
+		String HeadUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
+				+ token + "&lang=zh_CN";
+
+		GetMethod get = new GetMethod(GetUrl);
+		get.setRequestHeader(
+				"User-Agent",
+				"Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22");
+		get.setRequestHeader("Referer", HeadUrl);
+		get.setRequestHeader("Cookie", this.cookiestr);
+		int status = this.client.executeMethod(get);
+		if (status != 200)
+			return null;
+		String si = get.getResponseBodyAsString();
+		Pattern p = Pattern
+				.compile(
+						"<li[^>]+>\\s*[\\r\\n]*\\s*<\\s*h4\\s*>\\s*微信号\\s*</h4>\\s*[\\r\\n]*\\s*<div[^>]*>\\s*[\\r\\n]*\\s*</div>\\s*[\\r\\n]*\\s*<div[^>]*>\\s*[\\r\\n]*\\s*<span>([^<]*)</span>\\s*[\\r\\n]*\\s*</div>\\s*[\\r\\n]*\\s*</li>",
+						java.util.regex.Pattern.MULTILINE);
+		Matcher m = p.matcher(si);
+		String rs = "";
+		while (m.find()) {
+			rs = rs + m.group(1);
+		}
+		return rs;
+	}
+
+	/**
+	 * 编辑微信OAuth2.0网页授权
+	 * 
+	 * @param token
+	 * @return
+	 * @throws Exception
+	 */
+	public boolean editServiceOAuth(String token, String domain)
+			throws Exception {
+		String PostUrl = "https://mp.weixin.qq.com/merchant/myservice";
+		String HeadUrl = "https://mp.weixin.qq.com/merchant/myservice?action=index&t=service/my_service&token="
+				+ token + "&lang=zh_CN";
+		PostMethod post = new PostMethod(PostUrl);
+		post.setRequestHeader(USER_AGENT_H, USER_AGENT);
+		post.setRequestHeader(REFERER_H, HeadUrl);
+		post.setRequestHeader(COOKIE, this.cookiestr);
+		post.setParameter("domain", domain);
+		post.setParameter("token", token);
+		post.setParameter("lang", "zh_CN");
+		post.setParameter("random", new Random().nextDouble() + "");
+		post.setParameter("f", "json");
+		post.setParameter("ajax", "1");
+		post.setParameter("action", "set_oauth_domain");
+		int status = this.client.executeMethod(post);
+		System.out.println(post.getResponseBodyAsString());
+		if (status != 200)
+			return false;
+		return true;
 	}
 
 	public static void main(String[] args) throws Exception {
 		String LOGIN_USER = "chanpin@burgeon.cn";
 		String LOGIN_PWD = "burgeonchanpin";
-		WeixinBind wx = new WeixinBind(LOGIN_USER, LOGIN_PWD,"");
-		wx.login("xevp");
-		System.out.print(wx.getLoginErrMsg());
-		wx.editDevInteface(wx.getToken());//编辑开发模式
-		wx.editCommonInteface(wx.getToken(),//修改Token url
-				"http://wx.b.qq.com/weixin/addev/MOCYUBI",
-				"25b3e0b5ff5da2446986140f6be3b00a");
-		//System.out.println("用户token" + wx.getToken());
-		wx.getQrcode(wx.getToken(),"");
+		WeixinBind wx = new WeixinBind(LOGIN_USER, LOGIN_PWD, "");
+		wx.login("");
+		System.out.println("公众号原始ID：" + wx.getOriginalID(wx.getToken()));
+		System.out.println("公众微信号：" + wx.getWeixinAccount(wx.getToken()));
+		wx.editServiceOAuth(wx.getToken(), "test123123123123.next99.cn");
+		// String LOGIN_USER = "chanpin@burgeon.cn";
+		// String LOGIN_PWD = "burgeonchanpin";
+		// WeixinBind wx = new WeixinBind(LOGIN_USER, LOGIN_PWD,"");
+		// wx.login("xevp");
+		// System.out.print(wx.getLoginErrMsg());
+		// wx.editDevInteface(wx.getToken());//编辑开发模式
+		// wx.editCommonInteface(wx.getToken(),//修改Token url
+		// "http://wx.b.qq.com/weixin/addev/MOCYUBI",
+		// "25b3e0b5ff5da2446986140f6be3b00a");
+		// System.out.println("用户token" + wx.getToken());
+		// wx.getQrcode(wx.getToken(),"");
 	}
 }
