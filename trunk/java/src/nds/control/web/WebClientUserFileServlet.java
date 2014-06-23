@@ -1,6 +1,8 @@
 package nds.control.web;
 
 import nds.util.*;
+import nds.weixin.ext.WeUtils;
+import nds.weixin.ext.WeUtilsManager;
 
 import java.io.*;
 import java.net.URLEncoder;
@@ -44,24 +46,30 @@ public class WebClientUserFileServlet extends HttpServlet {
 			super.init(config);
 
 		    Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);	    
-		    clientWebRoot=conf.getProperty("client.webroot","/act/webroot");
+		    clientWebRoot=conf.getProperty("webclient.upload","/act.net/webhome");
 		}
 	}
 
 	public void service(HttpServletRequest req, HttpServletResponse res)
 		throws IOException, ServletException {
-
+		
 		UserWebImpl userWeb =null;
+		WeUtilsManager Wemanage =WeUtilsManager.getInstance();
     	try{
     		userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(req.getSession()).getActor(nds.util.WebKeys.USER));	
     	}catch(Throwable userWebException){
     		
     	}
+    	try{
 		String domain=null;
+		logger.debug("user name=> "+userWeb.getUserName());
     	if(userWeb==null || userWeb.getUserId()==UserWebImpl.GUEST_ID ){
     		try{
     			java.net.URL url = new java.net.URL(req.getRequestURL().toString());
-    			domain=WebUtils.getAdClientDomain( url.getHost());
+    			WeUtils wu=Wemanage.getByDomain(url.getHost().toLowerCase().trim());
+    			domain=wu.getDoMain();
+    			//domain=WebUtils.getAdClientDomain( url.getHost());
+    			
     		}catch(Throwable t){
     			logger.error("fail to parse host from "+req.getRequestURL() +":"+t);
     		}		
@@ -71,7 +79,10 @@ public class WebClientUserFileServlet extends HttpServlet {
     		}
     		
     	}else{
-    		domain=userWeb.getClientDomain();
+    		//WeUtils wu=nds.weixin.ext.WeUtilsManager.getByAdClientId(userWeb.getAdClientId());
+    		WeUtils wu=Wemanage.getByAdClientId(userWeb.getAdClientId());
+    		domain=wu.getDoMain();
+    		logger.debug("user domain=> "+domain);
     	}
     	
     	String path= clientWebRoot+"/"+domain+req.getPathInfo();
@@ -91,7 +102,7 @@ public class WebClientUserFileServlet extends HttpServlet {
     		return;
     	}
     	
-    	
+    	/*
 		long lastModified = file.lastModified();
 
 		long ifModifiedSince =
@@ -123,7 +134,44 @@ public class WebClientUserFileServlet extends HttpServlet {
             os.write(b,0,bInt);
         }
         os.close();
-        is.close();
+        is.close();*/
+    	//File f=new File(path+"/"+ dir+"/"+image);
+		if(file.exists()){
+			byte[] bytes= readFile(file.getAbsolutePath());
+		    String ct= Tools.getContentType(FileUtils.getExtension(file.getName()), "application/octetstream");
+		    res.setContentType(ct+"; charset=GBK");
+		    res.setContentType("image/jpeg");
+			//res.setContentType("application/octetstream");
+			res.setContentLength(bytes.length);
+			res.setHeader("Content-Disposition","inline;filename=\""+file.getName()+"\"");
+			ServletOutputStream ouputStream = res.getOutputStream();
+			ouputStream.write(bytes, 0, bytes.length);
+			ouputStream.flush();
+			ouputStream.close();
+		}
+    	}catch(Throwable t){
+			logger.error("fail to get user file"+t);
+			req.getRequestDispatcher(WebKeys.NDS_URI+"/images/noimg.png").forward(req, res);
+		}	
 	}
+	
+	//private final static String NO_ATTACH="<html><head><title>nofile</title></head><body><p> File not found!</body></html>";
+	/**
+     * Read file content as whole, only suitable for small size
+     */
+    public static byte[] readFile(String fileName) throws IOException{
+        FileInputStream is=new FileInputStream(fileName);
+        ByteArrayOutputStream os= new ByteArrayOutputStream();
+        byte[] b = new byte[1024];
+        int bInt;
+        while((bInt = is.read(b,0,b.length)) != -1)
+        {
+            os.write(b,0,bInt);
+        }
+        is.close();
+        os.flush();
+        return os.toByteArray();
 
+    }
+	
 }
