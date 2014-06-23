@@ -1,6 +1,9 @@
 package nds.control.web;
 
 import nds.velocity.*;
+import nds.weixin.ext.IAuthorization;
+import nds.weixin.ext.WeUtils;
+import nds.weixin.ext.WeUtilsManager;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.util.*;
@@ -12,6 +15,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -464,6 +469,7 @@ public class VelocityViewServlet extends HttpServlet
         {
             // first, get a context
             context = createContext(request, response);
+            System.out.print("VelocityViewServlet!");
             if(context==null){
             	// host not valid, redirect to our website homepage
             	response.sendRedirect(defaultServerURL);
@@ -471,18 +477,20 @@ public class VelocityViewServlet extends HttpServlet
             }
             
             String serverRootPath=((nds.velocity.WebClient)context.get("myweb")).getServerRootURL();
+            System.out.print("VelocityViewServlet serverRootPath"+serverRootPath);
             String tpath=getVelocityTemplatePath(request, context);
+            System.out.print("VelocityViewServlet tpath"+tpath);
             if(tpath==null || tpath.indexOf(serverRootPath)<0){
 //            	 host not valid, redirect to our website homepage
-            	response.sendRedirect(serverRootPath);
-            	return;
+            	//response.sendRedirect(serverRootPath);
+            	//return;
             }
             
             fillContext(context, request);
 
             // set the content type
             setContentType(request, response);
-
+            System.out.print("setContentType!");
             // get the template
             Template template = handleRequest(request, response, context);
 
@@ -492,9 +500,11 @@ public class VelocityViewServlet extends HttpServlet
                 velocity.warn("VelocityViewServlet: couldn't find template to match request.");
                 return;
             }
-
+            System.out.print("VelocityViewServlet!");
             // merge the template and context
             mergeTemplate(template, context, response);
+            System.out.print("VelocityViewServlet!");
+           
         }
         catch (Exception e)
         {
@@ -553,13 +563,18 @@ public class VelocityViewServlet extends HttpServlet
                                     HttpServletResponse response)
     {
     	VelocityContext context= null;
-    	
+    	int vipid=-1;
     	HttpSession session=request.getSession(true);
     	
     	context=(VelocityContext)session.getAttribute(PROPS_VELOCITY_CONTEXT);
+    	//System.out.print("1111context is not null update!");
+    	
     	if(context==null){
+    		//System.out.print("context is not null update!");
     		boolean preview=false;// default to webzip
     		int clientId=-1;
+    		
+    		List result=new ArrayList();
     		String webDomain=null;
 
         	if(isMultipleClientEnabled){
@@ -569,7 +584,19 @@ public class VelocityViewServlet extends HttpServlet
 	    		try{
 	    			java.net.URL url = new java.net.URL(request.getRequestURL().toString());
 	    			webDomain= url.getHost();
-	    			clientId=WebUtils.getAdClientId(webDomain);
+	    			WeUtilsManager Wemanage =WeUtilsManager.getInstance();
+	    			WeUtils wu=Wemanage.getByDomain(webDomain);
+	    			clientId=wu.getAd_client_id();
+	    			String code=request.getParameter("code");
+	    			logger.debug("code->"+code +" clientId->"+clientId);
+	    			if(code!=null){
+	    			nds.io.PluginController pc=(nds.io.PluginController) WebUtils.getServletContextManager().getActor(WebKeys.PLUGIN_CONTROLLER);
+	    			IAuthorization iaz=pc.findPluginShellwx("nds.weixin.ext.UserAuthorization");
+	    			
+	    			//nds.weixin.ext.UserAuthorization iaz=new nds.weixin.ext.UserAuthorization();
+	    			result=iaz.getVip(wu,code);
+	    			}
+	    			
 	    		}catch(Throwable t){
 	    			logger.error("fail to parse host from "+request.getRequestURL() +":"+t);
 	    		}
@@ -593,6 +620,7 @@ public class VelocityViewServlet extends HttpServlet
     		
 			try {
 				VelocityUtils.insertHelperUtilities(context);
+				 System.out.print("VelocityViewServlet! insertheloper");
 			} catch (Throwable e) {
 				throw new NDSRuntimeException("Fail to init velocity", e);
 			}
@@ -609,10 +637,84 @@ public class VelocityViewServlet extends HttpServlet
         		context= new VelocityContext();
         		VelocityUtils.insertVariables(context, clientId, preview?VELOCITY_WEB_ROOT:"/");
 	    	}*/
+			if(result!=null){
+				if(result.size()>0){
+					 vipid = Tools.getInt(((List) result.get(0)).get(0), -1);
+	    			int isopen = Tools.getInt(((List) result.get(0)).get(1), -1);
+					context.put("fromvipid", vipid);
+					context.put("isopen", isopen);
+				}
+			}
     		session.setAttribute(PROPS_VELOCITY_CONTEXT,context);
     		
+    	}else{
+    		//int clientId=-1;
+    		/*
+    		String webDomain=null;
+    		try{
+    			java.net.URL url = new java.net.URL(request.getRequestURL().toString());
+    			webDomain= url.getHost();
+    			WeUtilsManager Wemanage =WeUtilsManager.getInstance();
+    			WeUtils wu=Wemanage.getByDomain(webDomain);
+    			//clientId=wu.getAd_client_id();
+    			String code=request.getParameter("code");
+    			if(code!=null){
+    			nds.io.PluginController pc=(nds.io.PluginController) WebUtils.getServletContextManager().getActor(WebKeys.PLUGIN_CONTROLLER);
+    			IAuthorization iaz=pc.findPluginShellwx("nds.weixin.ext.UserAuthorization");
+    			//nds.weixin.ext.UserAuthorization iaz=new nds.weixin.ext.UserAuthorization();
+    			List result=iaz.getVip(wu,code);
+    			System.out.print("context is not null update!");
+    			if(result.size()>0){
+    				int vipid = Tools.getInt(((List) result.get(0)).get(0), -1);
+        			int isopen = Tools.getInt(((List) result.get(0)).get(1), -1);
+    				context.put("fromvipid", vipid);
+    				context.put("isopen", isopen);
+    				}
+    			}
+    			session.setAttribute(PROPS_VELOCITY_CONTEXT,context);
+    		}catch(Throwable t){
+    			logger.error("fail to parse host from "+request.getRequestURL() +":"+t);
+    		}
+    		
+    		*/
+    		
     	}
+    	
+    	//System.out.print("context fromvipid->"+context.get("fromvipid"));
     	//set working request and response
+    	vipid=nds.util.Tools.getInt(context.get("fromvipid"), -1);
+    	if(vipid>=-1){
+    		String webDomain=null;
+    		try{
+    			java.net.URL url = new java.net.URL(request.getRequestURL().toString());
+    			webDomain= url.getHost();
+    			WeUtilsManager Wemanage =WeUtilsManager.getInstance();
+    			WeUtils wu=Wemanage.getByDomain(webDomain);
+    			//clientId=wu.getAd_client_id();
+    			String code=request.getParameter("code");
+    			if(code!=null){
+    			nds.io.PluginController pc=(nds.io.PluginController) WebUtils.getServletContextManager().getActor(WebKeys.PLUGIN_CONTROLLER);
+    			IAuthorization iaz=pc.findPluginShellwx("nds.weixin.ext.UserAuthorization");
+    			//nds.weixin.ext.UserAuthorization iaz=new nds.weixin.ext.UserAuthorization();
+    			List result=iaz.getVip(wu,code);
+    			System.out.print("context is not null update!");
+    			if(result.size()>0){
+    				vipid = Tools.getInt(((List) result.get(0)).get(0), -1);
+        			int isopen = Tools.getInt(((List) result.get(0)).get(1), -1);
+    				context.put("fromvipid", vipid);
+    				context.put("isopen", isopen);
+    				}
+    			}
+    			session.setAttribute(PROPS_VELOCITY_CONTEXT,context);
+    		}catch(Throwable t){
+    			logger.error("fail to parse host from "+request.getRequestURL() +":"+t);
+    		}
+    		
+    		
+    		
+    		
+    	}
+    	
     	context.put("request", request);
     	context.put("response", response);
     	
