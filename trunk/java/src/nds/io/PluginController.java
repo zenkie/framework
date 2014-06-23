@@ -1,5 +1,6 @@
 package nds.io;
 import java.util.*;
+
 import javax.servlet.ServletContext;
 
 import nds.control.web.WebUtils;
@@ -14,6 +15,7 @@ import nds.control.ejb.*;
 import nds.process.*;
 import nds.web.button.*;
 import nds.web.shell.*;
+import nds.weixin.ext.IAuthorization;
 
 public class PluginController implements ServletContextActor{
 	private Logger logger= LoggerManager.getInstance().getLogger(PluginController.class.getName());
@@ -22,6 +24,7 @@ public class PluginController implements ServletContextActor{
 	private PluginManager<ProcessCall> psManager;
 	private PluginManager<ShellCmd> shellManager;
 	private PluginManager<BinaryHandler> binhander;
+	private PluginManager<IAuthorization> weixinexts;
 	
 	private PluginScanner scanner;
 	public void init(Director director) {
@@ -76,6 +79,8 @@ Caused by: java.io.FileNotFoundException: JAR entry META-INF/services/nds.contro
         binhander=new PluginManager<BinaryHandler>(BinaryHandler.class, scanner);
         binhander.init();
         
+        weixinexts=new PluginManager<IAuthorization>(IAuthorization.class, scanner);
+        weixinexts.init();  
     }
 	/**
 	 * Usage:
@@ -100,6 +105,9 @@ Caused by: java.io.FileNotFoundException: JAR entry META-INF/services/nds.contro
 	}
 	public ShellCmd findPluginShellCmd(String name){
 		return shellManager.findPlugin(name);
+	}
+	public IAuthorization findPluginShellwx(String name) {
+		return weixinexts.findPlugin(name);
 	}
 	public Iterator<ShellCmd> listShellCmds(){
 		return shellManager.plugins();
@@ -128,6 +136,7 @@ Caused by: java.io.FileNotFoundException: JAR entry META-INF/services/nds.contro
     	try{psManager.destroy();}catch(Throwable t){}
     	try{shellManager.destroy();}catch(Throwable t){}
     	try{binhander.destroy();}catch(Throwable t){}
+    	try{weixinexts.destroy();}catch(Throwable t){}
     	scanner.destroy();
     	
         logger.debug("PluginController destroied.");
