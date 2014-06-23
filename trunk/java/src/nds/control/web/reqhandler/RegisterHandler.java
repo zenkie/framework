@@ -23,6 +23,10 @@ import java.util.Enumeration;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.poi.ss.examples.formula.SettingExternalFunction.BloombergAddIn;
+
+import com.liferay.util.servlet.SessionErrors;
+
 import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEvent;
 import nds.control.event.NDSEventException;
@@ -49,13 +53,25 @@ public class RegisterHandler extends RequestHandlerSupport {
     	String serverValidCode=(String) request.getSession().getAttribute("nds.control.web.ValidateMServlet");
     	if(serverValidCode ==null ) throw new NDSEventException("Internal error, nds.control.web.ValidateMServlet not set in session attribute");
     	String userValidCode= request.getParameter("verifyCode");
+    	String wxappid=request.getParameter("WXAPPID");
+    	logger.debug("userValidCode->"+userValidCode);
+    	logger.debug("serverValidCode->"+serverValidCode);
+    	String vaildcode="N";
+    	
     	if(serverValidCode.equalsIgnoreCase(userValidCode)){
-    		
+    		SessionErrors.clear(request);
     	}else{
-    		throw new NDSEventException("@error-verify-code@");
+    		SessionErrors.add(request, "VERIFY_CODE_ERROR");
+    		vaildcode="Y";
+    		logger.debug("@error-verify-code@");
+    		//throw new NDSEventException("@error-verify-code@");
     	}
     	DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
     	event.setParameter("command","RegistrateUser");
+    	if(vaildcode.equals("Y")){
+    		event.setParameter("vaildcode",vaildcode);
+    		event.setParameter("WXAPPID",wxappid);
+    	}
         /** 
          * add param named "nds.query.querysession", which hold QuerySession object
          * @since 2.0
