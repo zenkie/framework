@@ -457,6 +457,37 @@ public class WeixinBind {
 			return false;
 		return true;
 	}
+	
+	/**
+	 * 判断用户是否成为开发者
+	 * @param token
+	 * @return true开发者  false尚未成为开发者
+	 * @throws Exception
+	 */
+	public boolean isDevUser(String token) throws Exception{
+		String GetUrl = "https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token="+token+"&lang=zh_CN&f=json";
+		String HeadUrl = "https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token="+token+"&lang=zh_CN";
+
+		GetMethod get = new GetMethod(GetUrl);
+		get.setRequestHeader(
+				"User-Agent",
+				"Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22");
+		get.setRequestHeader("Referer", HeadUrl);
+		get.setRequestHeader("Cookie", this.cookiestr);
+		int status = this.client.executeMethod(get);
+		if (status != 200)
+			return false;
+		String ret = get.getResponseBodyAsString();
+		org.json.JSONObject json = new org.json.JSONObject(ret);
+		org.json.JSONObject userInfo = (org.json.JSONObject) json
+				.get("user_info");
+		int is_dev_user = userInfo.getInt("is_dev_user");//0尚未成为开发者  1已经成为开发者
+		if(is_dev_user == 1){
+			return true;
+		}else{
+			return false;
+		}
+	}
 
 	public static void main(String[] args) throws Exception {
 		String LOGIN_USER = "chanpin@burgeon.cn";
