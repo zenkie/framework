@@ -3,6 +3,8 @@ package nds.velocity;
 import nds.schema.*;
 import nds.query.*;
 import nds.web.config.*;
+import nds.weixin.ext.WeUtils;
+import nds.weixin.ext.WeUtilsManager;
 import nds.util.*;
 import nds.log.Logger;
 import nds.log.LoggerManager;
@@ -12,9 +14,15 @@ import nds.control.web.*;
 import java.sql.*;
 import java.util.*;
 import java.io.*;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.directwebremoting.util.SwallowingHttpServletResponse;
+
+import com.wxap.*;
+import com.wxap.client.TenpayHttpClient;
+import com.wxap.util.Sha1Util;
+import com.wxap.util.TenpayUtil;
 
 /**
  * Helper class for loading information from db, commonly named "web" in vm file
@@ -27,9 +35,13 @@ public class WebClient {
 	
 	private final static String NEWS_CLOB_BY_DOCNO="select content from u_news where ad_client_id=? and no=?";
 	private final static String NEWS_CLOB_BY_ID="select content from u_news where ad_client_id=? and id=?";
+	private final static String STORE_CLOB_BY_ID="select REMARK from WX_STORE where ad_client_id=? and id=?";
+	
 	private final static String WEB_CLIENT="select id from web_client where ad_client_id=?";
 	private final static String FRIENDURL="select name,url,web_target from web_friendurl where ad_client_id=?";
-	private final static int MAX_COLUMNLENGTH_WHEN_TOO_LONG=30;//QueryUtils.MAX_COLUMN_CHARS -3
+	private final static String WX_CATEGORYSETPDT="select count(*) from WX_ITEMCATEGORYSET t where t.wx_itemcategoryset_id=?";
+	private final static String WX_CATEGORYSETTXT="select count(*) from WX_ARTICLECATEGORY t where t.WX_ARTICLECATEGORY_ID=?";
+	private final static int MAX_COLUMNLENGTH_WHEN_TOO_LONG=3000;//QueryUtils.MAX_COLUMN_CHARS -3
 	
 	private final static String DEFAULT_TEMPLATE_FOLDER="001";
 	private int adClientId; 
@@ -61,7 +73,7 @@ public class WebClient {
 		}*/
 		this.webDomain= serverWebDomain;
 		if(hasTemplateFolder){
-			this.serverRootURL= serverRootURL+"html/nds/website/";
+			this.serverRootURL= serverRootURL+"html/nds/oto/website/";
 		}else{
 			this.serverRootURL= serverRootURL;
 		}
@@ -73,10 +85,14 @@ public class WebClient {
 	 * @return
 	 */
 	public String getServerRootURL(){
-		if(hasTemplateFolder)  
-			return serverRootURL+nds.control.web.WebUtils.getAdClientTemplateFolder(webDomain);
-		else
+		if(hasTemplateFolder)  {
+			WeUtilsManager Wemanage =WeUtilsManager.getInstance();
+		//WeUtils wu=Wemanage.getByDomain(webDomain);
+			return serverRootURL+Wemanage.getAdClientTemplateFolder(webDomain);
+			//nds.control.web.WebUtils.getAdClientTemplateFolder(webDomain);
+		}else{
 			return serverRootURL;
+		}
 	}
 	/**
 	 * All links made by hand on vml files should use this method.
@@ -304,10 +320,38 @@ public class WebClient {
 
         return buffer.toString();
     }
+    
+    
+    
+    
+    public void forwardTourl(String url, HttpServletRequest request, HttpServletResponse response) throws Exception, IOException
+    {
+        //StringWriter sout = new StringWriter();
+        //StringBuffer buffer = sout.getBuffer();
+
+        //HttpServletResponse realResponse =response;
+        //HttpServletResponse fakeResponse = new SwallowingHttpServletResponse(realResponse, sout, realResponse.getCharacterEncoding());
+
+        //HttpServletRequest realRequest = request;
+        //realRequest.setAttribute(WebContext.ATTRIBUTE_DWR, Boolean.TRUE);
+
+        WebUtils.getServletContext().getRequestDispatcher(url).forward(request, response);
+        return;
+        //return buffer.toString();
+    }
 	
 	
 	public String toHTMLControlForm(QueryRequest req, Expression userExpr, String nameSpace) throws QueryException {
 		return QueryUtils.toHTMLControlForm(req, userExpr,nameSpace);
+	}
+	
+	
+	public List getList(String adListDataConfName, String adListUIConfName)throws Exception{
+		  return getList(adListDataConfName,adListUIConfName,null,null,0);
+	}
+	
+	public List getList(String adListDataConfName, String adListUIConfName,String fixedcol)throws Exception{
+		  return getList(adListDataConfName,adListUIConfName,fixedcol,null,0);
 	}
 	/**
 	 * 
@@ -315,7 +359,7 @@ public class WebClient {
 	 * @param adListUIConfName name of ad_listuiconf table, note name is unique in ad_listuiconf  
 	 * @return List of List, first element will be pk link, others will be columns specified by dataConfig
 	 */
-	public List getList(String adListDataConfName, String adListUIConfName )throws Exception{
+	public List getList(String adListDataConfName, String adListUIConfName,String fixedcol,String parm,int pos)throws Exception{
 		logger.debug("adListDataConfName="+adListDataConfName+", adListUIConfName="+adListUIConfName);
 		PortletConfigManager pcManager=(PortletConfigManager)WebUtils.getServletContextManager().getActor(nds.util.WebKeys.PORTLETCONFIG_MANAGER);
 		ListDataConfig dataConfig= (ListDataConfig)pcManager.getPortletConfig(adListDataConfName,nds.web.config.PortletConfig.TYPE_LIST_DATA);
@@ -332,7 +376,7 @@ public class WebClient {
 	    query.setMainTable(tableId,true, dataConfig.getFilter());
 	    		
 	    query.addSelection(table.getPrimaryKey().getId());
-	    query.addColumnsToSelection(dataConfig.getColumnMasks(),false, uiConfig.getColumnCount() );
+	    query.addColumnsToSelection(dataConfig.getColumnMasks(),true, uiConfig.getColumnCount() );
 		if( dataConfig.getOrderbyColumnId()!=-1){
 			Column orderColumn= manager.getColumn(dataConfig.getOrderbyColumnId());
 			if(orderColumn!=null && orderColumn.getTable().getId()== tableId)query.setOrderBy(new int[]{dataConfig.getOrderbyColumnId()}, dataConfig.isAscending());
@@ -349,6 +393,23 @@ public class WebClient {
 			if(expr!=null)expr=expr.combine(new Expression(new ColumnLink(new int[]{table.getColumn("AD_CLIENT_ID").getId()}), "="+adClientId, null), SQLCombination.SQL_AND, null);
 			else expr=new Expression(new ColumnLink(new int[]{table.getColumn("AD_CLIENT_ID").getId()}), "="+adClientId, null);
 		}
+		
+		PairTable fixedColumns=null;
+		Expression fixedExpr=null;
+		try{
+				fixedColumns= PairTable.parseIntTable(fixedcol,null );
+				for( Iterator it=fixedColumns.keys();it.hasNext();){
+			        	Integer key=(Integer) it.next();
+			            Column col=manager.getColumn( key.intValue());
+			            ColumnLink cl=new ColumnLink( col.getTable().getName()+"."+ col.getName());
+			            fixedExpr= new Expression(cl,"="+ fixedColumns.get(key),null);
+			        }
+
+		}catch(NumberFormatException  e){
+		 		fixedColumns= PairTable.parse(fixedcol,null );
+		 		fixedExpr=Expression.parsePairTable(fixedColumns);
+		}
+		if(fixedExpr!=null)expr=expr.combine(fixedExpr, SQLCombination.SQL_AND, null);
 		query.addParam(expr);
 		
 		QueryResult result= QueryEngine.getInstance().doQuery(query);
@@ -356,10 +417,9 @@ public class WebClient {
 		
 		//Hashtable urls=new Hashtable();
 		
-	    String mainTablePath=getServerRootURL()+
-	    			(dataConfig.getMainURL().startsWith("/")?"":"/")+
+	    String mainTablePath=(dataConfig.getMainURL().startsWith("/")?"":"/")+
 	    				dataConfig.getMainURL(); // like "/news.vml", this is used in preview page
-	    if(mainTablePath.indexOf("@ID@")==-1){
+	    if(mainTablePath.indexOf("@ID@")==-1&&parm==null){
 	    	mainTablePath=mainTablePath+"?id=@ID@";
 	    }
 	    //if(mainTablePath!=null)urls.put(new Integer(0), mainTablePath);
@@ -373,6 +433,9 @@ public class WebClient {
 			ArrayList list =new ArrayList();
 	        pkValue= Tools.getInt(result.getObject(1),-1);
 	        url=StringUtils.replace(mainTablePath, "@ID@", String.valueOf(pkValue));  //mainTablePath+"?id="+pkValue;
+	        if(parm!=null&&pos>0){
+	        url=StringUtils.replace(mainTablePath, parm, String.valueOf(result.getObject(pos)));  //mainTablePath+"?id="+pkValue;
+	        }
 	        //if(this.isPreview)url=  mainTablePath+"?id="+pkValue;
             //else url=  staticMainTablePath +"_"+pkValue+".html";
 	        
@@ -414,34 +477,62 @@ public class WebClient {
 	 * @param columnMasks masks in column.mask
 	 * @return key: column's dbname in lower case, value: column data formatted according to ad_column definition   
 	 */
-	public Map getObject(String tableName, int objId, int[] columnMasks) throws Exception{
+	public Map getObject(String tableName, int objId, int[] columnMasks,String fixedcol) throws Exception{
 		QueryEngine engine= QueryEngine.getInstance();
 		TableManager manager= TableManager.getInstance();
 		Table table=manager.getTable(tableName);
 		
 		QueryRequestImpl query= engine.createRequest(null);
 		query.setMainTable(table.getId());
-		
-		query.addColumnsToSelection(columnMasks, false);
-	
-		Expression expr=new Expression(new ColumnLink(new int[]{table.getPrimaryKey().getId()}), "="+objId, null);
+		logger.debug("getObject columnMasks->"+columnMasks.toString());
+		query.addSelection(table.getPrimaryKey().getId());
+		query.addColumnsToSelection(columnMasks, true);
+		Expression expr=null;
+		if(objId>0){
+		 expr=new Expression(new ColumnLink(new int[]{table.getPrimaryKey().getId()}), "="+objId, null);
 		if(table.isAcitveFilterEnabled()){
 			expr=expr.combine(new Expression(new ColumnLink(new int[]{table.getColumn("ISACTIVE").getId()}), "=Y", null), SQLCombination.SQL_AND, null);
 		}
 		if(table.isAdClientIsolated()){
 			expr=expr.combine(new Expression(new ColumnLink(new int[]{table.getColumn("AD_CLIENT_ID").getId()}), "="+adClientId, null), SQLCombination.SQL_AND, null);
 		}
-		query.addParam(expr);
+		}else if(fixedcol!=null){
+		PairTable fixedColumns=null;
+		//Expression fixedExpr=null;
+		try{
+				fixedColumns= PairTable.parseIntTable(fixedcol,null );
+				for( Iterator it=fixedColumns.keys();it.hasNext();){
+			        	Integer key=(Integer) it.next();
+			            Column col=manager.getColumn( key.intValue());
+			            ColumnLink cl=new ColumnLink( col.getTable().getName()+"."+ col.getName());
+			            expr= new Expression(cl,"="+ fixedColumns.get(key),null);
+			        }
+
+		}catch(NumberFormatException  e){
+		 		fixedColumns= PairTable.parse(fixedcol,null );
+		 		expr=Expression.parsePairTable(fixedColumns);
+		}
+		}
+		if(expr!=null)query.addParam(expr);
 		
 		QueryResult result= engine.doQuery(query);
+		//QueryResultMetaData meta=result.getMetaData();
 		HashMap map = new HashMap();
 		
 		if(result.getRowCount()>0){
 			result.next();
-			ArrayList columns= table.getColumns(columnMasks,false,0);
+			map.put("id", result.getObject(1));
+			ArrayList columns= table.getColumns(columnMasks,true,0);
 			for(int i=0;i<columns.size();i++){
+				
 				Column column=(Column) columns.get(i);
-				map.put(column.getName().toLowerCase(), result.getObject(i+1));
+				logger.debug("colnam ->"+column.getName().toLowerCase());
+				//columnData=result.getString(i+1, true, true);
+				if(column.getDisplaySetting().getObjectType()==DisplaySetting.OBJ_CLOB){
+					map.put(column.getName().toLowerCase(), result.getObject(i+2));
+				}else{
+					map.put(column.getName().toLowerCase(), result.getString(i+2,true,true));
+				}
 			}
 		}
 		return map;
@@ -453,7 +544,7 @@ public class WebClient {
 	 * @return key: column name in lower case, value: column data formatted according to ad_column definition   
 	 */
 	public Map getObject(String tableName, int objId) throws Exception{
-		return getObject(tableName, objId, new int[]{Column.MASK_QUERY_LIST});
+		return getObject(tableName, objId, new int[]{Column.MASK_PRINT_SUBLIST},null);
 	}
 	/**
 	 * Return record column data in map of specified record, column is from Column.MASK_QUERY_LIST=1
@@ -462,7 +553,11 @@ public class WebClient {
 	 * @return key: column name in lower case, value: column data formatted according to ad_column definition   
 	 */
 	public Map getObject(String tableName, int objId, int mask) throws Exception{
-		return getObject(tableName, objId, new int[]{mask});
+		return getObject(tableName, objId, new int[]{mask},null);
+	}
+	
+	public Map getObject(String tableName, String fixcol) throws Exception{
+		return getObject(tableName, -1, new int[]{Column.MASK_PRINT_SUBLIST},fixcol);
 	}
 	
 	
@@ -533,7 +628,75 @@ public class WebClient {
 			if(conn!=null)try{conn.close();}catch(Throwable t){}
 		}
 		
-	}	
+	}
+	
+	/**
+	 * @param id 
+	 * @return
+	 * @throws Exception
+	 */
+	public String getStoreBody(int id) throws Exception{
+		Connection conn= QueryEngine.getInstance().getConnection();
+		PreparedStatement pstmt=null;
+		ResultSet rs=null;
+		try{
+			pstmt= conn.prepareStatement(STORE_CLOB_BY_ID);
+			pstmt.setInt(1,this.adClientId);
+			pstmt.setInt(2, id);
+			rs= pstmt.executeQuery();
+			if(rs.next()) return rs.getString(1);
+			return "";
+		}finally{
+			if(rs!=null)try{rs.close();}catch(Throwable t){}
+			if(pstmt!=null)try{pstmt.close();}catch(Throwable t){}
+			if(conn!=null)try{conn.close();}catch(Throwable t){}
+		}
+		
+	}
+	
+	/**
+	 * 
+	 * @param id
+	 * @return
+	 * @throws Exception
+	 */	
+	public String getListbyCategory(int id,String ptype) throws Exception{
+		Connection conn= QueryEngine.getInstance().getConnection();
+		PreparedStatement pstmt=null;
+		ResultSet rs=null;
+		String tbname=null;
+		String listname=null;
+		try{
+			if(ptype.equals("pdt")){
+			pstmt= conn.prepareStatement(WX_CATEGORYSETPDT);
+			tbname="WEB_MAIL_TMP";
+			listname="mlist_tmp";
+			}else if(ptype.equals("text")){
+				pstmt= conn.prepareStatement(WX_CATEGORYSETTXT);
+				tbname="WEB_CLIENT_TMP";
+				listname="list_tmp";
+			}
+			pstmt.setInt(1,id);
+			rs= pstmt.executeQuery();
+			logger.debug("webclient getListbyCategory"+id);
+			if(rs.next()) {
+				//logger.debug("webclient getListbyCategory"+rs.getInt(1));
+				if(Integer.valueOf(rs.getInt(1))==0){
+					String listfold="select e.foldername from "+tbname+" g,AD_SITE_TEMPLATE e"+
+					" where g."+listname+"=e.id and g.ad_client_id="+this.adClientId;
+					logger.debug("webclient getListbyCategory"+listfold);
+					 return (String)QueryEngine.getInstance().doQueryOne(listfold, conn);
+				}
+			}
+			return "cate";
+		}finally{
+			if(rs!=null)try{rs.close();}catch(Throwable t){}
+			if(pstmt!=null)try{pstmt.close();}catch(Throwable t){}
+			if(conn!=null)try{conn.close();}catch(Throwable t){}
+		}
+		
+	}
+	
 	/**
 	 * 
 	 * @param id
@@ -549,6 +712,25 @@ public class WebClient {
 	{
 		return this.adClientId ;
 	}
+	
+	
+	public int getCoupons(int vipid) throws Exception{
+		Connection conn= QueryEngine.getInstance().getConnection();
+		PreparedStatement pstmt=null;
+		ResultSet rs=null;
+		try{
+			pstmt= conn.prepareStatement("select count(1) from WX_COUPONEMPLOY t where  t.ISRECEIVE='N' and t.wx_vip_id=?");
+			pstmt.setInt(1,vipid);
+			rs= pstmt.executeQuery();
+			if(rs.next()) return rs.getInt(1);
+			return 0;
+		}finally{
+			if(rs!=null)try{rs.close();}catch(Throwable t){}
+			if(pstmt!=null)try{pstmt.close();}catch(Throwable t){}
+			if(conn!=null)try{conn.close();}catch(Throwable t){}
+		}
+	}
+	
 	/**
 	 * Get url list of friends
 	 * @return
@@ -606,6 +788,84 @@ public class WebClient {
 	public String shortString(String str,int len){
 		return StringUtils.shorten(str,len);	
 	}
+	
+	
+	public Map payOrder(int orderid,HttpServletRequest request, HttpServletResponse response) throws Exception{
+		
+		RequestHandler reqHandler = new RequestHandler(request, response);
+		TenpayHttpClient httpClient = new TenpayHttpClient();
+		
+		TreeMap<String, String> outParams = new TreeMap<String, String>();
+		 //初始化 
+		
+		String NOTIFY_URL="http://www.qq.com";
+		String APP_ID, APP_SECRET, PARTNER_KEY, APP_KEY;
+		String PARTNER="1218864901";
+		APP_ID="wxa5338bf0ca2d4d5f";
+		APP_SECRET="236967ace310d96cf128331c6ebb9f5d";
+		PARTNER_KEY="c3e3b96201950c9295baa2c261c8ff55";
+		APP_KEY="YFSkXX03STEjxEslXI29I6g0KkBU5hi8WAT9QjQfuuVUJOg8XU4hYVXbEPw4hC8IGWOqNlWLmoCPMePBG1gmYdW8KTeeCnBqbHncejkUXd05gP4HLdiAl6N6NTrhObYo";
+		reqHandler.init();
+		reqHandler.init(APP_ID, APP_SECRET,APP_KEY,PARTNER_KEY);
+		
+		//当前时间 yyyyMMddHHmmss
+		String currTime = TenpayUtil.getCurrTime();
+		//8位日期
+		String strTime = currTime.substring(8, currTime.length());
+		//四位随机数
+		String strRandom = TenpayUtil.buildRandom(4) + "";
+		//10位序列号,可以自行调整。
+		String strReq = strTime + strRandom;
+		//订单号，此处用时间加随机数生成，商户根据自己情况调整，只要保持全局唯一就行
+		String out_trade_no = strReq;
+		
+		//获取提交的商品价格
+		String order_price = request.getParameter("order_price");
+		//获取提交的商品名称
+		String product_name = request.getParameter("product_name");
+		
+		//设置package订单参数
+			SortedMap<String, String> packageParams = new TreeMap<String, String>();
+			packageParams.put("bank_type", "WX");  //支付类型   
+			packageParams.put("body", "江诗丹顿"); //商品描述   
+			packageParams.put("fee_type","1"); 	  //银行币种
+			packageParams.put("input_charset", "UTF-8"); //字符集    
+			packageParams.put("notify_url", NOTIFY_URL); //通知地址  
+			packageParams.put("out_trade_no", out_trade_no); //商户订单号  
+			packageParams.put("partner", PARTNER); //设置商户号
+			packageParams.put("spbill_create_ip",  request.getRemoteAddr()); //订单生成的机器IP，指用户浏览器端IP
+			packageParams.put("total_fee","1"); //商品总金额,以分为单位
+			
+			//获取package包
+			String packageValue = reqHandler.genPackage(packageParams);
+			System.out.print("packageValue -> "+packageValue);
+			String noncestr = Sha1Util.getNonceStr();
+			String timestamp = Sha1Util.getTimeStamp();
+			
+			//设置支付参数
+			SortedMap<String, String> signParams = new TreeMap<String, String>();
+			signParams.put("appid", APP_ID);
+			signParams.put("appkey", APP_KEY);
+			signParams.put("noncestr", noncestr);
+			signParams.put("package", packageValue);
+			signParams.put("timestamp", timestamp);
+			//生成支付签名，要采用URLENCODER的原始值进行SHA1算法！
+			String sign = Sha1Util.createSHA1Sign(signParams);
+			
+			//增加非参与签名的额外参数
+			//signParams.put("paySign", sign);
+			//signParams.put("signType", "SHA1");
+			
+			HashMap map = new HashMap();
+			map.put("app_id", APP_ID);
+			map.put("timestamp", timestamp);
+			map.put("noncestr", noncestr);
+			map.put("packageValue", packageValue);
+			map.put("sign", sign);
+		return map;
+		
+	}
+	
 
 }
 

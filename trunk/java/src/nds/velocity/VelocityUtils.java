@@ -85,12 +85,11 @@ public class VelocityUtils {
 	
 	
 	       public static void insertHelperUtilities(VelocityContext vc) throws Exception {
-	    	   vc.put("arrayutil", ArrayUtil.class);
-	    	   vc.put("getutil", GetterUtil.class);
-	    	   vc.put("stringutil", StringUtil.class);
-	    	   vc.put("webutil", WebUtils.class);
+	    	   vc.put("arrayutil", new ArrayUtil());
+	    	   vc.put("getutil", new GetterUtil());
+	    	   vc.put("stringutil", new StringUtil());
+	    	   vc.put("webutil", new WebUtils());
 	    	   vc.put("dateutil", DateUtil.getInstance());
-		     
 	    	   vc.put("v", DateUtil.getInstance());
 	    	   vc.put("engine", QueryEngine.getInstance());
 	    	   vc.put("manager", TableManager.getInstance());
