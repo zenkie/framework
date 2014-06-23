@@ -15,6 +15,8 @@ import nds.control.util.ValueHolder;
 import nds.query.*;
 import nds.schema.*;
 import nds.util.*;
+import nds.weixin.ext.WeUtils;
+import nds.weixin.ext.WeUtilsManager;
 
 import nds.security.User;
 
@@ -64,19 +66,42 @@ public class SelectTemplate extends Command {
 	   		params=jo.getJSONObject("params");
 	   		int clientId= usr.adClientId;  //params.getInt("clientId");
 	   		String templateid=params.getString("templateid");
+	   		String ptype=params.getString("ptype");
 
 	   		String colname="";
-	   		List li=QueryEngine.getInstance().doQueryList("select id,TPCLASS from ad_site_template where id='"+templateid+"'");
+	   		String foldername="";
+	   		String tpclass="";
+	   		List li=QueryEngine.getInstance().doQueryList("select id,TPCLASS,foldername from ad_site_template where id='"+templateid+"'");
 	        if (li.size() > 0) {
 	        	tmpid = Tools.getInt(((List)li.get(0)).get(0), -1);
-	        	colname = String.valueOf(((List)li.get(0)).get(1)).trim()+"_TMP";
+	        	tpclass = String.valueOf(((List)li.get(0)).get(1)).trim();//+"_TMP";
+	        	foldername = String.valueOf(((List)li.get(0)).get(2)).trim();
 	         }
-            pstmt= conn.prepareStatement("update WEB_CLIENT_TMP set "+colname+"=? where ad_client_id=?");		
+	        logger.debug("ptype -> "+ptype);
+	        logger.debug("tpclass -> "+tpclass);
+	        
+	        String tabname="WEB_CLIENT_TMP";
+	        colname=tpclass+"_TMP";
+	        if(ptype.equals("mall")){tabname="web_mail_tmp";colname=tpclass.equalsIgnoreCase("HOME")?tpclass+"_TMP":"M"+tpclass+"_TMP";}
+	        logger.debug("colname -> "+colname);
+            pstmt= conn.prepareStatement("update "+tabname+" set "+colname+"=? where ad_client_id=?");		
    			pstmt.setInt(1,tmpid);
    			pstmt.setInt(2,clientId);
 		    pstmt.executeUpdate();
 	   		rs.put("tmpid", tmpid);
-		   
+	   		//首页模版切换后更新内存
+	   		if(tpclass.equalsIgnoreCase("HOME")&&ptype.equals("home")){
+	   		WeUtilsManager Wemanage =WeUtilsManager.getInstance();
+			WeUtils wu=Wemanage.getByAdClientId(usr.adClientId);
+		    wu.setFoldName(foldername);
+	   		}
+	   		
+	   		//首页模版切换后更新内存
+	   		if(tpclass.equalsIgnoreCase("HOME")&&ptype.equals("mall")){
+	   		WeUtilsManager Wemanage =WeUtilsManager.getInstance();
+			WeUtils wu=Wemanage.getByAdClientId(usr.adClientId);
+		    wu.setFoldMall(foldername);
+	   		}
    		}catch(Throwable t){
    	  		if(t instanceof NDSException) throw (NDSException)t;
    	  		logger.error("exception",t);
