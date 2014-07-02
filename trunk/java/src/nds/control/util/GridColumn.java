@@ -29,7 +29,6 @@ public class GridColumn implements JSONString{
 	private Locale locale;
 	private String fkQueryURL;// when column is fk (such as m_product_id), how to do search
 	private boolean hideInEditMode;// controlled by embed_obj_hide of FK table
-	private boolean defocus=false;//default focus set
 	public String toJSONString()  {
 		try{
 			return toJSONObject().toString();
@@ -69,7 +68,6 @@ public class GridColumn implements JSONString{
 		jo.put("defaultValue",defaultValue);
 		jo.put("summethod", col==null?null: col.getSubTotalMethod());
 		jo.put("fkQueryURL", fkQueryURL);
-		jo.put("defocus", defocus);
 		return jo;
 	}
 	
@@ -158,9 +156,5 @@ public class GridColumn implements JSONString{
 	}
 	public void setColumnLink(ColumnLink columnLink) {
 		this.columnLink = columnLink;
-	}
-	public void setDefocus(boolean focus) {
-		// TODO Auto-generated method stub
-		this.defocus=focus;
 	}
 }
