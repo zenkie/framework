@@ -235,6 +235,7 @@ public class EditableGridMetadata {
 		c.setFkQueryURL(fkQueryURL);
 		c.setHideInEditMode(col!=null && col.getReferenceTable()!=null && col.getReferenceTable().getJSONProps()!=null &&
 					col.getReferenceTable().getJSONProps().optBoolean("embed_obj_hide",false)==true);
+		c.setDefocus(col!=null&&col.getJSONProps()!=null&&col.getJSONProps().optBoolean("set_def_focus",false)==true);
 		return c;
 	}
 	/**
