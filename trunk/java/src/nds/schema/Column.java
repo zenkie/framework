@@ -171,6 +171,17 @@ public interface Column extends Serializable {
      */
     public String getShowcomment();
     /**
+     * º¬Òå×¢ÊÍ
+     * @return String of Showtitle meaning
+     */
+    public Boolean getShowtitle();
+    
+    /**
+     * º¬Òå×¢ÊÍ
+     * @return String of rowspan meaning
+     */
+    public Boolean getRowspan();
+    /**
      * Limit Value Group Name
      * @return
      */
