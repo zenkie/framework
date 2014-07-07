@@ -539,5 +539,15 @@ public interface Table extends Serializable  {
      * 
      */
     //public final static int UNSUBMIT=7;
-
+    
+    /**
+     * 后台查询指定列根据扩展属性返回列对象数组
+     */
+    public ArrayList GetExtendColumns(String extendName,int securityGrade)throws Exception;
+    
+    /**
+     * get sysmodel
+     */
+    public SysModel getSysmodel();
 }
+
