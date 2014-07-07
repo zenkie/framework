@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.*;
 
+import nds.control.web.WebUtils;
 import nds.query.*;
 import nds.schema.AliasTable;
 import nds.schema.Column;
@@ -622,10 +623,11 @@ public class QueryRequestImpl extends nds.query.QueryRequestImpl {
     		String usersname= (String) session.getAttribute("$USER_NAME$");
     		//增加如果root时去掉公司数据的过滤问题
  			if(usersname!=null){
-	    			  if("root".equals(usersname)&&ad_client_id==37 ) {
-	    		            // root
-	    		            return;
-	    		        }
+ 			boolean mulit_clients = "true".equals(WebUtils.getProperty("mulit_clients", "false"));
+			  if(mulit_clients&&"root".equals(usersname)&&ad_client_id==37 ) {
+		            // root
+		            return;
+		        }
  			}else{
  				logger.debug("session is null"+session.toDebugString());
  				logger.debug("manager is null");

@@ -262,6 +262,31 @@ public class DateUtil {
 		}
 		return null;
 	}
+	
+	public int compareTo(Object tm1,Object tm2){
+		
+		java.text.DateFormat df=new java.text.SimpleDateFormat("yyyyMMdd");
+		java.util.Calendar c1=java.util.Calendar.getInstance();   
+		java.util.Calendar c2=java.util.Calendar.getInstance();  
+		try  
+		{   
+		c1.setTime(df.parse((String)tm1));   
+		c2.setTime(df.parse((String)tm2));   
+		}catch(java.text.ParseException e){   
+		System.err.println("格式不正确");   
+		}
+		int result=c1.compareTo(c2);   
+		if(result==0)   
+		//System.out.println("c1相等c2");   
+			return 0;
+		else if(result<0)   
+		//System.out.println("c1小于c2");   
+			return 2;
+		else  
+		//System.out.println("c1大于c2");
+			return 1;
+	}
+	
 
 	public String fmt(Object paramObject, String paramString) {
 		Date localDate = null;
