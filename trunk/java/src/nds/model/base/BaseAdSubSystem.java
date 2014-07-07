@@ -29,6 +29,8 @@ public abstract class BaseAdSubSystem  implements Serializable {
 	public static String PROP_ID = "Id";
 	public static String PROP_OWNER_ID = "OwnerId";
 	public static String PROP_CREATION_DATE = "CreationDate";
+	// add belong sysmodel
+	public static String PROP_AD_SYSMODEL_ID = "AdsysModel";
 
 
 	private int hashCode = Integer.MIN_VALUE;
@@ -48,6 +50,7 @@ public abstract class BaseAdSubSystem  implements Serializable {
 	private java.util.Date _creationDate;
 	private java.util.Date _modifiedDate;
 	private java.lang.String _isActive;
+	private java.lang.Integer _adsysModel;
 
 	// constructors
 	public BaseAdSubSystem () {
@@ -300,6 +303,14 @@ public abstract class BaseAdSubSystem  implements Serializable {
 
 	public String toString () {
 		return super.toString();
+	}
+
+	public java.lang.Integer getAdsysModel() {
+		return _adsysModel;
+	}
+
+	public void setAdsysModel(java.lang.Integer _adsysModel) {
+		this._adsysModel = _adsysModel;
 	}
 
 }
