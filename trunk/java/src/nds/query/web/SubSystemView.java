@@ -593,7 +593,7 @@ public class SubSystemView {
 		UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
 		int userid=userWeb.getUserId();
 		List al=QueryEngine.getInstance().doQueryList("select t.ad_table_id,t.fa_menu,t.menu_re,t.IS_REPORT from MU_FAVORITE t where t.ownerid="
-		+String.valueOf(userid)+" group by t.ad_table_id,t.menu_no,t.fa_menu,t.menu_re,t.IS_REPORT order by t.menu_no");		
+		+String.valueOf(userid)+" group by t.ad_table_id,t.menu_no,t.fa_menu,t.menu_re,t.IS_REPORT,t.creationdate order by t.menu_no,t.creationdate asc");
 		logger.debug("MU_FAVORITE size is "+String.valueOf(al.size()));
 		if(al.size()>0){
 			for(int i=0;i<al.size();i++){
