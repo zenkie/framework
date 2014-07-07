@@ -16,6 +16,8 @@
 package nds.taglibs.input;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.jsp.JspException;
@@ -47,6 +49,10 @@ public class Text extends TagSupport {
     private String beanId; // bean id to get default values from
 
     private String size;
+    
+    private String oristring="";
+    
+    private boolean isFold;
 
     public void release() {
         super.release();
@@ -81,7 +87,8 @@ public class Text extends TagSupport {
 
             // start building up the tag
             out.print("<input type=\"text\" ");
-            out.print("name=\"" + Util.quote(name) + "\" ");
+            if(isFold) {out.print("name=\"" + Util.quote(name+"hidden") + "\" readonly ");}
+            else{out.print("name=\"" + Util.quote(name) + "\" ");}
 
             // include any attributes we've got here
             Util.printAttributes(out, attributes);
@@ -136,7 +143,17 @@ public class Text extends TagSupport {
             }
             // end the tag
             out.print("/>");
-
+            if(isFold) {
+            	out.print("<input type=\"text\" ");
+            	out.print("name=\"" + Util.quote(name) + "\" ");
+            	if(nds.util.Validator.isNull(oristring)) {
+            		out.print("value=\"\" ");
+            	}else {
+            		out.print("value=\"" + Util.quote(oristring) + "\" ");
+            	}
+            	out.print("style='display:none;' ");
+            	out.print("/>");
+            }
         } catch (Exception ex) {
             throw new JspTagException(ex.getMessage());
         }
@@ -161,15 +178,41 @@ public class Text extends TagSupport {
 
     public void setDefault(String x) {
         dVal = x;
+        oristring="";
+        if(nds.util.Validator.isNull(dVal)) {return;}
+    	Pattern p=Pattern.compile("(?<=(<ori>)).*(?=</ori>)");
+    	try {
+    		System.out.print("x->"+x);
+	    	Matcher m=p.matcher(dVal);
+	    	 while(m.find()) {
+	    		oristring+=m.group();
+	    	}
+	    	 dVal=dVal.replaceAll("<ori>.*(?=</ori>)</ori>", "");
+    	}catch(Exception e) {}
+    	
     }
 
+    public void setIsFold(boolean x) {
+    	isFold=x;
+    }
+    
     /**
      * Getter for property name.
      * 
      * @return Value of property name.
      */
     public String getName() {
-        return name;
+    	return name;
+    }
+    
+
+    /**
+     * Getter for property name.
+     * 
+     * @return Value of property name.
+     */
+    public boolean getIsFold() {
+    	return isFold;
     }
 
     /**
