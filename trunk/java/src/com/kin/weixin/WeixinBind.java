@@ -25,7 +25,7 @@ import org.apache.commons.logging.LogFactory;
 public class WeixinBind {
 	private final static Log log = LogFactory.getLog(WeixinBind.class);
 	public final static String HOST = "http://mp.weixin.qq.com";
-	public final static String LOGIN_URL = "http://mp.weixin.qq.com/cgi-bin/login?lang=zh_CN";
+	public final static String LOGIN_URL = "https://mp.weixin.qq.com/cgi-bin/login?lang=zh_CN";
 	public final static String EDIT_DEV_URL = "https://mp.weixin.qq.com/misc/skeyform?form=advancedswitchform&lang=zh_CN";
 	public final static String VERIFY_CODE = "http://mp.weixin.qq.com/cgi-bin/verifycode?";
 	public final static String INDEX_URL = "http://mp.weixin.qq.com/cgi-bin/indexpage?t=wxm-index&lang=zh_CN";
