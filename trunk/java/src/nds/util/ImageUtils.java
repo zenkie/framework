@@ -11,13 +11,19 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
 import java.awt.*;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.net.URL;
+
+import net.coobird.thumbnailator.*;
+import net.coobird.thumbnailator.Thumbnails.Builder;
 /**
  * Common method handling image
  * @author yfzhu
- *
+ * add Thumbnailator
  */
 public class ImageUtils {
 	
@@ -26,8 +32,21 @@ public class ImageUtils {
 		 
 	public static void main (String argv[]) throws Exception {
 	 //参数1(from),参数2(to),参数3(宽),参数4(高)
-		 createThumbnail("c:/image2.jpg","c:/imgTest3.jpg",49,64);
-		 createThumbnails("c:/image2.jpg","d:/tmp","134.jpg",new int[]{140,49,34});
+		//URL url = new URL("http://lavasoft.blog.51cto.com/attachment/200811/200811271227767778082.jpg"); 
+		//createThumbnailatorurl(url,"/Users/jackrain/Downloads/imgTest3.jpg",200,300);
+		//createThumbnailator("/Users/jackrain/Downloads/4.jpg","/Users/jackrain/Downloads/imgTest2.jpg",200,200);
+		
+		//createThumbnail("/Users/jackrain/Downloads/4.jpg","/Users/jackrain/Downloads/imgTest4.jpg",200,300);
+		
+		File f = new File("/Users/jackrain/Downloads/bodybg.png");  
+        InputStream in = new FileInputStream(f); 
+        BufferedImage bi=ImageIO.read(in);
+        System.out.print(in.available());
+        ImageUtils.createThumbnailator(bi,"/Users/jackrain/Downloads/bodybg22.png","bodybg.png");
+		//createThumbnailator(in,"/Users/jackrain/Downloads/bodybg22.png",200,100,true,"bodybg.png");
+		
+		
+		//createThumbnails("c:/image2.jpg","d:/tmp","134.jpg",new int[]{140,49,34});
 	}
 	/**
 	 * 在指定目录下创建若干个尺寸的缩略图, 文件名称为 原图片名＋"_1.jpg",  原图片名＋"_2.jpg", 依次类推
@@ -200,7 +219,154 @@ public class ImageUtils {
 
 	        return ret;
 	    }
+	    
+	    
+	    
+	    
+	public static void getScaledInstance(File saveFile, File data, int width,int hight,
+			String imgtype,Boolean force) throws Exception {
+		BufferedImage srcImage;
+		Builder<BufferedImage> builder = null;  
+		/*
+		 * String imgType = "JPEG"; if
+		 * (fromFileStr.toLowerCase().equals(".png")) { imgType = "PNG"; }
+		 */
+		// File saveFile = new File(saveToFileStr);
+		srcImage = ImageIO.read(data);
+		if(force){
+			builder=Thumbnails.of(srcImage).forceSize(width,hight).outputFormat(imgtype).outputQuality(0.8f);
+		}else{
+			builder=Thumbnails.of(srcImage).size(width,hight).outputFormat(imgtype).outputQuality(0.8f);
+		}
+		builder.toFile(saveFile);
+	}
+	
 
+		  
+
+	
+	public static void createThumbnailator(File saveFile,File data , int width,String imgtype) throws Exception {
+		BufferedImage image = ImageIO.read(data);  
+		int imageHeitht = image.getHeight();  
+		getScaledInstance(saveFile,data,width,imageHeitht,"jpg",false);
+		
+	}
+	
+	public static void createThumbnailator (InputStream in,String saveToFileStr,int width,int hight, boolean force,String fileName)
+			throws Exception {
+		
+		 String imgType = "jpg";
+		 if (fileName.toLowerCase().endsWith(".png")) {
+			 imgType = "png";
+		 }
 		 
+		 File saveFile=new File(saveToFileStr);
+		 Builder<? extends InputStream> builder = null;  
+		if(force){
+			builder=Thumbnails.of(in).forceSize(width,hight).outputFormat(imgType).outputQuality(0.8f);
+		}else{
+			builder=Thumbnails.of(in).size(width,hight).outputFormat(imgType).outputQuality(0.8f);
+		}
+		builder.toFile(saveFile);
+		
+	}
+	
+	public static void createThumbnailator (BufferedImage in,String saveToFileStr,int width,int hight, boolean force,String fileName)
+			throws Exception {
+		
+		 String imgType = "jpg";
+		 if (fileName.toLowerCase().endsWith(".png")) {
+			 imgType = "png";
+		 }
+		 
+		 File saveFile=new File(saveToFileStr);
+		 Builder<BufferedImage> builder = null;  
+		if(force){
+			builder=Thumbnails.of(in).forceSize(width,hight).outputFormat(imgType).outputQuality(0.8f);
+		}else{
+			builder=Thumbnails.of(in).size(width,hight).outputFormat(imgType).outputQuality(0.8f);
+		}
+		builder.toFile(saveFile);
+		
+	}
+	//不压缩 按原始比例
+	public static void createThumbnailator (InputStream in,String saveToFileStr,String fileName)
+			throws Exception {
+		
+		 String imgType = "jpg";
+		 if (fileName.toLowerCase().endsWith(".png")) {
+			 imgType = "png";
+		 }
+		 
+		 File saveFile=new File(saveToFileStr);
+		 Builder<? extends InputStream> builder = null;  
+		builder=Thumbnails.of(in).scale(1).outputFormat(imgType).outputQuality(0.8f);
+		builder.toFile(saveFile);
+		
+	}
+	
+	
+	//不压缩 按原始比例
+	public static void createThumbnailator (BufferedImage in,String saveToFileStr,String fileName)
+			throws Exception {
+		
+		 String imgType = "jpg";
+		 if (fileName.toLowerCase().endsWith(".png")) {
+			 imgType = "png";
+		 }
+		 
+		 File saveFile=new File(saveToFileStr);
+		 Builder<BufferedImage> builder = null;  
+		builder=Thumbnails.of(in).scale(1).outputFormat(imgType).outputQuality(0.8f);
+		builder.toFile(saveFile);
+		
+	}
 
+
+	public static void createThumbnailator (String fromFileStr,String saveToFileStr,int width,int hight)
+				throws Exception {
+		 String imgType = "jpg";
+		 if (fromFileStr.toLowerCase().endsWith(".png")) {
+			 imgType = "png";
+		 }
+		 File saveFile=new File(saveToFileStr);
+		 File fromFile=new File(fromFileStr);
+		getScaledInstance(saveFile,fromFile,width,hight,imgType,true);
+	}
+	
+	public static void createThumbnailator (String fromFileStr,String saveToFileStr,int width,String imgtype)
+			throws Exception {
+	 String imgType = "jpg";
+	 if (fromFileStr.toLowerCase().endsWith(".png")) {
+		 imgType = "png";
+	 }
+	 File saveFile=new File(saveToFileStr);
+	 File fromFile=new File(fromFileStr);
+	 BufferedImage image = ImageIO.read(fromFile);  
+		int hight = image.getHeight(); 
+	getScaledInstance(saveFile,fromFile,width,hight,imgType,true);
+	}
+	
+	
+	//url load 
+	public static void createThumbnailatorurl (URL url,String saveToFileStr,int width,int hight)
+			throws Exception {
+	 File saveFile=new File(saveToFileStr);
+	getScaledInstance(saveFile,url,width,hight,"jpg",true);
+	}
+	
+	private static void getScaledInstance(File saveFile, URL url, int width,
+			int hight, String imgtype, boolean force) throws Exception {
+		Builder<URL> builder = null;  
+		if(force){
+			builder=Thumbnails.of(url).forceSize(width,hight).outputFormat(imgtype).outputQuality(0.8f);
+		}else{
+			builder=Thumbnails.of(url).size(width,hight).outputFormat(imgtype).outputQuality(0.8f);
+		}
+		builder.toFile(saveFile);
+	}
+	
+
+	
+	
 }

@@ -96,7 +96,7 @@ public class QueryResultImpl implements QueryResult , JSONString{
     protected QueryRequest request;
     protected int[] displayColumnIndices;// just QueryRequest.getDisplayColumnIndices(), note it starts from 0
     protected int totalRowCount;// total row count including those not fetched
-    
+    protected int totalCount;// 解决当我们自定义sql 添加distinct request add_select("distinct ") 无法拿到正确的总行数
     protected ArrayList fullRangeRowData; // full range row data
       
     protected TableManager manager;
@@ -131,6 +131,9 @@ public class QueryResultImpl implements QueryResult , JSONString{
             rs.next();
     }*/
         //Now read in desired number of results
+        
+
+  
         for (int i=0; i<range; i++) {
             if (rs.next()) {
                 // generate result
@@ -139,11 +142,26 @@ public class QueryResultImpl implements QueryResult , JSONString{
                 break;
             }
         }
+        
+        if (rs.last()) {
+        	totalCount = rs.getRow();
+        	logger.debug("totalCount ->"+totalCount);
+        	  rs.beforeFirst(); // not rs.first() because the rs.next() below will move on, missing the first element
+        }
+   
         cursor=-1;
         prepareFullRangeSubTotal(req);
         //updateRequestStartIndex();
     }
-    public QueryResultImpl(ResultSet rs, QueryRequest req, int totalRowCount)throws SQLException {
+    /**解决当我们自定义sql 添加distinct request addSelection(String selectItem, String desc) 
+     * ("distinct ") 无法拿到正确的总行数
+     * 
+     * @return
+     */
+    public int getTotalCount() {
+		return totalCount;
+	}
+	public QueryResultImpl(ResultSet rs, QueryRequest req, int totalRowCount)throws SQLException {
         manager= TableManager.getInstance();
         this.totalRowCount=totalRowCount;
         meta=new QueryResultMetaDataImpl(req);
