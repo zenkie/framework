@@ -28,6 +28,7 @@ import nds.control.event.NDSEventException;
 import nds.control.web.*;
 import nds.weixin.ext.*;
 import  nds.util.ImageUtils;
+import nds.util.FileUtils;
 
 /**
  * Upload file to user web folder
@@ -120,6 +121,8 @@ public class UploadforWebroot implements BinaryHandler{
 	    	    if (!uploadPath.exists()) {
 	    	       uploadPath.mkdirs();
 	    	    }
+	    	    
+	    	    fileName=new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date())+"."+FileUtils.getExtension(fileName);
 	    	    String filePath = svrPath + File.separator + fileName;
 	    	    int insize=in.available();
 	    	    BufferedImage bi=ImageIO.read(in);
