@@ -29,6 +29,7 @@ public abstract class BaseAdTableCategory  implements Serializable {
 	public static String PROP_ID = "Id";
 	public static String PROP_OWNER_ID = "OwnerId";
 	public static String PROP_CREATION_DATE = "CreationDate";
+	public static String PROP_ICOURL = "IcoUrl";
 
 
 	private int hashCode = Integer.MIN_VALUE;
@@ -48,6 +49,7 @@ public abstract class BaseAdTableCategory  implements Serializable {
 	private java.util.Date _creationDate;
 	private java.util.Date _modifiedDate;
 	private java.lang.String _isActive;
+	private java.lang.String _icourl;
 
 	private nds.model.AdSubSystem _adSubSystem;
 	// collections
@@ -337,6 +339,14 @@ public abstract class BaseAdTableCategory  implements Serializable {
 
 	public String toString () {
 		return super.toString();
+	}
+
+	public java.lang.String getIcoUrl() {
+		return _icourl;
+	}
+
+	public void setIcoUrl(java.lang.String _icourl) {
+		this._icourl = _icourl;
 	}
 
 }
