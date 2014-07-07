@@ -76,6 +76,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Properties;
@@ -83,6 +84,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import nds.util.*;
@@ -165,6 +167,19 @@ public class TableImpl implements Table {
     
     private List<WebAction>[] actions=null;
     private JSONObject jsonProps=null;
+    
+    /**
+     * 显示和影藏对象 extendPros
+     */
+	private  Hashtable<String,ArrayList> extendPros;
+	/**
+	 * 获取显示和影藏列对象
+	 * @return
+	 */
+	public Hashtable<String,ArrayList> GetExtendPros(){
+		return this.extendPros;
+	}
+
 
     public TableImpl(int id,int order,String tableName,String desc,String rowURL,String rowClass,TableCategory category, boolean[] mask, TriggerHolder trigs,String comment) {
         this.id=id;
@@ -786,6 +801,11 @@ public class TableImpl implements Table {
     public TableCategory getCategory() {
     	return category;
     }
+    
+    public SysModel getSysmodel(){
+    	return category.getSubSystem().getSysModel();
+    }
+    
     public boolean isActionEnabled(int action){
         return actionMask[action];
     }
@@ -1314,5 +1334,59 @@ public class TableImpl implements Table {
     public void setAccordico(String Accordico){
     	this.Accordico= Accordico;
     }
+    
+    /**
+     * 后台查询指定列根据扩展属性返回列对象数组
+     * @param extendName
+     * @param securityGrade
+     * @return
+     * @throws Exception
+     */
+    public ArrayList GetExtendColumns(String extendName,int securityGrade)throws Exception{
+    	ArrayList al=null;
+    	if(this.extendPros!= null && this.extendPros.containsKey(extendName)){
+    		al=this.extendPros.get(extendName);
+    		return al;
+    	}
+    	
+    	if(this.extendPros == null){this.extendPros=new Hashtable<String, ArrayList>();}
+    	Column column=null;
+    	JSONArray showJson=null;
+    	JSONArray moveShowJson=null;
+    	
+    	ArrayList showColumn=new ArrayList();
+    	ArrayList moveShowColumn=new ArrayList();
+    	
+    	if(this.jsonProps!=null&&this.jsonProps.has("showColumns")){
+    		showJson=this.jsonProps.getJSONArray("showColumns");
+    		if(showJson!=null && showJson.length()>0){
+    			for(int i=0;i<showJson.length();i++){
+    				column=this.getColumn(showJson.optString(i));
+    				if(column!=null && column.getSecurityGrade()>=securityGrade){
+    					showColumn.add(column);
+    				}
+    			}
+    			this.extendPros.put("showColumns", showColumn);
+    		}
+    	}
+    	
+    	if(this.jsonProps!=null && this.jsonProps.has("moveShowColumns")){
+    		moveShowJson=this.jsonProps.getJSONArray("moveShowColumns");
+		if(moveShowJson!=null && moveShowJson.length()>0){
+			for(int i=0;i<moveShowJson.length();i++){
+				column=this.getColumn(moveShowJson.optString(i));
+				if(column!=null && column.getSecurityGrade()>=securityGrade){
+					moveShowColumn.add(column);
+				}
+			}
+			this.extendPros.put("moveShowColumns", moveShowColumn);
+		}
+    	}
+		
+		al=this.extendPros.get(extendName);
+		return al;
+    }
+    	
+    /*paco add end*/
        
 }
