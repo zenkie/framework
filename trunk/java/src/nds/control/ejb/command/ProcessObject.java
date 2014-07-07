@@ -454,8 +454,12 @@ public class ProcessObject extends Command {
 	  			returnObj.put("message",mh.translateMessage("@object-saved-but-status-changed@",locale));
 	  			returnObj.put("closewindow",true);// issue close
 	  		}else{
+	  			String serverPath=WebKeys.NDS_URI;
+	  			if(masterTable.getSysmodel()!=null&&masterTable.getSysmodel().getMlink()!=null){
+	  			    serverPath=masterTable.getSysmodel().getMlink();
+	  			}
 		  		if(mainAction== Table.ADD && !errorFound && !hasItemAddList){
-		  			String nextScreen=WebKeys.NDS_URI+"/object/object.jsp?table="+ masterTable.getId()+"&id="+ masterObjectId+
+		  			String nextScreen=serverPath+"/object/object.jsp?table="+ masterTable.getId()+"&id="+ masterObjectId+
 		  			(masterObj.optString("fixedcolumns")!=null?"&fixedcolumns="+ masterObj.optString("fixedcolumns"):"");
 		  			returnObj.put("nextscreen", nextScreen);
 		  		}else{
@@ -467,11 +471,11 @@ public class ProcessObject extends Command {
 					/**
 					 * Please note param "compress=false" is to prohibit  com.liferay.filters.compression.CompressionFilter from compressing file content 
 					 */
-					String page=wc.forwardToString(WebKeys.NDS_URI+"/object/ajax_object.jsp?compress=f&table="+masterObj.get("table")+"&id="+ masterObjectId);
+					String page=wc.forwardToString(serverPath+"/object/ajax_object.jsp?compress=f&table="+masterObj.get("table")+"&id="+ masterObjectId);
 					returnObj.put("masterpage", page);
 					// and for  mainAction== Table.ADD, reconstruct object page url for refresh and fixedcolumns information
 					if(mainAction== Table.ADD){
-						returnObj.put("url",WebKeys.NDS_URI+"/object/object.jsp?table="+ masterObj.get("table")+"&id="+ masterObjectId);
+						returnObj.put("url",serverPath+"/object/object.jsp?table="+ masterObj.get("table")+"&id="+ masterObjectId);
 						returnObj.put("fixecolumnstr",fixedColumns);
 						returnObj.put("fixecolumns",PairTable.parse(fixedColumns, null).toJSONString());
 					}

@@ -18,6 +18,7 @@
         <property column="CREATIONDATE" length="40" name="CreationDate" not-null="false" type="timestamp" />
         <property column="MODIFIEDDATE" length="40" name="ModifiedDate" not-null="false" type="timestamp" />
         <property column="ISACTIVE" length="1" name="IsActive" not-null="true" type="string" />
+        <property column="AD_SYSMODEL_ID" length="10" name="AdsysModel" not-null="false" type="integer" />
 <!--        <set inverse="true" lazy="true" name="AdTableCategorySet" >
             <key column="AD_SUBSYSTEM_ID" />
             <one-to-many class="AdTableCategory" />

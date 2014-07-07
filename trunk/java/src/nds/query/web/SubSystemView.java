@@ -441,6 +441,104 @@ public class SubSystemView {
 	 * menu action
 	 * @throws Exception  cyl
 	 * @param request
+	 * @param Subsystem desgin menu list
+	 * @paqram includeAction if true, will load webactions also
+	 * @return elements are Table or WebAction and menu list
+	 */
+	public List getChildrenOfSubsystembymenu(HttpServletRequest request, int subid, boolean includeAction) throws Exception{
+		
+		TableManager manager=TableManager.getInstance();
+		Locale locale = (Locale)request.getSession(true).getAttribute(org.apache.struts.Globals.LOCALE_KEY);
+        if(locale ==null ) locale= manager.getDefaultLocale();
+		WebAction action;
+        ArrayList cats = new ArrayList();
+        List children = new ArrayList();
+        Connection conn= null;
+        HashMap webActionEnv=null;
+        Table table;
+        //List al=QueryEngine.getInstance().doQueryList("select e.id,e.name from ad_table g,AD_ACCORDION e where g.AD_ACCORDION_id=e.id and g.ad_tablecategory_id="+tableCategoryId+" group by e.id,e.name,e.orderno order by e.orderno asc");
+        SubSystem sub=manager.getSubSystem(subid);
+   
+        UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
+        //TableCategory tc= manager.getTableCategory(tableCategoryId);
+        List al=sub.getTableCategories();
+        //if(tc!=null)children= tc.children();
+    	//ArrayList prow= new ArrayList();
+    	if(al.size()>0){
+			for(int i=0;i<al.size();i++){
+				TableCategory als= (TableCategory)al.get(i);
+				int  ACCORDION=als.getId();
+				logger.debug("ACCORDION~~~~~~~~~~"+String.valueOf(als.getName()));
+				ArrayList catschild= new ArrayList();
+				String	ACCORDION_name=als.getDescription(locale);
+				try{
+		            if(includeAction){
+			    		conn=QueryEngine.getInstance().getConnection();
+			        	webActionEnv=new HashMap();
+			        	webActionEnv.put("connection",conn);
+			        	webActionEnv.put("httpservletrequest",request);
+			        	webActionEnv.put("userweb",userWeb);
+		            }
+		            children=als.getTables();
+			    	for(int j=0;j< children.size();j++){
+			    		if(children.get(j) instanceof Table){
+			    			table=(Table)children.get(j);
+			    			//logger.debug("getAccordid~~~~~~~~~~"+String.valueOf(table.getAccordid()));
+			    			if(!table.isMenuObject()){
+			                	continue;
+			                }
+//			    			else if(ACCORDION!=table.getAccordid()){
+//			    				//logger.debug(String.valueOf(ACCORDION)+"!="+String.valueOf(table.getAccordid()));
+//			    				continue;
+//			    			}
+			    			try{
+			                    WebUtils.checkTableQueryPermission(table.getName(),request );
+			                }catch(NDSSecurityException e){
+			                    continue;
+			                }
+			                // table is ok for current user to list
+			                logger.debug(String.valueOf(ACCORDION)+"&&"+ACCORDION_name);
+			                catschild.add(table);
+			    		}
+			    	}
+			    		children=als.getWebActions();	
+			    		for(int v=0;v< children.size();v++){
+			    		if(children.get(v) instanceof WebAction){
+			        		if(includeAction){	
+				    			action=(WebAction)children.get(v);
+				        		if(action.canDisplay(webActionEnv)){
+				        			logger.debug("add action"+ACCORDION_name);
+				        			catschild.add(action);
+				        		}
+			        		}
+			    		}else{
+			    			throw new NDSRuntimeException("Unsupported element in TableCategory children:"+ 
+			    					children.get(v).getClass());
+			    		}
+			    	}
+			     
+		    	}catch(Throwable t){
+		        	logger.error("Fail to load subsystem tree", t);
+		        }finally{
+		        	try{if(conn!=null)conn.close();}catch(Throwable e){}
+		        }
+	        	if(catschild.size()>0){
+	        		// show this category
+	        		ArrayList row= new ArrayList();
+	                row.add(ACCORDION_name);
+	                row.add(catschild);
+	                cats.add(row);
+	        	}
+			}
+    	}
+			return cats;
+     
+	}
+	
+	/**
+	 * menu action
+	 * @throws Exception  cyl
+	 * @param request
 	 * @param tableCategoryId desgin menu list
 	 * @paqram includeAction if true, will load webactions also
 	 * @return elements are Table or WebAction and menu list
