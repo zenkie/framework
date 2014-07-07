@@ -182,7 +182,7 @@ public class Text extends TagSupport {
         if(nds.util.Validator.isNull(dVal)) {return;}
     	Pattern p=Pattern.compile("(?<=(<ori>)).*(?=</ori>)");
     	try {
-    		System.out.print("x->"+x);
+    		//System.out.print("x->"+x);
 	    	Matcher m=p.matcher(dVal);
 	    	 while(m.find()) {
 	    		oristring+=m.group();
