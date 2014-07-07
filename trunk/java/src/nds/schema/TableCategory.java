@@ -5,7 +5,7 @@
 package nds.schema;
 
 import java.util.*;
-
+import nds.util.FileUtils;
 import nds.util.MessagesHolder;
 
 /**
@@ -19,6 +19,8 @@ public class TableCategory {
 	private  SubSystem subsystem=null;
 	private int orderno;
 	private String pageURL;
+	private String icoURL;
+
 	private List<WebAction> actions;
 	private List<Table> tables;
 	private List tbacts; // WebAction and Table in order
@@ -144,4 +146,24 @@ public class TableCategory {
 	public void setSubSystem(SubSystem ss) {
 		this.subsystem= ss;
 	}
+	
+	/**
+	 * @param ico url
+	 */
+	public String getIcoURL() {
+		return icoURL;
+	}
+	
+	public void setIcoURL(String icoURL) {
+		this.icoURL = icoURL;
+	}
+	/**
+	 * @param ico back url
+	 */
+	public String getIcoURLback() {
+		
+		return icoURL==null?"":FileUtils.getFileNameNoEx(icoURL)+"_bk."
+		+FileUtils.getExtension(icoURL);
+	}
+	
 }
