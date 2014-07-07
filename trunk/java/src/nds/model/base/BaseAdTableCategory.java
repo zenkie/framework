@@ -349,12 +349,4 @@ public abstract class BaseAdTableCategory  implements Serializable {
 		this._icourl = _icourl;
 	}
 
-	public java.lang.String getIcoUrl() {
-		return _icourl;
-	}
-
-	public void setIcoUrl(java.lang.String _icourl) {
-		this._icourl = _icourl;
-	}
-
 }
