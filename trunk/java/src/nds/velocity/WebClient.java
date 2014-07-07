@@ -838,7 +838,7 @@ public class WebClient {
 			
 			//»ñÈ¡package°ü
 			String packageValue = reqHandler.genPackage(packageParams);
-			System.out.print("packageValue -> "+packageValue);
+			logger.debug("packageValue -> "+packageValue);
 			String noncestr = Sha1Util.getNonceStr();
 			String timestamp = Sha1Util.getTimeStamp();
 			
