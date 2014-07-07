@@ -46,6 +46,8 @@
         <property column="STATSIZE" length="10" name="StatSize" not-null="false" type="integer" />
         <property column="PROPS" length="4000" name="Props" not-null="false" type="string" />
         <property column="SHOW_COMMENTS" length="1" name="Showcomment" not-null="false" type="string" />
+        <property column="SHOW_TITLE" length="1" name="Showtitle" not-null="false" type="string" />
+        <property column="ROWSPAN" length="1" name="Rowspan" not-null="false" type="string" />
         <many-to-one class="AdTable" name="AdTable" insert="false" update="false" not-null="true" >
             <column name="AD_TABLE_ID" /> 
         </many-to-one>

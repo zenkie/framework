@@ -55,6 +55,8 @@ public abstract class BaseAdColumn  implements Serializable {
 	public static String PROP_PROPS = "Props";
 	// show comments
 	public static String PROP_SHOW_COMMENTS = "Showcomment";
+	public static String PROP_SHOW_TITLE = "Showtitle";
+	public static String PROP_ROWSPAN = "Rowspan";
 	public static String PROP_SEQUENCENAME = "Sequencename";
 	public static String PROP_ID = "Id";
 	public static String PROP_CREATION_DATE = "CreationDate";
@@ -107,6 +109,8 @@ public abstract class BaseAdColumn  implements Serializable {
 	private java.lang.String _isIndexed;
 	private java.lang.String _onDelete;
 	private java.lang.String _Showcomment;
+	private java.lang.String _Showtitle;
+	private java.lang.String _Rowspan;
 	
 	// many to one
 	private nds.model.AdTable _adTable;
@@ -464,18 +468,49 @@ public abstract class BaseAdColumn  implements Serializable {
 	}
 	
 	/**
-	 * Return the value associated with the column: accordion
+	 * Return the value associated with the column: comment
 	 */
 	public java.lang.String getShowcomment () {
 		return _Showcomment;
 	}
 
 	/**
-	 * Set the value related to the column: _Accordion
+	 * Set the value related to the column: _Showcomment
 	 * @param _comments the COMMENTS value
 	 */
 	public void setShowcomment (java.lang.String _Showcomment) {
 		this._Showcomment = _Showcomment;
+	}	
+	
+	/**
+	 * Return the value associated with the column: title
+	 */
+	public java.lang.String getShowtitle () {
+		return _Showtitle;
+	}
+
+	/**
+	 * Set the value related to the column: _Showtitle
+	 * @param _comments the COMMENTS value
+	 */
+	public void setShowtitle (java.lang.String _Showtitle) {
+		this._Showtitle = _Showtitle;
+	}	
+	
+	
+	/**
+	 * Return the value associated with the column: title
+	 */
+	public java.lang.String getRowspan () {
+		return _Rowspan;
+	}
+
+	/**
+	 * Set the value related to the column: _Showtitle
+	 * @param _comments the COMMENTS value
+	 */
+	public void setRowspan (java.lang.String _Rowspan) {
+		this._Rowspan = _Rowspan;
 	}	
 	
 	
