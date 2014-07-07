@@ -68,6 +68,12 @@ public interface QueryResult extends Serializable {
      * has startIndex and range set to request only one page of limited information.
      */
     public int getTotalRowCount();
+    /**解决当我们自定义sql 添加distinct request addSelection(String selectItem, String desc) 
+     * ("distinct ") 无法拿到正确的总行数
+     * 
+     * @return
+     */
+    public int getTotalCount();
 
     /**
      * Many columns are not string type, but we provide only this method for
