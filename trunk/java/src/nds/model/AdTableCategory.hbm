@@ -11,6 +11,7 @@
         <property column="NAME" length="180" name="Name" not-null="true" type="string" />
         <property column="ORDERNO" length="10" name="Orderno" not-null="false" type="integer" />
         <property column="URL" length="255" name="Url" not-null="false" type="string" />
+        <property column="ICOURL" length="255" name="IcoUrl" not-null="false" type="string" />
         <property column="AD_SUBSYSTEM_ID" length="10" name="AdSubSystemId" not-null="false" type="integer" />
         <property column="COMMENTS" length="1000" name="Comments" not-null="false" type="string" />
         <property column="OWNERID" length="10" name="OwnerId" not-null="false" type="integer" />
