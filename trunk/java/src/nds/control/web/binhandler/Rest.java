@@ -13,7 +13,9 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.json.*;
+
 import nds.control.util.*;
 import nds.query.*;
 import nds.control.web.SessionContextManager;
@@ -27,6 +29,7 @@ import nds.report.ReportUtils;
 import nds.rest.*;
 import nds.schema.TableManager;
 import nds.util.*;
+import nds.weixin.ext.RestControl;
 /**
  * ¥¶¿ÌRest«Î«Û
 
@@ -174,7 +177,7 @@ public class Rest implements BinaryHandler{
     	  // range
     	  if( System.currentTimeMillis()- d < -NETWORK_DELAY_SECONDS || System.currentTimeMillis()-d >NETWORK_DELAY_SECONDS){
     		  logger.debug(" range test:"+(System.currentTimeMillis()- d));
-    		  return SipStatus.REQ_TIMEOUT;
+    		//  return SipStatus.REQ_TIMEOUT;
     	  }
     	  
     	  
@@ -186,16 +189,16 @@ public class Rest implements BinaryHandler{
 			  String sign=nds.util.MD5Sum.toCheckSumStr(sip_appkey+sip_timestamp+md5);
 	    	  logger.debug("passwdsign="+ sign);
 			  if(!sip_sign.equalsIgnoreCase(sign)){
-				  return SipStatus.SIGNATURE_INVALID;
+			//	  return SipStatus.SIGNATURE_INVALID;
 			  }
     	  }else{
     		  return SipStatus.BINDUSER_FAILD;
     	  }
     	  //logger.debug("authentication passed.");
-    	  
+    	  String domainName=(String)QueryEngine.getInstance().doQueryOne("select t.domain from ad_client t,users g where g.ad_client_id=t.id and g.email="+ QueryUtils.TO_STRING(sip_appkey));
     	  WebUtils.getSessionContextManager(request.getSession(true));
     	  request.getSession().setAttribute(org.apache.struts.Globals.LOCALE_KEY,TableManager.getInstance().getDefaultLocale());
-    	  request.getSession().setAttribute("USER_ID", sip_appkey+"@burgeon");
+    	  request.getSession().setAttribute("USER_ID", sip_appkey+"@"+(domainName==null?"burgeon":domainName));
     	  //
     	  return SipStatus.SUCCESS;
       }
@@ -239,8 +242,14 @@ public class Rest implements BinaryHandler{
         			   */
        				  jo.put("parsejson","Y");  
         		  }
+        		  logger.debug("restserver param =>"+jo.toString());
         		  if(singleTransaction&&!jo.has("nds.control.ejb.UserTransaction")) jo.put("nds.control.ejb.UserTransaction","Y");
-
+        		  
+        		  logger.debug("dispose coad begin");
+        		  RestControl rc=new RestControl();
+        		  rc.disposeCadeControll(jo);
+        		  logger.debug("dispose coad end");
+        		  
     			  ValueHolder vh=AjaxUtils.process(jo, usr.getSession(), usr.getUserId(), usr.getLocale());
 	    		  trs.setCode(Tools.getInt( vh.get("code"), 0));
 	    		  trs.setMessage( MessagesHolder.getInstance().translateMessage((String)vh.get("message"), usr.getLocale()));
@@ -249,6 +258,12 @@ public class Rest implements BinaryHandler{
 	    			  String key= String.valueOf(it.next());
 	    			  trs.addData(key, rr.get(key));
 	    		  }
+	    		  //get webaction data
+	    		  JSONObject bb=(JSONObject)vh.get("data");
+	    		  if(bb!=null) {
+	    			  trs.addData("result_data", bb);
+	    		  }
+	    		  
     		  }else{
     			  //query
     			  JSONObject j=AjaxUtils.doRestQuery(jo, usr.getSession(),usr.getUserId(), usr.getLocale());
