@@ -57,6 +57,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     private CollectionValueHashtable fkColumns;//key: PK columnId(Integer),value: Columns(Collection) that referece to that pk
     private ArrayList tableCategories;  //elements are TableCategory
     private ArrayList subSystems;  //elements are SubSystem
+    private ArrayList sysModel;  //elements are sysModel
     private boolean isInitializing;
     private Locale defaultLocale= Locale.getDefault();
     /**
@@ -172,6 +173,25 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
 	}	
 	
 	/**
+	 * By order specified in SysModel
+	 * @return elements are SysModel
+	 */
+	public ArrayList getSysModel(){
+		return this.sysModel;
+	}
+	public SysModel getSysModel(int id){
+		for(int i=0;i< sysModel.size();i++)
+			if ( ((SysModel)sysModel.get(i)).getId()==id) return ((SysModel)sysModel.get(i));
+		return null;
+	}
+	
+	public SysModel getSysModel(String subname) {
+		for (int i = 0; i < this.sysModel.size(); i++)
+			if (((SysModel)this.sysModel.get(i)).getName().equals(subname)) return (SysModel)sysModel.get(i);
+		return null;
+	}	
+	
+	/**
 	 * Return column interpreter if found
 	 * @param columnId
 	 * @return null if not found 
@@ -237,6 +257,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
             it=loader.getTables();
             tableCategories = loader.getTableCategories();
             subSystems= loader.getSubSystems();
+            sysModel=loader.getSysModel();
             
         } catch(Exception e) {
             logger.error("Could not get schema structure from db",e);
@@ -255,6 +276,23 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     	}
     	for(int i=0;i< this.subSystems.size();i++)
     		((SubSystem)subSystems.get(i)).sortTableCategoryAndActions();
+    }
+    
+    /**
+     * Add table categories to sysmodel
+     *
+     */
+    private void initSysmodel(){
+    	for(int i=0;i<subSystems.size();i++){
+    		SubSystem tc=(SubSystem)subSystems.get(i);
+    		if(tc.getSysModel()!=null)
+    			tc.getSysModel().addSubSystem(tc);
+    	}
+    	logger.debug("sysmodel size"+this.sysModel.size());
+    	for(int j=0;j< this.sysModel.size();j++){
+    		logger.debug(((SysModel)sysModel.get(j)).getName());
+    		((SysModel)sysModel.get(j)).sortTableCategoryAndActions();
+    	}
     }
     /**
      * Add tables to category
@@ -322,7 +360,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
      */
     private void setup(Iterator it) {
         
-
+    //System.out.print("测试一下啦！！！！！！！");
         while(it.hasNext()) {
             Table table=(Table)it.next();
             String tableName= table.getName().toUpperCase();
@@ -346,6 +384,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
         dict.init(this);
         initActions();
         initSubSystems();
+        initSysmodel();
         initTableCategories();
         this.checkVoidActionsOnTable();
     	/*
@@ -1017,6 +1056,7 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
     	instance.subSystems = tmpInstance.subSystems;
     	instance.tableIDs=tmpInstance.tableIDs;
     	instance.tableNames=tmpInstance.tableNames;
+    	instance.sysModel=tmpInstance.sysModel;
     	instance.aliasTableNames=tmpInstance.aliasTableNames;
     	instance.columnIDs= tmpInstance.columnIDs;
     	instance.columnNames=tmpInstance.columnNames;
@@ -1057,6 +1097,20 @@ public class TableManager implements SchemaConstants,java.io.Serializable , nds.
         clearAll();
         logger.debug("TableManager "+ name+ " is destroied." );
     }
+
+	/**
+	 * 根据表返回列表查询对象
+	 * @param tableId
+	 * @return
+	 * @throws Exception
+	 */
+	public ArrayList getQueryColumns(int tableId)throws Exception{
+    	Table t=TableManager.getInstance().getTable(tableId);
+    	ArrayList queryColumns=t.getShowableColumns(Column.QUERY_LIST);
+    	return queryColumns;
+	}
+
+
 
 }
 /**
@@ -1120,6 +1174,8 @@ class ReferTable{
         return 	v;
     }
     
-    
+
+	
+	
     
 }
