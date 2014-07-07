@@ -42,6 +42,7 @@ public interface ButtonCommandUI {
 	public final static String POPUP_TARGET_SMALL_DIALOG="btn_dialog_small";
 	public final static String POPUP_TARGET_MEDIUM_DIALOG="btn_dialog_medium";
 	public final static String POPUP_TARGET_LARGE_DIALOG="btn_dialog_large"; // JUST ANOTHER OBJ IN OBJ DLG
+	public final static String POPUP_TARGET_NODIALOG="btn_nodialog";
 	
 	/**
 	 * Contruct html ui for the command of Input style
