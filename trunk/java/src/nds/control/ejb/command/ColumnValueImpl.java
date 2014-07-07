@@ -68,6 +68,7 @@ public class ColumnValueImpl implements ColumnValue{
       */
      event.put("ColumnValueHashMap",hasMsp);
      logger.debug("ColumnValueHashMap  "+hasMsp);
+     Boolean unionfk=(Boolean) (event.getParameterValue("unionfk")==null?event.getParameterValue("unionfk"):false);
      String tableName = table.getName() ;
      Vector value = new Vector();
      //支持sheetNo字段包含其他字段的内容作为一部分，例如：商品编号需要包含大类，小类信息，则写法为：
@@ -186,6 +187,7 @@ public class ColumnValueImpl implements ColumnValue{
             co.enableBestEffort(isBestEffort);
             co.setInvalidRows(invalidRows) ;
          }
+         //suppot fk外键新增时支持对应的ak和id
          value = co.getColumnValue(event,table,column,length);
          
          hasMsp.put(columnName,value);
