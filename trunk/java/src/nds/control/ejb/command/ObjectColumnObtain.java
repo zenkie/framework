@@ -40,7 +40,8 @@ public class ObjectColumnObtain extends ColumnObtain{
   public Vector getColumnValue(DefaultWebEvent event,Table table,Column col,int length) throws NDSException,RemoteException{
     DefaultWebEventHelper helper= new DefaultWebEventHelper();
     locale= event.getLocale();
-    
+    Boolean unionfk=(Boolean) (event.getParameterValue("unionfk")!=null?event.getParameterValue("unionfk"):false);
+    logger.debug("unionfk for column " + col.getName() + ":"+ unionfk);
     nds.security.User user= helper.getOperator(event);
     //logger.debug(" for column " + col.getName() + ":"+ event.toDetailString());
   	TableManager tm= helper.getTableManager();
@@ -65,8 +66,8 @@ public class ObjectColumnObtain extends ColumnObtain{
       }
       Column akColumn = refTable.getAlternateKey();
       Column ak2Column= refTable.getAlternateKey2();
-      
-      String akNo = akColumn.getName();
+      String akNo=akColumn.getName();
+
       //Column akCol = refTable.getAlternateKey();
       String colName = col.getName();
       int lastIndex = -100;
@@ -133,9 +134,13 @@ public class ObjectColumnObtain extends ColumnObtain{
       
       int refTableId= tm.getTable(refTableName).getId();
       String filterSql=null;
+      
+      //suppot fkid and fkak
       // refTableName must not be real table, but column filter may use the alias table as reference   
       StringBuffer sqlStr=new StringBuffer( "SELECT "+tableColumnName+" FROM "+(refTable.getRealTableName())+
-	    " "+refTable.getName()+" WHERE "+(refTable.isAcitveFilterEnabled()?"ISACTIVE='Y' AND (":"(")+akNo+" = ?");
+	    " "+refTable.getName()+" WHERE "+(refTable.isAcitveFilterEnabled()?"ISACTIVE='Y' AND (":"(")+(unionfk?refTable.getPrimaryKey().getName():akNo)+" = ?");
+
+      
       if(ak2Column!=null){
     	  sqlStr.append(" OR ").append(ak2Column.getName()).append("=?");
       }
@@ -226,6 +231,7 @@ public class ObjectColumnObtain extends ColumnObtain{
             
           	aliasPstmt=conn.prepareStatement(aliasTableFilterSql);
           }
+          logger.debug("test is uphere!!!!");
           int tableId= col.getTable().getId();
           List rcwf=col.getReferenceColumnsInWildcardFilter();
           Column rc;
@@ -300,6 +306,7 @@ public class ObjectColumnObtain extends ColumnObtain{
                   				  resultInt[i] = result.getBigDecimal(1);
                   			  }else{
                   				  //add support for ad_table( fast_save), will save if not found 2010.2.9 yfzhu
+                  				  
                   				  if(isFastSave){
                   					  resultInt[i]=new BigDecimal( fastSaveNewValue(refTable,objectStr[i], i,fsPstmt));
                   					  
