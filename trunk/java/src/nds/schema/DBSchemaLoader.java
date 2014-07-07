@@ -13,6 +13,7 @@ import nds.query.*;
 import nds.control.event.NDSEventException;
 import nds.model.dao.*;
 import nds.model.*;
+
 import org.hibernate.*;
 import nds.log.*;
 import java.sql.*;
@@ -28,6 +29,7 @@ public class DBSchemaLoader {
 	private Hashtable tables= new Hashtable();// key:table id, value TableImpl
 	private HashMap categories= new HashMap(); // key: category id (Integer) values are TableCategory
 	private HashMap subsystems= new HashMap(); // key: category id (Integer) values are SubSystem
+	private HashMap sysmodels= new HashMap(); // key: category id (Integer) values are Sysmodels
 	/**
 	 * By default, comments of column and table will not be loaded into memory
 	 * this can be changed using portal.properties#schema.loadcomments 
@@ -46,6 +48,8 @@ public class DBSchemaLoader {
 		tables=null;
 		categories=null;
 		subsystems=null;
+		//add sysmodels
+		sysmodels=null;
 	}
 	
 	/**
@@ -62,6 +66,16 @@ public class DBSchemaLoader {
     	try{
     		session=adTableDAO.createSession();
     		long t=System.currentTimeMillis();
+    		
+    		
+    		//add sysmodes who has Public subsystem
+    		List mod= session.createSQLQuery("select * from ad_sysmodel t where t.isactive='Y' and exists (select 1 from ad_subsystem e where e.AD_SYSMODEL_ID=t.id and e.isactive='Y')")
+        			.addEntity(AdSysModel.class).list();
+        		for(Iterator it=mod.iterator();it.hasNext();){
+        			AdSysModel s= (AdSysModel) it.next();
+        			createAdSysModel(s);
+        		}
+        		
     		//List colList= session.createSQLQuery("select {c.*} from ad_column {c} where {c}.IsActive='Y' and exists (select 1 from ad_table a, ad_tablecategory g where a.id={c}.ad_table_id and g.id=a.ad_tablecategory_id and g.isactive='Y' and a.isactive='Y') order by {c}.Orderno", "c", AdColumn.class).list();
     		List colList= session.createSQLQuery("select * from ad_column where ad_column.IsActive='Y' and exists (select 1 from ad_table a, ad_tablecategory g, ad_subsystem s where a.id=ad_column.ad_table_id and g.id=a.ad_tablecategory_id and s.id=g.ad_subsystem_id and s.isactive='Y' and g.isactive='Y' and a.isactive='Y') order by ad_column.Orderno").addEntity(AdColumn.class).list();
     		
@@ -74,6 +88,7 @@ public class DBSchemaLoader {
    				createRefByTables(tb);
     		}
     		
+
     		//add subsystems who has no tablecategory but do have webaction as child
     		List ss= session.createSQLQuery("select * from ad_subsystem where ad_subsystem.IsActive='Y' and exists (select 1 from ad_action a where a.ad_subsystem_id=ad_subsystem.id and a.isactive='Y') and not exists (select 1 from ad_tablecategory c where c.ad_subsystem_id=ad_subsystem.id and c.isactive='Y') order by ad_subsystem.Orderno")
     			.addEntity(AdSubSystem.class).list();
@@ -92,7 +107,34 @@ public class DBSchemaLoader {
     	adTables.clear();
 	}
 	
+	private SysModel getSysModel(AdSysModel m){
+		if(m==null) return null;
+		SysModel mod= (SysModel)this.sysmodels.get(m.getId());
+		if( mod==null) mod=createAdSysModel(m);
+		return mod;
+	}
 	
+	private SysModel getSysModelbyid(Integer m){
+		if(m==null) return null;
+		SysModel mod= (SysModel)this.sysmodels.get(m);
+		if( mod==null) mod=null;
+		return mod;
+	}
+	
+	
+	private SysModel createAdSysModel(AdSysModel m) {
+		// TODO Auto-generated method stub
+		SysModel mod= new SysModel( );
+		mod.setId(m.getId().intValue());
+		mod.setName(m.getName());
+		mod.setMlink(m.getMlink());
+		mod.setPico(m.getPico());
+		mod.setMdisp(m.getMdisp());
+		sysmodels.put(m.getId(), mod);
+		return mod;
+		
+	}
+
 	private TableImpl getTableImpl(AdTable tb){
 		TableImpl table= (TableImpl)tables.get(tb.getId()) ;
 		if(table ==null)
@@ -113,7 +155,10 @@ public class DBSchemaLoader {
 		ss.setOrderno(ass.getOrderno());
 		ss.setPageURL(ass.getUrl());
 		ss.setIconURL(ass.getIconUrl());
-		//tc.setParent
+		//tc.setParent adsysmodel
+//		if(ass.getAdsysModel()!=null)
+//			getSysModelbyid((ass.getAdsysModel())).addSubSystem(ss);
+		ss.setSysModel(getSysModelbyid((ass.getAdsysModel())));
 		subsystems.put(ass.getId(), ss);
 		return ss;
 	}
@@ -130,6 +175,7 @@ public class DBSchemaLoader {
 		tc.setOrder(Tools.getInt(atc.getOrderno(),-1));
 		tc.setPageURL(atc.getUrl());
 		tc.setSubSystem(getSubSystem(atc.getAdSubSystem()));
+		tc.setIcoURL(atc.getIcoUrl());
 		//tc.setParent
 		categories.put(atc.getId(), tc);
 		return tc;
@@ -334,6 +380,10 @@ public class DBSchemaLoader {
             if(loadingComments) col.setComment(column.getComments());
             //showcomments
             col.setShowcomment(column.getShowcomment());
+           //showtitle
+            col.setShowtitle(Tools.getYesNo(column.getShowtitle(), false));
+            //showtitle
+            col.setRowspan(Tools.getYesNo(column.getRowspan(), false));
             //after displaysetting
             col.setFilter(column.getFilter());
             
@@ -410,6 +460,13 @@ public class DBSchemaLoader {
 	public ArrayList getSubSystems(){
 		
 		ArrayList  col=new ArrayList( this.subsystems.values());
+		ListSort.sort(col,"Orderno");
+		return col;
+	}
+	
+	public ArrayList getSysModel(){
+		
+		ArrayList  col=new ArrayList( this.sysmodels.values());
 		ListSort.sort(col,"Orderno");
 		return col;
 	}
