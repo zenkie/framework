@@ -19,6 +19,7 @@ public class SubSystem {
 	private Integer orderno;
 	private String pageURL;
 	private String iconURL;
+	private SysModel sysmodel;
 	private List<TableCategory> tcs;
 	private List<WebAction> actions;
 	private List tcacts; // WebAction and TableCategory in order
@@ -149,5 +150,13 @@ public class SubSystem {
 	public void setIconURL(String iconURL) {
 		this.iconURL = iconURL;
 	}
+
+	public void setSysModel(SysModel model) {
+		// TODO Auto-generated method stub
+		this.sysmodel=model;
+	}
 	
+	public SysModel getSysModel(){
+		return sysmodel;
+	}
 }
