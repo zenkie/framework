@@ -61,14 +61,9 @@ public class WxBindkey extends Command {
     		Wxvcode wxv=Wxvcode.getInstance();
     		WeixinBind wx = new WeixinBind(login_user, login_pwd,wxv.getcookei(userid));
     		wx.login(vcode);
-    		if(wx.getLoginErrCode()==0){
+    		if(wx.getLoginErrCode()==0&&wx.getToken()!=null){
     		
-    		if(!wx.isDevUser(wx.getToken())){
-    			vh.put("message", "尚未成为开发者，请在公众平台中检查相应的注册信息！");
-    			vh.put("code","-1");
-    			return vh;
-    		}
-    		
+
     		wx.editDevInteface(wx.getToken());//编辑开发模式
     		
     		
@@ -78,11 +73,21 @@ public class WxBindkey extends Command {
 	        	token = String.valueOf(((List)li.get(0)).get(1));
 	         }
     		wx.editCommonInteface(wx.getToken(),url,token);
+    		
+    		if(!wx.isDevUser(wx.getToken())){
+    			vh.put("message", "尚未成为开发者，请在公众平台中检查相应的注册信息！");
+    			vh.put("code","-1");
+    			return vh;
+    		}
+    		
+    		
     		WeUtilsManager Wemanage =WeUtilsManager.getInstance();
 			WeUtils wu=Wemanage.getByAdClientId(usr.adClientId);
     		String svrPath = m_storageDir+ File.separator  + wu.getDoMain();
     		
     		wx.editServiceOAuth(wx.getToken(), wu.getDoMain());//oauth2.0
+    		
+    		
     		
     		File uploadPath = new File(svrPath);//上传文件目录
     		logger.debug("uploadPath ->"+svrPath);
