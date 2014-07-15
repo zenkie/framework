@@ -26,6 +26,15 @@ public class WeUtilsManager {
        "AD_SITE_TEMPLATE ast1 ON ast1.id=wmt.home_tmp "+
        "where wxc.DOMAIN=? and wxc.domain is not null";
 	
+	private final static String websqlad="select wxi.ad_client_id, wxc.DOMAIN, wxc.wxnum, wxc.wxtype, wxi.url,"+
+		       "wxi.appid, wxi.appsecret, wxi.wxparam,wxi.wxtoken, nvl(ast.foldername, ''),nvl(ast1.foldername,'')"+
+		       " from WEB_CLIENT wxc LEFT JOIN WX_INTERFACESET wxi ON wxi.ad_client_id = wxc.ad_client_id "+
+		       "LEFT JOIN WEB_CLIENT_TMP wct ON wct.ad_client_id = wxc.ad_client_id "+
+		       "LEFT JOIN AD_SITE_TEMPLATE ast ON ast.id = wct.home_tmp "+
+		       "LEFT JOIN WEB_MAIL_TMP wmt ON wmt.ad_client_id=wxc.ad_client_id LEFT JOIN "+
+		       "AD_SITE_TEMPLATE ast1 ON ast1.id=wmt.home_tmp "+
+		       "where wxc.ad_client_id=? and wxc.domain is not null";
+	
 	
 	public WeUtilsManager(){
 		logger.debug("WeUtilsManager is init!!!!");
@@ -93,9 +102,9 @@ public class WeUtilsManager {
 			WeUtils w=null;
 			for(Enumeration<WeUtils> wus=weUtiles.elements();wus.hasMoreElements();) {
 				w=wus.nextElement();
-				logger.debug("weUtiles domain is->"+w.getDoMain());
+				//logger.debug("weUtiles domain is->"+w.getDoMain());
 				if(w.getDoMain().equals(webDomain)) {
-					logger.debug("weUtiles domain is eauals");
+					//logger.debug("weUtiles domain is eauals");
 					wu=w;
 					break;
 				}
@@ -178,6 +187,46 @@ public class WeUtilsManager {
 				}
 		} catch (Throwable t) {
 			logger.error("Fail to get ad_client.id from " + webDomain, t);
+		} finally {
+			try {
+				if (conn != null)
+					conn.close();
+			} catch (Throwable t2) {
+			}
+		}
+		return dc;
+	}
+	
+	/**
+	 * 
+	 * @param webDomain
+	 *            web_client.id
+	 * @return null if not found, or [ad_client.id (Integer), ad_client.domain
+	 *         (String)]
+	 */
+	public static WeUtils loadAdClientbyid(int adclientid) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		//String d = webDomain.toLowerCase();
+		List al=new java.util.ArrayList();
+		WeUtils dc = getByAdClientId(adclientid);
+		//if(weUtiles==null){weUtiles=new Hashtable<String,WeUtils>();}
+		try {
+			if (dc == null) {
+				// loading from db
+				conn = QueryEngine.getInstance().getConnection();
+				List localList = QueryEngine.getInstance().doQueryList(websqlad,new Object[] { Integer.valueOf(adclientid)},conn);
+				 for (int i = 0; i < localList.size(); i++) {
+			    	  dc = new WeUtils((List)localList.get(i));  
+			    	  logger.debug("weutils key is ->"+dc.getCustomId());
+			    	  weUtiles.put(dc.getCustomId(), dc);
+				 }
+				} else {
+					logger.debug("find clientid for " + adclientid);
+				}
+		} catch (Throwable t) {
+			logger.error("Fail to get ad_client.id from " + adclientid, t);
 		} finally {
 			try {
 				if (conn != null)
