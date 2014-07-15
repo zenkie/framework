@@ -37,20 +37,22 @@ public class wx_refshkey extends Command {
     	int objectId = -1;
      	objectId=params.optInt("objid");
     	
-    	String appid = null,appSecret = null;
-    	List li=QueryEngine.getInstance().doQueryList("select t.APPID,t.APPSECRET from WX_INTERFACESET t where t.id="+objectId);
-        if (li.size() > 0) {
-        	appid = String.valueOf(((List)li.get(0)).get(0));
-        	appSecret = String.valueOf(((List)li.get(0)).get(1));
-         }
+    	//String appid = null,appSecret = null;
+    	//List li=QueryEngine.getInstance().doQueryList("select t.APPID,t.APPSECRET from WX_INTERFACESET t where t.id="+objectId);
+        //if (li.size() > 0) {
+        //	appid = String.valueOf(((List)li.get(0)).get(0));
+        //	appSecret = String.valueOf(((List)li.get(0)).get(1));
+        // }
  
 		WeUtilsManager Wemanage =WeUtilsManager.getInstance();
-    	WeUtils wu=Wemanage.getByAdClientId(clientId);
-    	if(wu!=null&&appid!=null&&appSecret!=null){
-    		wu.setAppId(appid);
-    		wu.setAppSecret(appSecret);
-    		wu.setRefshmem(true);
-    	}
+    	Wemanage.unloadAdClientId(clientId);
+    	WeUtils wu=Wemanage.loadAdClientbyid(clientId);
+	   	if(wu!=null){
+	//    		wu.setAppId(appid);
+	//    		wu.setAppSecret(appSecret);
+	   		logger.debug("setRefshmem true!");
+	  		wu.setRefshmem(true);//接口重新获取新的token
+	 	}
     	
     	vh.put("message","appid,appsecret 刷新成功！");
 		vh.put("code","0");
