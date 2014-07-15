@@ -581,11 +581,12 @@ public class VelocityViewServlet extends HttpServlet
         		/**
         		 * for yunbao
         		 */
+        		WeUtils wu=null;
 	    		try{
 	    			java.net.URL url = new java.net.URL(request.getRequestURL().toString());
 	    			webDomain= url.getHost();
 	    			WeUtilsManager Wemanage =WeUtilsManager.getInstance();
-	    			WeUtils wu=Wemanage.getByDomain(webDomain);
+	    			 wu=Wemanage.getByDomain(webDomain);
 	    			clientId=wu.getAd_client_id();
 	    			String code=request.getParameter("code");
 	    			logger.debug("code->"+code +" clientId->"+clientId);
@@ -606,6 +607,7 @@ public class VelocityViewServlet extends HttpServlet
 	    		context= new VelocityContext();
 	    		//VelocityUtils.insertVariables(context, clientId, "/");
 	    		context.put("myweb", new WebClient(clientId, "/",  webDomain, true) );
+	    		if(wu!=null)context.put("weutils",wu);
         	}else{
         		/**
         		 * For ahyyzb only, which use vml as website language
