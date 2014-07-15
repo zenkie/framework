@@ -522,21 +522,25 @@ import nds.util.Validator;
 		}
 
 		public static String shorten(String s, int length) {
-			return shorten(s, length, "...");
+			return shorten(s, length, "...",true);
+		}
+		
+		public static String shorten(String s, int length,Boolean ignoreWhitespace) {
+			return shorten(s, length, "...",ignoreWhitespace);
 		}
 
 		public static String shorten(String s, String suffix) {
-			return shorten(s, 20, suffix);
+			return shorten(s, 20, suffix,true);
 		}
 
-		public static String shorten(String s, int length, String suffix) {
+		public static String shorten(String s, int length, String suffix,Boolean ignoreWhitespace) {
 			if (s == null || suffix == null)  {
 				return null;
 			}
 
 			if (s.length() > length) {
 				for (int j = length; j >= 0; j--) {
-					if (Character.isWhitespace(s.charAt(j))) {
+					if (ignoreWhitespace&&Character.isWhitespace(s.charAt(j))) {
 						length = j;
 
 						break;
