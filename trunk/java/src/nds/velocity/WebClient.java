@@ -18,6 +18,7 @@ import java.io.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.directwebremoting.util.SwallowingHttpServletResponse;
+import org.json.JSONObject;
 
 import com.wxap.*;
 import com.wxap.client.TenpayHttpClient;
@@ -863,6 +864,45 @@ public class WebClient {
 			map.put("packageValue", packageValue);
 			map.put("sign", sign);
 		return map;
+		
+	}
+	
+	public JSONObject getAlias(int pdtid) throws QueryException {
+		
+		String psql="select t.WX_SPECID,t.qty from wx_alias t where t.WX_SPECID is not null and t.wx_appendgoods_id=?";
+		Connection conn= QueryEngine.getInstance().getConnection();
+		PreparedStatement pstmt=null;
+		ResultSet rs=null;
+		JSONObject jor = new JSONObject();
+		try{
+			pstmt= conn.prepareStatement(psql);
+			pstmt.setInt(1,pdtid);
+			rs= pstmt.executeQuery();	
+			while(rs.next()) {
+				jor.put(rs.getString(1),  Tools.getInt(rs.getObject(2), 0));
+			}
+			logger.debug("jor ->"+jor.toString());
+			 return jor;
+		} catch (Exception e) {
+			try {
+				pstmt.close();
+			} catch (Exception ea) {
+			}
+			try {
+				rs.close();
+			} catch (Exception ew) {
+			}
+			try {
+					conn.close();
+			} catch (Exception ec) {
+			}
+			logger.error("Error doing query:"+ psql + pdtid + ":" + e);
+			throw new QueryException("Error doing query:" + psql,e);
+		}finally{
+			if(rs!=null)try{rs.close();}catch(Throwable t){}
+			if(pstmt!=null)try{pstmt.close();}catch(Throwable t){}
+			if(conn!=null)try{conn.close();}catch(Throwable t){}
+		}
 		
 	}
 	
