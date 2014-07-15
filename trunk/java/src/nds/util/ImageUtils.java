@@ -241,6 +241,33 @@ public class ImageUtils {
 		builder.toFile(saveFile);
 	}
 	
+	
+	public static BufferedImage getScaledInstance(String path,int width,int hight,
+			String imgtype,Boolean force) throws Exception {
+		//BufferedImage srcImage;
+	 
+		File fromFile=new File(path);
+		BufferedImage srcImage;
+		Builder<BufferedImage> builder = null;  
+		/*
+		 * String imgType = "JPEG"; if
+		 * (fromFileStr.toLowerCase().equals(".png")) { imgType = "PNG"; }
+		 */
+		// File saveFile = new File(saveToFileStr);
+		srcImage = ImageIO.read(fromFile);
+		/*
+		 * String imgType = "JPEG"; if
+		 * (fromFileStr.toLowerCase().equals(".png")) { imgType = "PNG"; }
+		 */
+		// File saveFile = new File(saveToFileStr);
+		if(force){
+			builder=Thumbnails.of(srcImage).forceSize(width,hight).outputFormat(imgtype).outputQuality(0.8f);
+		}else{
+			builder=Thumbnails.of(srcImage).size(width,hight).outputFormat(imgtype).outputQuality(0.8f);
+		}
+		return builder.asBufferedImage();
+	}
+	
 
 		  
 
@@ -282,9 +309,9 @@ public class ImageUtils {
 		 File saveFile=new File(saveToFileStr);
 		 Builder<BufferedImage> builder = null;  
 		if(force){
-			builder=Thumbnails.of(in).forceSize(width,hight).outputFormat(imgType).outputQuality(0.8f);
+			builder=Thumbnails.of(in).forceSize(width,hight).outputFormat(imgType).outputQuality(0.5f);
 		}else{
-			builder=Thumbnails.of(in).size(width,hight).outputFormat(imgType).outputQuality(0.8f);
+			builder=Thumbnails.of(in).size(width,hight).outputFormat(imgType).outputQuality(0.5f);
 		}
 		builder.toFile(saveFile);
 		
