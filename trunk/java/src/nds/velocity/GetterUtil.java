@@ -1,6 +1,8 @@
 package nds.velocity;
 
 import java.text.DateFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Date;
 
 /**
@@ -316,6 +318,20 @@ public class GetterUtil {
 		}
 
 		return defaultValue;
+	}
+	
+	public static Object getDecimalFormat(Object obj) {
+		Object obj1 = null;
+		// 基于格式的解析
+		NumberFormat nf1 = NumberFormat.getInstance();
+		try {
+			obj1 = nf1.parse((String) obj);
+
+			// System.err.println(obj1);
+		} catch (ParseException e1) {
+			System.err.println(e1);
+		}
+		return  obj1;
 	}
 
 	private static String _trim(String value) {
