@@ -93,6 +93,7 @@ public class VelocityUtils {
 	    	   vc.put("v", DateUtil.getInstance());
 	    	   vc.put("engine", QueryEngine.getInstance());
 	    	   vc.put("manager", TableManager.getInstance());
+	    	   vc.put("math",new org.apache.velocity.tools.generic.MathTool());
 	    	   vc.put("controller", (ClientControllerWebImpl)WebUtils.getServletContextManager().getActor("nds.web.webController"));
 		       }
 	
