@@ -137,6 +137,8 @@ public class WeixinBind {
 			post.setParameter("f", "json");
 			int status = client.executeMethod(post);
 			// System.out.println("登录：" + post.getResponseBodyAsString());
+			System.out.println("login status->" + status);
+			
 			if (status == HttpStatus.SC_OK) {
 				String ret = post.getResponseBodyAsString();
 				org.json.JSONObject json = new org.json.JSONObject(ret);
@@ -144,6 +146,7 @@ public class WeixinBind {
 						.get("base_resp");
 				String token = json.optString("redirect_url");
 				int retCode = Integer.parseInt(retcode.getString("ret"));
+				System.out.println("login retCode->" + retCode);
 				if (retCode == 0) {
 					this.cookies = client.getState().getCookies();
 					StringBuffer cookie = new StringBuffer();
@@ -366,7 +369,7 @@ public class WeixinBind {
 	 */
 	public String getOriginalID(String token) throws Exception {
 		String GetUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
-				+ token + "&lang=zh_CN";
+				+ token + "&lang=zh_CN&f=json";
 		String HeadUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
 				+ token + "&lang=zh_CN";
 
@@ -377,18 +380,14 @@ public class WeixinBind {
 		get.setRequestHeader("Referer", HeadUrl);
 		get.setRequestHeader("Cookie", this.cookiestr);
 		int status = this.client.executeMethod(get);
+		String rs = null;
 		if (status != 200)
-			return null;
-		String si = get.getResponseBodyAsString();
-		Pattern p = Pattern
-				.compile(
-						"<li[^>]+>\\s*[\\r\\n]*\\s*<\\s*h4\\s*>\\s*原始ID\\s*</h4>\\s*[\\r\\n]*\\s*<div[^>]*>\\s*[\\r\\n]*\\s*</div>\\s*[\\r\\n]*\\s*<div[^>]*>\\s*[\\r\\n]*\\s*<span>([^<]*)</span>\\s*[\\r\\n]*\\s*</div>\\s*[\\r\\n]*\\s*</li>",
-						java.util.regex.Pattern.MULTILINE);
-		Matcher m = p.matcher(si);
-		String rs = "";
-		while (m.find()) {
-			rs = rs + m.group(1);
-		}
+			return rs;
+		String ret = get.getResponseBodyAsString();
+		org.json.JSONObject json = new org.json.JSONObject(ret);
+		org.json.JSONObject settingInfo = (org.json.JSONObject) json
+				.get("setting_info");
+		rs = settingInfo.getString("original_username");
 		return rs;
 	}
 
@@ -402,7 +401,7 @@ public class WeixinBind {
 	 */
 	public String getWeixinAccount(String token) throws Exception {
 		String GetUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
-				+ token + "&lang=zh_CN";
+				+ token + "&lang=zh_CN&f=json";
 		String HeadUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
 				+ token + "&lang=zh_CN";
 
@@ -413,18 +412,14 @@ public class WeixinBind {
 		get.setRequestHeader("Referer", HeadUrl);
 		get.setRequestHeader("Cookie", this.cookiestr);
 		int status = this.client.executeMethod(get);
+		String rs = null;
 		if (status != 200)
-			return null;
-		String si = get.getResponseBodyAsString();
-		Pattern p = Pattern
-				.compile(
-						"<li[^>]+>\\s*[\\r\\n]*\\s*<\\s*h4\\s*>\\s*微信号\\s*</h4>\\s*[\\r\\n]*\\s*<div[^>]*>\\s*[\\r\\n]*\\s*</div>\\s*[\\r\\n]*\\s*<div[^>]*>\\s*[\\r\\n]*\\s*<span>([^<]*)</span>\\s*[\\r\\n]*\\s*</div>\\s*[\\r\\n]*\\s*</li>",
-						java.util.regex.Pattern.MULTILINE);
-		Matcher m = p.matcher(si);
-		String rs = "";
-		while (m.find()) {
-			rs = rs + m.group(1);
-		}
+			return rs;
+		String ret = get.getResponseBodyAsString();
+		org.json.JSONObject json = new org.json.JSONObject(ret);
+		org.json.JSONObject settingInfo = (org.json.JSONObject) json
+				.get("setting_info");
+		rs = settingInfo.getString("username");
 		return rs;
 	}
 
@@ -457,16 +452,19 @@ public class WeixinBind {
 			return false;
 		return true;
 	}
-	
+
 	/**
 	 * 判断用户是否成为开发者
+	 * 
 	 * @param token
-	 * @return true开发者  false尚未成为开发者
+	 * @return true开发者 false尚未成为开发者
 	 * @throws Exception
 	 */
-	public boolean isDevUser(String token) throws Exception{
-		String GetUrl = "https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token="+token+"&lang=zh_CN&f=json";
-		String HeadUrl = "https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token="+token+"&lang=zh_CN";
+	public boolean isDevUser(String token) throws Exception {
+		String GetUrl = "https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token="
+				+ token + "&lang=zh_CN&f=json";
+		String HeadUrl = "https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token="
+				+ token + "&lang=zh_CN";
 
 		GetMethod get = new GetMethod(GetUrl);
 		get.setRequestHeader(
@@ -481,32 +479,158 @@ public class WeixinBind {
 		org.json.JSONObject json = new org.json.JSONObject(ret);
 		org.json.JSONObject userInfo = (org.json.JSONObject) json
 				.get("user_info");
-		int is_dev_user = userInfo.getInt("is_dev_user");//0尚未成为开发者  1已经成为开发者
-		if(is_dev_user == 1){
+		int is_dev_user = userInfo.getInt("is_dev_user");// 0尚未成为开发者 1已经成为开发者
+		if (is_dev_user == 1) {
 			return true;
-		}else{
+		} else {
 			return false;
 		}
 	}
 
+	/**
+	 * 判断用户是否成微信认证 和 服务号类型
+	 * 
+	 * @param token
+	 * @return 类型： 0订阅号 1认证订阅号 2服务号 3认证服务号
+	 * @throws Exception
+	 */
+
+	public int getServiceType(String token) throws Exception {
+		String GetUrl = "https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token="
+				+ token + "&lang=zh_CN&f=json";
+		String HeadUrl = "https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token="
+				+ token + "&lang=zh_CN";
+
+		GetMethod get = new GetMethod(GetUrl);
+		get.setRequestHeader(
+				"User-Agent",
+				"Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22");
+		get.setRequestHeader("Referer", HeadUrl);
+		get.setRequestHeader("Cookie", this.cookiestr);
+		int status = this.client.executeMethod(get);
+		if (status != 200)
+			return -1;
+		String ret = get.getResponseBodyAsString();
+		org.json.JSONObject json = new org.json.JSONObject(ret);
+		org.json.JSONObject userInfo = (org.json.JSONObject) json
+				.get("user_info");
+		int type;
+		int service_type = userInfo.getInt("service_type");// 1订阅号 2服务号
+		int is_wx_verify = userInfo.getInt("is_wx_verify");// 0没有认证 1微信认证
+		if (service_type == 1 && is_wx_verify == 0) {
+			type = 0;
+		} else if (service_type == 1 && is_wx_verify == 1) {
+			type = 1;
+		} else if (service_type == 2 && is_wx_verify == 0) {
+			type = 2;
+		} else {
+			type = 3;
+		}
+		// 类型： 0订阅号 1认证订阅号 2服务号 3认证服务号
+		return type;
+	}
+
+	/**
+	 * 获取开发者AppId
+	 * 
+	 * @param token
+	 * @return
+	 * @throws Exception
+	 */
+	public String getAppId(String token) throws Exception {
+		String GetUrl = "https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token="
+				+ token + "&lang=zh_CN&f=json";
+		String HeadUrl = "https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token="
+				+ token + "&lang=zh_CN";
+
+		GetMethod get = new GetMethod(GetUrl);
+		get.setRequestHeader(
+				"User-Agent",
+				"Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22");
+		get.setRequestHeader("Referer", HeadUrl);
+		get.setRequestHeader("Cookie", this.cookiestr);
+		int status = this.client.executeMethod(get);
+		if (status != 200)
+			return null;
+		String ret = get.getResponseBodyAsString();
+		org.json.JSONObject json = new org.json.JSONObject(ret);
+		org.json.JSONObject advancedInfo = (org.json.JSONObject) json
+				.get("advanced_info");
+		org.json.JSONObject devInfo = (org.json.JSONObject) advancedInfo
+				.get("dev_info");
+		String appId = null;
+		if (devInfo.has("app_id")) {
+			appId = devInfo.getString("app_id");
+		}
+		return appId;
+	}
+
+	/**
+	 * 获取开发者appKey
+	 * 
+	 * @param token
+	 * @return
+	 * @throws Exception
+	 */
+	public String getAppKey(String token) throws Exception {
+		String GetUrl = "https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token="
+				+ token + "&lang=zh_CN&f=json";
+		String HeadUrl = "https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token="
+				+ token + "&lang=zh_CN";
+
+		GetMethod get = new GetMethod(GetUrl);
+		get.setRequestHeader(
+				"User-Agent",
+				"Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22");
+		get.setRequestHeader("Referer", HeadUrl);
+		get.setRequestHeader("Cookie", this.cookiestr);
+		int status = this.client.executeMethod(get);
+		if (status != 200)
+			return null;
+		String ret = get.getResponseBodyAsString();
+		org.json.JSONObject json = new org.json.JSONObject(ret);
+		org.json.JSONObject advancedInfo = (org.json.JSONObject) json
+				.get("advanced_info");
+		org.json.JSONObject devInfo = (org.json.JSONObject) advancedInfo
+				.get("dev_info");
+		String appKey = null;
+		if (devInfo.has("app_key")) {
+			appKey = devInfo.getString("app_key");
+		}
+		return appKey;
+	}
+
 	public static void main(String[] args) throws Exception {
-		String LOGIN_USER = "chanpin@burgeon.cn";
-		String LOGIN_PWD = "burgeonchanpin";
+		String LOGIN_USER = "2994044970@qq.com";
+		String LOGIN_PWD = "zt1314520";
+		// String LOGIN_USER = "customer_insight";
+		// String LOGIN_PWD = "burgeon123";
 		WeixinBind wx = new WeixinBind(LOGIN_USER, LOGIN_PWD, "");
-		wx.login("");
-		System.out.println("公众号原始ID：" + wx.getOriginalID(wx.getToken()));
-		System.out.println("公众微信号：" + wx.getWeixinAccount(wx.getToken()));
-		wx.editServiceOAuth(wx.getToken(), "test123123123123.next99.cn");
-		// String LOGIN_USER = "chanpin@burgeon.cn";
-		// String LOGIN_PWD = "burgeonchanpin";
-		// WeixinBind wx = new WeixinBind(LOGIN_USER, LOGIN_PWD,"");
-		// wx.login("xevp");
-		// System.out.print(wx.getLoginErrMsg());
-		// wx.editDevInteface(wx.getToken());//编辑开发模式
-		// wx.editCommonInteface(wx.getToken(),//修改Token url
-		// "http://wx.b.qq.com/weixin/addev/MOCYUBI",
-		// "25b3e0b5ff5da2446986140f6be3b00a");
-		// System.out.println("用户token" + wx.getToken());
-		// wx.getQrcode(wx.getToken(),"");
+		wx.login("");// 1.登录,拿Token,拿cookie
+		// System.out.println("token:"+wx.getToken()+" cookie:"+wx.getCookiestr());
+		// 2.验证码
+		// BufferedImage image = ImageIO.read(wx.code());
+		// File file = new File("D://images//code.jpg");
+		// ImageIO.write(image, "jpg", file);
+		// 3.编辑开发者模式
+		// wx.editCommonInteface(wx.getToken(),
+		// "http://2look.xicp.net/servlets/binserv/nds.weixin.ext.RestWeixin?customid=pacozhhejm",
+		// "test");
+		// 4.是否开发者
+		// System.out.println("是否为开发者:"+wx.isDevUser(wx.getToken()));
+		// 5.oauth2.0
+		// wx.editServiceOAuth(wx.getToken(), "www.baidu.com");
+		// 6.用户头像
+		// wx.getQrcode(wx.getToken(), "D://images//qrcode.jpg");
+		// 7.用户公众号
+		System.out.println("公众号:" + wx.getWeixinAccount(wx.getToken()));
+		System.out.println(wx.getToken());
+		// 8.用户原始id
+		System.out.println("原始id:" + wx.getOriginalID(wx.getToken()));
+		// 9.获取开发者AppId 与 AppSecret
+		System.out.println("appid:" + wx.getAppId(wx.getToken()));
+		System.out.println("appKey:" + wx.getAppKey(wx.getToken()));
+		// 10.ServiceType
+		System.out.println("ServiceType:" + wx.getServiceType(wx.getToken()));
 	}
 }

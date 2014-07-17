@@ -61,6 +61,7 @@ public class WxBindkey extends Command {
     		Wxvcode wxv=Wxvcode.getInstance();
     		WeixinBind wx = new WeixinBind(login_user, login_pwd,wxv.getcookei(userid));
     		wx.login(vcode);
+    		logger.debug("get token ->"+wx.getToken());
     		if(wx.getLoginErrCode()==0&&wx.getToken()!=null){
     		
 
@@ -103,9 +104,15 @@ public class WxBindkey extends Command {
    			pstmt.setInt(2,clientId);
 		    pstmt.executeUpdate();
 		    //set OriginalID
-    		pstmt= conn.prepareStatement("update WX_INTERFACESET set originalid=? where ad_client_id=?");		
+		    //set appid
+		    //set appKey
+		    //set ServiceType
+    		pstmt= conn.prepareStatement("update WX_INTERFACESET set originalid=?,appid=?,appsecret=?,PUBLICTYPE=? where ad_client_id=?");		
    			pstmt.setString(1,wx.getOriginalID(wx.getToken()));
-   			pstmt.setInt(2,clientId);
+   			pstmt.setString(2,wx.getAppId(wx.getToken()));
+   			pstmt.setString(3,wx.getAppKey(wx.getToken()));
+   			pstmt.setInt(4,wx.getServiceType(wx.getToken()));
+   			pstmt.setInt(5,clientId);
 		    pstmt.executeUpdate();
 		    
     		vh.put("message", wx.getLoginErrMsg());
