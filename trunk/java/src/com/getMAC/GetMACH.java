@@ -19,7 +19,8 @@ public class GetMACH {
         	int cpuThreadNum = cpuThreadNum();
         	MACstr.append(String.valueOf(cpuThreadNum));
             // “‘Ã´Õ¯–≈œ¢
-        	MACstr = ethernet(MACstr);
+        	//MACstr = ethernet(MACstr);
+        	MACstr.append(","+NetInterfaceData.getCPUSerial());
         } catch (Exception e1) {
             e1.printStackTrace();
         }
@@ -50,6 +51,8 @@ public class GetMACH {
         String[] ifaces = sigar.getNetInterfaceList();
         for (int i = 0; i < ifaces.length; i++) {
             NetInterfaceConfig cfg = sigar.getNetInterfaceConfig(ifaces[i]);
+            System.out.println(cfg.getAddress());
+            System.out.println(cfg.getFlags());
             if (NetFlags.LOOPBACK_ADDRESS.equals(cfg.getAddress()) || (cfg.getFlags() & NetFlags.IFF_LOOPBACK) != 0
                     || NetFlags.NULL_HWADDR.equals(cfg.getHwaddr())) {
                 continue;
@@ -62,6 +65,8 @@ public class GetMACH {
             	MACstr.append(currStr);
             }
         }
+
+        System.out.print(MACstr);
         return MACstr;
     }
     
