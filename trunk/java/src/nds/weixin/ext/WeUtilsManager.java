@@ -17,7 +17,7 @@ public class WeUtilsManager {
 	private static WeUtilsManager instance=null;
 	private static Hashtable<String,WeUtils> weUtiles ;
 	private static Logger logger= LoggerManager.getInstance().getLogger(WeUtilsManager.class.getName());
-	private final static String websql="select wxi.ad_client_id, wxc.DOMAIN, wxc.wxnum, wxc.wxtype, wxi.url,"+
+	private final static String websql="select wxi.ad_client_id, wxc.DOMAIN, wxc.wxnum, wxi.PUBLICTYPE, wxi.url,"+
        "wxi.appid, wxi.appsecret, wxi.wxparam,wxi.wxtoken, nvl(ast.foldername, ''),nvl(ast1.foldername,'')"+
        " from WEB_CLIENT wxc LEFT JOIN WX_INTERFACESET wxi ON wxi.ad_client_id = wxc.ad_client_id "+
        "LEFT JOIN WEB_CLIENT_TMP wct ON wct.ad_client_id = wxc.ad_client_id "+
@@ -26,7 +26,7 @@ public class WeUtilsManager {
        "AD_SITE_TEMPLATE ast1 ON ast1.id=wmt.home_tmp "+
        "where wxc.DOMAIN=? and wxc.domain is not null";
 	
-	private final static String websqlad="select wxi.ad_client_id, wxc.DOMAIN, wxc.wxnum, wxc.wxtype, wxi.url,"+
+	private final static String websqlad="select wxi.ad_client_id, wxc.DOMAIN, wxc.wxnum, wxi.PUBLICTYPE, wxi.url,"+
 		       "wxi.appid, wxi.appsecret, wxi.wxparam,wxi.wxtoken, nvl(ast.foldername, ''),nvl(ast1.foldername,'')"+
 		       " from WEB_CLIENT wxc LEFT JOIN WX_INTERFACESET wxi ON wxi.ad_client_id = wxc.ad_client_id "+
 		       "LEFT JOIN WEB_CLIENT_TMP wct ON wct.ad_client_id = wxc.ad_client_id "+
@@ -40,7 +40,7 @@ public class WeUtilsManager {
 		logger.debug("WeUtilsManager is init!!!!");
 		if(weUtiles==null){weUtiles=new Hashtable<String,WeUtils>();}
 		try {
-			List localList = QueryEngine.getInstance().doQueryList("select wxi.ad_client_id,wxc.DOMAIN,wxc.wxnum,wxc.wxtype,"+
+			List localList = QueryEngine.getInstance().doQueryList("select wxi.ad_client_id,wxc.DOMAIN,wxc.wxnum,wxi.PUBLICTYPE,"+
 		"wxi.url,wxi.appid,wxi.appsecret,wxi.wxparam,wxi.wxtoken,nvl(ast.foldername,''),nvl(ast1.foldername, '') "+
 		"from WEB_CLIENT wxc LEFT JOIN WX_INTERFACESET wxi ON wxi.ad_client_id=wxc.ad_client_id "+
 		"LEFT JOIN WEB_CLIENT_TMP wct ON wct.ad_client_id=wxc.ad_client_id LEFT JOIN"+
