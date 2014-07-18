@@ -869,7 +869,7 @@ public class WebClient {
 	
 	public JSONObject getAlias(int pdtid) throws QueryException {
 		
-		String psql="select t.WX_SPECID,t.qty from wx_alias t where t.WX_SPECID is not null and t.wx_appendgoods_id=?";
+		String psql="select t.WX_SPECID,t.qty-nvl(t.lock_qty,0) from wx_alias t where t.WX_SPECID is not null and t.wx_appendgoods_id=?";
 		Connection conn= QueryEngine.getInstance().getConnection();
 		PreparedStatement pstmt=null;
 		ResultSet rs=null;
