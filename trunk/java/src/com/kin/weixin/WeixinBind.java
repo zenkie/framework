@@ -5,8 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 
@@ -137,8 +135,6 @@ public class WeixinBind {
 			post.setParameter("f", "json");
 			int status = client.executeMethod(post);
 			// System.out.println("登录：" + post.getResponseBodyAsString());
-			System.out.println("login status->" + status);
-			
 			if (status == HttpStatus.SC_OK) {
 				String ret = post.getResponseBodyAsString();
 				org.json.JSONObject json = new org.json.JSONObject(ret);
@@ -146,7 +142,6 @@ public class WeixinBind {
 						.get("base_resp");
 				String token = json.optString("redirect_url");
 				int retCode = Integer.parseInt(retcode.getString("ret"));
-				System.out.println("login retCode->" + retCode);
 				if (retCode == 0) {
 					this.cookies = client.getState().getCookies();
 					StringBuffer cookie = new StringBuffer();
@@ -314,6 +309,40 @@ public class WeixinBind {
 
 	}
 
+//	/**
+//	 * 获取用户二维码
+//	 * 
+//	 * @param token
+//	 * @throws Exception
+//	 */
+//	public void getQrcode(String token, String path) throws Exception {
+//
+//		String GetUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
+//				+ token + "&lang=zh_CN";
+//		String HeadUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
+//				+ token + "&lang=zh_CN";
+//
+//		GetMethod get = new GetMethod(GetUrl);
+//		get.setRequestHeader(USER_AGENT_H, USER_AGENT);
+//		get.setRequestHeader(REFERER_H, HeadUrl);
+//		get.setRequestHeader(COOKIE, this.cookiestr);
+//		int status = client.executeMethod(get);
+//		if (status == HttpStatus.SC_OK) {
+//			// System.err.println("正在跳转.....");
+//			String si = get.getResponseBodyAsString();
+//			Pattern p = Pattern
+//					.compile("(?<=(src=\"))/misc/getqrcode\\?[^\"]*(?=\")");
+//			Matcher m = p.matcher(si);
+//			String rs = "";
+//			while (m.find()) {
+//				rs += m.group();
+//			}
+//			rs = "https://mp.weixin.qq.com" + rs;
+//			// System.out.println(rs);
+//			getQrcodeImage(rs, path);// 下载二维码
+//		}
+//	}
+	
 	/**
 	 * 获取用户二维码
 	 * 
@@ -323,7 +352,7 @@ public class WeixinBind {
 	public void getQrcode(String token, String path) throws Exception {
 
 		String GetUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
-				+ token + "&lang=zh_CN";
+				+ token + "&lang=zh_CN&f=json";
 		String HeadUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
 				+ token + "&lang=zh_CN";
 
@@ -332,18 +361,15 @@ public class WeixinBind {
 		get.setRequestHeader(REFERER_H, HeadUrl);
 		get.setRequestHeader(COOKIE, this.cookiestr);
 		int status = client.executeMethod(get);
+		String rs = null;
 		if (status == HttpStatus.SC_OK) {
-			// System.err.println("正在跳转.....");
-			String si = get.getResponseBodyAsString();
-			Pattern p = Pattern
-					.compile("(?<=(src=\"))/misc/getqrcode\\?[^\"]*(?=\")");
-			Matcher m = p.matcher(si);
-			String rs = "";
-			while (m.find()) {
-				rs += m.group();
-			}
-			rs = "https://mp.weixin.qq.com" + rs;
-			// System.out.println(rs);
+			String ret = get.getResponseBodyAsString();
+			org.json.JSONObject json = new org.json.JSONObject(ret);
+			org.json.JSONObject userInfo = (org.json.JSONObject) json
+					.get("user_info");
+			String fakeId = userInfo.getString("fake_id");
+			rs = "https://mp.weixin.qq.com/misc/getqrcode?fakeid=" + fakeId
+					+ "&token=" + token + "&style=1";
 			getQrcodeImage(rs, path);// 下载二维码
 		}
 	}
@@ -491,7 +517,7 @@ public class WeixinBind {
 	 * 判断用户是否成微信认证 和 服务号类型
 	 * 
 	 * @param token
-	 * @return 类型： 0订阅号 1认证订阅号 2服务号 3认证服务号
+	 * @return 类型：   1订阅号 3认证订阅号 2服务号 4认证服务号
 	 * @throws Exception
 	 */
 
@@ -518,15 +544,15 @@ public class WeixinBind {
 		int service_type = userInfo.getInt("service_type");// 1订阅号 2服务号
 		int is_wx_verify = userInfo.getInt("is_wx_verify");// 0没有认证 1微信认证
 		if (service_type == 1 && is_wx_verify == 0) {
-			type = 0;
-		} else if (service_type == 1 && is_wx_verify == 1) {
 			type = 1;
+		} else if (service_type == 1 && is_wx_verify == 1) {
+			type = 3;
 		} else if (service_type == 2 && is_wx_verify == 0) {
 			type = 2;
 		} else {
-			type = 3;
+			type = 4;
 		}
-		// 类型： 0订阅号 1认证订阅号 2服务号 3认证服务号
+		// 类型： 1订阅号 3认证订阅号 2服务号 4认证服务号
 		return type;
 	}
 
@@ -612,7 +638,7 @@ public class WeixinBind {
 		// BufferedImage image = ImageIO.read(wx.code());
 		// File file = new File("D://images//code.jpg");
 		// ImageIO.write(image, "jpg", file);
-		// 3.编辑开发者模式
+//		 3.编辑开发者模式
 		// wx.editCommonInteface(wx.getToken(),
 		// "http://2look.xicp.net/servlets/binserv/nds.weixin.ext.RestWeixin?customid=pacozhhejm",
 		// "test");
@@ -621,10 +647,9 @@ public class WeixinBind {
 		// 5.oauth2.0
 		// wx.editServiceOAuth(wx.getToken(), "www.baidu.com");
 		// 6.用户头像
-		// wx.getQrcode(wx.getToken(), "D://images//qrcode.jpg");
+		 wx.getQrcode(wx.getToken(), "D://images//qrcode.jpg");
 		// 7.用户公众号
 		System.out.println("公众号:" + wx.getWeixinAccount(wx.getToken()));
-		System.out.println(wx.getToken());
 		// 8.用户原始id
 		System.out.println("原始id:" + wx.getOriginalID(wx.getToken()));
 		// 9.获取开发者AppId 与 AppSecret
