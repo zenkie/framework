@@ -72,6 +72,7 @@ public class JReport {
 	private String sql;	
 	private String whereClause; // filter setting from ui
 	private HashMap params; // currently used for print one object
+	private String folder;
 	/**
 	 * Create report and save to file
 	 * @return file name
@@ -151,7 +152,7 @@ public class JReport {
 	    	
 			JasperPrint jasperPrint = JasperFillManager.fillReport(jreport, parameters, conn);
 
-   	        File destFolder = new File(exportRootPath+File.separator+ user.getClientDomain()+File.separator+  user.name);
+   	        File destFolder = folder==null?new File(exportRootPath+File.separator+ user.getClientDomain()+File.separator+  user.name):new File(folder);
 			
    	        if(!destFolder.exists()){
    	        	if(!destFolder.mkdirs()){
@@ -506,5 +507,11 @@ public class JReport {
     		sql= ReportVariables.getInstance().evaluate(sql); 
     	}
     	return sql;
+	}
+	public String getFolder() {
+		return folder;
+	}
+	public void setFolder(String folder) {
+		this.folder = folder;
 	}	
 }
