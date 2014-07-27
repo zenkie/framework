@@ -18,6 +18,7 @@ import nds.control.web.WebUtils;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.report.ReportUtils;
+import nds.util.Configurations;
 
 /**
  * Different with GetFile, thie handler always request client to download the file instead of dispalying directly 
@@ -56,6 +57,9 @@ public class Download implements BinaryHandler{
 	   *  				for normal user, for root, it can be absolute path
 	   */
       public void process(HttpServletRequest request,HttpServletResponse  response)  throws Exception{
+    	Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+    	Boolean pathname=nds.util.Tools.getBoolean(conf.getProperty("report_savepathbyuserid","false"),false);
+    	
         String filePath = request.getParameter("filename");
         boolean deleteFile=false;
         if(filePath==null){
@@ -73,7 +77,7 @@ public class Download implements BinaryHandler{
         if(filePath!=null && !filePath.trim().equals("")){
             filePath = filePath.trim();
             ReportUtils ru = new ReportUtils(request);
-            String name = ru.getUserName();
+            String name = pathname?String.valueOf(ru.getUser().getUserId()):ru.getUserName();
             nds.control.web.UserWebImpl userWeb=ru.getUser();
             boolean isRoot=userWeb.isPermissionEnabled("WEBSQL_LIST", nds.security.Directory.WRITE);
             

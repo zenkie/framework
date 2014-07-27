@@ -18,6 +18,7 @@ import nds.control.web.WebUtils;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.report.ReportUtils;
+import nds.util.Configurations;
 
 /**
  * 
@@ -61,6 +62,9 @@ public class GetFile implements BinaryHandler{
 	   *    cd - content-disposition "inline"|"attachment" default to inline               
 	   */
       public void process(HttpServletRequest request,HttpServletResponse  response)  throws Exception{
+      	Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+      	Boolean pathname=nds.util.Tools.getBoolean(conf.getProperty("report_savepathbyuserid","false"),false);
+      	
         String filePath = request.getParameter("filename");
         boolean deleteFile=nds.util.Tools.getYesNo(request.getParameter("del"), false);
         String cd= request.getParameter("cd");
@@ -81,7 +85,7 @@ public class GetFile implements BinaryHandler{
         if(filePath!=null && !filePath.trim().equals("")){
             filePath = filePath.trim();
             ReportUtils ru = new ReportUtils(request);
-            String name = ru.getUserName();
+            String name = pathname?String.valueOf(ru.getUser().getUserId()):ru.getUserName();
 
             File file = new File(ru.getExportRootPath()+File.separator+ru.getUser().getClientDomain()+ File.separator+ name+File.separator+filePath);
             if(file.exists() && file.isFile()){
