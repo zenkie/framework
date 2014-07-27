@@ -7,6 +7,9 @@ import java.util.Locale;
 
 import nds.log.Logger;
 import nds.log.LoggerManager;
+import nds.query.QueryEngine;
+import nds.query.QueryRequestImpl;
+import nds.query.QueryResult;
 import nds.schema.Column;
 import nds.schema.Table;
 import nds.schema.TableManager;
@@ -19,6 +22,7 @@ import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
+import org.json.JSONObject;
 
 /**
  * Currently only Chinese excel template supported
@@ -93,6 +97,7 @@ public class ExcelTemplateManager {
     }
     /**
      * Create excel template
+     *   * jack add 关联名称输出 扩展属性{reflable:{"tabid":12853,"ref_id":1853}} 支持
      */
     private void createExcelTemplate(Table table){
         try {
@@ -107,6 +112,30 @@ public class ExcelTemplateManager {
                 column= (Column) al.get(i);
                 if ( !column.isModifiable( Column.ADD )) continue;
                 desc= column.getDescription(Locale.CHINA);
+                JSONObject jo;
+                try {
+					jo = column.getJSONProps().getJSONObject("reflable");
+					int lable_id = jo.optInt("ref_id", 0);
+					int lable_tabid = jo.optInt("tabid", 0);
+					TableManager manager = TableManager.getInstance();
+					Table reftable = manager.getTable(lable_tabid);
+					QueryRequestImpl query = QueryEngine.getInstance().createRequest(null);
+					query.setMainTable(lable_tabid);
+					query.addSelection(reftable.getAlternateKey().getId());
+					query.addParam(reftable.getPrimaryKey().getId(), ""+ lable_id);
+					QueryResult rs = QueryEngine.getInstance().doQuery(query);
+					if (lable_id != 0|| (rs != null && rs.getTotalRowCount() > 0)) {
+						while (rs.next()) {
+							logger.debug(rs.getObject(1).toString());
+							desc = rs.getObject(1).toString();
+						}
+					}
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					// e.printStackTrace();
+					//logger.debug("col get reflable is null");
+				}
+            
                 /*if ( column.getReferenceTable() !=null){
                     desc += column.getReferenceTable().getAlternateKey().getDescription(Locale.CHINA) ;
                 }*/
