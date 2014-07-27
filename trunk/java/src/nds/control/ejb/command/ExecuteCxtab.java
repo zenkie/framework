@@ -108,6 +108,9 @@ public class ExecuteCxtab extends Command {
 	 *      if by schedule, return infor.jsp
 	 */
   public ValueHolder execute(DefaultWebEvent event) throws RemoteException, NDSException {
+	
+	Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+	String exportRootPath=conf.getProperty("export.root.nds","/act/home");
 	Connection conn=null;
   	PreparedStatement pstmt=null;
   	
@@ -160,7 +163,7 @@ public class ExecuteCxtab extends Command {
 	  	// At most portal.properties#cxtab.concurrent.max pinstance can run, -1 means no limitation
 	  	int maxJobCount=-1;
   		if(!isBg){
-		  	Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+		  //	Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
 	  		maxJobCount=Tools.getInt( conf.getProperty("cxtab.concurrent.max"),-1);
 	  		if(maxJobCount >0 && runningJobCount>=maxJobCount){
 	  			throw new NDSException( MessagesHolder.getInstance().
@@ -297,6 +300,8 @@ public class ExecuteCxtab extends Command {
 		i = 1;
 		
 		String folder = jo.optString("folder");
+		folder=Validator.isNull(folder)?null:exportRootPath + File.separator+user.getClientDomain()+File.separator + folder;
+		
 		if (Validator.isNotNull(filename)) {
 			map.put("FOLDER",folder);
 		}
@@ -337,8 +342,7 @@ public class ExecuteCxtab extends Command {
 	  		
 	  	
 	  		String url;
-	  		Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
-	  		String exportRootPath=conf.getProperty("export.root.nds","/act/home");
+
 	  		String filePath =Validator.isNull(folder)?exportRootPath + File.separator+user.getClientDomain()+File.separator+ user.getName():folder;
 			
 	  		logger.debug("filePath is "+filePath);

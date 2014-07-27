@@ -50,6 +50,8 @@ public class ExecuteJReport extends Command {
 		return true;
 	}	
   public ValueHolder execute(DefaultWebEvent event) throws RemoteException, NDSException {
+	Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+	String exportRootPath=conf.getProperty("export.root.nds","/act/home");	  
 	Connection conn=null;
   	PreparedStatement pstmt=null;
 	long startTime=System.currentTimeMillis();
@@ -177,6 +179,8 @@ public class ExecuteJReport extends Command {
 		map.put("FILETYPE", fileType);
 
 		String folder = jo.optString("folder");
+		folder=Validator.isNull(folder)?null:exportRootPath + File.separator+user.getClientDomain()+File.separator + folder;
+		
 		if (Validator.isNotNull(filename) ){
 			map.put("FOLDER", folder);
 		}		
@@ -197,8 +201,7 @@ public class ExecuteJReport extends Command {
 	  		 */
 	  		String url;
 	  		//url = "/html/nds/cxtab/viewrpt.jsp?file="+URLEncoder.encode(filename+"."+ fileType,"UTF-8");
-	  		Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
-	  		String exportRootPath=conf.getProperty("export.root.nds","/act/home");	  
+
 	  		String filePath =Validator.isNull(folder)?exportRootPath + File.separator+user.getClientDomain()+File.separator+ user.getName():folder;
 			
 	 		File f=new File(filePath+File.separator+filename+"."+ fileType);
