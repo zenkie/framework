@@ -112,7 +112,13 @@ public class PrintJasper extends Command{
 	    		fileName= "rpt"+sdf.format(new Date());
 	    	}
 	    	Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
-	    	String destFolder = conf.getProperty("export.root.nds","/aic/home") + File.separator +  user.getClientDomain()+File.separator+  user.name;
+	    	Boolean pathname=nds.util.Tools.getBoolean(conf.getProperty("report_savepathbyuserid","false"),false);
+	    	
+	    	String folder=params.optString("folder",null);
+	    	String destFolder = conf.getProperty("export.root.nds","/aic/home") + File.separator +  user.getClientDomain()+File.separator+(pathname?String.valueOf(user.id):user.name);
+	    	if(folder!=null&&folder!="")destFolder=folder;
+	    	
+	    	logger.debug("destFolder ->"+destFolder);
 	    	File fold= new File(destFolder);
 	    	fold.mkdirs();
 	    	String destFile	=destFolder + java.io.File.separator+ fileName+"."+ fileType  ;
