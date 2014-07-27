@@ -34,6 +34,7 @@ public class JReportRunner extends SvrProcess
 	private String fileType;
 	private QueryEngine engine;
 	private String filter;
+	private String folder;
 	
 	/**
 	 *  Parameters:
@@ -60,6 +61,8 @@ public class JReportRunner extends SvrProcess
 				fileType= ((String)para[i].getParameter());
 			else if (name.equals("filter"))
 				filter= ((String)para[i].getParameter());
+			else if (name.equals("folder"))
+				folder= ((String)para[i].getParameter());
 		}
 	}	//	prepare
 	
@@ -121,6 +124,7 @@ public class JReportRunner extends SvrProcess
 			    cr.setUserId( this.getAD_User_ID());
 			    cr.setAdClientId(this.getAD_Client_ID());
 			    cr.setAD_PInstance_ID(this.getAD_PInstance_ID()); // this will be needed when doing cube exporting
+			    cr.setFolder(folder);
 			    finalFile= cr.create(conn);
 		    }else if(tp[0].equals("python")){
 		    	finalFile=nds.control.util.PythonScriptUtils.runProcess(tp[1],this.getAD_PInstance_ID());
