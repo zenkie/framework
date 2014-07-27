@@ -532,7 +532,7 @@ public class WebClient {
 				if(column.getDisplaySetting().getObjectType()==DisplaySetting.OBJ_CLOB){
 					map.put(column.getName().toLowerCase(), result.getObject(i+2));
 				}else{
-					map.put(column.getName().toLowerCase(), result.getString(i+2,true,true));
+					map.put(column.getName().toLowerCase(), result.getString(i+2,true,false));
 				}
 			}
 		}
