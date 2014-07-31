@@ -154,10 +154,12 @@ public class AccordionAction extends WebActionImpl {
 		boolean showico;
 		//tabimg="<img src=\""+StringUtils.escapeForXML(table.getAccordico())+"\" style=\"height:16px;width:20px;\"></img>";
 		//增加参数判断是否显示ICO 增加界面装载速度
-		showico=Tools.getYesNo(userweb.getUserOption("showico","N"),false);
+		showico=Tools.getYesNo(userweb.getUserOption("showico","Y"),false);
+		logger.debug("showico ->"+userweb.getUserOption("showico","Y"));
+		logger.debug("showico ->"+showico);
 		if ((Validator.isNotNull(ico_png = jo.optString("icon")))
 				&& (!ico_png.startsWith("http:")) && (!ico_png.startsWith("/"))) {
-			ico_png = "<img src=\"/html/nds/images/" + ico_png+"\" style=\"height:16px;width:20px;\"></img>";
+			ico_png = "<img src=\"/html/nds/images/" + ico_png+"\" style=\"height:16px;width:16px;vertical-align:bottom;padding-right: 4px;\"></img>";
 		}
 		//System.out.println(showico);
 		if(!showico){
@@ -249,7 +251,7 @@ public class AccordionAction extends WebActionImpl {
 					if (Validator.isNull((String) text_lable))
 						text_lable = cxtab_name;
 					if (Validator.isNull(ico_png))
-						ico_png = "<img src=\"/html/nds/images/jrpt.gif\" style=\"height:16px;width:20px;\"></img>";
+						ico_png = "<img src=\"/html/nds/images/jrpt.gif\" style=\"height:16px;width:16px;vertical-align:bottom;padding-right: 4px;\"></img>";
 					String action = "pc.qrpt('" + cxtab_name + "')";
 					accord_xml.append("<div class=\"accordion_headings")//.append(ico_png)
 					.append("\" onclick=\"javascript:").append(action)
