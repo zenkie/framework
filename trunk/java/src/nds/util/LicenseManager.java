@@ -300,7 +300,7 @@ public final class LicenseManager {
  */
 	public static String sendmss(String cp,Date exp){
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-		String cont=cp+">您的服务期已与"+df.format(exp)+"到期!请与产品客户联系！";
+		String cont=cp+">您的服务期已于"+df.format(exp)+"到期！请与产品客服联系！";
 		String mss="art.dialog.notice({title: '系统消息',width: 220,content: '尊敬的客户<"+cont+"',icon: 'warning',time: 5});";
 		return mss;
 	}
