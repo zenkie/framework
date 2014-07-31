@@ -12,8 +12,10 @@ public class checkMACAddr {
     	// 0:否  1：是
     	// 获取当前的MAC地址
     	String currentMAC = GetMACH.getMach();
+    	//System.out.println("currentMAC ->"+currentMAC);
     	String[] currentMACAry = currentMAC.split(",");
     	String currentCpuNum = currentMACAry[0];
+    	//System.out.print(currentCpuNum);
     	// 注册
     	String[] strOrigin = str.split(",");
     	String cpuNum = strOrigin[0];
@@ -23,7 +25,7 @@ public class checkMACAddr {
     		double sameNum = findSameNum(currentMACAry,strOrigin);
     		//System.out.println(sameNum );
     		//System.out.println(currentMACAry.length-1);
-    		if ((sameNum/(currentMACAry.length-1)) >= 0.5){
+    		if (sameNum >= 0.5){
     			return 1;
     		} else {
     			return 0;

@@ -20,9 +20,11 @@ public class multiMac {
 		} else {
 			 String[] macStrArr = new String[]{};
 			 macStrArr = multiMac.split(DISPATCH);
+			 System.out.print("multiMacJun size ->"+macStrArr.length);
 			 for(int i=0;i<macStrArr.length;i++){
 				 String macArr = macStrArr[i];
 				 returnValue = checkMACAddr.checkMAC(macArr);
+				 System.out.println("returnValue ->"+returnValue);
 				 if(returnValue == 1) break;
 			 }
 		}
