@@ -486,11 +486,19 @@ public final class QueryUtils {
      */
     public static String toSQLClauseDesc(Column column, String columnDesc, String input, int type,Locale locale)throws QueryException {
         String ret=null;
+        //logger.debug("toSQLClauseDesc column ->"+column.getName());
+        //logger.debug("toSQLClauseDesc input ->"+input);
+        //logger.debug("toSQLClauseDesc type ->"+type);
         switch( type) {
 		        case Column.STRING:
 		            input=input.trim();
 		            if( input.startsWith("=") || input.startsWith("£½")) {
-		                ret=" ("+columnDesc+" = "+input.substring(1)+") ";
+		            	//logger.debug("column =");
+		                if ( column.isValueLimited()){
+		                	//logger.debug("column isValueLimited");
+	                        input=TableManager.getInstance().getColumnValueDescription(column.getId(), input.trim().substring(1), locale);
+	                    }
+		                ret=" ("+columnDesc+" = "+input+") ";
 		            } else {
 		            	String lcseInput=input.toLowerCase();
 		            	if(lcseInput.startsWith("is ") || lcseInput.startsWith("in ")) {
@@ -512,6 +520,11 @@ public final class QueryUtils {
 	                    }else{
 	                    	ret=" ("+columnDesc+"="+input+") ";
 	                    }	                    
+	                }else if("=".equals(oper1.trim())){
+	                    if ( column.isValueLimited() ){
+	                        input=TableManager.getInstance().getColumnValueDescription(column.getId(),input.trim().substring(1), locale);
+	                    }
+	                    ret=" ("+columnDesc+"="+input+") ";
 	                }else{
 	                    ret=" ("+columnDesc+input+") ";
 	                }
@@ -538,6 +551,7 @@ public final class QueryUtils {
                 logger.error("Unexpected type when calling toSQLClauseDesc( "+columnDesc+","+input+","+type+")");
                 throw new QueryException("Unexpected type");
         }
+        logger.debug("toSQLClauseDesc ->"+ret);
         return ret;
     }
     /**
