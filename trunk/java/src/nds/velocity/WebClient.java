@@ -143,7 +143,8 @@ public class WebClient {
 	 */
 	public void updateNewsCounter(int newsId){
 		try{
-			QueryEngine.getInstance().executeUpdate("update u_news set readcnt=readcnt+1 where id="+ newsId);
+			QueryEngine.getInstance().executeUpdate("update WX_ISSUEARTICLE set BROWSENUM=nvl(BROWSENUM,0)+1 where id="+ newsId);
+			//logger.debug("updateNewsCounter !");
 		}catch(Throwable t){
 			logger.error("Fail to update news id="+ newsId, t);
 		}
