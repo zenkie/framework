@@ -37,6 +37,7 @@
 		<mapping resource="nds/model/AdReport.hbm" />
 		<mapping resource="nds/model/AdQuery.hbm" />
 		<mapping resource="nds/model/AdCube.hbm" />
+		<mapping resource="nds/model/AdSysModel.hbm" />
 		
 <!--
 <mapping resource="nds/model/AdAliastable.hbm" />
