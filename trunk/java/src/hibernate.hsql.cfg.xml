@@ -31,6 +31,7 @@
 		<mapping resource="nds/model/AdSubSystem.hbm" />
 		<mapping resource="nds/model/Directory.hbm" />
 		<mapping resource="nds/model/Users.hbm" />			
+		<mapping resource="nds/model/AdSysModel.hbm" />
 
     </session-factory>
 </hibernate-configuration>
