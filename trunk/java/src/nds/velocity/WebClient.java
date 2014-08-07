@@ -513,6 +513,12 @@ public class WebClient {
 		 		fixedColumns= PairTable.parse(fixedcol,null );
 		 		expr=Expression.parsePairTable(fixedColumns);
 		}
+		if(table.isAcitveFilterEnabled()){
+			expr=expr.combine(new Expression(new ColumnLink(new int[]{table.getColumn("ISACTIVE").getId()}), "=Y", null), SQLCombination.SQL_AND, null);
+		}
+		if(table.isAdClientIsolated()){
+			expr=expr.combine(new Expression(new ColumnLink(new int[]{table.getColumn("AD_CLIENT_ID").getId()}), "="+adClientId, null), SQLCombination.SQL_AND, null);
+		}
 		}
 		if(expr!=null)query.addParam(expr);
 		
