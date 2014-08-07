@@ -302,7 +302,7 @@ public class ExecuteCxtab extends Command {
 		String folder = jo.optString("folder");
 		folder=Validator.isNull(folder)?null:exportRootPath + File.separator+user.getClientDomain()+File.separator + folder;
 		
-		if (Validator.isNotNull(filename)) {
+		if (Validator.isNotNull(folder)) {
 			map.put("FOLDER",folder);
 		}
 		
