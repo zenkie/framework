@@ -444,7 +444,7 @@ public class WebClient {
 	        list.add(url);
 			
 	        for(int i=1;i< meta.getColumnCount();i++){ // first column should always be PK
-	        	columnData=result.getString(i+1, true, true);
+	        	columnData=result.getString(i+1, true, false);
 				
 				/*int objId= result.getObjectID(i+1);
 				if(objId!=-1){
