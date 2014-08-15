@@ -87,7 +87,7 @@ public class Text extends TagSupport {
 
             // start building up the tag
             out.print("<input type=\"text\" ");
-            if(isFold) {out.print("name=\"" + Util.quote(name+"hidden") + "\" readonly ");}
+            if(isFold) {out.print("name=\"" + Util.quote(name+"hidden") + "\" readonly style='display:none;'");}
             else{out.print("name=\"" + Util.quote(name) + "\" ");}
 
             // include any attributes we've got here
@@ -144,6 +144,18 @@ public class Text extends TagSupport {
             // end the tag
             out.print("/>");
             if(isFold) {
+            	out.print("<div style='display: inline-block;padding-right: 15px;'>");
+                if (beanValue != null) {
+                	out.write(beanValue);
+                } else if (req.getParameter(name) != null) {
+                    out.write(req.getParameter(name));
+                } else {
+                    if (dVal != null) {
+                        out.write(dVal);
+                    }
+                }
+            	out.print("</div>");
+            	
             	out.print("<input type=\"text\" ");
             	out.print("name=\"" + Util.quote(name) + "\" ");
             	if(nds.util.Validator.isNull(oristring)) {
@@ -182,7 +194,7 @@ public class Text extends TagSupport {
         if(nds.util.Validator.isNull(dVal)) {return;}
     	Pattern p=Pattern.compile("(?<=(<ori>)).*(?=</ori>)");
     	try {
-    		//System.out.print("x->"+x);
+    		//System.out.print("[TagSupport.Text]x->"+x);
 	    	Matcher m=p.matcher(dVal);
 	    	 while(m.find()) {
 	    		oristring+=m.group();
