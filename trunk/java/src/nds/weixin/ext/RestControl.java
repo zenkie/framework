@@ -23,10 +23,10 @@ public class RestControl {
 	private String careid;
 	private String ts;
 	
-	//restserver param =>{"BIRTHDAY":"19340202","NAME":"jackrain","PHONENUM":"18005695669","partial_update":true,"table":16003,"CONTACTADDRESS":"Ìì½òÊÐÏ½ÇøºÍÆ½ÇøÖÐ¹úÉÏº£Ðì»ã","parsejson":"Y","PROVINCE":"Ìì½ò","GENDER":"1","javax.servlet.http.HttpServletRequest":"+/servlets/binserv+/Rest\nPOST /servlets/binserv/Rest HTTP/1.1\r\nCache-Control: no-cache\r\nPragma: no-cache\r\nUser-Agent: Java/1.6.0_07\r\nHost: localhost\r\nAccept: text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2\r\nConnection: keep-alive\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 682\r\n\r\n","ID":69,"command":"ObjectModify","CITY":"ÊÐÏ½Çø","REGIONID":"ºÍÆ½Çø"}
+	//restserver param =>{"BIRTHDAY":"19340202","NAME":"jackrain","PHONENUM":"18005695669","partial_update":true,"table":16003,"CONTACTADDRESS":"å¤©æ´¥å¸‚è¾–åŒºå’Œå¹³åŒºä¸­å›½ä¸Šæµ·å¾æ±‡","parsejson":"Y","PROVINCE":"å¤©æ´¥","GENDER":"1","javax.servlet.http.HttpServletRequest":"+/servlets/binserv+/Rest\nPOST /servlets/binserv/Rest HTTP/1.1\r\nCache-Control: no-cache\r\nPragma: no-cache\r\nUser-Agent: Java/1.6.0_07\r\nHost: localhost\r\nAccept: text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2\r\nConnection: keep-alive\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 682\r\n\r\n","ID":69,"command":"ObjectModify","CITY":"å¸‚è¾–åŒº","REGIONID":"å’Œå¹³åŒº"}
 	
 	public void disposeCadeControll(JSONObject jo) throws Exception {
-		//{"BIRTHDAY":"19340202","NAME":"jackrain","PHONENUM":"?13705519364","partial_update":true,"table":16003,"vipid":79,"CONTACTADDRESS":"ÉÏº£ÊÐÏ½Çø»ÆÆÖÇøÖÐ¹úÉÏº£Ðì»ã","parsejson":"Y","ad_client_id":55,"javax.servlet.http.HttpServletRequest":"+/servlets/binserv+/Rest\nPOST /servlets/binserv/Rest HTTP/1.1\r\nCache-Control: no-cache\r\nPragma: no-cache\r\nUser-Agent: Java/1.6.0_07\r\nHost: localhost\r\nAccept: text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2\r\nConnection: keep-alive\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 733\r\n\r\n","GENDER":"1","PROVINCE":"ÉÏº£","command":"ObjectModify","ID":74,"CITY":"ÊÐÏ½Çø","REGIONID":"»ÆÆÖÇø"}
+		//{"BIRTHDAY":"19340202","NAME":"jackrain","PHONENUM":"?13705519364","partial_update":true,"table":16003,"vipid":79,"CONTACTADDRESS":"ä¸Šæµ·å¸‚è¾–åŒºé»„æµ¦åŒºä¸­å›½ä¸Šæµ·å¾æ±‡","parsejson":"Y","ad_client_id":55,"javax.servlet.http.HttpServletRequest":"+/servlets/binserv+/Rest\nPOST /servlets/binserv/Rest HTTP/1.1\r\nCache-Control: no-cache\r\nPragma: no-cache\r\nUser-Agent: Java/1.6.0_07\r\nHost: localhost\r\nAccept: text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2\r\nConnection: keep-alive\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 733\r\n\r\n","GENDER":"1","PROVINCE":"ä¸Šæµ·","command":"ObjectModify","ID":74,"CITY":"å¸‚è¾–åŒº","REGIONID":"é»„æµ¦åŒº"}
 		String method=jo.optString("method");
 		
 		logger.debug("dispose cade method->"+method);
@@ -36,16 +36,17 @@ public class RestControl {
 			bindCard(jo);
 		}else if("updateCard".equalsIgnoreCase(method)) {
 			updateCard(jo);
+		}else if("integralExchange".equalsIgnoreCase(method)) {
+			integralExchange(jo);
 		}
 	}
 	
-	/*¿ª¿¨
+	/*å¼€å¡
 	 * 
 	 */
 	private void openCard(JSONObject restjo) throws Exception{
 		if(restjo==null||!restjo.has("vipid")||!restjo.has("ad_client_id")){
-			logger.debug("params->"+restjo.toString());
-			logger.debug("params must not null");
+			logger.debug("openCard params error->"+restjo.toString());
 			return;
 		}
 		List all=null;
@@ -54,12 +55,12 @@ public class RestControl {
 		boolean isErp=false;
 		careid=String.valueOf(ad_client_id);
 
-		//²éÑ¯½Ó¿ÚÏà¹ØÐÅÏ¢ url,skey
+		//æŸ¥è¯¢æŽ¥å£ç›¸å…³ä¿¡æ¯ url,skey
 		all=QueryEngine.getInstance().doQueryList("select ifs.erpurl,ifs.username,ifs.iserp,ifs.wxparam from WX_INTERFACESET ifs WHERE ifs.ad_client_id="+ad_client_id);
 		
 		
 		if(all!=null&&all.size()>0) {
-			System.out.println("WX_INTERFACESET size->"+all.size());
+			logger.debug("WX_INTERFACESET size->"+all.size());
 			serverUrl=(String)((List)all.get(0)).get(0);
 			isErp="Y".equalsIgnoreCase((String)((List)all.get(0)).get(2));
 			SKEY=(String)((List)all.get(0)).get(3);
@@ -74,7 +75,7 @@ public class RestControl {
 		
 		
 		if(!isErp) {
-			logger.debug("Î´½ÓÍ¨ERP");
+			logger.debug("æœªæŽ¥é€šERP");
 			return;
 		}
 		SipStatus sp=validateSing();
@@ -136,8 +137,8 @@ public class RestControl {
 			try{
 				vh=RestUtils.sendRequest(serverUrl,params,"POST");
 			} catch (Throwable tx) {
-				logger.debug("ERPÍøÂçÍ¨ÐÅÕÏ°­!");
-				throw new Exception("ERPÍøÂçÍ¨ÐÅÕÏ°­!->"+tx.getMessage());
+				logger.debug("ERPç½‘ç»œé€šä¿¡éšœç¢!");
+				throw new Exception("ERPç½‘ç»œé€šä¿¡éšœç¢!->"+tx.getMessage());
 				//return false;
 			}
 			
@@ -146,7 +147,7 @@ public class RestControl {
 			logger.debug("open offline code result->"+result);
 			JSONObject jo= new JSONObject(result);
 
-			//{"result":{"data":{"code":"26f5lb99fr0-0","couponId":"6F5Lb99Fr"},"card":{"balance":0,"level":215,"no":"WX140515000000002","credit":0},"openid":"owAZBuEBBLn-LQ_5ebcbkSh_wFDk","cardid":"37"},"errMessage":"Î¢Éú»î»áÔ±¿ª¿¨³É¹¦£¡","errCode":0}
+			//{"result":{"data":{"code":"26f5lb99fr0-0","couponId":"6F5Lb99Fr"},"card":{"balance":0,"level":215,"no":"WX140515000000002","credit":0},"openid":"owAZBuEBBLn-LQ_5ebcbkSh_wFDk","cardid":"37"},"errMessage":"å¾®ç”Ÿæ´»ä¼šå‘˜å¼€å¡æˆåŠŸï¼","errCode":0}
 			
 			int insertcount=1;
 			if(jo.optInt("errCode",-1)==0) {
@@ -184,8 +185,8 @@ public class RestControl {
 						logger.debug("open offline code insert WX_COUPONEMPLOY error->"+jo.optString("errMessage"));
 						throw new Exception("open offline code insert WX_COUPONEMPLOY error->"+jo.optString("errMessage"));
 					}else {
-						logger.debug("open offline code result not find no[ÏßÏÂ¿¨ºÅ] error->"+jo.optString("errMessage"));
-						throw new Exception("open offline code result not find no[ÏßÏÂ¿¨ºÅ] error->"+jo.optString("errMessage"));
+						logger.debug("open offline code result not find no[çº¿ä¸‹å¡å·] error->"+jo.optString("errMessage"));
+						throw new Exception("open offline code result not find no[çº¿ä¸‹å¡å·] error->"+jo.optString("errMessage"));
 					}
 				}
 				
@@ -209,13 +210,12 @@ public class RestControl {
 		
 	}
 	
-	/*°ó¶¨
+	/*ç»‘å®š
 	 * 
 	 */
 	private void bindCard(JSONObject restjo) throws Exception{
 		if(restjo==null||!restjo.has("vipid")||!restjo.has("ad_client_id")||!restjo.has("PHONENUM")) {
-			logger.debug("params->"+restjo.toString());
-			logger.debug("params must not null");
+			logger.debug("bindCard params error->"+restjo.toString());
 			return;
 		}
 		
@@ -238,13 +238,13 @@ public class RestControl {
 				//return isSuccessfull;
 			}
 		}else {
-			System.out.println("not find WX_INTERFACESET");
+			logger.debug("not find WX_INTERFACESET");
 			throw new Exception("not find WX_INTERFACESET ad_client_id->"+ad_client_id);
 			//return isSuccessfull;
 		}
 		
 		if(!isErp) {
-			logger.debug("Î´½ÓÍ¨ERP");
+			logger.debug("æœªæŽ¥é€šERP");
 			return;
 		}
 		
@@ -286,8 +286,8 @@ public class RestControl {
 		try{
 		 vh=RestUtils.sendRequest(serverUrl,params,"POST");
 		} catch (Throwable tx) {
-			logger.debug("ERPÍøÂçÍ¨ÐÅÕÏ°­!");
-			throw new Exception("ERPÍøÂçÍ¨ÐÅÕÏ°­->"+tx.getMessage());
+			logger.debug("ERPç½‘ç»œé€šä¿¡éšœç¢!");
+			throw new Exception("ERPç½‘ç»œé€šä¿¡éšœç¢->"+tx.getMessage());
 		}
 		String result=(String) vh.get("message");
 		logger.debug("bind offline code result->"+result);
@@ -314,14 +314,14 @@ public class RestControl {
 			  sql="UPDATE WX_VIP V SET V.INTEGRAL=?,V.LASTAMT=?,V.VIPTYPE=?,V.DOCNO=?,V.RELNAME=?,V.EMAIL=?,V.PHONENUM=?,V.STORE_ID=?,V.CONTACTADDRESS=?,V.BIRTHDAY=?,V.GENDER=?"+
 				  " WHERE V.ID=?";
 			int count=0;
-			count=QueryEngine.getInstance().executeUpdate(sql,new Object[] {cardjo.optInt("credit"),cardjo.optDouble("balance"),viptypeid,cardjo.optString("no"),cardjo.optString("name",""),cardjo.optString("email",""),cardjo.optString("phonenum",""),cardjo.optInt("store_id",0),cardjo.optString("address",""),cardjo.optString("birthday"),cardjo.optString("gender"),vipid});
+			count=QueryEngine.getInstance().executeUpdate(sql,new Object[] {cardjo.optInt("credit"),cardjo.optDouble("balance"),viptypeid,cardjo.optString("no"),cardjo.optString("name",""),cardjo.optString("email",null),cardjo.optString("phonenum",null),cardjo.optInt("store_id",0),cardjo.optString("address",null),cardjo.optString("birthday"),cardjo.optString("gender"),vipid});
 			if(count<=0) {
 				logger.debug("bind offline code update vip error->"+count);
 				throw new Exception("bind offline code update vip error->"+count);
 			}
 			sql="UPDATE WX_VIPINFO V SET V.isopencard=2,V.VIPTYPE_ID=?,v.relname=?,v.email=?,v.phonenum=?,v.otheraddress=?,v.birthday=?,v.gender=?,v.province=?,v.city=?,v.regionid=?"+
 				  " WHERE v.wx_vip_id=?";
-			count=QueryEngine.getInstance().executeUpdate(sql,new Object[] {viptypeid,cardjo.optString("name",""),cardjo.optString("email",""),cardjo.optString("phonenum",""),cardjo.optString("address",""),cardjo.optString("birthday"),cardjo.optString("gender"),cardjo.optString("province",""),cardjo.optString("city",""),cardjo.optString("depart",""),vipid});
+			count=QueryEngine.getInstance().executeUpdate(sql,new Object[] {viptypeid,cardjo.optString("name",null),cardjo.optString("email",null),cardjo.optString("phonenum",null),cardjo.optString("address",null),cardjo.optString("birthday"),cardjo.optString("gender"),cardjo.optString("province",null),cardjo.optString("city",null),cardjo.optString("depart",null),vipid});
 			if(count<=0) {
 				logger.debug("bind offline code update vipinfo error->"+count);
 				throw new Exception("bind offline code update vipinfo error->"+count);
@@ -334,17 +334,16 @@ public class RestControl {
 		//return isSuccessfull;
 	}
 	
-	/* ÓÃ»§¿¨ÐÅÏ¢¸üÐÂ½Ó¿Ú¿ÉÒÔ±»ÉÌ¼Òµ÷ÓÃÀ´¸üÐÂÓÃ»§Î¢Éú»î»áÔ±¿¨µÄÐÅÏ¢¡£
-	 * µ±ÓÃ»§ÔÚÉÌ¼ÒµÄ CRM ÏµÍ³ÀïµÄ ÓÃ»§µÈ¼¶¡¢»ý·Ö»òÓà¶î·¢Éú±ä»¯Ê±,
-	 * ÉÌ¼ÒÍ¨¹ýµ÷ÓÃ¸Ã½Ó¿Ú¿ÉÒÔ½«±ä¸üµÄÓÃ»§Êý¾ÝÐÅÏ¢ºÍ openid(Î¢ÐÅÓÃ»§ ±êÊ¶)´«µÝ¸øÎ¢Éú»î,Î¢Éú»îÕ¹Ê¾ÔÚ»áÔ±¿¨ Html5 Ò³Ãæ,·½±ã²é¿´¡£
-	 * @param objectid µ÷Õûµ¥id
+	/* ç”¨æˆ·å¡ä¿¡æ¯æ›´æ–°æŽ¥å£å¯ä»¥è¢«å•†å®¶è°ƒç”¨æ¥æ›´æ–°ç”¨æˆ·å¾®ç”Ÿæ´»ä¼šå‘˜å¡çš„ä¿¡æ¯ã€‚
+	 * å½“ç”¨æˆ·åœ¨å•†å®¶çš„ CRM ç³»ç»Ÿé‡Œçš„ ç”¨æˆ·ç­‰çº§ã€ç§¯åˆ†æˆ–ä½™é¢å‘ç”Ÿå˜åŒ–æ—¶,
+	 * å•†å®¶é€šè¿‡è°ƒç”¨è¯¥æŽ¥å£å¯ä»¥å°†å˜æ›´çš„ç”¨æˆ·æ•°æ®ä¿¡æ¯å’Œ openid(å¾®ä¿¡ç”¨æˆ· æ ‡è¯†)ä¼ é€’ç»™å¾®ç”Ÿæ´»,å¾®ç”Ÿæ´»å±•ç¤ºåœ¨ä¼šå‘˜å¡ Html5 é¡µé¢,æ–¹ä¾¿æŸ¥çœ‹ã€‚
+	 * @param objectid è°ƒæ•´å•id
 	 * @return 
 	 * @throws Exception
 	 */
 	private void updateCard(JSONObject restjo) throws Exception{
 		if(restjo==null||!restjo.has("vipid")||!restjo.has("ad_client_id")||!restjo.has("RELNAME")||!restjo.has("GENDER")||!restjo.has("BIRTHDAY")||!restjo.has("PHONENUM")) {
-			logger.debug("params->"+restjo.toString());
-			logger.debug("params must not null");
+			logger.debug("updateCard params error->"+restjo.toString());
 			return;
 		}
 		
@@ -366,13 +365,13 @@ public class RestControl {
 				//return isSuccessfull;
 			}
 		}else {
-			System.out.println("not find WX_INTERFACESET");
+			logger.debug("not find WX_INTERFACESET");
 			throw new Exception("not find WX_INTERFACESET ad_client_id->"+ad_client_id);
 			//return isSuccessfull;
 		}
 		
 		if(!isErp) {
-			logger.debug("Î´½ÓÍ¨ERP");
+			logger.debug("æœªæŽ¥é€šERP");
 			return;
 		}
 		
@@ -382,7 +381,7 @@ public class RestControl {
 		if(sp.getCode().equals("0")){
 			List al = QueryEngine.getInstance().doQueryList("select vp.wechatno,vs.code,vp.vipcardno from wx_vip vp,wx_vipbaseset vs WHERE vp.id=? AND vp.viptype=vs.id",new Object[] {vipid});
 			if(al!=null&&al.size()>0) {
-				//"BIRTHDAY":"19340202","NAME":"jackrain","PHONENUM":"18005695669","CONTACTADDRESS":"Ìì½òÊÐÏ½ÇøºÍÆ½ÇøÖÐ¹úÉÏº£Ðì»ã","GENDER":"1"
+				//"BIRTHDAY":"19340202","NAME":"jackrain","PHONENUM":"18005695669","CONTACTADDRESS":"å¤©æ´¥å¸‚è¾–åŒºå’Œå¹³åŒºä¸­å›½ä¸Šæµ·å¾æ±‡","GENDER":"1"
 				params.put("args[openid]", (String) ((List)al.get(0)).get(0));
 				params.put("args[cardid]",String.valueOf(ad_client_id));
 				params.put("args[wshno]","");
@@ -402,7 +401,7 @@ public class RestControl {
 			params.put("ts",ts);
 			params.put("method","updateUserInfo");
 		}else {
-			System.out.println("validateSing error->"+sp.toString());
+			logger.debug("validateSing error->"+sp.toString());
 			throw new Exception("validateSing error->"+sp.toString());
 			//return isSuccessfull;
 		}
@@ -410,8 +409,8 @@ public class RestControl {
 		try{
 			vh=RestUtils.sendRequest(serverUrl,params,"POST");
 		} catch (Throwable tx) {
-			logger.debug("Î¢Éú»îÍøÂçÍ¨ÐÅÕÏ°­! "+tx.getMessage());
-			throw new Exception("Î¢Éú»îÍøÂçÍ¨ÐÅÕÏ°­! "+tx.getMessage());
+			logger.debug("å¾®ç”Ÿæ´»ç½‘ç»œé€šä¿¡éšœç¢! "+tx.getMessage());
+			throw new Exception("å¾®ç”Ÿæ´»ç½‘ç»œé€šä¿¡éšœç¢! "+tx.getMessage());
 			//return;
 		}
 		String result=(String) vh.get("message");
@@ -423,16 +422,83 @@ public class RestControl {
 		}
 	}
 	
-	/**
-	Ç°Ìá
-	Ë«·½Ô¼¶¨Í¨ÐÅ¼ÓÃÜÊ¹ÓÃµÄÍ¨ÐÅÃÜ³×¼´ skey¡£ Éú³É¹æÔò
-	½« cardid, ts, skey Æ´½ÓÆðÀ´µÄ×Ö·û´®½øÐÐ md5 ¼ÓÃÜ¼´µÃµ½ sig Æ´½ÓË³Ðò±ØÐëÎª cardid, ts, skey
-	md5 ºóµÄ½á¹ûÎªÐ¡Ð´×Ö·û
-	cardid ´æ·ÅÓë we_vip_cost
-	* @param request
-	* @return
-	* @throws Exception 
-	*/
+	private void integralExchange(JSONObject restjo) throws Exception{
+		if(restjo!=null&&!restjo.has("query")) {
+			logger.debug("integralExchange params error->"+restjo.toString());
+			return;
+		}
+		JSONObject tjo=restjo.optJSONObject("query");
+		if(tjo==null||!tjo.has("cardno")||!tjo.has("docno")||!tjo.has("integral")) {
+			logger.debug("integralExchange params error->"+tjo.toString());
+			return;
+		}
+		
+		List all=null;
+		int ad_client_id=tjo.optInt("ad_client_id");
+		careid=String.valueOf(ad_client_id);
+		boolean isErp=false;
+		
+		all=QueryEngine.getInstance().doQueryList("select ifs.erpurl,ifs.username,ifs.iserp,ifs.wxparam from WX_INTERFACESET ifs WHERE ifs.ad_client_id="+ad_client_id);
+		
+		if(all!=null&&all.size()>0) {
+			System.out.println("WX_INTERFACESET size->"+all.size());
+			serverUrl=(String)((List)all.get(0)).get(0);
+			SKEY=(String)((List)all.get(0)).get(3);
+			isErp="Y".equalsIgnoreCase((String)((List)all.get(0)).get(2));
+			if(nds.util.Validator.isNull(serverUrl)||nds.util.Validator.isNull(SKEY)) {
+				logger.debug("SERVERuRL OR SKEY IS NULL");
+				throw new Exception("SERVERuRL OR SKEY IS NULL");
+				//return isSuccessfull;
+			}
+		}else {
+			logger.debug("not find WX_INTERFACESET");
+			throw new Exception("not find WX_INTERFACESET ad_client_id->"+ad_client_id);
+			//return isSuccessfull;
+		}
+		
+		if(!isErp) {
+			logger.debug("æœªæŽ¥é€šERP");
+			return;
+		}
+		
+		SipStatus sp=validateSing();
+		if(!sp.getCode().equals("0")){
+			logger.debug("validateSing error->"+sp.toString());
+			throw new Exception("validateSing error->"+sp.toString());
+		}
+		HashMap<String, String> params =new HashMap<String, String>();
+		params.put("args[cardno]", tjo.optString("cardno"));
+		params.put("args[docno]", tjo.optString("docno"));
+		params.put("args[integral]", tjo.optString("integral"));
+		
+		params.put("format","JSON");
+		params.put("client","");
+		params.put("ver","1.0");
+		params.put("sig",Sign);
+		params.put("ts",ts);
+		params.put("method","integralExchange");
+		
+		ValueHolder vh=null;
+		try{
+			vh=RestUtils.sendRequest(serverUrl,params,"POST");
+		} catch (Throwable tx) {
+			logger.debug("å¾®ç”Ÿæ´»ç½‘ç»œé€šä¿¡éšœç¢! "+tx.getMessage());
+			throw new Exception("å¾®ç”Ÿæ´»ç½‘ç»œé€šä¿¡éšœç¢! "+tx.getMessage());
+			//return;
+		}
+		String result=(String) vh.get("message");
+		logger.debug("integralExchange offline result->"+result);
+		JSONObject jo= new JSONObject(result);
+		int recode=jo.optInt("errCode");
+		if(recode!=0) {
+			logger.debug("integralExchange offline error->"+jo.optString("errMessage"));
+			throw new Exception("integralExchange offline error->"+jo.optString("errMessage"));
+		}else {
+			tjo.put("availableintegral", jo.optInt("integral",0));
+			//restjo.optJSONObject("query").put("availableintegral", jo.optInt("integral",0));
+		}
+	}
+	
 	private SipStatus validateSing() throws Exception{
 		ts=String.valueOf(System.currentTimeMillis());
     	
