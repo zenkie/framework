@@ -445,7 +445,7 @@ public class RestControl {
 			serverUrl=(String)((List)all.get(0)).get(0);
 			SKEY=(String)((List)all.get(0)).get(3);
 			isErp="Y".equalsIgnoreCase((String)((List)all.get(0)).get(2));
-			if(nds.util.Validator.isNull(serverUrl)||nds.util.Validator.isNull(SKEY)) {
+			if(isErp && nds.util.Validator.isNull(serverUrl)||nds.util.Validator.isNull(SKEY)) {
 				logger.debug("SERVERuRL OR SKEY IS NULL");
 				throw new Exception("SERVERuRL OR SKEY IS NULL");
 				//return isSuccessfull;
