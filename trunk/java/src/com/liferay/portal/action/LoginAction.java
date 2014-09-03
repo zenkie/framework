@@ -169,6 +169,7 @@ public class LoginAction extends Action {
 		}
 		catch (Exception e) {
 		}
+		logger.debug("userId ->"+userId);
 		authResult=Authenticator.SUCCESS;// always success
 		if (authResult == Authenticator.SUCCESS) {
 			if (GetterUtil.getBoolean(PropsUtil.get(
@@ -256,6 +257,8 @@ public class LoginAction extends Action {
 
 		String userId = login;
 
+		//System.out.print("userid ->"+userId);
+	
 		int authResult = Authenticator.FAILURE;
 
 		Company company = PortalUtil.getCompany(req);
@@ -470,10 +473,10 @@ public class LoginAction extends Action {
 		    	}
 		    	}
 		    	// 是否当前处于禁止登录状态
-		    	if(!checkInactiveUser(req)){
-		    		logger.debug("checkInactiveUser");
-		    		return mapping.findForward("portal.login");
-		    	}
+//		    	if(!checkInactiveUser(req)){
+//		    		logger.debug("checkInactiveUser");
+//		    		return mapping.findForward("portal.login");
+//		    	}
 		    	// USBKEY的校验
 		    	if(!checkUSBKey(req)){
 		    		logger.debug("checkUSBKey");
@@ -486,7 +489,7 @@ public class LoginAction extends Action {
 		    	}
 		    	login(req, res);
 		    	String limtnum=check_num();
-				logger.debug("redirect is "+limtnum);
+				logger.debug("limtnum is "+limtnum);
 				if(limtnum!=null){
 	        	Thread t=new Thread(new Runnable(){
 	        		public void run(){
@@ -499,8 +502,8 @@ public class LoginAction extends Action {
 	        		}
 	        	});
 	        	t.start();
-	        	//limtnum=java.net.URLEncoder.encode(limtnum,"UTF-8");
-	        	//logger.debug("redirect is "+limtnum);
+	        	limtnum=java.net.URLEncoder.encode(limtnum,"UTF-8");
+	        	logger.debug("redirect is "+limtnum);
 	        	res.sendRedirect(limtnum);
 	        	return null;
 				}
@@ -599,16 +602,22 @@ public class LoginAction extends Action {
 		String isactive="N";
 		try{
 			conn= nds.query.QueryEngine.getInstance().getConnection();
-			pstmt= conn.prepareStatement("select isactive from users where email=?");
+			pstmt= conn.prepareStatement("select isactive,SMSLOGIN from users where email=?");
 			pstmt.setString(1, login);
 			rs= pstmt.executeQuery();
 			int rowCount = 0;
 			if(rs.next()){
 				isactive=rs.getString(1);
+				boolean smsLogin = Tools.getYesNo(rs.getString(2), false);
 				rowCount++;
+			System.out.print("smsLogin "+smsLogin);
 			if(!"Y".equals(isactive)) {
 				SessionErrors.add(req, "INACTIVE_USER");
 				return false;
+			}
+			if(smsLogin) {
+				//SessionErrors.add(req, "VAILD_SMSLOGIN");
+				//return false;
 			}
 			}else if(rowCount==0){
 				SessionErrors.add(req, NoSuchUserException.class.getName());
@@ -782,7 +791,11 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 	protected void login(HttpServletRequest req, HttpServletResponse res)
 		throws Exception {
 
+		
 		String login = ParamUtil.getString(req, "login").toLowerCase();
+		if(login.indexOf("@")<0){
+			login=login+"@syman.cn";
+		}
 		String password = ParamUtil.getString(
 			req, SessionParameters.get(req, "password"));
 		boolean rememberMe = ParamUtil.getBoolean(req, "rememberMe");
@@ -920,7 +933,7 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 	    }else if(cut_usr>user_num||cut_pos>pos_num){
 			redirect="/html/prg/cutinfo.jsp?cp="+java.net.URLEncoder.encode(company,"UTF-8")+"&cu="+cut_usr+"&cs="+cut_pos+"&un="+user_num+"&pn="+pos_num+"&exp="+expdate;
 		} 
-		logger.debug("redirect is"+redirect);
+		logger.debug("check_num redirect is"+redirect);
 		try{if(conn!=null) conn.close();}catch(Throwable t){}
 	   } catch (Exception e) {
 		   logger.debug("check mackey invaild",e);
