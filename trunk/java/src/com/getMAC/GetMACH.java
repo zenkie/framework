@@ -20,7 +20,7 @@ public class GetMACH {
         	MACstr.append(String.valueOf(cpuThreadNum));
             // “‘Ã´Õ¯–≈œ¢
         	//MACstr = ethernet(MACstr);
-        	MACstr.append(","+NetInterfaceData.getCPUSerial());
+        	MACstr.append(","+NetInterfaceData.getCPUSerial()+NetInterfaceData.getMotherboardSN());
         } catch (Exception e1) {
             e1.printStackTrace();
         }
