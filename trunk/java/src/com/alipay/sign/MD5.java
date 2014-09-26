@@ -41,11 +41,9 @@ public class MD5 {
 	 *            编码格式
 	 * @return 签名结果
 	 */
-	public static boolean verify(String text, String sign, String key,
-			String input_charset) {
+	public static boolean verify(String text, String sign, String key,String input_charset) {
 		text = text + key;
-		String mysign = DigestUtils
-				.md5Hex(getContentBytes(text, input_charset));
+		String mysign = DigestUtils.md5Hex(getContentBytes(text, input_charset));
 		if (mysign.equals(sign)) {
 			return true;
 		} else {

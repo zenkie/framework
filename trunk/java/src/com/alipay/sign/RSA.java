@@ -34,8 +34,7 @@ public class RSA {
 			KeyFactory keyf = KeyFactory.getInstance("RSA");
 			PrivateKey priKey = keyf.generatePrivate(priPKCS8);
 
-			java.security.Signature signature = java.security.Signature
-					.getInstance(SIGN_ALGORITHMS);
+			java.security.Signature signature = java.security.Signature.getInstance(SIGN_ALGORITHMS);
 
 			signature.initSign(priKey);
 			signature.update(content.getBytes(input_charset));
@@ -63,16 +62,13 @@ public class RSA {
 	 *            编码格式
 	 * @return 布尔值
 	 */
-	public static boolean verify(String content, String sign,
-			String ali_public_key, String input_charset) {
+	public static boolean verify(String content, String sign,String ali_public_key, String input_charset) {
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			byte[] encodedKey = Base64.decode(ali_public_key);
-			PublicKey pubKey = keyFactory
-					.generatePublic(new X509EncodedKeySpec(encodedKey));
+			PublicKey pubKey = keyFactory.generatePublic(new X509EncodedKeySpec(encodedKey));
 
-			java.security.Signature signature = java.security.Signature
-					.getInstance(SIGN_ALGORITHMS);
+			java.security.Signature signature = java.security.Signature.getInstance(SIGN_ALGORITHMS);
 
 			signature.initVerify(pubKey);
 			signature.update(content.getBytes(input_charset));

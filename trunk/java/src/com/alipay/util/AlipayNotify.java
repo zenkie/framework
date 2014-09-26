@@ -88,10 +88,8 @@ public class AlipayNotify {
 		String responseTxt = "true";
 		try {
 			// XML解析notify_data数据，获取notify_id
-			Document document = DocumentHelper.parseText(params
-					.get("notify_data"));
-			String notify_id = document.selectSingleNode("//notify/notify_id")
-					.getText();
+			Document document = DocumentHelper.parseText(params.get("notify_data"));
+			String notify_id = document.selectSingleNode("//notify/notify_id").getText();
 			responseTxt = verifyResponse(notify_id);
 		} catch (Exception e) {
 			responseTxt = e.toString();
@@ -102,6 +100,7 @@ public class AlipayNotify {
 		if (params.get("sign") != null) {
 			sign = params.get("sign");
 		}
+		
 		boolean isSign = getSignVeryfy(params, sign, false);
 
 		// 写日志记录（若要调试，请取消下面两行注释）
@@ -144,8 +143,7 @@ public class AlipayNotify {
 	 *            是否排序
 	 * @return 生成的签名结果
 	 */
-	private static boolean getSignVeryfy(Map<String, String> Params,
-			String sign, boolean isSort) {
+	private static boolean getSignVeryfy(Map<String, String> Params,String sign, boolean isSort) {
 		// 过滤空值、sign与sign_type参数
 		Map<String, String> sParaNew = AlipayCore.paraFilter(Params);
 		// 获取待签名字符串
@@ -157,13 +155,10 @@ public class AlipayNotify {
 		}
 		// 获得签名验证结果
 		boolean isSign = false;
-		if (aliconf.sign_type.equals("MD5")) {
-			isSign = MD5.verify(preSignStr, sign, aliconf.getKey(),
-					AlipayConfig.input_charset);
-		}
-		if (aliconf.sign_type.equals("0001")) {
-			isSign = RSA.verify(preSignStr, sign, AlipayConfig.ali_public_key,
-					AlipayConfig.input_charset);
+		if (aliconf.sign_type.equalsIgnoreCase("MD5")) {
+			isSign = MD5.verify(preSignStr, sign, aliconf.getKey(),AlipayConfig.input_charset);
+		}else if (aliconf.sign_type.equalsIgnoreCase("0001")) {
+			isSign = RSA.verify(preSignStr, sign, AlipayConfig.ali_public_key,AlipayConfig.input_charset);
 		}
 		return isSign;
 	}
@@ -180,8 +175,7 @@ public class AlipayNotify {
 		// 获取远程服务器ATN结果，验证是否是支付宝服务器发来的请求
 
 		String partner = aliconf.getPartner();
-		String veryfy_url = HTTPS_VERIFY_URL + "partner=" + partner
-				+ "&notify_id=" + notify_id;
+		String veryfy_url = HTTPS_VERIFY_URL + "partner=" + partner+ "&notify_id=" + notify_id;
 
 		return checkUrl(veryfy_url);
 	}
@@ -199,10 +193,8 @@ public class AlipayNotify {
 
 		try {
 			URL url = new URL(urlvalue);
-			HttpURLConnection urlConnection = (HttpURLConnection) url
-					.openConnection();
-			BufferedReader in = new BufferedReader(new InputStreamReader(
-					urlConnection.getInputStream()));
+			HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+			BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
 			inputLine = in.readLine().toString();
 		} catch (Exception e) {
 			e.printStackTrace();

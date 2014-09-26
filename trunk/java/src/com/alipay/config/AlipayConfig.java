@@ -50,7 +50,7 @@ public class AlipayConfig {
 	public static String log_path = "D:\\";
 
 	// 字符编码格式 目前支持  utf-8
-	public static String input_charset = "utf-8";
+	public static String input_charset = "UTF-8";
 	
 	// 签名方式，选择项：0001(RSA)、MD5
 	public static  String sign_type = "MD5";

@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.httpclient.methods.multipart.FilePartSource;
 import org.apache.commons.httpclient.methods.multipart.PartSource;
@@ -44,7 +46,8 @@ public class AlipayCore {
 
 		for (String key : sArray.keySet()) {
 			String value = sArray.get(key);
-			if (value == null || value.equals("")
+			if (value == null 
+					|| value.equals("")
 					|| key.equalsIgnoreCase("sign")
 					|| key.equalsIgnoreCase("sign_type")) {
 				continue;
@@ -92,7 +95,7 @@ public class AlipayCore {
 	 */
 	public static String createLinkStringNoSort(Map<String, String> params) {
 
-		Map<String, String> sParaSort = new HashMap<String, String>();
+		Map<String, String> sParaSort = new LinkedHashMap<String, String>();
 		sParaSort.put("service", params.get("service"));
 		sParaSort.put("v", params.get("v"));
 		sParaSort.put("sec_id", params.get("sec_id"));
