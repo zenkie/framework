@@ -103,8 +103,9 @@ public class UploadforWebroot implements BinaryHandler{
 	                    }
 	                }else{
 	                	map.put(item.getFieldName(),item.getString("UTF-8") );
+	                	continue;
 	                }
-	        }
+	        
 	        if(in !=null){
 	        // save to file system
 	    		// save to file
@@ -127,7 +128,8 @@ public class UploadforWebroot implements BinaryHandler{
 	    	    int insize=in.available();
 	    	    BufferedImage bi=ImageIO.read(in);
 	    	    Boolean isthum= nds.util.Tools.getBoolean(map.get("isThum"), false);//(Boolean)map.get("isThum")==null?false:true;
-	    		if(isthum){
+	    	    Boolean isFile= nds.util.Tools.getBoolean(map.get("isFile"), false);//(Boolean)map.get("isThum")==null?false:true;
+	    	    if(isthum&&!isFile){
 	    			//createThumbnailator("/Users/jackrain/Downloads/4.jpg","/Users/jackrain/Downloads/imgTest2.jpg",200,200);
 	    			int width=Integer.valueOf((String)map.get("width"));
 	    			int hight=Integer.valueOf((String)map.get("hight"));
@@ -135,7 +137,8 @@ public class UploadforWebroot implements BinaryHandler{
 	    			ImageUtils.createThumbnailator(bi,filePath,width,hight,true,fileName);
 	    		}else{
 	    			logger.debug("fileName ->"+fileName);
-	    			ImageUtils.createThumbnailator(bi,filePath,fileName);
+	    			 item.write(new File(filePath));  
+	    			//ImageUtils.createThumbnailator(in,filePath,fileName);
 	    		}
 	    	    
 	    		
@@ -148,6 +151,7 @@ public class UploadforWebroot implements BinaryHandler{
 	            isOK=true;
 	            //"/servlets/userfolder/"+fileName
 	            logger.debug("save to "+ filePath+" (" + Tools.formatSize(insize)+")");
+	        }
 	        }
 		}catch(Throwable t){
 			logger.error("fail to do upload ",t);
