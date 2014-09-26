@@ -90,8 +90,7 @@ public class TenpayUtil {
 	 * @return String
 	 */
 
-	public static String getCharacterEncoding(HttpServletRequest request,
-			HttpServletResponse response) {
+	public static String getCharacterEncoding(HttpServletRequest request,HttpServletResponse response) {
 		
 		if(null == request || null == response) {
 			return "gbk";
