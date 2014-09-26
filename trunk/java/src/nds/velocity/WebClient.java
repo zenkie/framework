@@ -17,9 +17,11 @@ import java.io.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.directwebremoting.util.SwallowingHttpServletResponse;
 import org.json.JSONObject;
 
+import com.alibaba.fastjson.JSON;
 import com.wxap.*;
 import com.wxap.client.TenpayHttpClient;
 import com.wxap.util.Sha1Util;
@@ -798,34 +800,64 @@ public class WebClient {
 	}
 	
 	
-	public Map payOrder(int orderid,HttpServletRequest request, HttpServletResponse response) throws Exception{
+	public String payOrder(int orderid,HttpServletRequest request, HttpServletResponse response) throws Exception{
 		
 		RequestHandler reqHandler = new RequestHandler(request, response);
 		TenpayHttpClient httpClient = new TenpayHttpClient();
 		
 		TreeMap<String, String> outParams = new TreeMap<String, String>();
-		 //初始化 
+		//初始化 
+		WeUtils wu=null;
+		List weixinpay=null;
+		try {
+			java.net.URL url = new java.net.URL(request.getRequestURL().toString());
+			WeUtilsManager Wemanage =WeUtilsManager.getInstance();
+			wu =Wemanage.getByDomain(url.getHost());
+			
+			weixinpay=QueryEngine.getInstance().doQueryList("select p.partner,p.app_id,p.app_secret,p.partner_key,p.app_key from wx_pay p where p.ad_client_id=? and p.pcode='weixin'", new Object[] {wu.getAd_client_id()});
+		}catch(Exception t){
+			logger.debug("get path error->"+t.getMessage());
+			t.printStackTrace();
+			return "{}";
+		}
 		
-		String NOTIFY_URL="http://www.qq.com";
-		String APP_ID, APP_SECRET, PARTNER_KEY, APP_KEY;
-		String PARTNER="1218864901";
-		APP_ID="wxa5338bf0ca2d4d5f";
-		APP_SECRET="236967ace310d96cf128331c6ebb9f5d";
-		PARTNER_KEY="c3e3b96201950c9295baa2c261c8ff55";
-		APP_KEY="YFSkXX03STEjxEslXI29I6g0KkBU5hi8WAT9QjQfuuVUJOg8XU4hYVXbEPw4hC8IGWOqNlWLmoCPMePBG1gmYdW8KTeeCnBqbHncejkUXd05gP4HLdiAl6N6NTrhObYo";
+		if(weixinpay==null||weixinpay.size()<=0) {
+			logger.debug("not find pay info->");
+			return "{}";
+		}
+		
+		//查询订单信息
+		List orderinfo=null;
+		try {
+			orderinfo=QueryEngine.getInstance().doQueryList("select o.docno,to_char(wmsys.wm_concat(ag.itemname)) from wx_order o,wx_orderitem oi,wx_appendgoods ag where o.id=? and o.id=oi.wx_order_id and oi.wx_appendgoods_id=ag.id group by o.docno", new Object[] {orderid});
+		}catch(Exception e) {
+			logger.debug("not find order info->");
+			return "{}";
+		}
+		if(orderinfo==null||orderinfo.size()<=0) {
+			logger.debug("not find order info->");
+			return "{}";
+		}
+	
+		String out_trade_no = String.valueOf(((List)orderinfo.get(0)).get(0));
+		String productname= String.valueOf(((List)orderinfo.get(0)).get(1));
+		if(nds.util.Validator.isNotNull(productname)&&productname.length()>30) {
+			productname=productname.substring(0,29)+"...";
+		}
+		
+		
+		String APP_ID, APP_SECRET, PARTNER,PARTNER_KEY, APP_KEY;
+		String NOTIFY_URL=wu.getDoMain()+"/servlets/binserv/nds.weixin.ext.RestWeixinPayCallback";
+		
+		PARTNER=String.valueOf(((List) weixinpay.get(0)).get(0));
+		APP_ID=String.valueOf(((List) weixinpay.get(0)).get(1));
+		APP_SECRET=String.valueOf(((List) weixinpay.get(0)).get(2));
+		PARTNER_KEY=String.valueOf(((List) weixinpay.get(0)).get(3));
+		APP_KEY=String.valueOf(((List) weixinpay.get(0)).get(4));
 		reqHandler.init();
 		reqHandler.init(APP_ID, APP_SECRET,APP_KEY,PARTNER_KEY);
 		
-		//当前时间 yyyyMMddHHmmss
-		String currTime = TenpayUtil.getCurrTime();
-		//8位日期
-		String strTime = currTime.substring(8, currTime.length());
-		//四位随机数
-		String strRandom = TenpayUtil.buildRandom(4) + "";
-		//10位序列号,可以自行调整。
-		String strReq = strTime + strRandom;
-		//订单号，此处用时间加随机数生成，商户根据自己情况调整，只要保持全局唯一就行
-		String out_trade_no = strReq;
+		
 		
 		//获取提交的商品价格
 		String order_price = request.getParameter("order_price");
@@ -833,45 +865,58 @@ public class WebClient {
 		String product_name = request.getParameter("product_name");
 		
 		//设置package订单参数
-			SortedMap<String, String> packageParams = new TreeMap<String, String>();
-			packageParams.put("bank_type", "WX");  //支付类型   
-			packageParams.put("body", "江诗丹顿"); //商品描述   
-			packageParams.put("fee_type","1"); 	  //银行币种
-			packageParams.put("input_charset", "UTF-8"); //字符集    
-			packageParams.put("notify_url", NOTIFY_URL); //通知地址  
-			packageParams.put("out_trade_no", out_trade_no); //商户订单号  
-			packageParams.put("partner", PARTNER); //设置商户号
-			packageParams.put("spbill_create_ip",  request.getRemoteAddr()); //订单生成的机器IP，指用户浏览器端IP
-			packageParams.put("total_fee","1"); //商品总金额,以分为单位
-			
-			//获取package包
-			String packageValue = reqHandler.genPackage(packageParams);
-			logger.debug("packageValue -> "+packageValue);
-			String noncestr = Sha1Util.getNonceStr();
-			String timestamp = Sha1Util.getTimeStamp();
-			
-			//设置支付参数
-			SortedMap<String, String> signParams = new TreeMap<String, String>();
-			signParams.put("appid", APP_ID);
-			signParams.put("appkey", APP_KEY);
-			signParams.put("noncestr", noncestr);
-			signParams.put("package", packageValue);
-			signParams.put("timestamp", timestamp);
-			//生成支付签名，要采用URLENCODER的原始值进行SHA1算法！
-			String sign = Sha1Util.createSHA1Sign(signParams);
-			
-			//增加非参与签名的额外参数
-			//signParams.put("paySign", sign);
-			//signParams.put("signType", "SHA1");
-			
-			HashMap map = new HashMap();
-			map.put("app_id", APP_ID);
-			map.put("timestamp", timestamp);
-			map.put("noncestr", noncestr);
-			map.put("packageValue", packageValue);
-			map.put("sign", sign);
-		return map;
+		SortedMap<String, String> packageParams = new TreeMap<String, String>();
+		packageParams.put("bank_type", "WX");  //支付类型   
+		packageParams.put("body", productname); //商品描述   
+		packageParams.put("fee_type","1"); 	  //银行币种
+		packageParams.put("input_charset", "UTF-8"); //字符集    
+		packageParams.put("notify_url", NOTIFY_URL); //通知地址  
+		packageParams.put("out_trade_no", out_trade_no); //商户订单号  
+		packageParams.put("partner", PARTNER); //设置商户号
+		packageParams.put("spbill_create_ip",  request.getRemoteAddr()); //订单生成的机器IP，指用户浏览器端IP
+		packageParams.put("total_fee","1"); //商品总金额,以分为单位
 		
+		//获取package包
+		String packageValue = reqHandler.genPackage(packageParams);
+		logger.debug("packageValue -> "+packageValue);
+		String noncestr = Sha1Util.getNonceStr();
+		String timestamp = Sha1Util.getTimeStamp();
+		
+		//设置支付参数
+		SortedMap<String, String> signParams = new TreeMap<String, String>();
+		signParams.put("appid", APP_ID);
+		signParams.put("appkey", APP_KEY);
+		signParams.put("noncestr", noncestr);
+		signParams.put("package", packageValue);
+		signParams.put("timestamp", timestamp);
+		//生成支付签名，要采用URLENCODER的原始值进行SHA1算法！
+		String sign = Sha1Util.createSHA1Sign(signParams);
+		
+		//增加非参与签名的额外参数
+		//signParams.put("paySign", sign);
+		//signParams.put("signType", "SHA1");
+		
+		/*HashMap map = new HashMap();
+		map.put("appid", APP_ID);
+		map.put("timestamp", timestamp);
+		map.put("noncestr", noncestr);
+		map.put("package", packageValue);
+		map.put("signtype", "SHA1");
+		map.put("paysign", sign);*/
+		
+		JSONObject orderjo=new JSONObject();
+		try {
+			orderjo.put("appId", APP_ID);
+			orderjo.put("timeStamp", timestamp);
+			orderjo.put("nonceStr", noncestr);
+			orderjo.put("package", packageValue);
+			orderjo.put("signType", "SHA1");
+			orderjo.put("paySign", sign);
+		}catch(Exception e) {
+			
+		}
+		logger.debug("weixin pay->"+orderjo.toString());
+		return orderjo.toString();
 	}
 	
 	public JSONObject getAlias(int pdtid) throws QueryException {
