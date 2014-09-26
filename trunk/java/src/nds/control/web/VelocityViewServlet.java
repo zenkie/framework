@@ -480,6 +480,7 @@ public class VelocityViewServlet extends HttpServlet
             System.out.print("VelocityViewServlet serverRootPath"+serverRootPath);
             String tpath=getVelocityTemplatePath(request, context);
             System.out.print("VelocityViewServlet tpath"+tpath);
+            //System.out.print("VelocityViewServlet tpath"+serverRootPath+tpath);
             if(tpath==null || tpath.indexOf(serverRootPath)<0){
 //            	 host not valid, redirect to our website homepage
             	//response.sendRedirect(serverRootPath);
@@ -602,6 +603,20 @@ public class VelocityViewServlet extends HttpServlet
 	    			logger.error("fail to parse host from "+request.getRequestURL() +":"+t);
 	    		}
 	    		// client id=-1 means not found, when not found, should return null;
+	    		//add support localvml
+	    		UserWebImpl userWeb =null;
+		    	try{
+		    		userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));	
+		    	}catch(Throwable userWebException){
+		    		
+		    	}
+		    	if(userWeb==null || userWeb.getUserId()==UserWebImpl.GUEST_ID ){
+		    	}else{
+		    		clientId= userWeb.getAdClientId();
+		    		//preview=true;
+	        		//context= new VelocityContext();
+	        		//VelocityUtils.insertVariables(context, clientId, preview?VELOCITY_WEB_ROOT:"/");
+		    	}
 	    		if(clientId==-1) return null;
 	    		
 	    		context= new VelocityContext();
