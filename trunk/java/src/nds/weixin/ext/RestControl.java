@@ -1,6 +1,8 @@
 package nds.weixin.ext;
 
 import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -12,6 +14,7 @@ import nds.control.web.WebUtils;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.query.QueryEngine;
+import nds.query.QueryException;
 import nds.rest.RestUtils;
 import nds.util.Tools;
 
@@ -23,10 +26,10 @@ public class RestControl {
 	private String careid;
 	private String ts;
 	
-	//restserver param =>{"BIRTHDAY":"19340202","NAME":"jackrain","PHONENUM":"18005695669","partial_update":true,"table":16003,"CONTACTADDRESS":"å¤©æ´¥å¸‚è¾–åŒºå’Œå¹³åŒºä¸­å›½ä¸Šæµ·å¾æ±‡","parsejson":"Y","PROVINCE":"å¤©æ´¥","GENDER":"1","javax.servlet.http.HttpServletRequest":"+/servlets/binserv+/Rest\nPOST /servlets/binserv/Rest HTTP/1.1\r\nCache-Control: no-cache\r\nPragma: no-cache\r\nUser-Agent: Java/1.6.0_07\r\nHost: localhost\r\nAccept: text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2\r\nConnection: keep-alive\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 682\r\n\r\n","ID":69,"command":"ObjectModify","CITY":"å¸‚è¾–åŒº","REGIONID":"å’Œå¹³åŒº"}
+	//restserver param =>{"BIRTHDAY":"19340202","NAME":"jackrain","PHONENUM":"18005695669","partial_update":true,"table":16003,"CONTACTADDRESS":"Ìì½òÊĞÏ½ÇøºÍÆ½ÇøÖĞ¹úÉÏº£Ğì»ã","parsejson":"Y","PROVINCE":"Ìì½ò","GENDER":"1","javax.servlet.http.HttpServletRequest":"+/servlets/binserv+/Rest\nPOST /servlets/binserv/Rest HTTP/1.1\r\nCache-Control: no-cache\r\nPragma: no-cache\r\nUser-Agent: Java/1.6.0_07\r\nHost: localhost\r\nAccept: text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2\r\nConnection: keep-alive\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 682\r\n\r\n","ID":69,"command":"ObjectModify","CITY":"ÊĞÏ½Çø","REGIONID":"ºÍÆ½Çø"}
 	
 	public void disposeCadeControll(JSONObject jo) throws Exception {
-		//{"BIRTHDAY":"19340202","NAME":"jackrain","PHONENUM":"?13705519364","partial_update":true,"table":16003,"vipid":79,"CONTACTADDRESS":"ä¸Šæµ·å¸‚è¾–åŒºé»„æµ¦åŒºä¸­å›½ä¸Šæµ·å¾æ±‡","parsejson":"Y","ad_client_id":55,"javax.servlet.http.HttpServletRequest":"+/servlets/binserv+/Rest\nPOST /servlets/binserv/Rest HTTP/1.1\r\nCache-Control: no-cache\r\nPragma: no-cache\r\nUser-Agent: Java/1.6.0_07\r\nHost: localhost\r\nAccept: text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2\r\nConnection: keep-alive\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 733\r\n\r\n","GENDER":"1","PROVINCE":"ä¸Šæµ·","command":"ObjectModify","ID":74,"CITY":"å¸‚è¾–åŒº","REGIONID":"é»„æµ¦åŒº"}
+		//{"BIRTHDAY":"19340202","NAME":"jackrain","PHONENUM":"?13705519364","partial_update":true,"table":16003,"vipid":79,"CONTACTADDRESS":"ÉÏº£ÊĞÏ½Çø»ÆÆÖÇøÖĞ¹úÉÏº£Ğì»ã","parsejson":"Y","ad_client_id":55,"javax.servlet.http.HttpServletRequest":"+/servlets/binserv+/Rest\nPOST /servlets/binserv/Rest HTTP/1.1\r\nCache-Control: no-cache\r\nPragma: no-cache\r\nUser-Agent: Java/1.6.0_07\r\nHost: localhost\r\nAccept: text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2\r\nConnection: keep-alive\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 733\r\n\r\n","GENDER":"1","PROVINCE":"ÉÏº£","command":"ObjectModify","ID":74,"CITY":"ÊĞÏ½Çø","REGIONID":"»ÆÆÖÇø"}
 		String method=jo.optString("method");
 		
 		logger.debug("dispose cade method->"+method);
@@ -41,7 +44,7 @@ public class RestControl {
 		}
 	}
 	
-	/*å¼€å¡
+	/*¿ª¿¨
 	 * 
 	 */
 	private void openCard(JSONObject restjo) throws Exception{
@@ -55,7 +58,7 @@ public class RestControl {
 		boolean isErp=false;
 		careid=String.valueOf(ad_client_id);
 
-		//æŸ¥è¯¢æ¥å£ç›¸å…³ä¿¡æ¯ url,skey
+		//²éÑ¯½Ó¿ÚÏà¹ØĞÅÏ¢ url,skey
 		all=QueryEngine.getInstance().doQueryList("select ifs.erpurl,ifs.username,ifs.iserp,ifs.wxparam from WX_INTERFACESET ifs WHERE ifs.ad_client_id="+ad_client_id);
 		
 		
@@ -64,7 +67,7 @@ public class RestControl {
 			serverUrl=(String)((List)all.get(0)).get(0);
 			isErp="Y".equalsIgnoreCase((String)((List)all.get(0)).get(2));
 			SKEY=(String)((List)all.get(0)).get(3);
-			if(nds.util.Validator.isNull(serverUrl)||nds.util.Validator.isNull(SKEY)) {
+			if(isErp&&nds.util.Validator.isNull(serverUrl)||nds.util.Validator.isNull(SKEY)) {
 				logger.debug("SERVERuRL OR SKEY IS NULL");
 				throw new Exception("SERVERuRL OR SKEY IS NULL");
 			}
@@ -75,7 +78,21 @@ public class RestControl {
 		
 		
 		if(!isErp) {
-			logger.debug("æœªæ¥é€šERP");
+			logger.debug("Î´½ÓÍ¨ERP");
+			//ÏßÉÏ·¢È¯
+			ArrayList params=new ArrayList();
+			params.add(vipid);
+			ArrayList para=new ArrayList();
+			para.add( java.sql.Clob.class);
+			
+			try {
+				Collection list=QueryEngine.getInstance().executeFunction("wx_coupon_onlinecoupon",params,para);
+				String res=(String)list.iterator().next();
+				logger.debug("online send coupon result->"+res);
+			}catch (QueryException e) {
+				logger.debug("Deductstocksvr erroe->"+e.getMessage());
+				e.printStackTrace();
+			}
 			return;
 		}
 		SipStatus sp=validateSing();
@@ -137,8 +154,8 @@ public class RestControl {
 			try{
 				vh=RestUtils.sendRequest(serverUrl,params,"POST");
 			} catch (Throwable tx) {
-				logger.debug("ERPç½‘ç»œé€šä¿¡éšœç¢!");
-				throw new Exception("ERPç½‘ç»œé€šä¿¡éšœç¢!->"+tx.getMessage());
+				logger.debug("ERPÍøÂçÍ¨ĞÅÕÏ°­!");
+				throw new Exception("ERPÍøÂçÍ¨ĞÅÕÏ°­!->"+tx.getMessage());
 				//return false;
 			}
 			
@@ -147,7 +164,7 @@ public class RestControl {
 			logger.debug("open offline code result->"+result);
 			JSONObject jo= new JSONObject(result);
 
-			//{"result":{"data":{"code":"26f5lb99fr0-0","couponId":"6F5Lb99Fr"},"card":{"balance":0,"level":215,"no":"WX140515000000002","credit":0},"openid":"owAZBuEBBLn-LQ_5ebcbkSh_wFDk","cardid":"37"},"errMessage":"å¾®ç”Ÿæ´»ä¼šå‘˜å¼€å¡æˆåŠŸï¼","errCode":0}
+			//{"result":{"data":{"code":"26f5lb99fr0-0","couponId":"6F5Lb99Fr"},"card":{"balance":0,"level":215,"no":"WX140515000000002","credit":0},"openid":"owAZBuEBBLn-LQ_5ebcbkSh_wFDk","cardid":"37"},"errMessage":"Î¢Éú»î»áÔ±¿ª¿¨³É¹¦£¡","errCode":0}
 			
 			int insertcount=1;
 			if(jo.optInt("errCode",-1)==0) {
@@ -185,8 +202,8 @@ public class RestControl {
 						logger.debug("open offline code insert WX_COUPONEMPLOY error->"+jo.optString("errMessage"));
 						throw new Exception("open offline code insert WX_COUPONEMPLOY error->"+jo.optString("errMessage"));
 					}else {
-						logger.debug("open offline code result not find no[çº¿ä¸‹å¡å·] error->"+jo.optString("errMessage"));
-						throw new Exception("open offline code result not find no[çº¿ä¸‹å¡å·] error->"+jo.optString("errMessage"));
+						logger.debug("open offline code result not find no[ÏßÏÂ¿¨ºÅ] error->"+jo.optString("errMessage"));
+						throw new Exception("open offline code result not find no[ÏßÏÂ¿¨ºÅ] error->"+jo.optString("errMessage"));
 					}
 				}
 				
@@ -210,7 +227,7 @@ public class RestControl {
 		
 	}
 	
-	/*ç»‘å®š
+	/*°ó¶¨
 	 * 
 	 */
 	private void bindCard(JSONObject restjo) throws Exception{
@@ -244,7 +261,7 @@ public class RestControl {
 		}
 		
 		if(!isErp) {
-			logger.debug("æœªæ¥é€šERP");
+			logger.debug("Î´½ÓÍ¨ERP");
 			return;
 		}
 		
@@ -286,8 +303,8 @@ public class RestControl {
 		try{
 		 vh=RestUtils.sendRequest(serverUrl,params,"POST");
 		} catch (Throwable tx) {
-			logger.debug("ERPç½‘ç»œé€šä¿¡éšœç¢!");
-			throw new Exception("ERPç½‘ç»œé€šä¿¡éšœç¢->"+tx.getMessage());
+			logger.debug("ERPÍøÂçÍ¨ĞÅÕÏ°­!");
+			throw new Exception("ERPÍøÂçÍ¨ĞÅÕÏ°­->"+tx.getMessage());
 		}
 		String result=(String) vh.get("message");
 		logger.debug("bind offline code result->"+result);
@@ -334,10 +351,10 @@ public class RestControl {
 		//return isSuccessfull;
 	}
 	
-	/* ç”¨æˆ·å¡ä¿¡æ¯æ›´æ–°æ¥å£å¯ä»¥è¢«å•†å®¶è°ƒç”¨æ¥æ›´æ–°ç”¨æˆ·å¾®ç”Ÿæ´»ä¼šå‘˜å¡çš„ä¿¡æ¯ã€‚
-	 * å½“ç”¨æˆ·åœ¨å•†å®¶çš„ CRM ç³»ç»Ÿé‡Œçš„ ç”¨æˆ·ç­‰çº§ã€ç§¯åˆ†æˆ–ä½™é¢å‘ç”Ÿå˜åŒ–æ—¶,
-	 * å•†å®¶é€šè¿‡è°ƒç”¨è¯¥æ¥å£å¯ä»¥å°†å˜æ›´çš„ç”¨æˆ·æ•°æ®ä¿¡æ¯å’Œ openid(å¾®ä¿¡ç”¨æˆ· æ ‡è¯†)ä¼ é€’ç»™å¾®ç”Ÿæ´»,å¾®ç”Ÿæ´»å±•ç¤ºåœ¨ä¼šå‘˜å¡ Html5 é¡µé¢,æ–¹ä¾¿æŸ¥çœ‹ã€‚
-	 * @param objectid è°ƒæ•´å•id
+	/* ÓÃ»§¿¨ĞÅÏ¢¸üĞÂ½Ó¿Ú¿ÉÒÔ±»ÉÌ¼Òµ÷ÓÃÀ´¸üĞÂÓÃ»§Î¢Éú»î»áÔ±¿¨µÄĞÅÏ¢¡£
+	 * µ±ÓÃ»§ÔÚÉÌ¼ÒµÄ CRM ÏµÍ³ÀïµÄ ÓÃ»§µÈ¼¶¡¢»ı·Ö»òÓà¶î·¢Éú±ä»¯Ê±,
+	 * ÉÌ¼ÒÍ¨¹ıµ÷ÓÃ¸Ã½Ó¿Ú¿ÉÒÔ½«±ä¸üµÄÓÃ»§Êı¾İĞÅÏ¢ºÍ openid(Î¢ĞÅÓÃ»§ ±êÊ¶)´«µİ¸øÎ¢Éú»î,Î¢Éú»îÕ¹Ê¾ÔÚ»áÔ±¿¨ Html5 Ò³Ãæ,·½±ã²é¿´¡£
+	 * @param objectid µ÷Õûµ¥id
 	 * @return 
 	 * @throws Exception
 	 */
@@ -371,7 +388,7 @@ public class RestControl {
 		}
 		
 		if(!isErp) {
-			logger.debug("æœªæ¥é€šERP");
+			logger.debug("Î´½ÓÍ¨ERP");
 			return;
 		}
 		
@@ -381,7 +398,7 @@ public class RestControl {
 		if(sp.getCode().equals("0")){
 			List al = QueryEngine.getInstance().doQueryList("select vp.wechatno,vs.code,vp.vipcardno from wx_vip vp,wx_vipbaseset vs WHERE vp.id=? AND vp.viptype=vs.id",new Object[] {vipid});
 			if(al!=null&&al.size()>0) {
-				//"BIRTHDAY":"19340202","NAME":"jackrain","PHONENUM":"18005695669","CONTACTADDRESS":"å¤©æ´¥å¸‚è¾–åŒºå’Œå¹³åŒºä¸­å›½ä¸Šæµ·å¾æ±‡","GENDER":"1"
+				//"BIRTHDAY":"19340202","NAME":"jackrain","PHONENUM":"18005695669","CONTACTADDRESS":"Ìì½òÊĞÏ½ÇøºÍÆ½ÇøÖĞ¹úÉÏº£Ğì»ã","GENDER":"1"
 				params.put("args[openid]", (String) ((List)al.get(0)).get(0));
 				params.put("args[cardid]",String.valueOf(ad_client_id));
 				params.put("args[wshno]","");
@@ -409,8 +426,8 @@ public class RestControl {
 		try{
 			vh=RestUtils.sendRequest(serverUrl,params,"POST");
 		} catch (Throwable tx) {
-			logger.debug("å¾®ç”Ÿæ´»ç½‘ç»œé€šä¿¡éšœç¢! "+tx.getMessage());
-			throw new Exception("å¾®ç”Ÿæ´»ç½‘ç»œé€šä¿¡éšœç¢! "+tx.getMessage());
+			logger.debug("Î¢Éú»îÍøÂçÍ¨ĞÅÕÏ°­! "+tx.getMessage());
+			throw new Exception("Î¢Éú»îÍøÂçÍ¨ĞÅÕÏ°­! "+tx.getMessage());
 			//return;
 		}
 		String result=(String) vh.get("message");
@@ -457,7 +474,7 @@ public class RestControl {
 		}
 		
 		if(!isErp) {
-			logger.debug("æœªæ¥é€šERP");
+			logger.debug("Î´½ÓÍ¨ERP");
 			return;
 		}
 		
@@ -482,8 +499,8 @@ public class RestControl {
 		try{
 			vh=RestUtils.sendRequest(serverUrl,params,"POST");
 		} catch (Throwable tx) {
-			logger.debug("å¾®ç”Ÿæ´»ç½‘ç»œé€šä¿¡éšœç¢! "+tx.getMessage());
-			throw new Exception("å¾®ç”Ÿæ´»ç½‘ç»œé€šä¿¡éšœç¢! "+tx.getMessage());
+			logger.debug("Î¢Éú»îÍøÂçÍ¨ĞÅÕÏ°­! "+tx.getMessage());
+			throw new Exception("Î¢Éú»îÍøÂçÍ¨ĞÅÕÏ°­! "+tx.getMessage());
 			//return;
 		}
 		String result=(String) vh.get("message");
