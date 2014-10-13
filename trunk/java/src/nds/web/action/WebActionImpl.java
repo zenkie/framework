@@ -178,7 +178,7 @@ public abstract class WebActionImpl implements WebAction{
 				logger.debug("query:"+qs);
 				//int qtid= query.optInt("table", -1);
 				int oid= query.optInt("id", -1);
-				if(oid!=-1 ){
+				if(oid!=-1&&query.optBoolean("lock",true)){
 					//try lock it
 					QueryUtils.lockRecord(TableManager.getInstance().findTable(query.opt("table")), oid,conn);
 				}
