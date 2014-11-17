@@ -167,7 +167,8 @@ public class PrintJasper extends Command{
 	    	// for special handle
 	    	parameters.put("userid", String.valueOf(user.id));
 	    	parameters.put("ad_client_id", String.valueOf(user.adClientId));   
-	    	parameters.put("SUBREPORT_DIR", conf.getProperty("export.root.nds","/aic/home")+"/../jreport/");
+	    	parameters.put("SUBREPORT_DIR",conf.getProperty("dir.jreport","/act.nea/jreport")+"/act.nea/jreport/");//conf.getProperty("export.root.nds","/aic/home")+"/../jreport/");
+	    	logger.debug("jasper is SUBREPORT_DIR "+conf.getProperty("dir.jreport","/act.nea/jreport")+"/act.nea/jreport/");
 	    	
 	    	if("L".equals(reportType)){
 	    		if(! ((nds.control.util.SecurityUtils.getPermission(table.getSecurityDirectory(), user.id.intValue())

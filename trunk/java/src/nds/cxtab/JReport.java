@@ -288,13 +288,14 @@ public class JReport {
 	public static JasperReport getJasperReport(String fileXMLPath) throws Exception{
 		JasperReport jasperReport=null;
 		
-		if(!fileXMLPath.startsWith("/") ){
+		if(fileXMLPath.startsWith("/") ){
 			//relative to portal.properties#dir.jreport
 	        Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
 			String jreportDir=conf.getProperty("dir.jreport","/act.nea/jreport");
 			fileXMLPath=jreportDir+File.separator+fileXMLPath;
 			logger.debug("jreport file path:"+fileXMLPath);
 		}
+		logger.debug("fileXMLPath"+fileXMLPath);
 		File reportXMLFile=new File(fileXMLPath);
 		
 		if( reportXMLFile.exists()){    		
