@@ -13,6 +13,7 @@ import nds.util.ServletContextActor;
 import nds.util.WebKeys;
 import nds.control.ejb.*;
 import nds.process.*;
+import nds.web.IShowColumnDisposeFactory;
 import nds.web.button.*;
 import nds.web.shell.*;
 import nds.weixin.ext.IAuthorization;
@@ -25,6 +26,7 @@ public class PluginController implements ServletContextActor{
 	private PluginManager<ShellCmd> shellManager;
 	private PluginManager<BinaryHandler> binhander;
 	private PluginManager<IAuthorization> weixinexts;
+	private PluginManager<IShowColumnDisposeFactory> showcolumndisposes;
 	
 	private PluginScanner scanner;
 	public void init(Director director) {
@@ -81,6 +83,9 @@ Caused by: java.io.FileNotFoundException: JAR entry META-INF/services/nds.contro
         
         weixinexts=new PluginManager<IAuthorization>(IAuthorization.class, scanner);
         weixinexts.init();  
+        
+        showcolumndisposes=new PluginManager<IShowColumnDisposeFactory>(IShowColumnDisposeFactory.class,scanner);
+        showcolumndisposes.init();
     }
 	/**
 	 * Usage:
@@ -108,6 +113,9 @@ Caused by: java.io.FileNotFoundException: JAR entry META-INF/services/nds.contro
 	}
 	public IAuthorization findPluginShellwx(String name) {
 		return weixinexts.findPlugin(name);
+	}
+	public IShowColumnDisposeFactory findPluginShessColumnDispose(String name) {
+		return showcolumndisposes.findPlugin(name);
 	}
 	public Iterator<ShellCmd> listShellCmds(){
 		return shellManager.plugins();
@@ -137,6 +145,7 @@ Caused by: java.io.FileNotFoundException: JAR entry META-INF/services/nds.contro
     	try{shellManager.destroy();}catch(Throwable t){}
     	try{binhander.destroy();}catch(Throwable t){}
     	try{weixinexts.destroy();}catch(Throwable t){}
+    	try {showcolumndisposes.destroy();}catch(Throwable t) {}
     	scanner.destroy();
     	
         logger.debug("PluginController destroied.");
