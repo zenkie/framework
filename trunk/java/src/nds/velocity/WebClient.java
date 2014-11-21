@@ -152,6 +152,18 @@ public class WebClient {
 		}
 	}
 	/**
+	 * Update ths visit quantity of wx_setinfo
+	 * @param companyid
+	 */
+	public void updateWebsite() {
+		try{
+			QueryEngine.getInstance().executeUpdate("update wx_setinfo s set s.visitnumber=nvl(s.visitnumber,0)+1 where s.ad_client_id="+ this.getClientId());
+			//logger.debug("updateNewsCounter !");
+		}catch(Throwable t){
+			logger.error("Fail to update setinfo id="+ this.getClientId(), t);
+		}
+	}
+	/**
 	 * User specific image location
 	 * @return #nds.control.web.WebClientUserFileServlet.USER_FOLDER_PATH
 	 */
@@ -829,7 +841,7 @@ public class WebClient {
 		//查询订单信息
 		List orderinfo=null;
 		try {
-			orderinfo=QueryEngine.getInstance().doQueryList("select o.docno,to_char(wmsys.wm_concat(ag.itemname)) from wx_order o,wx_orderitem oi,wx_appendgoods ag where o.id=? and o.id=oi.wx_order_id and oi.wx_appendgoods_id=ag.id group by o.docno", new Object[] {orderid});
+			orderinfo=QueryEngine.getInstance().doQueryList("select o.docno,to_char(wmsys.wm_concat(ag.itemname)),sum(nvl(o.tot_amt,0)*100) from wx_order o,wx_orderitem oi,wx_appendgoods ag where o.id=? and o.id=oi.wx_order_id and oi.wx_appendgoods_id=ag.id group by o.docno", new Object[] {orderid});
 		}catch(Exception e) {
 			logger.debug("not find order info->");
 			return "{}";
@@ -874,7 +886,7 @@ public class WebClient {
 		packageParams.put("out_trade_no", out_trade_no); //商户订单号  
 		packageParams.put("partner", PARTNER); //设置商户号
 		packageParams.put("spbill_create_ip",  request.getRemoteAddr()); //订单生成的机器IP，指用户浏览器端IP
-		packageParams.put("total_fee","1"); //商品总金额,以分为单位
+		packageParams.put("total_fee",String.valueOf(((List)orderinfo.get(0)).get(2))); //商品总金额,以分为单位
 		
 		//获取package包
 		String packageValue = reqHandler.genPackage(packageParams);
