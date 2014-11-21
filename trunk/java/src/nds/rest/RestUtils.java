@@ -15,6 +15,7 @@ public class RestUtils {
 	public static ValueHolder sendRequest(String apiURL, Map<String, String> params, String method) throws Exception {
 
         String queryString = (null == params) ? "" : delimit(params.entrySet(),true	);
+        logger.debug("url :"+apiURL);
 		logger.debug("queryString :"+queryString);
         HttpURLConnection conn = (HttpURLConnection) new URL(apiURL).openConnection();
         conn.setConnectTimeout(6* 1000);
@@ -61,6 +62,7 @@ public class RestUtils {
 	public static ValueHolder sendRequest_buff(String apiURL, String params, String method) throws Exception {
 
         String queryString = (null == params) ? "" : params;
+        logger.debug("url :"+apiURL);
         logger.debug("queryString :"+queryString);
         HttpURLConnection conn = (HttpURLConnection) new URL(apiURL).openConnection();
 		conn.setRequestMethod(method);
