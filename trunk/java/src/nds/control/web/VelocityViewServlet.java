@@ -501,7 +501,7 @@ public class VelocityViewServlet extends HttpServlet
                 velocity.warn("VelocityViewServlet: couldn't find template to match request.");
                 return;
             }
-            System.out.print("VelocityViewServlet!");
+            //System.out.print("VelocityViewServlet!");
             // merge the template and context
             mergeTemplate(template, context, response);
             System.out.print("VelocityViewServlet!");
@@ -597,6 +597,7 @@ public class VelocityViewServlet extends HttpServlet
 	    			
 	    			//nds.weixin.ext.UserAuthorization iaz=new nds.weixin.ext.UserAuthorization();
 	    			result=iaz.getVip(wu,code);
+	    			//nds.velocity.WebClient.shareRecord(request,clientId);
 	    			}
 	    			
 	    		}catch(Throwable t){
@@ -623,6 +624,8 @@ public class VelocityViewServlet extends HttpServlet
 	    		//VelocityUtils.insertVariables(context, clientId, "/");
 	    		context.put("myweb", new WebClient(clientId, "/",  webDomain, true) );
 	    		if(wu!=null)context.put("weutils",wu);
+	    		
+	    		//nds.velocity.WebClient.shareRecord(request,clientId);
         	}else{
         		/**
         		 * For ahyyzb only, which use vml as website language
@@ -660,6 +663,7 @@ public class VelocityViewServlet extends HttpServlet
 	    			int isopen = Tools.getInt(((List) result.get(0)).get(1), -1);
 					context.put("fromvipid", vipid);
 					context.put("isopen", isopen);
+					nds.velocity.WebClient.shareRecord(request,clientId,vipid);
 				}
 			}
     		session.setAttribute(PROPS_VELOCITY_CONTEXT,context);
@@ -707,7 +711,7 @@ public class VelocityViewServlet extends HttpServlet
     			webDomain= url.getHost();
     			WeUtilsManager Wemanage =WeUtilsManager.getInstance();
     			WeUtils wu=Wemanage.getByDomain(webDomain);
-    			//clientId=wu.getAd_client_id();
+    			int cid=wu.getAd_client_id();
     			String code=request.getParameter("code");
     			if(code!=null){
     			nds.io.PluginController pc=(nds.io.PluginController) WebUtils.getServletContextManager().getActor(WebKeys.PLUGIN_CONTROLLER);
@@ -715,6 +719,7 @@ public class VelocityViewServlet extends HttpServlet
     			//nds.weixin.ext.UserAuthorization iaz=new nds.weixin.ext.UserAuthorization();
     			List result=iaz.getVip(wu,code);
     			System.out.print("context is not null update!");
+    		
     			if(result.size()>0){
     				vipid = Tools.getInt(((List) result.get(0)).get(0), -1);
         			int isopen = Tools.getInt(((List) result.get(0)).get(1), -1);
@@ -722,13 +727,11 @@ public class VelocityViewServlet extends HttpServlet
     				context.put("isopen", isopen);
     				}
     			}
+    			nds.velocity.WebClient.shareRecord(request,cid,vipid);
     			session.setAttribute(PROPS_VELOCITY_CONTEXT,context);
     		}catch(Throwable t){
     			logger.error("fail to parse host from "+request.getRequestURL() +":"+t);
     		}
-    		
-    		
-    		
     		
     	}
     	

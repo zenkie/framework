@@ -57,11 +57,17 @@ public class UploadforWebroot implements BinaryHandler{
 		try{
 			UserWebImpl userWeb =null;
 			userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession(true)).getActor(nds.util.WebKeys.USER));	
+			WeUtilsManager Wemanage=null;
+			WeUtils wu=null;
 			if(userWeb==null || userWeb.isGuest()){
-				throw new NDSException("guest not allowed");
+				//throw new NDSException("guest not allowed");
+				Wemanage=WeUtilsManager.getInstance();
+				java.net.URL url = new java.net.URL(request.getRequestURL().toString());
+				wu=Wemanage.getByDomain(url.getHost());
+			}else{
+				Wemanage=WeUtilsManager.getInstance();
+				wu=Wemanage.getByAdClientId(userWeb.getAdClientId());
 			}
-			WeUtilsManager Wemanage =WeUtilsManager.getInstance();
-			WeUtils wu=Wemanage.getByAdClientId(userWeb.getAdClientId());
 			//	          Create a factory for disk-based file items
 			DiskFileItemFactory factory = new DiskFileItemFactory();
 
@@ -105,7 +111,7 @@ public class UploadforWebroot implements BinaryHandler{
 	                	map.put(item.getFieldName(),item.getString("UTF-8") );
 	                	continue;
 	                }
-	        
+	        }
 	        if(in !=null){
 	        // save to file system
 	    		// save to file
@@ -126,10 +132,11 @@ public class UploadforWebroot implements BinaryHandler{
 	    	    fileName=new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date())+"."+FileUtils.getExtension(fileName);
 	    	    String filePath = svrPath + File.separator + fileName;
 	    	    int insize=in.available();
-	    	    BufferedImage bi=ImageIO.read(in);
+	    	  
 	    	    Boolean isthum= nds.util.Tools.getBoolean(map.get("isThum"), false);//(Boolean)map.get("isThum")==null?false:true;
 	    	    Boolean isFile= nds.util.Tools.getBoolean(map.get("isFile"), false);//(Boolean)map.get("isThum")==null?false:true;
 	    	    if(isthum&&!isFile){
+	    	    	BufferedImage bi=ImageIO.read(in);
 	    			//createThumbnailator("/Users/jackrain/Downloads/4.jpg","/Users/jackrain/Downloads/imgTest2.jpg",200,200);
 	    			int width=Integer.valueOf((String)map.get("width"));
 	    			int hight=Integer.valueOf((String)map.get("hight"));
@@ -137,8 +144,15 @@ public class UploadforWebroot implements BinaryHandler{
 	    			ImageUtils.createThumbnailator(bi,filePath,width,hight,true,fileName);
 	    		}else{
 	    			logger.debug("fileName ->"+fileName);
-	    			 item.write(new File(filePath));  
+	    			 //item.write(new File(filePath));  
 	    			//ImageUtils.createThumbnailator(in,filePath,fileName);
+	    			File file = new File(filePath);
+		        	
+		        	OutputStream out = null;
+		        	out = new FileOutputStream(file);
+		            copyContents( in, out );
+		            out.flush();
+		            out.close();
 	    		}
 	    	    
 	    		
@@ -152,7 +166,7 @@ public class UploadforWebroot implements BinaryHandler{
 	            //"/servlets/userfolder/"+fileName
 	            logger.debug("save to "+ filePath+" (" + Tools.formatSize(insize)+")");
 	        }
-	        }
+	        
 		}catch(Throwable t){
 			logger.error("fail to do upload ",t);
 			//return;

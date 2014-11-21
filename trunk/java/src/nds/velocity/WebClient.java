@@ -151,6 +151,34 @@ public class WebClient {
 			logger.error("Fail to update news id="+ newsId, t);
 		}
 	}
+	
+	/**
+	 * Update news, increase news.readcnt 
+	 * @param newsId
+	 */
+	public static void shareRecord(HttpServletRequest req,int ad_client_id,int targetid){
+		try{
+			//int vipid=nds.util.Tools.getInt(req.getParameter("fromvip"), -1);
+			//String fromid=req.getParameter("fromid");
+			//int objid=nds.util.Tools.getInt(req.getParameter("objid"),-1);
+			String state=req.getParameter("state");
+			logger.debug("state->"+state);
+			if(state==null)return;
+			String[] param = state.split("z");
+			logger.debug("param len->"+param.length);
+			if(param.length<1)return;
+			int vipid=nds.util.Tools.getInt(param[0], -1);
+			int fromid=nds.util.Tools.getInt(param[1], -1);
+			int objid=nds.util.Tools.getInt(param[2], -1);
+			StringBuffer url=req.getRequestURL();
+			QueryEngine.getInstance().executeUpdate("insert into WX_SHARERECORD(id,AD_CLIENT_ID,AD_ORG_ID,WX_VIP_ID,FROMID,OBJID,targetid,URL,CREATIONDATE,ISACTIVE) values(get_sequences('WX_SHARERECORD'),?,27,?,?,?,?,?,sysdate,'Y')" 
+		               ,new Object[] {ad_client_id,vipid,fromid,objid,targetid,String.valueOf(url)});
+			//QueryEngine.getInstance().executeUpdate("update WX_ISSUEARTICLE set BROWSENUM=nvl(BROWSENUM,0)+1 where id="+ newsId);
+			logger.debug("shareRecord !");
+		}catch(Throwable t){
+			logger.error("Fail to shareRecord url="+ req.getRequestURL(), t);
+		}
+	}
 	/**
 	 * Update ths visit quantity of wx_setinfo
 	 * @param companyid
@@ -970,6 +998,5 @@ public class WebClient {
 		
 	}
 	
-
 }
 
