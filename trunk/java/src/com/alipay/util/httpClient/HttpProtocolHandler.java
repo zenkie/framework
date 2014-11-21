@@ -100,8 +100,7 @@ public class HttpProtocolHandler {
 	 * @throws HttpException
 	 *             , IOException
 	 */
-	public HttpResponse execute(HttpRequest request, String strParaFileName,
-			String strFilePath) throws HttpException, IOException {
+	public HttpResponse execute(HttpRequest request, String strParaFileName,String strFilePath) throws HttpException, IOException {
 		HttpClient httpclient = new HttpClient(connectionManager);
 
 		// 设置连接超时
@@ -109,20 +108,17 @@ public class HttpProtocolHandler {
 		if (request.getConnectionTimeout() > 0) {
 			connectionTimeout = request.getConnectionTimeout();
 		}
-		httpclient.getHttpConnectionManager().getParams()
-				.setConnectionTimeout(connectionTimeout);
+		httpclient.getHttpConnectionManager().getParams().setConnectionTimeout(connectionTimeout);
 
 		// 设置回应超时
 		int soTimeout = defaultSoTimeout;
 		if (request.getTimeout() > 0) {
 			soTimeout = request.getTimeout();
 		}
-		httpclient.getHttpConnectionManager().getParams()
-				.setSoTimeout(soTimeout);
+		httpclient.getHttpConnectionManager().getParams().setSoTimeout(soTimeout);
 
 		// 设置等待ConnectionManager释放connection的时间
-		httpclient.getParams().setConnectionManagerTimeout(
-				defaultHttpConnectionManagerTimeout);
+		httpclient.getParams().setConnectionManagerTimeout(defaultHttpConnectionManagerTimeout);
 
 		String charset = request.getCharset();
 		charset = charset == null ? DEFAULT_CHARSET : charset;
@@ -147,16 +143,13 @@ public class HttpProtocolHandler {
 			method = new PostMethod(request.getUrl());
 			List<Part> parts = new ArrayList<Part>();
 			for (int i = 0; i < request.getParameters().length; i++) {
-				parts.add(new StringPart(request.getParameters()[i].getName(),
-						request.getParameters()[i].getValue(), charset));
+				parts.add(new StringPart(request.getParameters()[i].getName(),request.getParameters()[i].getValue(), charset));
 			}
 			// 增加文件参数，strParaFileName是参数名，使用本地文件
-			parts.add(new FilePart(strParaFileName, new FilePartSource(
-					new File(strFilePath))));
+			parts.add(new FilePart(strParaFileName, new FilePartSource(new File(strFilePath))));
 
 			// 设置请求体
-			((PostMethod) method).setRequestEntity(new MultipartRequestEntity(
-					parts.toArray(new Part[0]), new HttpMethodParams()));
+			((PostMethod) method).setRequestEntity(new MultipartRequestEntity(parts.toArray(new Part[0]), new HttpMethodParams()));
 		}
 
 		// 设置Http Header中的User-Agent属性
@@ -172,13 +165,13 @@ public class HttpProtocolHandler {
 			}
 			response.setResponseHeaders(method.getResponseHeaders());
 		} catch (UnknownHostException ex) {
-
+			ex.printStackTrace();
 			return null;
 		} catch (IOException ex) {
-
+			ex.printStackTrace();
 			return null;
 		} catch (Exception ex) {
-
+			ex.printStackTrace();
 			return null;
 		} finally {
 			method.releaseConnection();

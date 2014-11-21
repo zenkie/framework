@@ -79,9 +79,8 @@ public class AlipaySubmit {
 
 		// 签名结果与签名方式加入请求提交参数组中
 		sPara.put("sign", mysign);
-		if (!sPara.get("service").equals("alipay.wap.trade.create.direct")
-				&& !sPara.get("service").equals(
-						"alipay.wap.auth.authAndExecute")) {
+		if (!sPara.get("service").equals("alipay.wap.trade.create.direct") 
+			&& !sPara.get("service").equals("alipay.wap.auth.authAndExecute")) {
 			sPara.put("sign_type", aliconf.sign_type);
 		}
 
@@ -100,9 +99,7 @@ public class AlipaySubmit {
 	 *            确认按钮显示文字
 	 * @return 提交表单HTML文本
 	 */
-	public static String buildRequest(String ALIPAY_GATEWAY_NEW,
-			Map<String, String> sParaTemp, String strMethod,
-			String strButtonName) {
+	public static String buildRequest(String ALIPAY_GATEWAY_NEW,Map<String, String> sParaTemp, String strMethod,String strButtonName) {
 		// 待请求参数数组
 		Map<String, String> sPara = buildRequestPara(sParaTemp);
 		List<String> keys = new ArrayList<String>(sPara.keySet());
@@ -147,9 +144,7 @@ public class AlipaySubmit {
 	 *            文件上传的参数名
 	 * @return 提交表单HTML文本
 	 */
-	public static String buildRequest(String ALIPAY_GATEWAY_NEW,
-			Map<String, String> sParaTemp, String strMethod,
-			String strButtonName, String strParaFileName) {
+	public static String buildRequest(String ALIPAY_GATEWAY_NEW,Map<String, String> sParaTemp, String strMethod,String strButtonName, String strParaFileName) {
 		// 待请求参数数组
 		Map<String, String> sPara = buildRequestPara(sParaTemp);
 		List<String> keys = new ArrayList<String>(sPara.keySet());
@@ -197,25 +192,20 @@ public class AlipaySubmit {
 	 * @return 支付宝处理结果
 	 * @throws Exception
 	 */
-	public static String buildRequest(String ALIPAY_GATEWAY_NEW,
-			String strParaFileName, String strFilePath,
-			Map<String, String> sParaTemp) throws Exception {
+	public static String buildRequest(String ALIPAY_GATEWAY_NEW,String strParaFileName, String strFilePath,Map<String, String> sParaTemp) throws Exception {
 		// 待请求参数数组
 		Map<String, String> sPara = buildRequestPara(sParaTemp);
 
-		HttpProtocolHandler httpProtocolHandler = HttpProtocolHandler
-				.getInstance();
+		HttpProtocolHandler httpProtocolHandler = HttpProtocolHandler.getInstance();
 
 		HttpRequest request = new HttpRequest(HttpResultType.BYTES);
 		// 设置编码集
 		request.setCharset(AlipayConfig.input_charset);
 
 		request.setParameters(generatNameValuePair(sPara));
-		request.setUrl(ALIPAY_GATEWAY_NEW + "_input_charset="
-				+ AlipayConfig.input_charset);
+		request.setUrl(ALIPAY_GATEWAY_NEW + "_input_charset="+ AlipayConfig.input_charset);
 
-		HttpResponse response = httpProtocolHandler.execute(request,
-				strParaFileName, strFilePath);
+		HttpResponse response = httpProtocolHandler.execute(request,strParaFileName, strFilePath);
 		if (response == null) {
 			return null;
 		}
