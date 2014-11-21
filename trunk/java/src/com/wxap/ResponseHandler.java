@@ -179,7 +179,7 @@ public class ResponseHandler {
 	
 	public void doPase() {
 		String charset=request.getCharacterEncoding();
-		charset=charset==null?"gbk":charset;
+		charset=charset==null?"UTF-8":charset;
 		String result=null;
 		System.out.println("weixin pay callback getdata->"+this.request.getQueryString());
 		
