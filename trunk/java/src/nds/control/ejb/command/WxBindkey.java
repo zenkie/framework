@@ -56,6 +56,7 @@ public class WxBindkey extends Command {
 	   		String vcode=params.optString("vcode","");
 	   		String userid=params.getString("userid");
     		String url = null,token = null;
+    		String aeskey=nds.util.StringUtils.randomString(43);
    
     		//vcode
     		Wxvcode wxv=Wxvcode.getInstance();
@@ -73,7 +74,7 @@ public class WxBindkey extends Command {
 	        	url = String.valueOf(((List)li.get(0)).get(0));
 	        	token = String.valueOf(((List)li.get(0)).get(1));
 	         }
-    		wx.editCommonInteface(wx.getToken(),url,token);
+    		wx.editCommonInteface(wx.getToken(),url,token,aeskey);
     		
     		if(!wx.isDevUser(wx.getToken())){
     			vh.put("message", "尚未成为开发者，请在公众平台中检查相应的注册信息！");
@@ -95,6 +96,10 @@ public class WxBindkey extends Command {
     	    if (!uploadPath.exists()) {
     	       uploadPath.mkdirs();
     	    }
+    	    //保存头像
+    	    String userimg=svrPath+File.separator+"userico.jpg";
+    	    wx.getHeadimg(wx.getToken(), userimg);
+    	    //保存2维码
     		svrPath+=File.separator+"wxappcode.jpg";
     		wx.getQrcode(wx.getToken(),svrPath);
     		
@@ -107,12 +112,14 @@ public class WxBindkey extends Command {
 		    //set appid
 		    //set appKey
 		    //set ServiceType
-    		pstmt= conn.prepareStatement("update WX_INTERFACESET set originalid=?,appid=?,appsecret=?,PUBLICTYPE=? where ad_client_id=?");		
+		    
+    		pstmt= conn.prepareStatement("update WX_INTERFACESET set originalid=?,appid=?,appsecret=?,PUBLICTYPE=?,EncodingAESKey=? where ad_client_id=?");		
    			pstmt.setString(1,wx.getOriginalID(wx.getToken()));
    			pstmt.setString(2,wx.getAppId(wx.getToken()));
    			pstmt.setString(3,wx.getAppKey(wx.getToken()));
    			pstmt.setInt(4,wx.getServiceType(wx.getToken()));
-   			pstmt.setInt(5,clientId);
+   			pstmt.setString(5,aeskey);
+   			pstmt.setInt(6,clientId);
 		    pstmt.executeUpdate();
 		    
     		vh.put("message", wx.getLoginErrMsg());
