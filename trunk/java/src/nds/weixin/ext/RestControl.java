@@ -200,7 +200,12 @@ public class RestControl {
 			//int vvid=QueryEngine.getInstance().getSequence("WX_COUPONEMPLOY", conn);
 			String result=(String) vh.get("message");
 			logger.debug("open offline code result->"+result);
-			JSONObject jo= new JSONObject(result);
+			JSONObject jo=null;
+			try {
+				jo= new JSONObject(result);
+			}catch(Exception e) {
+				throw new Exception("线下会员开卡异常，请联系商家");
+			}
 
 			//{"result":{"data":{"code":"26f5lb99fr0-0","couponId":"6F5Lb99Fr"},"card":{"balance":0,"level":215,"no":"WX140515000000002","credit":0},"openid":"owAZBuEBBLn-LQ_5ebcbkSh_wFDk","cardid":"37"},"errMessage":"微生活会员开卡成功！","errCode":0}
 			
@@ -406,7 +411,12 @@ public class RestControl {
 		}
 		String result=(String) vh.get("message");
 		logger.debug("bind offline code result->"+result);
-		JSONObject jo= new JSONObject(result);
+		JSONObject jo=null;
+		try {
+			jo= new JSONObject(result);
+		}catch(Exception e) {
+			throw new Exception("线下会员绑卡异常，请联系商家");
+		}
 		int recode=jo.optInt("errCode");
 		if(recode!=0) {
 			throw new Exception("绑卡异常，请重试");
@@ -459,22 +469,25 @@ public class RestControl {
 	 * @throws Exception
 	 */
 	private void updateCard(JSONObject restjo) throws Exception{
+		ValueHolder vh=null;
 		if(restjo==null||!restjo.has("vipid")||!restjo.has("ad_client_id")||!restjo.has("RELNAME")||!restjo.has("GENDER")||!restjo.has("BIRTHDAY")||!restjo.has("PHONENUM")) {
 			logger.debug("updateCard params error->"+restjo.toString());
 			return;
 		}
 		
+		String isVerifyCode="N";
 		List all=null;
 		boolean isErp=false;
 		int vipid=restjo.optInt("vipid");
 		int ad_client_id=restjo.optInt("ad_client_id");
 		careid=String.valueOf(ad_client_id);
-		all=QueryEngine.getInstance().doQueryList("select ifs.erpurl,ifs.username,ifs.iserp,ifs.wxparam from WX_INTERFACESET ifs WHERE ifs.ad_client_id="+ad_client_id);
+		all=QueryEngine.getInstance().doQueryList("select ifs.erpurl,ifs.username,ifs.iserp,ifs.wxparam,nvl(wc.ismesauth,'N') from WX_INTERFACESET ifs join web_client wc on ifs.ad_client_id=wc.ad_client_id WHERE ifs.ad_client_id="+ad_client_id);
 		
 		if(all!=null&&all.size()>0) {
 			System.out.println("WX_INTERFACESET size->"+all.size());
 			serverUrl=(String)((List)all.get(0)).get(0);
 			SKEY=(String)((List)all.get(0)).get(3);
+			isVerifyCode=String.valueOf(((List)all.get(0)).get(4));
 			isErp="Y".equalsIgnoreCase((String)((List)all.get(0)).get(2));
 			if(nds.util.Validator.isNull(serverUrl)||nds.util.Validator.isNull(SKEY)) {
 				logger.debug("SERVERuRL OR SKEY IS NULL");
@@ -485,6 +498,37 @@ public class RestControl {
 			logger.debug("not find WX_INTERFACESET ad_client_id->"+ad_client_id);
 			throw new Exception("数据维护异常，请联系商家");
 			//return isSuccessfull;
+		}
+		
+		//判断是否需要验证码
+		if("Y".equalsIgnoreCase(isVerifyCode)) {
+			//判断验证码
+			JSONObject vjo=new JSONObject();
+			try {
+				JSONObject pjo=new JSONObject();
+				pjo.put("vipid", restjo.optInt("vipid",0));
+				pjo.put("verifycode", restjo.optString("verifycode"));
+				vjo.put("params", pjo);
+			} catch (Exception e) {
+				
+			}
+			
+			try {
+				ClientControllerWebImpl controller=(ClientControllerWebImpl)WebUtils.getServletContextManager().getActor(nds.util.WebKeys.WEB_CONTROLLER);
+				DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
+				event.put("jsonObject", vjo);
+				event.setParameter("command", "nds.weixin.ext.ValidationVipVerifycodeCommand");
+				vh=controller.handleEvent(event);
+			}catch(Exception e) {
+				logger.debug("open card verify code error->"+e.getLocalizedMessage());
+				throw new Exception("验证异常");
+			}
+			
+			if(vh==null||!"0".equalsIgnoreCase(String.valueOf(vh.get("code")))) {
+				logger.debug("open card verify code result error->");
+				if(vh==null) {throw new Exception("验证异常");}
+				else{throw new Exception(String.valueOf(vh.get("message")));}
+			}
 		}
 		
 		if(!isErp) {
@@ -516,8 +560,7 @@ public class RestControl {
 		params.put("ts",ts);
 		params.put("method","updateUserInfo");
 
-			
-		ValueHolder vh=null;
+		
 		try{
 			vh=RestUtils.sendRequest(serverUrl,params,"POST");
 		} catch (Throwable tx) {
@@ -528,7 +571,13 @@ public class RestControl {
 		}
 		String result=(String) vh.get("message");
 		logger.debug("update offline result->"+result);
-		JSONObject jo= new JSONObject(result);
+		
+		JSONObject jo=null;
+		try {
+			jo= new JSONObject(result);
+		}catch(Exception e) {
+			throw new Exception("线下同步会员信息异常，请联系商家");
+		}
 		int recode=jo.optInt("errCode");
 		if(recode!=0) {
 			throw new Exception("数据维护异常，请联系商家");
