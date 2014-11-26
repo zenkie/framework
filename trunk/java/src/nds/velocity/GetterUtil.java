@@ -212,6 +212,10 @@ public class GetterUtil {
 
 		return shortValues;
 	}
+	
+	public static String getString(Object value) {
+		return getString(String.valueOf(value), DEFAULT_STRING);
+	}
 
 	public static String getString(String value) {
 		return getString(value, DEFAULT_STRING);

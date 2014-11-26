@@ -266,7 +266,7 @@ public class WeixinBind {
 	 *            ,robackToken,token
 	 * */
 	public void editCommonInteface(String token, String application_url,
-			String robackToken) throws Exception {
+			String robackToken,String encodingAeskey) throws Exception {
 
 		String PostUrl = "https://mp.weixin.qq.com/advanced/callbackprofile?t=ajax-response&token="
 				+ token + "&lang=zh_CN";
@@ -279,7 +279,12 @@ public class WeixinBind {
 		post.setRequestHeader(COOKIE, this.cookiestr);
 		post.setParameter("callback_token", robackToken);
 		post.setParameter("url", application_url);
-
+		// 微信平台更新 配置url与token必须上传EncodingAESKey(消息加密密钥)43位字符
+		// post.setParameter("encoding_aeskey",
+		// "zbTTj5nllChiGc2NXzmFkTcibLcUCUDGnDQESgc9Ovv");
+		post.setParameter("encoding_aeskey", encodingAeskey);
+		// 请根据业务需要，选择消息加解密类型 0明文 1兼容 2安全
+		post.setParameter("callback_encrypt_mode", "0");
 		int status = client.executeMethod(post);
 		this.enabledEditComman(token);
 		// System.out.println(post.getResponseBodyAsString());
@@ -370,6 +375,36 @@ public class WeixinBind {
 	// getQrcodeImage(rs, path);// 下载二维码
 	// }
 	// }
+	/**
+	 * 获取用户头像
+	 * 
+	 * @param token
+	 * @throws Exception
+	 */
+	public void getHeadimg(String token, String path) throws Exception {
+
+		String GetUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
+				+ token + "&lang=zh_CN&f=json";
+		String HeadUrl = "https://mp.weixin.qq.com/cgi-bin/settingpage?t=setting/index&action=index&token="
+				+ token + "&lang=zh_CN";
+
+		GetMethod get = new GetMethod(GetUrl);
+		get.setRequestHeader(USER_AGENT_H, USER_AGENT);
+		get.setRequestHeader(REFERER_H, HeadUrl);
+		get.setRequestHeader(COOKIE, this.cookiestr);
+		int status = client.executeMethod(get);
+		String rs = null;
+		if (status == HttpStatus.SC_OK) {
+			String ret = get.getResponseBodyAsString();
+			org.json.JSONObject json = new org.json.JSONObject(ret);
+			org.json.JSONObject userInfo = (org.json.JSONObject) json
+					.get("user_info");
+			String fakeId = userInfo.getString("fake_id");
+			rs = "https://mp.weixin.qq.com/misc/getheadimg?fakeid=" + fakeId
+					+ "&token=" + token + "&r=" + new Random().nextDouble();
+			getQrcodeImage(rs, path);// 下载用户头像
+		}
+	}
 
 	/**
 	 * 获取用户二维码
@@ -655,8 +690,8 @@ public class WeixinBind {
 	}
 
 	public static void main(String[] args) throws Exception {
-//		String LOGIN_USER = "2994044970@qq.com";
-//		String LOGIN_PWD = "zt1314520";
+		// String LOGIN_USER = "2994044970@qq.com";
+		// String LOGIN_PWD = "zt1314520";
 		String LOGIN_USER = "jackrain@burgeon.cn";
 		String LOGIN_PWD = "qwert1~";
 		// String LOGIN_USER = "customer_insight";
@@ -676,18 +711,21 @@ public class WeixinBind {
 		// System.out.println("是否为开发者:"+wx.isDevUser(wx.getToken()));
 		// 5.oauth2.0
 		// wx.editServiceOAuth(wx.getToken(), "www.baidu.com");
-		// 6.用户头像
-		wx.getQrcode(wx.getToken(), "D://images//qrcode.jpg");
+		// 6.用户二维码
+		// wx.getQrcode(wx.getToken(), "D://images//qrcode.jpg");
 		// 7.用户公众号
-		System.out.println("公众号:" + wx.getWeixinAccount(wx.getToken()));
+		// System.out.println("公众号:" + wx.getWeixinAccount(wx.getToken()));
 		// 8.用户原始id
-		System.out.println("原始id:" + wx.getOriginalID(wx.getToken()));
+		// System.out.println("原始id:" + wx.getOriginalID(wx.getToken()));
 		// 9.获取开发者AppId 与 AppSecret
-		System.out.println("appid:" + wx.getAppId(wx.getToken()));
-		System.out.println("appKey:" + wx.getAppKey(wx.getToken()));
+		// System.out.println("appid:" + wx.getAppId(wx.getToken()));
+		// System.out.println("appKey:" + wx.getAppKey(wx.getToken()));
 		// 10.ServiceType
-		System.out.println("ServiceType:" + wx.getServiceType(wx.getToken()));
+		// System.out.println("ServiceType:" +
+		// wx.getServiceType(wx.getToken()));
 		// 11.启用服务器配置
-		wx.enabledEditComman(wx.getToken());
+		// wx.enabledEditComman(wx.getToken());
+		// 12.下载用户头像
+		wx.getHeadimg(wx.getToken(), "D://head.jpg");
 	}
 }
