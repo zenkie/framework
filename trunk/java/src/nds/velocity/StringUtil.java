@@ -123,6 +123,22 @@ import nds.util.Validator;
 			return true;
 		}
 
+		public static boolean contains(String s, String[] p,boolean isUL) {
+			boolean isExists=false;
+			if(p==null||p.length<=0) {return isExists;}
+			
+			for(String e:p) {
+				if(nds.util.Validator.isNull(s)) {
+					isExists=nds.util.Validator.isNull(e);
+				}else {
+					if(isUL) {isExists=s.equals(e);}
+					else {isExists=s.equalsIgnoreCase(e);}
+				}
+				if(isExists) {break;}
+			}
+			return isExists;
+		}
+		
 		public static int count(String s, String text) {
 			if ((s == null) || (text == null)) {
 				return 0;
