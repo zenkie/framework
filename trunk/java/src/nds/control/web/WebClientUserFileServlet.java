@@ -99,6 +99,7 @@ public class WebClientUserFileServlet extends HttpServlet {
     	File file=new File(path);
     	if(!file.exists()){
     		logger.warn(path+" not found");
+    		req.getRequestDispatcher(WebKeys.NDS_URI+"/images/noimg.png").forward(req, res);
     		return;
     	}
     	
