@@ -104,9 +104,10 @@ public class WxBindkey extends Command {
     		wx.getQrcode(wx.getToken(),svrPath);
     		
     		//QueryEngine.getInstance().executeUpdate(sql)
-    		pstmt= conn.prepareStatement("update WEB_CLIENT set qrcode=? where ad_client_id=?");		
+    		pstmt= conn.prepareStatement("update WEB_CLIENT set qrcode=?,wxnum=? where ad_client_id=?");		
    			pstmt.setString(1,"/servlets/userfolder/wxappcode.jpg");
-   			pstmt.setInt(2,clientId);
+   			pstmt.setString(2,wx.getWeixinAccount(wx.getToken()));
+   			pstmt.setInt(3,clientId);
 		    pstmt.executeUpdate();
 		    //set OriginalID
 		    //set appid

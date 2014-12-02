@@ -552,7 +552,9 @@ public class SubSystemView {
         Connection conn= null;
         HashMap webActionEnv=null;
         Table table;
-        List al=QueryEngine.getInstance().doQueryList("select e.id,e.name,e.ACCORDION_CLS from ad_table g,AD_ACCORDION e where g.AD_ACCORDION_id=e.id and g.ad_tablecategory_id="+tableCategoryId+" group by e.id,e.name,e.orderno,e.ACCORDION_CLS order by e.orderno asc");
+        //List al=QueryEngine.getInstance().doQueryList("select e.id,e.name,e.ACCORDION_CLS from ad_table g,AD_ACCORDION e where g.AD_ACCORDION_id=e.id and g.ad_tablecategory_id="+tableCategoryId+" group by e.id,e.name,e.orderno,e.ACCORDION_CLS order by e.orderno asc");
+        List al=QueryEngine.getInstance().doQueryList("select e.id,e.name,e.ACCORDION_CLS from ad_table g,AD_ACCORDION e,ad_action f where "+
+        "(g.AD_ACCORDION_id = e.id  or f.ad_accordion_id=e.id) and f.ad_tablecategory_id=e.ad_tablecategory_id and g.ad_tablecategory_id=e.ad_tablecategory_id and g.ad_tablecategory_id="+tableCategoryId+" group by e.id,e.name,e.orderno,e.ACCORDION_CLS order by e.orderno asc");
         UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
         TableCategory tc= manager.getTableCategory(tableCategoryId);
         if(tc!=null)children= tc.children();
