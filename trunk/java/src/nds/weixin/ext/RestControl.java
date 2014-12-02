@@ -481,6 +481,7 @@ public class RestControl {
 		int vipid=restjo.optInt("vipid");
 		int ad_client_id=restjo.optInt("ad_client_id");
 		careid=String.valueOf(ad_client_id);
+		
 		all=QueryEngine.getInstance().doQueryList("select ifs.erpurl,ifs.username,ifs.iserp,ifs.wxparam,nvl(wc.ismesauth,'N') from WX_INTERFACESET ifs join web_client wc on ifs.ad_client_id=wc.ad_client_id WHERE ifs.ad_client_id="+ad_client_id);
 		
 		if(all!=null&&all.size()>0) {
@@ -489,7 +490,7 @@ public class RestControl {
 			SKEY=(String)((List)all.get(0)).get(3);
 			isVerifyCode=String.valueOf(((List)all.get(0)).get(4));
 			isErp="Y".equalsIgnoreCase((String)((List)all.get(0)).get(2));
-			if(nds.util.Validator.isNull(serverUrl)||nds.util.Validator.isNull(SKEY)) {
+			if(isErp&&nds.util.Validator.isNull(serverUrl)||nds.util.Validator.isNull(SKEY)) {
 				logger.debug("SERVERuRL OR SKEY IS NULL");
 				throw new Exception("数据维护异常，请联系商家");
 				//return isSuccessfull;
