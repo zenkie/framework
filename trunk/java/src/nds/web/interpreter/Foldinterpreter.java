@@ -21,7 +21,9 @@ public class Foldinterpreter implements ColumnInterpreter,java.io.Serializable{
 		try {
 			ja=new JSONArray(m);
 		}catch(Exception e) {
-			e.printStackTrace();
+			result=m;
+			return result;
+			//e.printStackTrace();
 		}
 		if(ja!=null) {
 			for(int i=0;i<ja.length();i++) {
@@ -32,7 +34,8 @@ public class Foldinterpreter implements ColumnInterpreter,java.io.Serializable{
 				}
 			}
 		}
-		result=(jsb.length()==0?"":jsb.toString())+"<ori>"+value+"</ori>";
+		result="{\"ids\":\"\",\"showhtml\":\""+(jsb.length()==0?"":jsb.toString())+"\"}";
+		//result=(jsb.length()==0?"":jsb.toString())+"<ori>"+value+"</ori>";
 
 		//System.out.print("past->"+result);
 		return result;
