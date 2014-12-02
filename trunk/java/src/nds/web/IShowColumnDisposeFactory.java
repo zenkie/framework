@@ -6,6 +6,7 @@ import java.util.Properties;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.PageContext;
 
+import org.apache.jasper.runtime.TagHandlerPool;
 import org.json.JSONArray;
 
 import nds.control.web.UserWebImpl;
@@ -89,5 +90,5 @@ public interface IShowColumnDisposeFactory {
 	
 	public abstract String getNS();
 	
-	public abstract org.apache.jasper.runtime.TagHandlerPool getCLibs();
+	public abstract TagHandlerPool getCLibs();
 }
