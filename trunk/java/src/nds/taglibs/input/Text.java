@@ -25,6 +25,9 @@ import javax.servlet.jsp.JspTagException;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.TagSupport;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * 
  * This class implements the &lt;input:text&gt; tag, which presents an &lt;input
@@ -65,6 +68,18 @@ public class Text extends TagSupport {
     }
 
     public int doStartTag() throws JspException {
+    	if(isFold&&nds.util.Validator.isNotNull(dVal)) {
+	    	try {
+				JSONObject tempjo=new JSONObject(dVal);
+				
+				if(tempjo.has("showhtml")) {
+					oristring=tempjo.optString("showhtml");
+				}
+			} catch (JSONException e1) {
+				
+			}
+    	}
+    	
         try {
             // sanity check
             if (name == null || name.equals(""))
@@ -150,18 +165,18 @@ public class Text extends TagSupport {
                 } else if (req.getParameter(name) != null) {
                     out.write(req.getParameter(name));
                 } else {
-                    if (dVal != null) {
-                        out.write(dVal);
+                    if (oristring != null) {
+                        out.write(oristring);
                     }
                 }
             	out.print("</div>");
             	
             	out.print("<input type=\"text\" ");
             	out.print("name=\"" + Util.quote(name) + "\" ");
-            	if(nds.util.Validator.isNull(oristring)) {
+            	if(nds.util.Validator.isNull(dVal)) {
             		out.print("value=\"\" ");
             	}else {
-            		out.print("value=\"" + Util.quote(oristring) + "\" ");
+            		out.print("value=\"" + Util.quote(dVal) + "\" ");
             	}
             	out.print("style='display:none;' ");
             	out.print("/>");
@@ -190,18 +205,6 @@ public class Text extends TagSupport {
 
     public void setDefault(String x) {
         dVal = x;
-        oristring="";
-        if(nds.util.Validator.isNull(dVal)) {return;}
-    	Pattern p=Pattern.compile("(?<=(<ori>)).*(?=</ori>)");
-    	try {
-    		//System.out.print("[TagSupport.Text]x->"+x);
-	    	Matcher m=p.matcher(dVal);
-	    	 while(m.find()) {
-	    		oristring+=m.group();
-	    	}
-	    	 dVal=dVal.replaceAll("<ori>.*(?=</ori>)</ori>", "");
-    	}catch(Exception e) {}
-    	
     }
 
     public void setIsFold(boolean x) {
