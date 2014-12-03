@@ -537,6 +537,7 @@ public class RestControl {
 			return;
 		}
 		
+		SipStatus sp=validateSing();
 		HashMap<String, String> params =new HashMap<String, String>();
 
 		List al = QueryEngine.getInstance().doQueryList("select vp.wechatno,vs.code,vp.vipcardno from wx_vip vp,wx_vipbaseset vs WHERE vp.id=? AND vp.viptype=vs.id",new Object[] {vipid});
@@ -627,6 +628,7 @@ public class RestControl {
 			return;
 		}
 		
+		SipStatus sp=validateSing();
 		HashMap<String, String> params =new HashMap<String, String>();
 		params.put("args[cardno]", tjo.optString("cardno"));
 		params.put("args[docno]", tjo.optString("docno"));
