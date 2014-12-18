@@ -769,7 +769,7 @@ public class WebClient {
 		PreparedStatement pstmt=null;
 		ResultSet rs=null;
 		try{
-			pstmt= conn.prepareStatement("select count(1) from WX_COUPONEMPLOY t where  t.ISRECEIVE='N' and t.wx_vip_id=?");
+			pstmt= conn.prepareStatement("select count(1) from WX_COUPONEMPLOY t where  t.ISRECEIVE='N' and t.wx_vip_id=? and t.wx_coupon_id in(select c.id from wx_coupon c where c.id=t.wx_coupon_id and DECODE(c.VALIDAY,NULL, to_char(c.ENDTIME,'yyyymmdd'),to_char(t.CREATIONDATE+c.VALIDAY,'yyyymmdd'))>=to_char(sysdate,'yyyymmdd'))");
 			pstmt.setInt(1,vipid);
 			rs= pstmt.executeQuery();
 			if(rs.next()) return rs.getInt(1);
