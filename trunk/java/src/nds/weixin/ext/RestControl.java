@@ -63,6 +63,7 @@ public class RestControl {
 		boolean isErp=false;
 		careid=String.valueOf(ad_client_id);
 		String isVerifyCode="N";
+		String vipno="";
 		
 		//查询接口相关信息 url,skey
 		all=QueryEngine.getInstance().doQueryList("select ifs.erpurl,ifs.username,ifs.iserp,ifs.wxparam,nvl(wc.ismesauth,'N') from WX_INTERFACESET ifs join web_client wc on ifs.ad_client_id=wc.ad_client_id WHERE ifs.ad_client_id="+ad_client_id);
@@ -151,7 +152,8 @@ public class RestControl {
 					logger.debug("vip size->"+al.size());
 					params.put("args[openid]", (String) ((List)al.get(0)).get(0));
 					params.put("args[cardid]",String.valueOf(ad_client_id));
-					params.put("args[wshno]",(String) ((List)al.get(0)).get(1));
+					vipno=(String) ((List)al.get(0)).get(1);
+					params.put("args[wshno]",vipno);
 					params.put("args[shopid]",String.valueOf(((List)al.get(0)).get(2)));
 					params.put("args[viptype]",String.valueOf(((List)al.get(0)).get(6)));
 					params.put("args[couponval]",String.valueOf(((List)al.get(0)).get(7)));
@@ -233,7 +235,7 @@ public class RestControl {
 						ArrayList paramss=new ArrayList();
 						paramss.add(vipid);
 						ArrayList para=new ArrayList();
-						para.add( java.sql.Clob.class);
+						para.add(java.sql.Clob.class);
 						
 						try {
 							Collection list=QueryEngine.getInstance().executeFunction("wx_coupon_onlinecoupon",paramss,para);
@@ -251,7 +253,7 @@ public class RestControl {
 
 				if(insertcount>0&&jo.has("result")&&jo.optJSONObject("result").has("card")&&jo.optJSONObject("result").optJSONObject("card").has("no")) {
 					String updatevip="UPDATE wx_vip SET docno=?,vipcardno=?,opencard_status=2 WHERE ID=?";
-					insertcount=QueryEngine.getInstance().executeUpdate(updatevip,new Object[] {jo.optJSONObject("result").optJSONObject("card").optString("no"),jo.optJSONObject("result").optJSONObject("card").optString("wshno"),vipid},conn);
+					insertcount=QueryEngine.getInstance().executeUpdate(updatevip,new Object[] {jo.optJSONObject("result").optJSONObject("card").optString("no"),jo.optJSONObject("result").optJSONObject("card").optString("wshno",vipno),vipid},conn);
 					if(insertcount<=0) {
 						logger.debug("open offline code update WX_VIP error count->"+insertcount);
 						throw new Exception("开卡异常，请重试");
@@ -279,16 +281,20 @@ public class RestControl {
 			}
 				
 		}catch(Exception e) {
+			e.printStackTrace();
 			try {conn.rollback();}
 			catch(Exception e1) {e1.printStackTrace();}
 			throw new Exception("开卡异常，请重试");
-			//e.printStackTrace();
 		}finally{
 			try {
 				conn.setAutoCommit(true);
 				conn.close();
 			}
-			catch(Exception e) {throw new Exception("开卡异常，请重试");}
+			catch(Exception e) {
+				logger.debug("开卡FINALLY 异常");
+				e.printStackTrace();
+				throw new Exception("开卡异常，请重试");
+			}
 		}
 	}
 	
