@@ -344,6 +344,22 @@ public class AjaxUtils {
 		    	}
 			}			
 		}
+		//support objectids expres
+		PairTable pfixedColumns=null;
+		try{
+			pfixedColumns=PairTable.parseIntTable(jo.optString("objectIds"), null);
+		for( Iterator it=pfixedColumns.keys();it.hasNext();){
+        	Integer key=(Integer) it.next();
+            Column col=manager.getColumn( key.intValue());
+            ColumnLink cl=new ColumnLink( col.getTable().getName()+"."+ col.getName());
+            expr2= new Expression(cl,"="+ pfixedColumns.get(key),null);
+            expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
+        }
+		}catch(NumberFormatException  e){
+			pfixedColumns= PairTable.parse(jo.optString("objectIds"),null );
+			expr2=Expression.parsePairTable(pfixedColumns);
+			expr=expr2.combine(expr, SQLCombination.SQL_AND,null);
+		}
 			
 		
 		//when init, will also try param_expr for additional setting
