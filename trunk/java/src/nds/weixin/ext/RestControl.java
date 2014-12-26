@@ -144,7 +144,7 @@ public class RestControl {
 		try{
 			if(sp.getCode().equals("0")){
 
-				List al = QueryEngine.getInstance().doQueryList("select vp.wechatno,vp.vipcardno,vp.store_id,NVL(vt.ISSEND,'N'),cp.num,cp.usetype1,vt.code,nvl(cp.value,'0'),nvl(vp.integral,0),to_char(decode(nvl(cp.validay,0),0,nvl(cp.starttime,sysdate), sysdate), 'YYYYMMDD'),to_char(decode(nvl(cp.validay,0),0, nvl(cp.endtime, add_months(sysdate, 1)),sysdate+cp.validay), 'YYYYMMDD')"+
+				List al = QueryEngine.getInstance().doQueryList("select vp.wechatno,vp.vipcardno,vp.store_id,NVL(vt.ISSEND,'N'),cp.num,cp.usetype1,vt.code,nvl(cp.value,'0'),nvl(vp.integral,0),to_char(decode(nvl(cp.validay,0),0,nvl(cp.starttime,sysdate), sysdate), 'YYYYMMDD'),to_char(decode(nvl(cp.validay,0),0, nvl(cp.endtime, add_months(cp.starttime, 1)),sysdate+cp.validay), 'YYYYMMDD')"+
 						" from wx_vip vp LEFT JOIN wx_vipbaseset vt ON vp.viptype=vt.id LEFT JOIN WX_COUPON CP ON NVL(vt.LQTYPE,-1)=cp.id"+
 						" WHERE vp.id=?",new Object[] {vipid});
 				
@@ -192,8 +192,10 @@ public class RestControl {
 
 			try{
 				vh=RestUtils.sendRequest(serverUrl,params,"POST");
+				//String url=serverUrl+"?"+RestUtils.delimit(params.entrySet(),true);
+				//vh=RestUtils.sendRequest(url,null,"GET");
 			} catch (Throwable tx) {
-				logger.debug("ERP网络通信障碍!");
+				logger.debug("open card offline error->"+tx.getLocalizedMessage());
 				tx.printStackTrace();
 				throw new Exception("ERP网络通信障碍!->"+tx.getMessage());
 				//return false;
@@ -411,7 +413,7 @@ public class RestControl {
 		try{
 		 vh=RestUtils.sendRequest(serverUrl,params,"POST");
 		} catch (Throwable tx) {
-			logger.debug("ERP网络通信障碍!");
+			logger.debug("bind card offline error->"+tx.getLocalizedMessage());
 			tx.printStackTrace();
 			throw new Exception("ERP网络通信障碍");
 		}
@@ -572,7 +574,7 @@ public class RestControl {
 		try{
 			vh=RestUtils.sendRequest(serverUrl,params,"POST");
 		} catch (Throwable tx) {
-			logger.debug("微生活网络通信障碍! "+tx.getMessage());
+			logger.debug("update offline card error->"+tx.getLocalizedMessage());
 			tx.printStackTrace();
 			throw new Exception("数据维护异常，请联系商家");
 			//return;
@@ -651,7 +653,7 @@ public class RestControl {
 		try{
 			vh=RestUtils.sendRequest(serverUrl,params,"POST");
 		} catch (Throwable tx) {
-			logger.debug("微生活网络通信障碍! "+tx.getMessage());
+			logger.debug("integralExchange offline error->"+tx.getLocalizedMessage());
 			tx.printStackTrace();
 			throw new Exception("数据维护异常，请联系商家");
 			//return;
