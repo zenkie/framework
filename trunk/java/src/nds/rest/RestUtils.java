@@ -24,7 +24,10 @@ public class RestUtils {
 		conn.connect();
 		conn.getOutputStream().write(queryString.getBytes());
 		String charset = getChareset(conn.getContentType());
-		if (conn.getResponseCode() != 200) throw new NDSException("«Î«Ûurl ß∞‹");
+		if (conn.getResponseCode() != 200) {
+			logger.debug("server status->"+conn.getResponseCode());
+			throw new NDSException("«Î«Ûurl ß∞‹");
+		}
 		BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), charset));
 		StringBuffer buffer = new StringBuffer();
 		String line;
