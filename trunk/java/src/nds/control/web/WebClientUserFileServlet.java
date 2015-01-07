@@ -141,7 +141,7 @@ public class WebClientUserFileServlet extends HttpServlet {
 			byte[] bytes= readFile(file.getAbsolutePath());
 		    String ct= Tools.getContentType(FileUtils.getExtension(file.getName()), "application/octetstream");
 		    res.setContentType(ct+"; charset=GBK");
-		    res.setContentType("image/jpeg");
+		    res.setContentType("text/plain; charset=UTF-8");
 			//res.setContentType("application/octetstream");
 			res.setContentLength(bytes.length);
 			res.setHeader("Content-Disposition","inline;filename=\""+file.getName()+"\"");
