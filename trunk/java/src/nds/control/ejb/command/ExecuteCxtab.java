@@ -300,8 +300,9 @@ public class ExecuteCxtab extends Command {
 		i = 1;
 		
 		String folder = jo.optString("folder");
-		folder=Validator.isNull(folder)?null:exportRootPath + File.separator+user.getClientDomain()+File.separator + folder;
-		
+		String loaclpath=exportRootPath + File.separator+user.getClientDomain()+File.separator;
+		if(!Validator.isNull(folder)&&folder.indexOf("monitor")>0)loaclpath="";
+		folder=Validator.isNull(folder)?null:loaclpath + folder;
 		if (Validator.isNotNull(folder)) {
 			map.put("FOLDER",folder);
 		}
