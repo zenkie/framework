@@ -28,10 +28,16 @@ package nds.control;
 import java.beans.Beans;
 import java.io.File;
 import java.net.URI;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+
+import com.liferay.util.servlet.SessionErrors;
 
 import nds.control.web.WebUtils;
 import nds.log.Logger;
@@ -39,6 +45,7 @@ import nds.log.LoggerManager;
 
 import nds.util.Configurations;
 import nds.util.DestroyListener;
+import nds.util.LicenseManager;
 import nds.util.MD5Sum;
 import nds.util.NDSRuntimeException;
 import nds.util.ServletContextActor;
@@ -87,6 +94,7 @@ public class StartupEngine extends HttpServlet // implements javax.servlet.Servl
 
         */
 		//Tools.loadNativeLibrary(Tools.class.getClassLoader());
+    	//add check mac
 
         ServletContext context = this.getServletContext();
         String path = context.getInitParameter("nds.config.path");
@@ -108,6 +116,11 @@ public class StartupEngine extends HttpServlet // implements javax.servlet.Servl
 
         WebUtils.setServletContext(this.getServletContext());
         WebUtils.getServletContextManager();
+    	if(!check_mac()){
+    		logger.debug("check_mac");
+    		//return mapping.findForward("portal.vaildkey");
+    		 throw new NDSRuntimeException("Error initializing context !check_uk error!");
+    	}
     }
 
     
@@ -146,6 +159,91 @@ public class StartupEngine extends HttpServlet // implements javax.servlet.Servl
         }
 
     }
+ 
+	/**
+	 * return check_mac address
+	 * @param req 
+	 * 
+	 */
+	private boolean check_mac(){
+
+		Connection conn = null; 
+		Object sc=null;
+		String mac =null;
+		ResultSet rs = null;
+		PreparedStatement pstmt = null;
+		//if mac pass exists
+		//get mac file to check it
+		try{
+			conn= nds.query.QueryEngine.getInstance().getConnection();
+			pstmt= conn.prepareStatement("select mac from users where id=?");
+			pstmt.setInt(1, 893);
+			rs= pstmt.executeQuery();
+			if(rs.next()){
+				sc=rs.getObject(1);
+				if(sc instanceof java.sql.Clob) {
+					mac=((java.sql.Clob)sc).getSubString(1, (int) ((java.sql.Clob)sc).length());
+	        	}else{
+	        		mac=(String)sc;
+	        	}	
+			}
+			logger.debug("keyfile :"+mac);
+			if(mac==null){
+				//SessionErrors.add(req, "VERIFY_KEYFILE_ERROR");
+				System.out.print("mac is null");
+				return false;
+				}
+			try{if(conn!=null) conn.close();}catch(Throwable t){}
+		}catch(Throwable t){
+			System.out.print("query is error");
+			return false;
+		}finally{
+			try{if(rs!=null) rs.close();}catch(Throwable t){}
+			try{if(pstmt!=null) pstmt.close();}catch(Throwable t){}
+			try{if(conn!=null) conn.close();}catch(Throwable t){}
+		}	
+		//else
+		//nds.util.Configurations conf=(nds.util.Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+		try{
+			LicenseManager.validateLicense(WebKeys.PRDNAME,"5.0", mac);
+			/*
+		    Iterator b=LicenseManager.getLicenses();
+		    while (b.hasNext()) {
+		    LicenseWrapper o = (LicenseWrapper)b.next();
+	    	logger.debug("ltype :"+o.getLicenseType().toString());
+	   
+	    	if(o.getLicenseType()==License.LicenseType.COMMERCIAL){
+				//logger.error("The license should contain machine code.");
+				//return;
+				//if(license.getExpiresDate().getTime() - license.getCreationDate().getTime() > 1L * 100 * 24 * 3600* 1000  ){
+					if(System.currentTimeMillis() >o.getExpiresDate().getTime()  ){
+					//logger.error("Non-Commercial license valid duration should not be greater than 100 days");
+					logger.error("your company service day is old!!!!!!!");
+					o.setMms(LicenseManager.sendmss(o.getName(),o.getExpiresDate()));
+					//nds.control.web.WebUtils.setMms(o.getMms());
+				}
+		    }else if(o.getLicenseType()==License.LicenseType.EVALUATION){
+				// Evaluation should not have valid duration over 31 days
+				logger.debug("Evaluation should not have valid duration over");
+				//if(license.getExpiresDate().getTime() - license.getCreationDate().getTime() > 1L * 31 * 24 * 3600* 1000  ){
+				if(System.currentTimeMillis() >o.getExpiresDate().getTime()  ){
+					logger.error("Evaluation license valid duration should not be greater than 30 days");
+					o.setExpdate(true);
+			    	//nds.control.web.WebUtils.setLtype(o.getLicenseType());
+					//return;
+				}
+		    }
+		    }
+		    */
+			return true;
+		} catch (Exception e) {
+			logger.debug("check mackey invaild",e);
+			System.out.print("check mackey invaild");
+			//SessionErrors.add(req, "VERIFY_KEY_ERROR");
+			return false;
+		}
+	}
+
 
 }
 
