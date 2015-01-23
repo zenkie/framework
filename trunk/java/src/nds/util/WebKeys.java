@@ -112,4 +112,7 @@ public interface WebKeys {
     //public static final String NDS_URI="";
     public static final String NDS_URI="/html/nds";
     public static final String WEB_CONTEXT_ROOT=""; // for servlet finding 
+    //增加产品名称
+    public static final String PRDNAME="bos20";
+
 }
