@@ -504,6 +504,22 @@ public class ObjectCreate extends Command{
            
            JSONObject restResult=new JSONObject();// for rest call
            restResult.put("objectid", new Integer(objectId[0].intValue()));
+           // add restresult Designating column value
+           //JSONObject jors=(JSONObject)event.getParameterValue("jsonObject");
+           //JSONObject jors=(JSONObject)jsonobj;
+           
+           int discol=Tools.getInt( event.getParameterValue("discol"), -1);
+           if(discol>0){
+        	   logger.debug("discol ->"+discol);
+           	QueryRequestImpl query = engine.createRequest(null);
+			query.setMainTable(table.getId());
+			query.addSelection(discol);
+			query.addParam(table.getPrimaryKey().getId(), "=" + new Integer(objectId[0].intValue()));
+			rs = con.createStatement().executeQuery(query.toSQL());
+			rs.next();
+			restResult.put("returnval",rs.getObject(1));
+           
+           }
            v.put("restResult", restResult);
 
            v.put("jsonObjectCreated", new Boolean(jsonObjectCreated));
