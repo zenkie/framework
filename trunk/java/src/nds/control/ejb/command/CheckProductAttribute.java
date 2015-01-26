@@ -135,6 +135,7 @@ public class CheckProductAttribute extends Command {
 	  	// 按照纤丝鸟的要求，条码优先
 	  	// 按照LILY要求，条码也有快捷码(AK2)
   		if(checkAlias){
+
   			String sql="select m.id, m.name, m.value, m.m_attributeset_id, a.id,a.description, m.pricelist"+
   			(this.loadingBurgeonProduct?",a.value1,a.value2":"")+
   			(this.loadingBurgeonProduct2?",a.value1_code,a.value2_code":"")
@@ -256,7 +257,7 @@ public class CheckProductAttribute extends Command {
 		 * 例如，在入库单明细扫描输入时，如果发现有非入库单上已经设置的产品，应立刻禁止输入
 	  	 */
 	  	String errorMsg=null;
-	  	if(productId!=-1){
+	  	/*if(productId!=-1){
 		  	if(masterTable!=null && masterId!=-1 && (masterTable instanceof ProductCheckTableImpl)){
 		  		// check if master table has special test on validity of product
 		  		boolean isValid=Tools.getYesNo(engine.doQueryOne("select "+ masterTable.getRealTableName()+
@@ -266,17 +267,17 @@ public class CheckProductAttribute extends Command {
 		  			errorMsg="product-not-valid";
 		  		}
 		  	}
-	  	}
+	  	}*/
 
 	  	JSONObject ro=new JSONObject();
 	  	ro.put("tag", tag); //  return back unchanged.
 	  	logger.debug("productId        "+String.valueOf(productId));
 	  	logger.debug("asiId        "+String.valueOf(asiId));
 	  	//蜘蛛网模式矩阵输入模式
-	  	String pstr=(String)QueryEngine.getInstance().doQueryOne("select t.value from ad_param t where t.name = 'portal.pdtMatrix.tables'");
-	  	if(pstr.indexOf(table.getRealTableName())>=0){
-	  		asiId=-1;
-	  	}
+	  	//String pstr=(String)QueryEngine.getInstance().doQueryOne("select t.value from ad_param t where t.name = 'portal.pdtMatrix.tables'");
+	  	//if(pstr.indexOf(table.getRealTableName())>=0){
+	  	//	asiId=-1;
+	  	//}
 	  	if(productId==-1 ){
 	  		// not found the product, error returns
 	  		ro.put("code", 1);
@@ -306,9 +307,11 @@ public class CheckProductAttribute extends Command {
 	  		}else{
 	  			if(asId!=-1 && tryMatrix ){
 	  				logger.debug("now matrix");
+	  				
 	  				// does the attribute set support matrix?
-	  				int cnt=Tools.getInt( engine.doQueryOne("select count(*) from m_attributeuse u where u.isactive='Y' and u.M_ATTRIBUTESET_ID="+ asId+" and exists(select 1 from M_ATTRIBUTE a where a.ATTRIBUTEVALUETYPE='L' and a.id=u.M_ATTRIBUTE_ID)",conn), -1);
-	  				logger.debug("now cnt         "+String.valueOf(cnt));
+	  				//logger.info("select count(*) from m_attributeuse u where u.isactive='Y' and u.M_ATTRIBUTESET_ID="+ asId+" and exists(select 1 from M_ATTRIBUTE a where a.ATTRIBUTEVALUETYPE='L' and a.id=u.M_ATTRIBUTE_ID)");
+	  				int cnt=Tools.getInt( engine.doQueryOne("select count(*) from M_PRODUCT t WHERE t.isactive='Y' AND t.id="+productId,conn), -1);
+	  				logger.info("now cnt:"+cnt);
 	  				if(cnt>0){
 		  				WebContext wc=(WebContext) jo.get("org.directwebremoting.WebContext");
 		  				/**
@@ -318,6 +321,7 @@ public class CheckProductAttribute extends Command {
 		  				String storedata=(String)jo.getString("storedata");
 		  				int dest_colId=Tools.getInt((String)jo.getString("dest_colId"),-1);
 		  				String destdata=(String)jo.getString("destdata");
+		  				String page="";
 		  				//System.out.print(" fixedColumns is"+fixedColumns.toString());
 		  				String url=WebKeys.NDS_URI+"/pdt/itemdetail.jsp?compress=f&table="+tableId+"&pdtid="+productId+"&asid="+asId+"&storedata="+storedata+"&store_colId="+store_colId+"&dest_colId="+dest_colId+"&destdata="+destdata+"&fixedColumns="
 		  				+(fixedColumns==null?"":fixedColumns.toString());
@@ -331,11 +335,18 @@ public class CheckProductAttribute extends Command {
 
                                String jspURL=String.valueOf(engine.doQueryOne("select value from ad_param where name='portal.pdtMatrix.CustomJSP.JSPURL'"));                                 
                                url=jspURL+"?compress=f&table="+tableId+"&pdtid="+productId+"&asid="+asId+"&storedata="+storedata+"&store_colId="+store_colId+"&dest_colId="+dest_colId+"&destdata="+destdata+"&productName="+productName+"&objId="+masterId;                                
+                               page=url;
+                               logger.info(page);
+                               ro.put("customJSP",true);
+                            }else{
+                            	page=wc.forwardToString(url);
+                           	 	ro.put("customJSP",false);
                             }
                          }
-		  				String page=wc.forwardToString(url);
 		  				ro.put("pagecontent", page);
 		  				ro.put("showDialog",true);
+
+		  				logger.info("now cnt-------》:"+cnt);
 	  				}else{
 	  					ro.put("showDialog",false);
 	  				}
@@ -343,6 +354,7 @@ public class CheckProductAttribute extends Command {
 	  				ro.put("showDialog",false);
 	  		}
 	  	}
+	  	
 	  	ValueHolder holder= new ValueHolder();  
 		holder.put("message", mh.getMessage(event.getLocale(), "complete"));
 		holder.put("code","0");
