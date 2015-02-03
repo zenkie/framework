@@ -379,23 +379,25 @@ public class RestControl {
 		SipStatus sp=validateSing();
 		HashMap<String, String> params =new HashMap<String, String>();
 		
+		int storeid=0;
 		if(sp.getCode().equals("0")){
-			al = QueryEngine.getInstance().doQueryList("select vp.wechatno,vp.vipcardno,vb.code from wx_vip vp,wx_vipbaseset vb WHERE vp.id=? and vp.viptype=vb.id",new Object[] {vipid});
+			al = QueryEngine.getInstance().doQueryList("select vp.wechatno,vp.vipcardno,vb.code,nvl(vp.store_id,0),vp.email,vp.idcard from wx_vip vp,wx_vipbaseset vb WHERE vp.id=? and vp.viptype=vb.id",new Object[] {vipid});
 			
 			if(al!=null&&al.size()>0) {
 				logger.debug("vip size->"+al.size());
 				
 				params.put("args[openid]", (String) ((List)al.get(0)).get(0));
 				params.put("args[cardid]",String.valueOf(ad_client_id));
-				params.put("args[wshno]","");
+				params.put("args[wshno]",String.valueOf((((List)al.get(0)).get(1))));
 				params.put("args[name]",restjo.optString("RELNAME"));
 				params.put("args[phonenum]",restjo.optString("PHONENUM"));
-				params.put("args[email]","");
-				params.put("args[idno]","");
+				params.put("args[email]",String.valueOf((((List)al.get(0)).get(4))));
+				params.put("args[idno]",String.valueOf((((List)al.get(0)).get(5))));
 				params.put("args[cardno]",restjo.optString("DOCNO"));
 				params.put("args[cardpwd]",restjo.optString("VIPPASSWORD"));
 				params.put("args[viptype]",(String)((List)al.get(0)).get(2));
 				params.put("args[cardpin]","");
+				storeid=Integer.parseInt(String.valueOf((((List)al.get(0)).get(3))));
 				//params.put("args[isCodeRepeat]",String.valueOf(Tools.getInt(((List)al.get(0)).get(5), 0)));
 			}else {
 				logger.debug("bind offline code error not find vip->"+vipid);
@@ -450,7 +452,7 @@ public class RestControl {
 			  sql="UPDATE WX_VIP V SET V.INTEGRAL=?,V.LASTAMT=?,V.VIPTYPE=?,V.DOCNO=?,V.RELNAME=?,V.EMAIL=?,V.PHONENUM=?,V.STORE_ID=?,V.CONTACTADDRESS=?,V.BIRTHDAY=?,V.GENDER=?,V.PROVINCE=?,V.CITY=?,V.AREA=?"+
 				  " WHERE V.ID=?";
 			int count=0;
-			count=QueryEngine.getInstance().executeUpdate(sql,new Object[] {cardjo.optInt("credit"),cardjo.optDouble("balance"),viptypeid,cardjo.optString("no"),cardjo.optString("name",""),cardjo.optString("email",null),cardjo.optString("phonenum",null),cardjo.optInt("store_id",0),cardjo.optString("address",null),cardjo.optString("birthday"),cardjo.optString("gender"),cardjo.optString("province",null),cardjo.optString("city",null),cardjo.optString("depart",null),vipid});
+			count=QueryEngine.getInstance().executeUpdate(sql,new Object[] {cardjo.optInt("credit"),cardjo.optDouble("balance"),viptypeid,cardjo.optString("no"),cardjo.optString("name",""),cardjo.optString("email",null),cardjo.optString("phonenum",null),cardjo.optInt("store_id",storeid),cardjo.optString("address",null),cardjo.optString("birthday"),cardjo.optString("gender"),cardjo.optString("province",null),cardjo.optString("city",null),cardjo.optString("depart",null),vipid});
 			if(count<=0) {
 				logger.debug("bind offline code update vip error->"+count);
 				throw new Exception("∞Ûø®“Ï≥££¨«Î÷ÿ ‘");
