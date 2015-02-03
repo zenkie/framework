@@ -106,11 +106,12 @@ public class RegistrateUser  extends Command{
 	        //logger.debug("user"+usr.getUserName());
 	        vh.put("message", "@registrate-success@");
 	        vh.put("next-screen", "/register.jsp");
-	        if(wxappid!=null){
-	        	String domin=String.valueOf(QueryEngine.getInstance().doQueryOne("select t.domain from web_client t where t.wxnum='"+wxappid+"'"));
+	        //if(wxappid!=null){
+	        	//String domin=String.valueOf(QueryEngine.getInstance().doQueryOne("select t.domain from web_client t where t.wxnum='"+wxappid+"'"));
+	        	String domin=String.valueOf(QueryEngine.getInstance().doQueryOne("select t.domain from web_client t where t.email='"+email+"'"));
 	        	WeUtilsManager Wemanage =WeUtilsManager.getInstance();
 				Wemanage.getAdClientTemplateFolder(domin);
-	        }
+	        //}
 	        return vh;
     	}catch(Throwable t){
     		logger.error("Error", t);
