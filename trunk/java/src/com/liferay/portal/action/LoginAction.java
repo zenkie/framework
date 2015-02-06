@@ -975,7 +975,7 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 		//else
 		nds.util.Configurations conf=(nds.util.Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
 		try{
-			LicenseManager.validateLicense("jackrain","5.0", mac);
+			LicenseManager.validateLicense(nds.util.WebKeys.PRDNAME,"5.0", mac);
 			/*
 		    Iterator b=LicenseManager.getLicenses();
 		    while (b.hasNext()) {
