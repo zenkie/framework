@@ -72,6 +72,7 @@ import javax.sql.DataSource;
 
 import nds.control.event.NDSEventException;
 import nds.schema.TableManager;
+import nds.util.Configurations;
 import nds.util.License;
 import nds.util.LicenseManager;
 import nds.util.LicenseWrapper;
@@ -939,38 +940,43 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 	 */
 	private boolean check_mac(HttpServletRequest req){
 
-		Connection conn = null; 
-		Object sc=null;
+//		Connection conn = null; 
+//		Object sc=null;
 		String mac =null;
-		ResultSet rs = null;
-		PreparedStatement pstmt = null;
+//		ResultSet rs = null;
+//		PreparedStatement pstmt = null;
 		//if mac pass exists
 		//get mac file to check it
 		try{
-			conn= nds.query.QueryEngine.getInstance().getConnection();
-			pstmt= conn.prepareStatement("select mac from users where id=?");
-			pstmt.setInt(1, 893);
-			rs= pstmt.executeQuery();
-			if(rs.next()){
-				sc=rs.getObject(1);
-				if(sc instanceof java.sql.Clob) {
-					mac=((java.sql.Clob)sc).getSubString(1, (int) ((java.sql.Clob)sc).length());
-	        	}else{
-	        		mac=(String)sc;
-	        	}	
+//			conn= nds.query.QueryEngine.getInstance().getConnection();
+//			pstmt= conn.prepareStatement("select mac from users where id=?");
+//			pstmt.setInt(1, 893);
+//			rs= pstmt.executeQuery();
+//			if(rs.next()){
+//				sc=rs.getObject(1);
+//				if(sc instanceof java.sql.Clob) {
+//					mac=((java.sql.Clob)sc).getSubString(1, (int) ((java.sql.Clob)sc).length());
+//	        	}else{
+//	        		mac=(String)sc;
+//	        	}	
+//			}
+			Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+			String licfile=conf.getProperty("license",null);
+			if(licfile!=null){
+				mac= nds.util.Tools.readFile(licfile);
 			}
 			logger.debug("keyfile :"+mac);
 			if(mac==null){
 				SessionErrors.add(req, "VERIFY_KEYFILE_ERROR");
 				return false;
 				}
-			try{if(conn!=null) conn.close();}catch(Throwable t){}
+//			try{if(conn!=null) conn.close();}catch(Throwable t){}
 		}catch(Throwable t){
 			return false;
 		}finally{
-			try{if(rs!=null) rs.close();}catch(Throwable t){}
-			try{if(pstmt!=null) pstmt.close();}catch(Throwable t){}
-			try{if(conn!=null) conn.close();}catch(Throwable t){}
+//			try{if(rs!=null) rs.close();}catch(Throwable t){}
+//			try{if(pstmt!=null) pstmt.close();}catch(Throwable t){}
+//			try{if(conn!=null) conn.close();}catch(Throwable t){}
 		}	
 		//else
 		nds.util.Configurations conf=(nds.util.Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);

@@ -45,32 +45,37 @@ public class CheckmacKey extends Command {
 	  	
 	 
 	  	MessagesHolder mh= MessagesHolder.getInstance();
-	  	Connection conn=null;
+//	  	Connection conn=null;
 	  	boolean vailed=false;
 	  	String  checmak="null";
 	  	String mac=null;
 		Object sc=null;
-		ResultSet rs = null;
-		PreparedStatement pstmt = null;
+//		ResultSet rs = null;
+//		PreparedStatement pstmt = null;
 	    int user_num=0;
 	    int pos_num=0;
 	    String company=null;
 	    String expdate=null;
 	  	try{
 		   
-	  		conn= nds.query.QueryEngine.getInstance().getConnection();
-			pstmt= conn.prepareStatement("select mac from users where id=?");
-			pstmt.setInt(1, 893);
-			rs= pstmt.executeQuery();
-			if(rs.next()){
-				sc=rs.getObject(1);
-				if(sc instanceof java.sql.Clob) {
-					mac=((java.sql.Clob)sc).getSubString(1, (int) ((java.sql.Clob)sc).length());
-	        	}else{
-	        		mac=(String)sc;
-	        	}	
+//	  		conn= nds.query.QueryEngine.getInstance().getConnection();
+//			pstmt= conn.prepareStatement("select mac from users where id=?");
+//			pstmt.setInt(1, 893);
+//			rs= pstmt.executeQuery();
+//			if(rs.next()){
+//				sc=rs.getObject(1);
+//				if(sc instanceof java.sql.Clob) {
+//					mac=((java.sql.Clob)sc).getSubString(1, (int) ((java.sql.Clob)sc).length());
+//	        	}else{
+//	        		mac=(String)sc;
+//	        	}	
+//			}
+			Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+			String licfile=conf.getProperty("license",null);
+			if(licfile!=null){
+				mac= nds.util.Tools.readFile(licfile);
 			}
-		
+			logger.debug("keyfile :"+mac);
 		  	try{
 		  	// logger.debug("upload keyfile is"+mac);
 		  	LicenseManager.validateLicense("jackrain","5.0", mac,true);
@@ -110,9 +115,9 @@ public class CheckmacKey extends Command {
 	  		else
 	  			throw new NDSException(t.getMessage(), t);
 	  	}finally{
-			try{if(rs!=null) rs.close();}catch(Throwable t){}
-			try{if(pstmt!=null) pstmt.close();}catch(Throwable t){}
-			try{if(conn!=null) conn.close();}catch(Throwable t){}
+//			try{if(rs!=null) rs.close();}catch(Throwable t){}
+//			try{if(pstmt!=null) pstmt.close();}catch(Throwable t){}
+//			try{if(conn!=null) conn.close();}catch(Throwable t){}
 	  	}
 	  }
 }
