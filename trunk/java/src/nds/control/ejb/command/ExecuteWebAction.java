@@ -177,8 +177,13 @@ public class ExecuteWebAction extends Command {
 	  	//put json into env
 	  	webActionEnv.put("jsonobj", jo);
 	  	
+
     	if(!action.canDisplay(webActionEnv)){
-    		throw new NDSException("@no-permission@");
+    		Boolean hidac=false;
+    	  	if (table.getJSONProps()!= null) {
+    			 hidac = table.getJSONProps().optBoolean("hidden_webaction",false);
+    	  	}
+    		if(!hidac)throw new NDSException("@no-permission@");
     	}
     	
     	Map ret=action.execute(webActionEnv);

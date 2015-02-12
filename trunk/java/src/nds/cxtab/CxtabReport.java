@@ -845,10 +845,11 @@ public class CxtabReport {
 		
 		java.util.regex.Pattern pt=java.util.regex.Pattern.compile("(\\w+)",Pattern.CASE_INSENSITIVE);
 		Matcher m = pt.matcher(f);
+		String colname=null;
 		while (m.find()) {
 			String v=m.group();
 			int j = m.start();
-			String colname=null;
+			
 			Column col;
 			//get measure column for this value(alias)
 			for(int i=0;i< measures.size();i++){
@@ -868,10 +869,10 @@ public class CxtabReport {
 
 				if ((j > 0) && (f.substring(j - 1, j).equals("/")))
 				{
-					colname = "decode(sum(" + colname + "),0,1,sum(" + colname + "))";
+					colname = "decode(sum(" + colname + "),0,0,sum(" + colname + "))";
 				}else
 				// add sum
-				colname= "sum("+ colname+")";
+				colname= "decode(@,0,0,sum("+ colname+")";
 			}
 		    m.appendReplacement(sb, colname);
 		}
@@ -881,7 +882,7 @@ public class CxtabReport {
 			// sum / sum
 			fs= function+"("+ sb.toString()+")";
 		}else
-			fs=sb.toString();
+			fs=sb.toString().replace("@", colname)+")";
 		
 		return fs;
 	}

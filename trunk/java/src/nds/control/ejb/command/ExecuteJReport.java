@@ -174,7 +174,7 @@ public class ExecuteJReport extends Command {
 
 		SimpleDateFormat sdf = new SimpleDateFormat("MMddHHmm");
 		//String filename="JRP_"+table.getName()+sdf.format(new Date());
-		String filename="CXR_"+cxtabId+sdf.format(new Date());
+		String filename="CXR_"+cxtabId+"_"+sdf.format(new Date());
 		map.put("FILENAME", filename);
 		map.put("FILETYPE", fileType);
 
