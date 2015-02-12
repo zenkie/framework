@@ -136,9 +136,10 @@ public class SubSystemView {
 					for (int m = 0; m < sub_list.length; m++)
 					{
 						SubSystem usersub = manager.getSubSystem(sub_list[m].trim());
+					
 						if (usersub != null)
 						{
-							
+							if(usersub.getId()==10) continue;
 							  al.add(new Integer(usersub.getId()));
 							  subs.add(usersub);
 						}
