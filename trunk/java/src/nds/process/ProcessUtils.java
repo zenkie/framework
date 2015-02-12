@@ -97,7 +97,7 @@ public class ProcessUtils {
 	        	nullable = "Y".equals(((List)params.get(i)).get(2));
 	        	orderno= Tools.getInt(((List)params.get(i)).get(3),i*10);
 	        	value =(String)event.get(name.toUpperCase());
-        		if(nullable&&Validator.isNull(null))value=" ";
+        		if(nullable&&Validator.isNull(value)) continue;
 	        	
 	        	if(!nullable && Validator.isNull(value)) throw new NDSException("Parameter "+ name +" not set.");
 	        	
