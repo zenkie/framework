@@ -97,6 +97,7 @@ public class ProcessUtils {
 	        	nullable = "Y".equals(((List)params.get(i)).get(2));
 	        	orderno= Tools.getInt(((List)params.get(i)).get(3),i*10);
 	        	value =(String)event.get(name.toUpperCase());
+        		if(nullable&&Validator.isNull(null))value=" ";
 	        	
 	        	if(!nullable && Validator.isNull(value)) throw new NDSException("Parameter "+ name +" not set.");
 	        	
@@ -112,6 +113,8 @@ public class ProcessUtils {
 	        	pstmt.setInt(3, processInstanceId);
 	        	pstmt.setString(4, name);
 	        	if("S".equals(valueType)){// String
+	        		System.out.print("createAdProcessInstance ->"+name);
+	        		System.out.print("createAdProcessInstance ->"+name+" value "+value);
 	              if (value.getBytes().length > 4000) {
 		                logger.warning("param name=" + name + " value too long, cut for ad_pinstance_para:" + value);
 		      
