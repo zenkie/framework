@@ -113,8 +113,8 @@ public class ProcessUtils {
 	        	pstmt.setInt(3, processInstanceId);
 	        	pstmt.setString(4, name);
 	        	if("S".equals(valueType)){// String
-	        		System.out.print("createAdProcessInstance ->"+name);
-	        		System.out.print("createAdProcessInstance ->"+name+" value "+value);
+	        		//System.out.print("createAdProcessInstance ->"+name);
+	        		//System.out.print("createAdProcessInstance ->"+name+" value "+value);
 	              if (value.getBytes().length > 4000) {
 		                logger.warning("param name=" + name + " value too long, cut for ad_pinstance_para:" + value);
 		      
