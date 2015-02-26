@@ -149,7 +149,10 @@ public class JReport {
 	    	parameters.put("jobid", ReportTools.createJobId(user.id+""));
 	    	parameters.put("userid", String.valueOf(user.id));
 	    	parameters.put("ad_pi_id", String.valueOf(processInstanceId));
-	    	
+	    	parameters.put("SUBREPORT_DIR",conf.getProperty("dir.jreport","/act.nea/jreport")+"/act.nea/jreport/");//conf.getProperty("export.root.nds","/aic/home")+"/../jreport/");
+	    	logger.debug("jasper is SUBREPORT_DIR "+conf.getProperty("dir.jreport","/act.nea/jreport")+"/act.nea/jreport/");
+		    	
+
 			JasperPrint jasperPrint = JasperFillManager.fillReport(jreport, parameters, conn);
 
    	        File destFolder = folder==null?new File(exportRootPath+File.separator+ user.getClientDomain()+File.separator+  user.name):new File(folder);
@@ -292,7 +295,7 @@ public class JReport {
 			//relative to portal.properties#dir.jreport
 	        Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
 			String jreportDir=conf.getProperty("dir.jreport","/act.nea/jreport");
-			fileXMLPath=jreportDir+File.separator+fileXMLPath;
+			fileXMLPath=jreportDir+fileXMLPath;
 			logger.debug("jreport file path:"+fileXMLPath);
 		}
 		logger.debug("fileXMLPath"+fileXMLPath);
