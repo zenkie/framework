@@ -5,6 +5,7 @@ import org.hyperic.sigar.NetFlags;
 import org.hyperic.sigar.NetInterfaceConfig;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
+
 import nds.util.AES;
 
 public class GetMACH {
@@ -16,11 +17,11 @@ public class GetMACH {
     	StringBuffer MACstr = new StringBuffer();
         try {
              //cpu数量
-        	int cpuThreadNum = cpuThreadNum();
-        	MACstr.append(String.valueOf(cpuThreadNum));
+        	//int cpuThreadNum = cpuThreadNum();
+        	//MACstr.append(String.valueOf(cpuThreadNum));
             // 以太网信息
         	//MACstr = ethernet(MACstr);
-        	MACstr.append(","+NetInterfaceData.getCPUSerial()+NetInterfaceData.getMotherboardSN());
+        	MACstr.append(NetInterfaceData.getMotherboardSN());
         } catch (Exception e1) {
             e1.printStackTrace();
         }

@@ -11,28 +11,33 @@ public class checkMACAddr {
     public static int checkMAC(String str){
     	// 0:否  1：是
     	// 获取当前的MAC地址
+    	// 按主板uuid获取取消mac 验证
     	String currentMAC = GetMACH.getMach();
+    	if(str.equals(currentMAC))return 1;
+    	else return 0;
     	//System.out.println("currentMAC ->"+currentMAC);
-    	String[] currentMACAry = currentMAC.split(",");
-    	String currentCpuNum = currentMACAry[0];
+    	//String[] currentMACAry = currentMAC.split(",");
+    	//String currentCpuNum = currentMACAry[0];
     	//System.out.print(currentCpuNum);
     	// 注册
-    	String[] strOrigin = str.split(",");
-    	String cpuNum = strOrigin[0];
+    	//String[] strOrigin = str.split(",");
+    	//String cpuNum = strOrigin[0];
     	// 判断CPU核数是否相同
-    	if(currentCpuNum.endsWith(cpuNum.trim())){
-    		// 相同的个数
-    		double sameNum = findSameNum(currentMACAry,strOrigin);
-    		//System.out.println(sameNum );
-    		//System.out.println(currentMACAry.length-1);
-    		if (sameNum >= 0.5){
-    			return 1;
-    		} else {
-    			return 0;
-    		}
-    	}else {
-    		return 0;
-    	}
+//    	if(currentCpuNum.endsWith(cpuNum.trim())){
+//    		// 相同的个数
+//    		double sameNum = findSameNum(currentMACAry,strOrigin);
+//    		//System.out.println(sameNum );
+//    		//System.out.println(currentMACAry.length-1);
+//    		if (sameNum >= 0.5){
+//    			return 1;
+//    		} else {
+//    			return 0;
+//    		}
+//    	}else {
+//    		return 0;
+//    	}
+    	
+    	
     }
     /**
      * 判断相同的MAC地址的个数

@@ -158,7 +158,7 @@ import java.io.InputStreamReader;
         public static String getHardDiskSN(String drive) {
         String result = "";
         String os = getOsName();  
-        if (os.startsWith("Mac")) return "";
+        if (os.startsWith("Mac")) return getCPUSerial();
         try {
         File file = File.createTempFile("realhowto", ".vbs");
         file.deleteOnExit();
@@ -197,7 +197,7 @@ import java.io.InputStreamReader;
         public static String getMotherboardSN() {
         String result = "";
         String os = getOsName();  
-        if (os.startsWith("Mac")) return "";
+        if (os.startsWith("Mac")) return getCPUSerial();
         try {
         File file = File.createTempFile("realhowto", ".vbs");
         file.deleteOnExit();
