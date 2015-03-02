@@ -112,4 +112,5 @@ public interface WebKeys {
     //public static final String NDS_URI="";
     public static final String NDS_URI="/html/nds";
     public static final String WEB_CONTEXT_ROOT=""; // for servlet finding 
+    public static final String pdt_name="xe20"; // for pdt_name
 }

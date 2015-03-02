@@ -215,7 +215,7 @@ public class ObjectModify extends Command{
        //add licenses c_store and users check
 		ResultSet rs=null;
        try{
-       LicenseManager.validateLicense("jackrain","5.0","",false);
+       LicenseManager.validateLicense(nds.util.WebKeys.pdt_name,"5.0","",false);
 		Iterator b=LicenseManager.getLicenses();
 		int un=0,pn = 0;
 	    while (b.hasNext()) {

@@ -78,7 +78,7 @@ public class CheckmacKey extends Command {
 			logger.debug("keyfile :"+mac);
 		  	try{
 		  	// logger.debug("upload keyfile is"+mac);
-		  	LicenseManager.validateLicense("jackrain","5.0", mac,true);
+		  	LicenseManager.validateLicense(nds.util.WebKeys.pdt_name,"5.0", mac,true);
 		    vailed=true;
 		    Iterator b=LicenseManager.getLicenses();
 		    

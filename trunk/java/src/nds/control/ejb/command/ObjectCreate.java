@@ -332,7 +332,7 @@ public class ObjectCreate extends Command{
                 	   //normal update and ac procedure
                 	   try{
                 		    stmt.executeUpdate();
-            			    LicenseManager.validateLicense("jackrain","5.0","",false);
+            			    LicenseManager.validateLicense(nds.util.WebKeys.pdt_name,"5.0","",false);
             				Iterator b=LicenseManager.getLicenses();
             				int un=0,pn = 0;
             			    while (b.hasNext()) {
