@@ -65,8 +65,9 @@ public final class LicenseManager {
 					} catch (Exception e) {
 					}*/
 				//取消产品名称对比
-				//if (isValidProduct(product, license) && validVersion)
+				if (isValidProduct(product, license) && validVersion){
 					return;
+				}
 			}
 
 			String productNames = "";
