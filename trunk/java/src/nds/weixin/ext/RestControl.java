@@ -327,7 +327,7 @@ public class RestControl {
 			SKEY=(String)((List)all.get(0)).get(3);
 			isVerifyCode=String.valueOf(((List)all.get(0)).get(4));
 			isErp="Y".equalsIgnoreCase((String)((List)all.get(0)).get(2));
-			if(nds.util.Validator.isNull(serverUrl)||nds.util.Validator.isNull(SKEY)) {
+			if(isErp&&(nds.util.Validator.isNull(serverUrl)||nds.util.Validator.isNull(SKEY))) {
 				logger.debug("SERVERuRL OR SKEY IS NULL");
 				throw new Exception("数据维护异常，请联系商家");
 				//return isSuccessfull;
