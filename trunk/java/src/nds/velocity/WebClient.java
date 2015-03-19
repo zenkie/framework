@@ -9,6 +9,8 @@ import nds.util.*;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.model.*;
+import nds.control.event.DefaultWebEvent;
+import nds.control.util.ValueHolder;
 import nds.control.web.*;
 
 import java.sql.*;
@@ -19,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.directwebremoting.util.SwallowingHttpServletResponse;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.alibaba.fastjson.JSON;
@@ -364,9 +367,7 @@ public class WebClient {
 
         return buffer.toString();
     }
-    
-    
-    
+
     
     public void forwardTourl(String url, HttpServletRequest request, HttpServletResponse response) throws Exception, IOException
     {
@@ -473,6 +474,16 @@ public class WebClient {
 	    String url=null;
         String columnDataShort,columnData;
         ArrayList data=new ArrayList();
+        
+        //paco add begin 2015.01.08
+        Column c=null;
+        HashMap map = null;
+        ColumnLink cl=null;
+        //paco add end 2015.01.08
+        
+        Column column=null;
+        ArrayList columns=null;
+        int[] columnMasks = new int[] { Column.MASK_PRINT_SUBLIST };
 		while(result.next()){
 			ArrayList list =new ArrayList();
 	        pkValue= Tools.getInt(result.getObject(1),-1);
@@ -483,10 +494,36 @@ public class WebClient {
 	        //if(this.isPreview)url=  mainTablePath+"?id="+pkValue;
             //else url=  staticMainTablePath +"_"+pkValue+".html";
 	        
-	        list.add(url);
+	        map=new HashMap();
+	        map.put("MASTERHERFURL", url);
+	        //list.add(url);
+	        
+	        columns= table.getColumns(columnMasks, true, 0);
+	        for (int i = 0; i < columns.size(); i++) {
+
+				column = (Column) columns.get(i);
+				if (column.getDisplaySetting().getObjectType() == DisplaySetting.OBJ_CLOB) {
+					map.put(column.getName().toLowerCase(),
+							result.getObject(i + 2));
+				} else {
+					map.put(column.getName().toLowerCase(),
+							result.getString(i + 2, true, false));
+				}
+			}
 			
-	        for(int i=1;i< meta.getColumnCount();i++){ // first column should always be PK
-	        	columnData=result.getString(i+1, true, false);
+	        /*for(int i=1;i< meta.getColumnCount();i++){ // first column should always be PK
+	        	//columnData=result.getString(i+1, true, false);
+	        	
+	        	//paco add begin 2015.01.08
+	        	
+	        	cl=meta.getColumnLink(i);
+				c=cl.getLastColumn();
+				if(c.getDisplaySetting().getObjectType()==DisplaySetting.OBJ_CLOB){
+					map.put(c.getName().toLowerCase(), result.getObject(i+1));
+				}else{
+					map.put(c.getName().toLowerCase(), result.getString(i+1,true,false));
+				}
+				//paco add end 2015.01.08*/
 				
 				/*int objId= result.getObjectID(i+1);
 				if(objId!=-1){
@@ -500,14 +537,16 @@ public class WebClient {
 	            }*/
 	           
 	            //Tools.isHTMLAnchorTag(columnData)
-	            if(uiConfig.getColumnLength()!=null && uiConfig.getColumnLength().length>=i){
+	            /*if(uiConfig.getColumnLength()!=null && uiConfig.getColumnLength().length>=i){
 					columnDataShort= StringUtils.shortenInBytes(columnData, uiConfig.getColumnLength()[i-1]);
 	            }else{
 	            	columnDataShort= StringUtils.shortenInBytes(columnData, MAX_COLUMNLENGTH_WHEN_TOO_LONG);
 	            }
-	            list.add(columnDataShort);
-			}
-	        data.add(list);
+	            list.add(columnDataShort);*/
+	            
+			//}
+	        //data.add(list);
+	        data.add(map);
 		}
 		
 	    
@@ -998,5 +1037,51 @@ public class WebClient {
 		
 	}
 	
+	public JSONObject getJssdkConfig(String url) {
+		JSONObject jo=null;
+		ValueHolder vh=null;
+		try{
+			ClientControllerWebImpl controller=(ClientControllerWebImpl)WebUtils.getServletContextManager().getActor(nds.util.WebKeys.WEB_CONTROLLER);
+			DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
+			event.setParameter("ad_client_id", String.valueOf(this.adClientId));
+			event.setParameter("url", url);
+			event.setParameter("command", "nds.weixin.ext.WeJssdkInjectionCommand");
+			vh=controller.handleEvent(event);
+			if(vh!=null&&vh.get("code")=="0") {
+				jo=(JSONObject)vh.get("data");
+			}
+		}catch(Exception e){
+			logger.debug("call nds.weixin.ext.WeJssdkInjectionCommand error->"+e.getMessage());
+		}
+		
+		return jo;
+	}
+
+	public JSONObject updateVip(int vipid) {
+		ValueHolder vh=null;
+		JSONObject jo=new JSONObject();
+		try{
+			ClientControllerWebImpl controller=(ClientControllerWebImpl)WebUtils.getServletContextManager().getActor(nds.util.WebKeys.WEB_CONTROLLER);
+			DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
+
+
+			event.setParameter("vipid", String.valueOf(vipid));
+			event.setParameter("command", "nds.weixin.ext.WeUpdateVipCommand");
+			vh= controller.handleEvent(event);
+			
+			jo.put("code", vh.get("code"));
+			jo.put("message", vh.get("message"));
+		}catch(Exception e){
+			System.out.println("[nds.velocity WebClient] call nds.weixin.ext.WeUpdateVipCommand error->"+e.getLocalizedMessage());
+			try {
+				jo.put("code", "-1");
+				jo.put("message", "call nds.weixin.ext.WeUpdateVipCommand error->"+e.getLocalizedMessage());
+			} catch (JSONException e1) {
+				System.out.println();
+			}
+		}
+		
+		return jo;
+	}
 }
 
