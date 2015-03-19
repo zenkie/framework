@@ -498,16 +498,14 @@ public class WebClient {
 	        map.put("MASTERHERFURL", url);
 	        //list.add(url);
 	        
+	        map.put("id", pkValue);
 	        columns= table.getColumns(columnMasks, true, 0);
 	        for (int i = 0; i < columns.size(); i++) {
-
 				column = (Column) columns.get(i);
 				if (column.getDisplaySetting().getObjectType() == DisplaySetting.OBJ_CLOB) {
-					map.put(column.getName().toLowerCase(),
-							result.getObject(i + 2));
+					map.put(column.getName().toLowerCase(),result.getObject(i + 2));
 				} else {
-					map.put(column.getName().toLowerCase(),
-							result.getString(i + 2, true, false));
+					map.put(column.getName().toLowerCase(),result.getString(i + 2, true, false));
 				}
 			}
 			
