@@ -174,16 +174,24 @@ public class ExecuteJReport extends Command {
 
 		SimpleDateFormat sdf = new SimpleDateFormat("MMddHHmm");
 		//String filename="JRP_"+table.getName()+sdf.format(new Date());
-		String filename="CXR_"+cxtabId+"_"+sdf.format(new Date());
+		String filename=null;
+		if(jo.optString("filename")!=null&&jo.optString("filename")!=""){
+			filename=jo.optString("filename");
+		}else{
+			filename="CXR_"+cxtabId+"_"+sdf.format(new Date());
+		}
 		map.put("FILENAME", filename);
 		map.put("FILETYPE", fileType);
 
 		String folder = jo.optString("folder");
-		folder=Validator.isNull(folder)?null:exportRootPath + File.separator+user.getClientDomain()+File.separator + folder;
+		String loaclpath=exportRootPath + File.separator+user.getClientDomain()+File.separator;
+		if(!Validator.isNull(folder)&&folder.indexOf("monitor")>0)loaclpath="";
+		folder=Validator.isNull(folder)?null:loaclpath + folder;
+		if (Validator.isNotNull(folder)) {
+			map.put("FOLDER",folder);
+		}
 		
-		if (Validator.isNotNull(filename) ){
-			map.put("FOLDER", folder);
-		}		
+	
 	    piId=ProcessUtils.createAdProcessInstance(piId,pid,queueName, "",user,params,map,conn);
 	    ValueHolder hd=null;
 	    JSONObject returnObj=new JSONObject();
