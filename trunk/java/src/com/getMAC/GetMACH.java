@@ -6,6 +6,8 @@ import org.hyperic.sigar.NetInterfaceConfig;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
+import com.liferay.util.Validator;
+
 import nds.util.AES;
 
 public class GetMACH {
@@ -22,7 +24,15 @@ public class GetMACH {
             // ÒÔÌ«ÍøÐÅÏ¢
         	//MACstr = ethernet(MACstr);
         	String motherboard=NetInterfaceData.getMotherboardSN();
-        	String localui=motherboard==""?NetInterfaceData.getCPUSerial():motherboard;
+        	System.out.print("mo->"+motherboard);
+        	String localui=null;
+        	
+        	if(Validator.isNull(motherboard)){
+        		localui=NetInterfaceData.getCPUSerial();
+        		System.out.print("pu"+localui);
+        	}else{
+        		localui=motherboard;
+        	}
         	MACstr.append(localui);
         	
         } catch (Exception e1) {
