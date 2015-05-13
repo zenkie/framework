@@ -217,11 +217,12 @@ public class ObjectModify extends Command{
        try{
        LicenseManager.validateLicense(nds.util.WebKeys.pdt_name,"5.0","",false);
 		Iterator b=LicenseManager.getLicenses();
-		int un=0,pn = 0;
+		int un=0,pn = 0,padpos=0;
 	    while (b.hasNext()) {
 	    	LicenseWrapper o = (LicenseWrapper)b.next();
 	    	un=o.getNumUsers();
 			pn=o.getNumPOS();
+			padpos=o.getPadPOS();
 	    }
 
        if(table.getRealTableName().equals("C_STORE")){
@@ -233,6 +234,14 @@ public class ObjectModify extends Command{
 	    		logger.debug("licences pos:"+String.valueOf(pn));
 	    		throw new NDSEventException("当前pos点数已超！请联系商家！");
 	    	}
+    	rs= con.createStatement().executeQuery("select count(*) from c_store t where t.isactive='Y' and t.isretail='Y' and t.ispadpos='Y'");
+      	rs.next();
+    	int cpadpos=rs.getInt(1);
+    	if(cpadpos>padpos){
+    		logger.debug("now cpadpos:"+String.valueOf(cpadpos));
+    		logger.debug("licences padpos:"+String.valueOf(padpos));
+    		throw new NDSEventException("当前padpos点数已超！请联系商家！");
+    	}
 			   
        }else if(table.getRealTableName().equals("USERS")){
        	rs= con.createStatement().executeQuery("select count(*) from users t where t.isactive='Y' and t.IS_SYS_USER!='Y'");
