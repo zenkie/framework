@@ -23,7 +23,7 @@ public class GetMACH {
         	//MACstr.append(String.valueOf(cpuThreadNum));
             // ÒÔÌ«ÍøÐÅÏ¢
         	//MACstr = ethernet(MACstr);
-        	String motherboard=NetInterfaceData.getMotherboardSN();
+        	String motherboard=NetInterfaceData.getCPUSerial()+NetInterfaceData.getMotherboardSN();
         	System.out.print("mo->"+motherboard);
         	String localui=null;
         	
