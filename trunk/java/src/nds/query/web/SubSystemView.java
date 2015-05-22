@@ -110,9 +110,17 @@ public class SubSystemView {
 	public List getSubSystems(HttpServletRequest request){
 		UserWebImpl userWeb= ((UserWebImpl)WebUtils.getSessionContextManager(request.getSession()).getActor(nds.util.WebKeys.USER));
 		ArrayList subs=new ArrayList();
+		//add lic subsystems checks
 		if(userWeb.getUserId()==userWeb.GUEST_ID){
 			return subs;
 		}
+		LicenseManager.validateLicense(WebKeys.PRDNAME,"5.0","",false);
+		Iterator b=LicenseManager.getLicenses();
+		String licsubsys=null;
+	    while (b.hasNext()) {
+	    	LicenseWrapper o = (LicenseWrapper)b.next();
+	    	licsubsys=o.getSubsystems();
+	    }
 		List al= (List)userWeb.getProperty("subsystems");// elements are subystem.id
 		TableManager manager=TableManager.getInstance();
 		if(al!=null){
@@ -121,26 +129,43 @@ public class SubSystemView {
 				int sid= ((Integer)al.get(i)).intValue();
 				SubSystem ss= manager.getSubSystem(sid );
 				if(ss!=null)
-					subs.add(ss);
+					if(licsubsys!=null&&licsubsys.indexOf(ss.getName())<0){
+						subs.add(ss);
+					}else if(licsubsys==null){
+						subs.add(ss);
+					};
 			}
 		}else{
 			// search all tablecategoris for subsystem
 			// add users subsystems param
+
 			al=new ArrayList();
 			String[] sub_list;
 			try
 			{
 				String subsystems=(String)QueryEngine.getInstance().doQueryOne("SELECT subsystems from users where id="+userWeb.getUserId());
+				logger.debug("licsubsys ->"+licsubsys);
 				if (Validator.isNotNull(subsystems)){
 					sub_list = subsystems.split(",");
 					for (int m = 0; m < sub_list.length; m++)
 					{
+						//String[] licsubs = licsubsys.split(",");
+			
 						SubSystem usersub = manager.getSubSystem(sub_list[m].trim());
 						if (usersub != null)
 						{
-							
 							  al.add(new Integer(usersub.getId()));
-							  subs.add(usersub);
+								//for (int i = 0; i < licsubs.length; m++)
+								//{
+									//if(!licsubs[i].trim().equals(sub_list[m].trim())){
+							  if(licsubsys!=null&&licsubsys.indexOf(sub_list[m].trim())<0){
+								  subs.add(usersub);
+							  }else if(licsubsys==null){
+								  subs.add(usersub);
+							  }
+									//}
+								//}
+						
 						}
 					}
 					userWeb.setProperty("subsystems", al);
@@ -155,10 +180,24 @@ public class SubSystemView {
 			
 			for(int i=0;i< manager.getSubSystems().size();i++){
 				SubSystem ss=(SubSystem) manager.getSubSystems().get(i);
-				if(containsViewableChildren(request, ss)){
-					al.add(new Integer(ss.getId()));
-					subs.add(ss);
-				}
+				logger.debug("SubSystem name->"+ss.getName());
+				//String[] licsubs = licsubsys.split(",");
+//				for (int m = 0; m < licsubs.length; m++)
+//				{
+					//if(!licsubs[m].trim().equals(ss.getName())){
+						if(containsViewableChildren(request, ss)){
+							al.add(new Integer(ss.getId()));
+							logger.debug("licsubsys.indexOf->"+licsubsys.indexOf(ss.getName()));
+					if (licsubsys != null&& licsubsys.indexOf(ss.getName()) < 0) {
+						subs.add(ss);
+					}else if(licsubsys==null){
+						subs.add(ss);
+					}
+							
+					}
+					//}
+//				}
+		
 			}
 			userWeb.setProperty("subsystems",al);
 		}
