@@ -52,6 +52,15 @@ public final class LicenseWrapper {
 	public int getNumPOS() {
 		return lic.getNumPOS();
 	}
+	
+	public int getPadPOS() {
+		return lic.getPadPOS();
+	}
+	
+	
+	public String getSubsystems() {
+		return lic.getSubsystems();
+	}
 
 	public String getURL() {
 		return lic.getURL();

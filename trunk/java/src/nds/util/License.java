@@ -39,11 +39,23 @@ public final class License {
 	
 	private String machineCode;
 	
+	private String Subsystems;
+	
 	private int numUsers=1; // users created in db
 	
 	private int numOnlineUsers=1; // users online during check time
 	
 	private int numPOS=0; // pos count in db
+	
+	private int padPOS=0;
+
+	public int getPadPOS() {
+		return padPOS;
+	}
+
+	public void setPadPOS(int padPOS) {
+		this.padPOS = padPOS;
+	}
 
 	private String mms;//send notice to company when first in portal
 
@@ -69,6 +81,7 @@ public final class License {
 		maintenanceExpiresDate = null;
 		creationDate = new Date();
 		licenseSignature = null;
+		Subsystems=null;
 	}
 
 	//add cus_code
@@ -191,6 +204,8 @@ public final class License {
 		buf.append(numUsers).append(seperator);
 		buf.append(numOnlineUsers).append(seperator);
 		buf.append(numPOS).append(seperator);
+		buf.append(padPOS).append(seperator);
+		buf.append(Subsystems).append(seperator);
 		buf.append(cus_code).append(seperator);
 		try {
 			if (expiresDate != null)
@@ -252,6 +267,10 @@ public final class License {
 				+ license.getNumOnlineUsers()));
 		el.addContent((new Element("numPOS")).addContent(""
 				+ license.getNumPOS()));
+		el.addContent((new Element("padPOS")).addContent(""
+				+ license.getPadPOS()));
+		el.addContent((new Element("Subsystems")).addContent(""
+				+ license.getSubsystems()));
 		el.addContent((new Element("cuscode")).addContent(""
 				+ license.getCuscode()));
 		el.addContent((new Element("url"))
@@ -304,11 +323,20 @@ public final class License {
 		String mc = el.getChild("machineCode").getText();
 		if (mc != null && !mc.equals(""))
 			license.setMachineCode(mc);
+		String sub=null;
+		try{
+		 sub =el.getChild("Subsystems").getText();
+		} catch (Exception e) {
+			sub=null;
+		}
+		System.out.print("Subsystems ->"+sub);
+		if (sub != null)
+			license.setSubsystems(sub);
 
 		license.setNumUsers(Integer.parseInt(el.getChild("numUsers").getText()));
 		license.setNumOnlineUsers(Integer.parseInt(el.getChild("numOnlineUsers").getText()));
 		license.setNumPOS(Integer.parseInt(el.getChild("numPOS").getText()));
-
+		license.setPadPOS(Integer.parseInt(el.getChild("padPOS")==null?"0":el.getChild("padPOS").getText()));
 		
 		if (el.getChild("url") != null) {
 			String url = el.getChild("url").getText();
@@ -345,6 +373,7 @@ public final class License {
 				+ machineCode + "'"+ ", numUsers=" + numUsers +", numOnlineUsers="+ numOnlineUsers
 				+ ", cuscode="+ cus_code
 				+ ", numPOS="+ numPOS
+				+ ", padPOS="+ padPOS
 				+ ", url='" + url
 				+ "'" + ", expiresDate=" + expiresDate
 				+ ", maintenanceExpiresDate=" + maintenanceExpiresDate
@@ -436,6 +465,14 @@ public final class License {
 			}
 		}
 		return false;
+	}
+
+	public String getSubsystems() {
+		return this.Subsystems;
+	}
+
+	public void setSubsystems(String subsystems) {
+		this.Subsystems = subsystems;
 	}
 
 
