@@ -9,6 +9,8 @@ import java.util.*;
 
 import org.json.JSONObject;
 
+import com.liferay.util.Validator;
+
 import nds.control.check.ColumnCheckImpl;
 import nds.control.ejb.DefaultWebEventHelper;
 import nds.control.event.DefaultWebEvent;
@@ -236,7 +238,7 @@ public class ObjectColumnObtain extends ColumnObtain{
           List rcwf=col.getReferenceColumnsInWildcardFilter();
           Column rc;
 		  HashMap valuesHashMap=(HashMap)event.getParameterValue("ColumnValueHashMap");
-		  Vector v;
+		  Vector v=null;
           for(int i = 0;i<length;i++){
               try{
                   checkImpl.isColumnValid(col,objectStr[i]);
@@ -265,7 +267,37 @@ public class ObjectColumnObtain extends ColumnObtain{
 		                			  if(v==null || v.size()==0) throw new NDSException("Internal error:"+ col+" need values from "+ rc+" while not found, check parentFKcolumn setting");
 		                		  }else{
 		                			  //same table
-		                			  v= (Vector)valuesHashMap.get( rc.getName());
+		                			  System.out.print("column name ->"+rc.getName());
+		                	         if( rc.getReferenceTable()!=null){
+		                	        		String name= rc.getName() +"__"+ rc.getReferenceTable().getAlternateKey().getName().toUpperCase();
+		                	        		//System.out.print(event.getParameterValue("ColumnValueHashMap"));
+		                	        		if(Validator.isNull((String) event.getParameterValue("ColumnValueHashMap"))){
+		                	        			String value=(String)event.getParameterValue(name);
+		                	        			v=new Vector(); 
+		                						QueryRequestImpl query = QueryEngine.getInstance().createRequest(null);
+		                						query.setMainTable(rc.getReferenceTable().getId());
+		                						query.addSelection(rc.getReferenceColumn().getId());
+		                						query.addParam(rc.getReferenceTable().getAlternateKey().getId(), "="+ value);
+		                						QueryResult rs = QueryEngine.getInstance().doQuery(query);
+		                						if (rs != null && rs.getTotalRowCount() > 0) {
+		                							while (rs.next()) {
+		                								logger.debug(rs.getObject(1).toString());
+		                								BigDecimal[] itemId = new BigDecimal[1];
+		                								itemId[0] =new BigDecimal( Tools.getInt(rs.getObject(1),-1) );
+		                								v.addElement(itemId);
+		                							}
+		                						}
+		                	        			
+		                	        				//	
+		                	        			
+		                	        			//System.out.print("new value ->"+value);
+		                	        		}else{
+		                	        		 //System.out.print("new name ->"+name);
+		                	        		 System.out.print("new value ->"+(Vector)valuesHashMap.get(rc.getName()));
+		                	        		 v= (Vector)valuesHashMap.get(rc.getName());
+		                	        		}
+		                	         }
+		                			  
 		                			  if( v==null || v.size()==0) throw new NDSException("Internal error:"+ col+" need values from "+ rc+" while not found ("+ rc+" should locate before "+ col);
 		                			  
 		                		  }
