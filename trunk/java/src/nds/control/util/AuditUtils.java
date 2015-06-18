@@ -15,6 +15,7 @@ import java.util.*;
 
 import nds.audit.Program;
 import nds.control.ejb.Command;
+import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEventException;
 import nds.control.web.ClientControllerWebImpl;
 import nds.control.web.UserWebImpl;
@@ -280,12 +281,18 @@ public class AuditUtils {
 				sb.append(" union select distinct id from users where id in("+
 					userIds.toString()+")");
 			}
+			int au_piuserid= engine.getSequence(manager.getTable("au_pi_user").getName());
+			
 			sql2="insert into au_pi_user(id,ad_client_id, ad_org_id, isactive, ownerid, modifierid, creationdate, " +
-			"modifieddate, au_pi_id,ad_user_id,state) select get_sequences('au_pi_user'), ad_client_id, ad_org_id, 'Y',"+ 
+			"modifieddate, au_pi_id,ad_user_id,state) select "+au_piuserid+", ad_client_id, ad_org_id, 'Y',"+ 
 			userId+","+ userId+",sysdate,sysdate, "+ phaseInstanceId+",ad_user_id,'W' from ("+ sb.toString()+") a, users u where u.id="+ userId;
 			
 			logger.debug(sql2);
 			int auditUserCount=conn.createStatement().executeUpdate(sql2);
+			
+			int ad_userid=Tools.getInt(QueryEngine.getInstance().doQueryOne("select ad_user_id from au_pi_user where id=?",
+									new Object[] { Integer.valueOf(au_piuserid) },
+									conn), -1);
 			
 			
 			/*sql2="insert into au_pi_user(id,ad_client_id, ad_org_id, isactive, ownerid, modifierid, creationdate, " +
@@ -394,6 +401,9 @@ public class AuditUtils {
 			}else if("W".equals(action)){
 				vh.put("message","@wait-for-approve@,@audit-process-name@:"+processName+",@audit-phase-name@:"+ phaseName);
 				vh.put("code", "0");
+				vh.put("ad_userid", ad_userid);
+				vh.put("phaseInstanceId", phaseInstanceId);
+				logger.debug("ad_userid ->"+ad_userid);
 				//stop
 				//break;
 				if (MonitorManager.getInstance().isMonitorPluginInstalled()) {
@@ -733,6 +743,12 @@ public class AuditUtils {
 				vh=executeProcess(tableId, objectId,processId, userId,orderno,conn );
 				vh.put("table", table); // this value will be used by "ExecuteAudit" Command or "ExecuteAuditTimeout" Command
 				vh.put("objectid", new Integer(objectId));// this value will be used by "ExecuteAudit" Command or "ExecuteAuditTimeout" Command
+				//add auto check same user
+				Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+				Boolean samecheck=Tools.getBoolean(conf.getProperty("audit.samecheck"),false);
+				if(samecheck)autocheck(userId,Tools.getInt(vh.get("ad_userid"),-1),comments,table.getId(),Tools.getInt(vh.get("phaseInstanceId"),-1));
+			
+			
 			}else{
 				throw new NDSException("("+ res.getCode()+")"+ res.getMessage());
 			}
@@ -742,6 +758,33 @@ public class AuditUtils {
 		}finally{
 			//try{conn.close();}catch(Throwable t){} connection is created from outside now 2010-5-11
 		}
+	}
+	
+	
+	
+
+	private static void autocheck(int userid,int puserid,String comments,int tableid,int objectId){
+		if(puserid>0&&userid==puserid&&objectId>0){
+			logger.debug("same users auto check!");
+	    	ClientControllerWebImpl controller=(ClientControllerWebImpl)WebUtils.getServletContextManager().getActor(nds.util.WebKeys.WEB_CONTROLLER);
+	    	DefaultWebEvent event=new DefaultWebEvent("CommandEvent");
+	    	event.setParameter("operatorid", String.valueOf(userid));
+	    	 event.setParameter("nds.control.ejb.UserTransaction", "N");
+	    	event.setParameter("command", "ExecuteAudit");
+	    	event.setParameter("comments", comments);
+	    	event.setParameter("auditAction", "accept");
+	    	event.setParameter("table",String.valueOf(tableid));
+	    	String[] str;
+	    	str = new String[] {String.valueOf(objectId)};
+	    	event.setParameter("itemid",  str);
+	    	try {
+				controller.handleEventBackground(event);
+			} catch (NDSException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 	}
 	
 	/**
