@@ -81,6 +81,10 @@ public class JReportRunner extends SvrProcess
 		boolean isBackground=true;
 	    try{
 		    conn= engine.getConnection();
+		    // check PRE_PROCEDURE for cxtab add tmp table
+		    conn.setAutoCommit(false);
+		    // check PRE_PROCEDURE for cxtab add tmp table
+		    //System.out.print("tmp cmit!!!");
 		    // check pre-process for cxtab
 			log.debug("filterExpr="+ filterExpr);
 			log.debug("query="+ query);
@@ -96,7 +100,7 @@ public class JReportRunner extends SvrProcess
 		    if( nds.util.Validator.isNotNull(preProcedure)){
 		    	ArrayList al=new ArrayList();
 		    	al.add(new Integer(this.getAD_PInstance_ID()));
-		    	engine.executeStoredProcedure(preProcedure, al, false);
+		    	engine.executeStoredProcedure(preProcedure, al, false,conn);
 		    	
 		    }	
 		    isBackground=Tools.getYesNo( engine.doQueryOne("select c.isbackground from ad_cxtab c where c.ad_client_id="+ this.getAD_Client_ID() +" and c.name="+ QueryUtils.TO_STRING(cxtabName),conn), false);		    
@@ -126,6 +130,7 @@ public class JReportRunner extends SvrProcess
 			    cr.setAD_PInstance_ID(this.getAD_PInstance_ID()); // this will be needed when doing cube exporting
 			    cr.setFolder(folder);
 			    finalFile= cr.create(conn);
+			    log.debug("is jrxml");
 		    }else if(tp[0].equals("python")){
 		    	finalFile=nds.control.util.PythonScriptUtils.runProcess(tp[1],this.getAD_PInstance_ID());
 		    }else if(tp[0].equals("java")){
@@ -139,7 +144,8 @@ public class JReportRunner extends SvrProcess
             	finalFile=pr.execute(this.getAD_PInstance_ID());
 		    }
 		    
-		    
+		    conn.commit();
+		    //System.out.print("is pdf");
 //		  	if cxtab has pre_procedure and ad_pi_column_id set, then will try eraise report data in fact table
 		    // this task is asynchronized
 		    if(nds.util.Validator.isNotNull(preProcedure) && piColumnId!=-1){
