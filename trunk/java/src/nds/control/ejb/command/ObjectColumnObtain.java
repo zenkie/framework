@@ -271,7 +271,8 @@ public class ObjectColumnObtain extends ColumnObtain{
 		                	         if( rc.getReferenceTable()!=null){
 		                	        		String name= rc.getName() +"__"+ rc.getReferenceTable().getAlternateKey().getName().toUpperCase();
 		                	        		//System.out.print(event.getParameterValue("ColumnValueHashMap"));
-		                	        		if(Validator.isNull((String) event.getParameterValue("ColumnValueHashMap"))){
+		                	        		//if(Validator.isNull((String) event.getParameterValue("ColumnValueHashMap"))){
+		                	        		if(event.getParameterValue("ColumnValueHashMap")==null){
 		                	        			String value=(String)event.getParameterValue(name);
 		                	        			v=new Vector(); 
 		                						QueryRequestImpl query = QueryEngine.getInstance().createRequest(null);
