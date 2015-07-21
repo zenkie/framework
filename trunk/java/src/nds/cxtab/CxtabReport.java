@@ -872,7 +872,7 @@ public class CxtabReport {
 					colname = "decode(sum(" + colname + "),0,0,sum(" + colname + "))";
 				}else
 				// add sum
-				colname= "decode(@,0,0,sum("+ colname+")";
+				colname= "sum("+ colname+")";//"decode(@,0,0,sum("+ colname+")";
 			}
 		    m.appendReplacement(sb, colname);
 		}
@@ -882,7 +882,7 @@ public class CxtabReport {
 			// sum / sum
 			fs= function+"("+ sb.toString()+")";
 		}else
-			fs=sb.toString().replace("@", colname)+")";
+			fs=sb.toString();//.replace("@", colname)+")";
 		
 		return fs;
 	}
