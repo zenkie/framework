@@ -679,8 +679,9 @@ public class AuditUtils {
 	public static ValueHolder doAudit(int phaseInstanceId, int userId,boolean accept, String comments, Connection conn) throws Exception{
 		ValueHolder vh=new ValueHolder();
 		QueryEngine engine= QueryEngine.getInstance();
+		Statement stmt=null;
 		try{
-		Statement stmt= conn.createStatement();
+			stmt= conn.createStatement();
 		// this update may affect more than one records
 		// 在以下情况下，执行审核意见将修改一条以上记录：
 		// 本人是原始审核人之一，而同时又被其他原始审核人赋予了代办人的权利。
@@ -754,9 +755,12 @@ public class AuditUtils {
 			}
 		}
 		vh.put("docno", docno);
+		
 		return vh;
 		}finally{
+			try{stmt.close();}catch(Throwable t){} 
 			//try{conn.close();}catch(Throwable t){} connection is created from outside now 2010-5-11
+			//connection is created from outside now 2010-5-11
 		}
 	}
 	
