@@ -199,6 +199,8 @@ public final class LicenseManager {
 			logger.debug("numPOS="+ license.getNumPOS());
 			logger.debug("product=" + license.getProduct());
 			logger.debug("cuscode=" + license.getCuscode());
+			logger.debug("subsystems=" + license.getSubsystems());
+			logger.debug("padpos=" + license.getPadPOS());
 
 			if (license.getLicenseID() == 1L) {
 				logger.error("The license is out of date and is no longer "
