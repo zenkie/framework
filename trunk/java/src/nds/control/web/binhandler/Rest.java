@@ -258,10 +258,10 @@ public class Rest implements BinaryHandler{
 	    			  String key= String.valueOf(it.next());
 	    			  trs.addData(key, rr.get(key));
 	    		  }
-	    		  //get webaction data
-	    		  JSONObject bb=(JSONObject)vh.get("data");
-	    		  if(bb!=null) {
-	    			  trs.addData("result_data", bb);
+	    		  rr=(JSONObject)vh.get("data");
+	    		  if(rr!=null)for(Iterator it=rr.keys();it.hasNext();){
+	    			  String key= String.valueOf(it.next());
+	    			  trs.addData(key, rr.get(key));
 	    		  }
 	    		  
     		  }else{
