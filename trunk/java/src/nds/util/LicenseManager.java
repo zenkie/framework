@@ -67,7 +67,7 @@ public final class LicenseManager {
 				//取消产品名称对比
 				//bos2.0产品名称比对
 				//if (isValidProduct(product, license) && validVersion)
-				if (isValidProduct(product, license))
+				//if (isValidProduct(product, license))
 					return;
 				
 			}
@@ -182,7 +182,7 @@ public final class LicenseManager {
 			byte[] decryptData = AESUtils.decrypt(
 					Hex.decodeHex(licenseFile.toCharArray()), k);
 			String xml = new String(decryptData);
-			//System.out.println(xml);
+			System.out.println(xml);
 			//logger.debug(xml);
 			license = License.fromXML(xml);
 			logger.debug("creationDate=" + license.getCreationDate());
