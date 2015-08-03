@@ -480,9 +480,28 @@ public class ObjectCreate extends Command{
                    }
                }
            }
+           
+           //support view not Correct Parent object id
+           Column pfk=manager.getParentFKColumn(table);
+           Vector pfkVec;
+           int[] poids;
+           if(pfk!=null&&( pfkVec=(Vector) hashMap.get(pfk.getName()))!=null&&pfkVec.size()>0){
+               BigDecimal[] pids=(BigDecimal[])pfkVec.elementAt(0);
+               poids=new int[pids.length];
+               for(int i=0;i<pids.length;i++){
+                   poids[i]=pids[i].intValue();
+               }
+           }else{
+        	   //check parent table records exist and modifiable
+               poids= helper.getParentTablePKIDs(table,oids, con);
+           }
 
-           //check parent table records exist and modifiable
-     	   int[] poids= helper.getParentTablePKIDs(table,oids, con);
+         
+     	   //int[] poids= helper.getParentTablePKIDs(table,oids, con);
+     	   
+     	   
+     	   
+     	   
      	   helper.checkTableRowsModifiable(parent, poids, con);
            
            // commit all 
