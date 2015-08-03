@@ -23,7 +23,7 @@ public class Fair_ClearCache extends Command{
     	FairManager fairmanager=FairManager.getInstance();
     	try {
 			fairmanager.clearCache(b_fair_id);
-			holder.put("message", "@clear-cache-fail@");
+			holder.put("message", "@clear-cache-success@");
 		} catch (Exception e) {
 			holder.put("message", "@clear-cache-fail@"+"("+ e.getMessage()+")");
 		}
