@@ -457,9 +457,19 @@ public class CxtabReport {
 		startTime=System.currentTimeMillis();
 		
 		ArrayList vec=new ArrayList();
-		vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(sql)+" where name='filter' and ad_pinstance_id="+processInstanceId );
+		//vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(sql)+" where name='filter' and ad_pinstance_id="+processInstanceId );
 		vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(filePath)+" where name='filename' and ad_pinstance_id="+processInstanceId );
 		QueryEngine.getInstance().doUpdate(vec, conn);
+		
+		String uppinstance_sql="update ad_pinstance_para set info=? where name='filter' and ad_pinstance_id=? ";
+	
+		Clob sqlclob=QueryEngine.getInstance().getClob(new StringBuffer(QueryUtils.TO_STRING(sql)), conn);
+		PreparedStatement pstmt = conn.prepareStatement(uppinstance_sql);
+		pstmt.setClob(1, sqlclob);
+		pstmt.setInt(2, processInstanceId);
+		pstmt.executeUpdate();
+		if(pstmt!=null)pstmt.close();  
+		
 		//logger.debug("writeCSVFile :"+sql);
         rs= conn.createStatement().executeQuery(sql); //load from oracle
         
@@ -514,9 +524,20 @@ public class CxtabReport {
 		startTime=System.currentTimeMillis();
 		
 		ArrayList vec=new ArrayList();
-		vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(sql)+" where name='filter' and ad_pinstance_id="+processInstanceId );
+		//vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(sql)+" where name='filter' and ad_pinstance_id="+processInstanceId );
+		
 		vec.add("update ad_pinstance_para set info="+ QueryUtils.TO_STRING(filePath)+" where name='filename' and ad_pinstance_id="+processInstanceId );
 		QueryEngine.getInstance().doUpdate(vec, conn);
+		
+		
+		String uppinstance_sql="update ad_pinstance_para set info=? where name='filter' and ad_pinstance_id=? ";
+		
+		Clob sqlclob=QueryEngine.getInstance().getClob(new StringBuffer(QueryUtils.TO_STRING(sql)), conn);
+		PreparedStatement pstmts = conn.prepareStatement(uppinstance_sql);
+		pstmts.setClob(1, sqlclob);
+		pstmts.setInt(2, processInstanceId);
+		pstmts.executeUpdate();
+		
 		
 		// 生成下载文件，包含：一个数据表，一个定义表
         Connection connection = null;  
@@ -580,6 +601,7 @@ public class CxtabReport {
         } finally {  
             try {rs.close();  }catch(Throwable t){}  
             try {pstmt.close();  }catch(Throwable t){}
+            try {pstmts.close();  }catch(Throwable t){}    
             try {connection.close();  }catch(Throwable t){}
         }  
 		
