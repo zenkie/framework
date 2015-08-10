@@ -318,7 +318,8 @@ public class AjaxUtils {
 			}
 			// dropdown filter on the column
 			Column acceptorColumn=  TableManager.getInstance().getColumn(jo.optInt("column",-1));
-			if(acceptorColumn!=null && acceptorColumn.getTable()== table ){
+			//System.out.print("acceptorColumn ->"+acceptorColumn.getName());
+			if(acceptorColumn!=null && (acceptorColumn.getTable()== table||acceptorColumn.getReferenceTable()==table)){
 				//at least for Filter type column, the "column"'s table is not main table to query,
 				//which is set in regexpression's table json property. yfzhu 2009-11-6
 				boolean mustBeActive= jo.optBoolean("must_be_active", true);
