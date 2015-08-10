@@ -340,7 +340,13 @@ public class ObjectCreate extends Command{
            			    	LicenseWrapper o = (LicenseWrapper)b.next();
            			    	un=o.getNumUsers();
            					pn=o.getNumPOS();
+           					try{
            					padpos=o.getPadPOS();
+           					}catch(NoSuchMethodError ex){
+           						padpos=0;	
+           					}catch(Exception ex){
+           						padpos=0;	
+           					}
            			    }
 
                	        if(table.getName().equals("C_STORE")){
@@ -352,6 +358,8 @@ public class ObjectCreate extends Command{
                		    		logger.debug("licences pos:"+String.valueOf(pn));
                		    		throw new NDSEventException("当前pos点数已超！请联系商家！");
                		    	}
+               		    	
+               		    	if(padpos>0){
                	        	rs= con.createStatement().executeQuery("select count(*) from c_store t where t.isactive='Y' and t.ispadpos='Y'");
                	          	rs.next();
                		    	int cpadpos=rs.getInt(1);
@@ -359,6 +367,7 @@ public class ObjectCreate extends Command{
                		    		logger.debug("now cpadpos:"+String.valueOf(cpadpos));
                		    		logger.debug("licences padpos:"+String.valueOf(padpos));
                		    		throw new NDSEventException("当前padpos点数已超！请联系商家！");
+               		    	}
                		    	}
                				   
                	        }else if(table.getName().equals("USERS")){
@@ -487,10 +496,10 @@ public class ObjectCreate extends Command{
            int[] poids;
            if(pfk!=null&&( pfkVec=(Vector) hashMap.get(pfk.getName()))!=null&&pfkVec.size()>0){
                BigDecimal[] pids=(BigDecimal[])pfkVec.elementAt(0);
-               poids=new int[pids.length];
-               for(int i=0;i<pids.length;i++){
-                   poids[i]=pids[i].intValue();
-               }
+               poids=new int[1];
+              //for(int i=0;i<pids.length;i++){
+               poids[0]=pids[0].intValue();
+              // }
            }else{
         	   //check parent table records exist and modifiable
                poids= helper.getParentTablePKIDs(table,oids, con);
