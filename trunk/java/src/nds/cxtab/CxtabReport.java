@@ -869,9 +869,9 @@ public class CxtabReport {
 		Matcher m = pt.matcher(f);
 		String colname=null;
 		while (m.find()) {
+			colname=null;
 			String v=m.group();
 			int j = m.start();
-			
 			Column col;
 			//get measure column for this value(alias)
 			for(int i=0;i< measures.size();i++){
@@ -885,18 +885,21 @@ public class CxtabReport {
 			}
 			if(colname==null){
 				logger.warning("variable "+ v+" could not be found in measure list, fact="+ fact);
-				colname= v;// so no replacement
+				//colname= v;// so no replacement
+				continue;
 			}
-			if(isSumAvg){
+			if(isSumAvg&&colname.indexOf(".")>-1){
 
 				if ((j > 0) && (f.substring(j - 1, j).equals("/")))
 				{
 					colname = "decode(sum(" + colname + "),0,0,sum(" + colname + "))";
-				}else
+				}else{
 				// add sum
-				colname= "sum("+ colname+")";//"decode(@,0,0,sum("+ colname+")";
+				colname= "sum("+ colname+")";
+				}//"decode(@,0,0,sum("+ colname+")";
 			}
 		    m.appendReplacement(sb, colname);
+		    
 		}
 		m.appendTail(sb);
 			
