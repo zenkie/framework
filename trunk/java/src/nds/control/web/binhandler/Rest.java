@@ -223,7 +223,8 @@ public class Rest implements BinaryHandler{
 //    		  boolean isCompositeObjectProcessing=command.equals("ProcessOrder") || command.equals("GetObject");
     		  boolean isQuery= command.equals("Query");
     		  
-    		  boolean keepJSON= (command.equals("ProcessOrder") || command.equals("GetObject")||command.equals("ExecuteWebAction")); 
+    		  //boolean keepJSON= (command.equals("ProcessOrder") || command.equals("GetObject")||command.equals("ExecuteWebAction")); 
+    		  boolean keepJSON= (command.equals("ProcessOrder") || command.equals("GetObject")||command.equals("ExecuteWebAction")||command.equals("ExecuteSQL")); 
     		  boolean singleTransaction= !command.equals("Import"); // all commands are single transaction except import command
     		  
     		  JSONObject jo=tra.getJSONObject("params");
