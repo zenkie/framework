@@ -499,6 +499,8 @@ public class SubSystemView {
         if(tc!=null)children= tc.children();
     	
     	//ArrayList prow= new ArrayList();
+        if(includeAction)conn=QueryEngine.getInstance().getConnection();
+        
     	if(al.size()>0){
 			for(int i=0;i<al.size();i++){
 				List als= (List)al.get(i);
@@ -508,7 +510,7 @@ public class SubSystemView {
 				String	ACCORDION_name=(String)als.get(1);
 				try{
 		            if(includeAction){
-			    		conn=QueryEngine.getInstance().getConnection();
+			    		//conn=QueryEngine.getInstance().getConnection();
 			        	webActionEnv=new HashMap();
 			        	webActionEnv.put("connection",conn);
 			        	webActionEnv.put("httpservletrequest",request);
@@ -569,7 +571,7 @@ public class SubSystemView {
     		ArrayList catschild1= new ArrayList();
     	try{
             if(includeAction){
-	    		conn=QueryEngine.getInstance().getConnection();
+	    		//conn=QueryEngine.getInstance().getConnection();
 	        	webActionEnv=new HashMap();
 	        	webActionEnv.put("connection",conn);
 	        	webActionEnv.put("httpservletrequest",request);
