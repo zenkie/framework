@@ -177,7 +177,9 @@ public class AuditUtils {
 		vh.put("message","@accepted@");
 		vh.put("code", "0");
 		vh.put("state", "A");
+		Statement stmt=null;
 		try{
+			stmt=conn.createStatement();
 		List al;
 		al=engine.doQueryList("select filterobj, p.id, p.succ_action,p.succ_program,fail_action, fail_program,PERMIT_NUM from  au_phase p where p.au_process_id="+ processId+" and orderno>"+ orderno+" order by p.orderno asc", conn);
 		
@@ -243,7 +245,7 @@ public class AuditUtils {
 			","+ QueryUtils.TO_STRING(docno, 80)+","+  QueryUtils.TO_STRING(brief.toString(),500)+ " from users where id="+ userId;
 			logger.debug(sql2);
 			
-			if (conn.createStatement().executeUpdate(sql2)!=1)
+			if (stmt.executeUpdate(sql2)!=1)
 				throw new NDSException("Fail to insert phase instance");
 			//phase instance members
 			/**
@@ -284,15 +286,19 @@ public class AuditUtils {
 			int au_piuserid= engine.getSequence(manager.getTable("au_pi_user").getName());
 			
 			sql2="insert into au_pi_user(id,ad_client_id, ad_org_id, isactive, ownerid, modifierid, creationdate, " +
-			"modifieddate, au_pi_id,ad_user_id,state) select "+au_piuserid+", ad_client_id, ad_org_id, 'Y',"+ 
+			//"modifieddate, au_pi_id,ad_user_id,state) select "+au_piuserid+", ad_client_id, ad_org_id, 'Y',"+ 
+			"modifieddate, au_pi_id,ad_user_id,state) select get_sequences('au_pi_user'), ad_client_id, ad_org_id, 'Y',"+ 		
 			userId+","+ userId+",sysdate,sysdate, "+ phaseInstanceId+",ad_user_id,'W' from ("+ sb.toString()+") a, users u where u.id="+ userId;
 			
 			logger.debug(sql2);
-			int auditUserCount=conn.createStatement().executeUpdate(sql2);
-			
+			int auditUserCount=stmt.executeUpdate(sql2);
+			/*
 			int ad_userid=Tools.getInt(QueryEngine.getInstance().doQueryOne("select ad_user_id from au_pi_user where id=?",
 									new Object[] { Integer.valueOf(au_piuserid) },
 									conn), -1);
+			*/
+			int ad_userid=-1;
+			
 			
 			
 			/*sql2="insert into au_pi_user(id,ad_client_id, ad_org_id, isactive, ownerid, modifierid, creationdate, " +
@@ -374,7 +380,7 @@ public class AuditUtils {
 			vh.put("state", action);
 			sql2="update au_phaseinstance set state='"+action+"' where id="+ phaseInstanceId;
 			logger.debug(sql2);
-			conn.createStatement().executeUpdate(sql2);
+			stmt.executeUpdate(sql2);
 			syncObject(table, objectId, phaseInstanceId, action, conn);
 			if("R".equals(action)){
 				vh.put("message","@rejected@,@audit-process-name@:"+processName+",@audit-phase-name@:"+ phaseName);
@@ -424,9 +430,11 @@ public class AuditUtils {
 			}				
 			
 		}//end phases iteration
-		try { if (!connFromOut) conn.close();  } catch (Throwable t) { }
+		try { if (stmt!=null) stmt.close();  } catch (Throwable t) { }
 		}finally{
+			try{if(stmt!=null)stmt.close();}catch(Throwable t){}
 			try{if(!connFromOut)conn.close();}catch(Throwable t){}
+			
 		}
 		//update record status
 		return vh;
@@ -755,7 +763,7 @@ public class AuditUtils {
 			}
 		}
 		vh.put("docno", docno);
-		
+		try{stmt.close();}catch(Throwable t){} 
 		return vh;
 		}finally{
 			try{stmt.close();}catch(Throwable t){} 
