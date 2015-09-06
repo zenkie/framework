@@ -191,6 +191,8 @@ public final class WebUtils {
 				throw new NDSException(
 						"Could not find ad_client domain for id=" + String.valueOf(client_id));
 			domains.put(client_id,domname);
+		}else{
+			return (String) domains.get(client_id);
 		}
 		return domname;
 	}
@@ -1140,20 +1142,64 @@ public final class WebUtils {
 	 * @param req
 	 * @return 0 - ie, 1 - ff, 2 - others,3-Chrome
 	 */
+//	public static int getBrowserType(HttpServletRequest req) {
+//		String s = req.getHeader("User-Agent");
+//		if (s == null)
+//			return 2;
+//		if (s.indexOf("MSIE") > -1)
+//			return 0;
+//		else if (s.indexOf("Firefox") > -1)
+//			return 1;
+//		else if (s.indexOf("Chrome") > -1 )
+//			return 3;
+//		else if(regex("Opera", s)) 
+//			return 4;
+//		return 2;
+//	}
+	
 	public static int getBrowserType(HttpServletRequest req) {
-		String s = req.getHeader("User-Agent");
-		if (s == null)
+		String agent = req.getHeader("User-Agent");
+		if (agent == null)
 			return 2;
-		if (s.indexOf("MSIE") > -1)
+		agent = agent.toLowerCase();
+		if (agent.indexOf("msie 7") > 0) {
 			return 0;
-		else if (s.indexOf("Firefox") > -1)
-			return 1;
-		else if (s.indexOf("Chrome") > -1 )
-			return 3;
-		else if(regex("Opera", s)) 
+		} else if (agent.indexOf("msie 8") > 0) {
+			return 0;
+		} else if (agent.indexOf("msie 9") > 0) {
+			return 0;
+		} else if (agent.indexOf("msie 10") > 0) {
+			return 0;
+		} else if (agent.indexOf("msie") > 0) {
+			return 0;
+		} else if (agent.indexOf("opera") > 0) {
 			return 4;
-		return 2;
+		} else if (agent.indexOf("firefox") > 0) {
+			return 1;
+		} else if (agent.indexOf("chrome") > 0) {
+			return 3;
+		} else if (agent.indexOf("gecko") > 0 && agent.indexOf("rv:11") > 0) {
+			return 0;
+		} else {
+			return 2;
+		}
 	}
+	
+//	public static int getBrowserType(HttpServletRequest req) {
+//		String s = req.getHeader("User-Agent");
+//		if (s == null)
+//			return 2;
+//		s = s.toLowerCase();
+//		if (s.indexOf("msie") > -1 || s.indexOf("trident")>-1)
+//			return 0;
+//		else if (s.indexOf("firefox") > -1)
+//			return 1;
+//		else if (s.indexOf("chrome") > -1 )
+//			return 3;
+//		else if(regex("opera", s)) 
+//			return 4;
+//		return 2;
+//	}
 	
     public static boolean regex(String regex,String str){  
         Pattern p =Pattern.compile(regex,Pattern.MULTILINE);  
