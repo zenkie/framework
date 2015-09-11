@@ -495,7 +495,8 @@ public class CxtabReport {
 	        	for(int i=1;i<colcnt;i++) {
 	        		obj= rs.getObject(i);
 	        		if(rs.wasNull()) outStream.write(",");
-	        		else outStream.write(obj.toString()+",");
+	        		//else outStream.write(obj.toString()+",");
+	        		else outStream.write("=\""+obj.toString()+"\",");
 	        	}
 	        	//last col
         		obj= rs.getObject(colcnt);
@@ -892,7 +893,7 @@ public class CxtabReport {
 
 				if ((j > 0) && (f.substring(j - 1, j).equals("/")))
 				{
-					colname = "decode(sum(" + colname + "),0,0,sum(" + colname + "))";
+					colname = "decode(sum(" + colname + "),0,1,sum(" + colname + "))";
 				}else{
 				// add sum
 				colname= "sum("+ colname+")";
