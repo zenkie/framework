@@ -490,13 +490,15 @@ public class CxtabReport {
 		outStream.write((String)factDescs.get(factDescs.size()-1)+"\r\n");
 		
 		Object obj;
+		String val;
 		try{
 			while(rs.next()){
 	        	for(int i=1;i<colcnt;i++) {
-	        		obj= rs.getObject(i);
+	        		//obj= rs.getObject(i);
+	        		val=rs.getString(i);
 	        		if(rs.wasNull()) outStream.write(",");
 	        		//else outStream.write(obj.toString()+",");
-	        		else outStream.write("=\""+obj.toString()+"\",");
+	        		else outStream.write("=\""+val+"\",");
 	        	}
 	        	//last col
         		obj= rs.getObject(colcnt);
@@ -819,7 +821,9 @@ public class CxtabReport {
 		StringBuffer gsql=new StringBuffer("SELECT ");
 		String decodeSQL;
 		int pos=0; 
-		if(dimensionsV!=null && dimensionsV.size()>0)for(int i=0;i< dimensionsV.size();i++){
+		if(dimensionsV!=null && dimensionsV.size()>0)
+		 
+		for(int i=0;i< dimensionsV.size();i++){
 			List dim= (List)dimensionsV.get(i);
 			ColumnLink cl=new ColumnLink((String) dim.get(0));
 			if(cl.getLastColumn().isValueLimited()){
