@@ -48,6 +48,19 @@ public final class License {
 	private int numPOS=0; // pos count in db
 	
 	private int padPOS=0;
+	
+	
+	private Boolean supportJFR=false;
+	
+
+	public Boolean getSupportJFR() {
+		return supportJFR;
+	}
+
+	public void setSupportJFR(Boolean supportJFR) {
+		this.supportJFR = supportJFR;
+	}
+	
 
 	public int getPadPOS() {
 		return padPOS;
@@ -337,6 +350,23 @@ public final class License {
 		license.setNumOnlineUsers(Integer.parseInt(el.getChild("numOnlineUsers").getText()));
 		license.setNumPOS(Integer.parseInt(el.getChild("numPOS").getText()));
 		license.setPadPOS(Integer.parseInt(el.getChild("padPOS")==null?"0":el.getChild("padPOS").getText()));
+
+		String supportjfr=null;
+		
+		try{
+			supportjfr =el.getChild("supportjfr").getText();
+			
+			} catch (Exception e) {
+				supportjfr=null;
+			}
+		
+			System.out.print("supportjfr ->"+supportjfr);
+			
+			if (supportjfr != null&&supportjfr.equalsIgnoreCase("true")){
+				license.setSupportJFR(true);
+			}
+		
+		
 		
 		if (el.getChild("url") != null) {
 			String url = el.getChild("url").getText();

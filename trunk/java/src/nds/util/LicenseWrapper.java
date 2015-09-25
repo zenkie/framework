@@ -61,6 +61,11 @@ public final class LicenseWrapper {
 	public String getSubsystems() {
 		return lic.getSubsystems();
 	}
+	
+	
+	public Boolean getSupportJFR() {
+		return lic.getSupportJFR();
+	}
 
 	public String getURL() {
 		return lic.getURL();
