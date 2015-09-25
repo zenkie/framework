@@ -95,6 +95,7 @@ public final class License {
 		creationDate = new Date();
 		licenseSignature = null;
 		Subsystems=null;
+		supportJFR=false;
 	}
 
 	//add cus_code
@@ -219,6 +220,7 @@ public final class License {
 		buf.append(numPOS).append(seperator);
 		buf.append(padPOS).append(seperator);
 		buf.append(Subsystems).append(seperator);
+		buf.append(supportJFR).append(seperator);
 		buf.append(cus_code).append(seperator);
 		try {
 			if (expiresDate != null)
@@ -284,6 +286,8 @@ public final class License {
 				+ license.getPadPOS()));
 		el.addContent((new Element("Subsystems")).addContent(""
 				+ license.getSubsystems()));
+		el.addContent((new Element("supportjfr")).addContent(""
+				+ license.getSupportJFR()));
 		el.addContent((new Element("cuscode")).addContent(""
 				+ license.getCuscode()));
 		el.addContent((new Element("url"))
