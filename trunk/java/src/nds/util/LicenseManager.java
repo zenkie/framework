@@ -67,7 +67,7 @@ public final class LicenseManager {
 				//取消产品名称对比
 				//bos2.0产品名称比对
 				//if (isValidProduct(product, license) && validVersion)
-				//if (isValidProduct(product, license))
+				if (isValidProduct(product, license))
 					return;
 				
 			}
@@ -179,8 +179,9 @@ public final class LicenseManager {
 				}
 			}
 			 */
+			System.out.println(licenseFile.trim());
 			byte[] decryptData = AESUtils.decrypt(
-					Hex.decodeHex(licenseFile.toCharArray()), k);
+					Hex.decodeHex(licenseFile.trim().toCharArray()), k);
 			String xml = new String(decryptData);
 			System.out.println(xml);
 			//logger.debug(xml);
