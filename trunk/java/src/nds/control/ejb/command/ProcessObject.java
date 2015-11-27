@@ -408,6 +408,7 @@ public class ProcessObject extends Command {
 		  		qr.put("init_query", true);
 		  		qr.put("dir_perm", q.optInt("dir_perm",1));
 		  		qr.put("fixedColumns", q.optString("fixedColumns"));
+		  		qr.put("nea.tabitems", true);
 		  		StringBuffer sb=new StringBuffer(" IN (");
 		  		boolean isNoData=true;   
 		  		for(int i=0;i< rtArrayResults.length();i++){
