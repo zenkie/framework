@@ -297,7 +297,12 @@ public class ObjectColumnObtain extends ColumnObtain{
 		                	        		 System.out.print("new value ->"+(Vector)valuesHashMap.get(rc.getName()));
 		                	        		 v= (Vector)valuesHashMap.get(rc.getName());
 		                	        		}
+		                	         }else{
+		                	        	 if(event.getParameterValue("ColumnValueHashMap")!=null)
+		                	        		 System.out.print("new value ->"+(Vector)valuesHashMap.get(rc.getName()));
+		                	        		 v= (Vector)valuesHashMap.get(rc.getName());
 		                	         }
+		                	         
 		                			  
 		                			  if( v==null || v.size()==0) throw new NDSException("Internal error:"+ col+" need values from "+ rc+" while not found ("+ rc+" should locate before "+ col);
 		                			  
