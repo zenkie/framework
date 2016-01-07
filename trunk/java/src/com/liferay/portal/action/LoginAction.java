@@ -4,6 +4,8 @@
 
 package com.liferay.portal.action;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.*;
 import java.util.regex.Pattern;
 
@@ -77,6 +79,7 @@ import nds.util.LicenseManager;
 import nds.util.LicenseWrapper;
 import nds.util.SysLogger;
 import nds.util.Tools;
+import nds.util.ipfilter;
 import nds.portal.auth.*;
 import nds.query.QueryEngine;
 import nds.query.QueryUtils;
@@ -97,7 +100,7 @@ public class LoginAction extends Action {
 	private static final Log logger = LogFactory.getLog(LoginAction.class);
 
 	private static DataSource datasource;
-	private final static String GET_IPRULE="select u.login_ip_rule from users u, ad_client a where u.name=? and u.ad_client_id=a.id and a.domain=?";	
+	private final static String GET_IPRULE="select u.login_ip_rule from users u where u.email=?";	
 
 	
 	public static String getLogin(
@@ -155,10 +158,10 @@ public class LoginAction extends Action {
 		 */
 		String remoteAddress=req.getRemoteAddr();
 		try{
-			/*authResult= authenticateByLoginIPRule(remoteAddress, userId);
+			authResult= authenticateByLoginIPRule(remoteAddress, userId);
 			if (authResult != Authenticator.SUCCESS) {
 				throw new InvalidIPException("@invalid-login-ip@");
-			}*/	
+			}
 		// following is original codes	
 		if (company.getAuthType().equals(CompanyImpl.AUTH_TYPE_EA)) {
 			userId = UserLocalServiceUtil.getUserId(company.getCompanyId(), login);
@@ -285,7 +288,19 @@ public class LoginAction extends Action {
 		 * yfzhu add check login ip at 2005-12-26
 		 * add server url
 		 */
-		String remoteAddress=req.getRemoteAddr();
+		//String remoteAddress=req.getRemoteAddr();
+		
+		 // 获取请求IP
+        InetAddress inet = null;
+        String remoteAddress = req.getRemoteAddr();
+        try {
+            inet = InetAddress.getLocalHost();
+            if (remoteAddress.equals("127.0.0.1"))
+            	remoteAddress = inet.getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        
 		String serverUrl="";//= Tools.toString(req);
 		Enumeration  enu=req.getHeaders("Origin"); 
 		if(enu.hasMoreElements()){ 
@@ -293,11 +308,12 @@ public class LoginAction extends Action {
 			   if(nds.control.web.WebUtils.getServerUrl()==null)nds.control.web.WebUtils.setServerUrl(serverUrl);
 		}
 		//System.out.print("serverUrl "+serverUrl);
+		logger.debug("checkallowip");
 		try{
-			/*authResult= authenticateByLoginIPRule(remoteAddress, userId);
+			authResult= authenticateByLoginIPRule(remoteAddress, userId);
 			if (authResult != Authenticator.SUCCESS) {
 				throw new InvalidIPException("@invalid-login-ip@");
-			}*/
+		}
 		// following is original codes	
 		if (company.getAuthType().equals(CompanyImpl.AUTH_TYPE_EA)) {
 			authResult = UserLocalServiceUtil.authenticateByEmailAddress(
@@ -528,7 +544,8 @@ public class LoginAction extends Action {
 					e instanceof NoSuchUserException ||
 					e instanceof UserEmailAddressException ||
 					e instanceof UserIdException ||
-					e instanceof UserPasswordException) {
+					e instanceof UserPasswordException||
+					e instanceof InvalidIPException) {
 
 					SessionErrors.add(req, e.getClass().getName());
 					//logger.debug("eee");
@@ -841,33 +858,38 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 			  *  登录的时候由系统强行设置登录名为小写后验证
 			  */
 			String domainName=userId;
-			String uName, adclientName ;
-			int p=domainName.indexOf("@");
-			if ( p<=0){
-				return authResult;
-				//throw new AuthException("user id is invalid:"+userId);
-			}
-			uName= domainName.substring(0,p );
-			adclientName= domainName.substring(p+1);
+//			String uName, adclientName ;
+//			int p=domainName.indexOf("@");
+//			if ( p<=0){
+//				return authResult;
+//				//throw new AuthException("user id is invalid:"+userId);
+//			}
+//			uName= domainName.substring(0,p );
+//			adclientName= domainName.substring(p+1);
 			
 			pstmt= conn.prepareStatement(GET_IPRULE);
 			
-	    	pstmt.setString(1, uName);
-	    	pstmt.setString(2, adclientName);
+	    	pstmt.setString(1, domainName);
+	    	//pstmt.setString(2, adclientName);
 	    	rs=pstmt.executeQuery();
 	    	if(rs.next()){
 	    		ipRule=rs.getString(1);
 	    		if(ipRule!=null && ipRule.trim().length()>1 ){
-	    			try{
-	    				Pattern reg= Pattern.compile(ipRule);
-		    			if(!reg.matcher(ip).find()){
-		    				logger.debug("Error ip rule:"+ipRule +" for ip:"+ ip+" of user:"+ userId);
-		    				authResult=Authenticator.FAILURE;
-		    			}
-	    			}catch(Exception e){
-	    				logger.error("Could not parse ip rule:"+ipRule +" for ip:"+ ip+" of user:"+ userId+":"+e);
-	    				authResult=Authenticator.FAILURE;
-	    			}
+//	    			try{
+//	    				Pattern reg= Pattern.compile(ipRule);
+//		    			if(!reg.matcher(ip).find()){
+//		    				logger.debug("Error ip rule:"+ipRule +" for ip:"+ ip+" of user:"+ userId);
+//		    				authResult=Authenticator.FAILURE;
+//		    			}
+//	    			}catch(Exception e){
+//	    				logger.error("Could not parse ip rule:"+ipRule +" for ip:"+ ip+" of user:"+ userId+":"+e);
+//	    				authResult=Authenticator.FAILURE;
+//	    			}
+	    			ipfilter ipfi=new ipfilter();
+	    			ipfi.setallowip(ipRule);
+	    			if(!ipfi.checkLoginIP(ip))
+	    				return Authenticator.FAILURE;
+	    			
 	    		}
 	    	}else{
 	    		// not find the user, let following authenticator to check it
