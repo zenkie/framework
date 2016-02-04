@@ -67,7 +67,7 @@ public class SaveCxtabJson extends Command {
   		JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
 	  	Object tag= jo.opt("tag");
 	  	int cxtabId= jo.getInt("cxtabId");
-	  	int parentId =jo.optInt("parentId",-1);
+	  	int parentId =jo.optInt("parentId",cxtabId);
 	  	String savetype=(String)jo.opt("savetype");
 		String name=(String)jo.opt("name");
 	  	
