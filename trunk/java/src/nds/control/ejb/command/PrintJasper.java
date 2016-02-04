@@ -367,7 +367,7 @@ public class PrintJasper extends Command{
     	if(userWeb!=null){
 	    	int id=Tools.getInt(QueryEngine.getInstance().doQueryOne(
 	    			"select id from ad_cxtab where ad_client_id=" +userWeb.getAdClientId() +" and ad_table_id="+table.getId() +
-	    			" and reporttype='P' and rownum< 2 order by orderno, id"),-1);
+	    			" and reporttype='P' and rownum< 2  and isactive='Y' order by orderno, id"),-1);
 	    	if(id!=-1) return "cx"+id;
 	    	
 	    	
