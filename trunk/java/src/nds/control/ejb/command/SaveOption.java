@@ -68,7 +68,7 @@ public class SaveOption  extends Command {
    		try{
 	   		params=jo.getJSONObject("params");
 	   		String name,value,sql;
-	   		sql="delete from ad_user_pref where ad_user_id="+userid;
+	   		sql="delete from ad_user_pref t where t.module NOT LIKE '%print' AND t.module NOT LIKE 'cxtab%' AND t.module != 'qlc' and t.ad_user_id="+userid;
    			JSONArray names=params.names();
    			pstmt= conn.prepareStatement(sql);
             pstmt.executeUpdate();
