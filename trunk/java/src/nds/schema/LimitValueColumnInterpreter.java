@@ -27,6 +27,8 @@ package nds.schema;
 
 import java.util.*;
 
+import nds.log.Logger;
+import nds.log.LoggerManager;
 import nds.util.*;
 /**
  * Parse limit value of column, the column should has method <br>
@@ -34,7 +36,7 @@ import nds.util.*;
  *
  */
 public class LimitValueColumnInterpreter implements nds.util.ColumnInterpreter, java.io.Serializable {
-    
+	private static Logger logger=LoggerManager.getInstance().getLogger(LimitValueColumnInterpreter.class.getName());
 	
 	private Column column;
     public LimitValueColumnInterpreter(Column col)  {
@@ -45,7 +47,8 @@ public class LimitValueColumnInterpreter implements nds.util.ColumnInterpreter, 
      * @throws ColumnInterpretException if input value is not valid
      */
     public String parseValue(Object value, Locale locale) throws ColumnInterpretException {
-    	if( value !=null && value instanceof String) value=( (String)value).trim();
+    	if( value !=null) value=String.valueOf(value).trim();
+    	
     	Object s=(Object)column.getValues(locale).get(value);
         if( s ==null)
             throw new ColumnInterpretException("Invalid value:"+value+", legal values are:"+ column.getValues(locale));
