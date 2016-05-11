@@ -745,10 +745,12 @@ public class QueryResultImpl implements QueryResult , JSONString{
                 // format to specified precision
                 int scale=  col.getScale();
                 if(scale==0){
-	                row.set(idInRowItems, new Long(Math.round(d.doubleValue())));
+	                  row.set(idInRowItems, new Long(Math.round(d.doubleValue())));
+                	 //row.set(idInRowItems, Tools.addComma(String.valueOf(new Long(Math.round(d.doubleValue())))));
                 }else{
 	                long s= (long)Math.pow(10,scale);
-	                row.set(idInRowItems, new Double(Math.round(d.doubleValue()*  s )/(s*1.0)));
+	              //  row.set(idInRowItems, new Double(Math.round(d.doubleValue()*  s )/(s*1.0)));
+	                row.set(idInRowItems, Tools.addComma(String.valueOf(new Double(Math.round(d.doubleValue()*  s )/(s*1.0)))));
                 }
             }
         }
