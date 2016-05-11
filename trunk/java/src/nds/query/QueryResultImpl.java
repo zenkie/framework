@@ -748,9 +748,10 @@ public class QueryResultImpl implements QueryResult , JSONString{
 	                  row.set(idInRowItems, new Long(Math.round(d.doubleValue())));
                 	 //row.set(idInRowItems, Tools.addComma(String.valueOf(new Long(Math.round(d.doubleValue())))));
                 }else{
-	                long s= (long)Math.pow(10,scale);
+	                //long s= (long)Math.pow(10,scale);
+	                row.set(idInRowItems, Tools.addComma(String.valueOf(new Double(Math.round(d.doubleValue())))));
 	              //  row.set(idInRowItems, new Double(Math.round(d.doubleValue()*  s )/(s*1.0)));
-	                row.set(idInRowItems, Tools.addComma(String.valueOf(new Double(Math.round(d.doubleValue()*  s )/(s*1.0)))));
+	               // row.set(idInRowItems, Tools.addComma(String.valueOf(new Double(Math.round(d.doubleValue()*  s )/(s*1.0)))));
                 }
             }
         }
@@ -777,8 +778,11 @@ public class QueryResultImpl implements QueryResult , JSONString{
             for(int i=0;i< getRowCount();i++){
                 al.add( ((ArrayList)rows.get(i)).get(idInRowItems));
             }
-            return ((java.text.DecimalFormat)QueryUtils.floatPrintFormatter.get()).format(SumMethodFactory.getInstance().
-                    createSumMethod( col.getSubTotalMethod() ).calculate(al));
+            //return ((java.text.DecimalFormat)QueryUtils.floatPrintFormatter.get()).format(SumMethodFactory.getInstance().
+                //    createSumMethod( col.getSubTotalMethod() ).calculate(al));
+            
+            return Tools.addComma(String.valueOf(
+            		SumMethodFactory.getInstance().createSumMethod( col.getSubTotalMethod() ).calculate(al)));
         }else{
             return needNBSP?StringUtils.NBSP:"";
         }
