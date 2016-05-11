@@ -329,10 +329,16 @@ public class QueryResultImpl implements QueryResult , JSONString{
             if( rs.next() ){
                 ResultSetMetaData mt= rs.getMetaData();
                 for( int i=1;i<= mt.getColumnCount();i++) {
-                    d=rs.getString(i);
+                	 Column col= manager.getColumn(meta.getColumnId(i));
+                	 int scale=  col.getScale();
+                     if(scale!=0){
+                    	 d=Tools.addComma(String.format("%10."+String.valueOf(scale)+"f",rs.getString(i)).trim());
+                     }else
+                    	 d=rs.getString(i);
+                    
                     if ( rs.wasNull() ) fullRangeRowData.add(null);
                    // else fullRangeRowData.add(((java.text.DecimalFormat)QueryUtils.floatPrintFormatter.get()).format(d));
-                    else fullRangeRowData.add(Tools.addComma(d));
+                    else fullRangeRowData.add(d);
                 }
             }
         }
