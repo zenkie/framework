@@ -104,6 +104,8 @@ public final class QueryUtils {
        		return new DecimalFormat("###,###,###");}};
     public static ThreadLocal<DecimalFormat> floatPrintFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
    		return new DecimalFormat("###,###,##0.00");}};
+   	public static ThreadLocal<DecimalFormat> doulbePrintFormatter=new ThreadLocal(){protected synchronized Object initialValue() {
+   	   		return new DecimalFormat("###,###,##0.0000");}};
    	
    	/**
    	 * default date query range, can be updated by portal.properties#query.date.range
@@ -254,6 +256,7 @@ public final class QueryUtils {
     	/**
     	 * For instance when we just want to table's AK column shown as dropdown list
     	 */
+    	//System.out.print("dropdownColumn ref table ->"+table.getName());
     	if(table==null){
     		// this case, column is AK of table
     		table= dropdownColumn.getTable();
