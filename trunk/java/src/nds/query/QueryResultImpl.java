@@ -322,23 +322,32 @@ public class QueryResultImpl implements QueryResult , JSONString{
     private void prepareFullRangeSubTotal(QueryRequest req) throws SQLException{
         if ( !req.isFullRangeSubTotalEnabled()) return;
         fullRangeRowData=new ArrayList();
-        ResultSet rs=null; String d;
+        ResultSet rs=null; String val = null;
         try {
             String sql= req.toFullRangeSubTotalSQL() ;
             rs=QueryEngine.getInstance().doQuery(sql);
+            TableManager manager=TableManager.getInstance();
             if( rs.next() ){
                 ResultSetMetaData mt= rs.getMetaData();
+               
                 for( int i=1;i<= mt.getColumnCount();i++) {
-                	 Column col= manager.getColumn(meta.getColumnId(i));
-                	 int scale=  col.getScale();
-                     if(scale!=0){
-                    	 d=Tools.addComma(String.format("%10."+String.valueOf(scale)+"f",rs.getString(i)).trim());
-                     }else
-                    	 d=rs.getString(i);
-                    
+                	 System.out.print("columnname ->"+mt.getColumnName(i));
+                	 if(mt.getColumnName(i).indexOf("SUM")>-1){
+	                	 String Dbname=mt.getColumnName(i).replace("SUM", "").trim();
+	                	 Dbname=Dbname.substring(1, Dbname.length()-1);
+	                	 Column col=(Column)manager.getColumn(Dbname);
+	                	 int scale=  col.getScale();
+	                     if(scale==0){
+	                    	 val=rs.getString(i);
+	                     }else{
+	                    	 long s= (long)Math.pow(10,scale);
+	                    	 val=Tools.addComma(String.format("%10."+String.valueOf(scale)+"f",(double)(Math.round(rs.getDouble(i)*  s )/(s*1.0))).trim());
+	                    	 //val=Tools.addComma(String.format("%10."+String.valueOf(scale)+"f",rs.getDouble(i)).trim());
+	                     }
+                	 }
                     if ( rs.wasNull() ) fullRangeRowData.add(null);
                    // else fullRangeRowData.add(((java.text.DecimalFormat)QueryUtils.floatPrintFormatter.get()).format(d));
-                    else fullRangeRowData.add(d);
+                    else fullRangeRowData.add(val);
                 }
             }
         }
