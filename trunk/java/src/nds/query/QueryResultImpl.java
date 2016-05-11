@@ -751,9 +751,8 @@ public class QueryResultImpl implements QueryResult , JSONString{
 	                long s= (long)Math.pow(10,scale);
 	                //row.set(idInRowItems, Tools.addComma(String.valueOf(new Double(Math.round(d.doubleValue())))));
 	              //  row.set(idInRowItems, new Double(Math.round(d.doubleValue()*  s )/(s*1.0)));
-	                row.set(idInRowItems, Tools.addComma(String.valueOf(new Double(
-	                		String.format("%10."+String.valueOf(scale)+"f",
-	                				(new Double(Math.round(d.doubleValue()*  s )/(s*1.0))))))));
+	                row.set(idInRowItems, Tools.addComma(
+	                		String.format("%10."+String.valueOf(scale)+"f",(new Double(Math.round(d.doubleValue()*  s )/(s*1.0))))).trim());
                 }
             }
         }
@@ -787,8 +786,8 @@ public class QueryResultImpl implements QueryResult , JSONString{
             	return Tools.addComma(String.valueOf(
             			 SumMethodFactory.getInstance().createSumMethod( col.getSubTotalMethod() ).calculate(al)));
             }else{
-            	return Tools.addComma(String.valueOf(new Double(String.format("%10."+String.valueOf(scale)+"f",
-            		SumMethodFactory.getInstance().createSumMethod( col.getSubTotalMethod() ).calculate(al)))));
+            	return Tools.addComma(String.format("%10."+String.valueOf(scale)+"f",
+            		SumMethodFactory.getInstance().createSumMethod( col.getSubTotalMethod() ).calculate(al)).trim());
             }
         }else{
             return needNBSP?StringUtils.NBSP:"";
