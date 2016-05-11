@@ -322,17 +322,17 @@ public class QueryResultImpl implements QueryResult , JSONString{
     private void prepareFullRangeSubTotal(QueryRequest req) throws SQLException{
         if ( !req.isFullRangeSubTotalEnabled()) return;
         fullRangeRowData=new ArrayList();
-        ResultSet rs=null; double d;
+        ResultSet rs=null; String d;
         try {
             String sql= req.toFullRangeSubTotalSQL() ;
             rs=QueryEngine.getInstance().doQuery(sql);
             if( rs.next() ){
                 ResultSetMetaData mt= rs.getMetaData();
                 for( int i=1;i<= mt.getColumnCount();i++) {
-                    d=rs.getDouble(i);
+                    d=rs.getString(i);
                     if ( rs.wasNull() ) fullRangeRowData.add(null);
                    // else fullRangeRowData.add(((java.text.DecimalFormat)QueryUtils.floatPrintFormatter.get()).format(d));
-                    else fullRangeRowData.add(Tools.addComma(String.valueOf(d)));
+                    else fullRangeRowData.add(Tools.addComma(d));
                 }
             }
         }
