@@ -748,10 +748,10 @@ public class QueryResultImpl implements QueryResult , JSONString{
 	                  row.set(idInRowItems, new Long(Math.round(d.doubleValue())));
                 	 //row.set(idInRowItems, Tools.addComma(String.valueOf(new Long(Math.round(d.doubleValue())))));
                 }else{
-	                //long s= (long)Math.pow(10,scale);
-	                row.set(idInRowItems, Tools.addComma(String.valueOf(new Double(Math.round(d.doubleValue())))));
+	                long s= (long)Math.pow(10,scale);
+	                //row.set(idInRowItems, Tools.addComma(String.valueOf(new Double(Math.round(d.doubleValue())))));
 	              //  row.set(idInRowItems, new Double(Math.round(d.doubleValue()*  s )/(s*1.0)));
-	               // row.set(idInRowItems, Tools.addComma(String.valueOf(new Double(Math.round(d.doubleValue()*  s )/(s*1.0)))));
+	                row.set(idInRowItems, Tools.addComma(String.format("%10."+String.valueOf(scale)+"f",(new Double(Math.round(d.doubleValue()*  s )/(s*1.0))))));
                 }
             }
         }
@@ -780,9 +780,14 @@ public class QueryResultImpl implements QueryResult , JSONString{
             }
             //return ((java.text.DecimalFormat)QueryUtils.floatPrintFormatter.get()).format(SumMethodFactory.getInstance().
                 //    createSumMethod( col.getSubTotalMethod() ).calculate(al));
-            
-            return Tools.addComma(String.valueOf(
+            int scale=  col.getScale();
+            if(scale==0){
+            	return Tools.addComma(String.valueOf(
+            			 SumMethodFactory.getInstance().createSumMethod( col.getSubTotalMethod() ).calculate(al)));
+            }else{
+            	return Tools.addComma(String.format("%10."+String.valueOf(scale)+"f",
             		SumMethodFactory.getInstance().createSumMethod( col.getSubTotalMethod() ).calculate(al)));
+            }
         }else{
             return needNBSP?StringUtils.NBSP:"";
         }
