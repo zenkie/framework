@@ -781,13 +781,16 @@ public class QueryResultImpl implements QueryResult , JSONString{
             }
             //return ((java.text.DecimalFormat)QueryUtils.floatPrintFormatter.get()).format(SumMethodFactory.getInstance().
                 //    createSumMethod( col.getSubTotalMethod() ).calculate(al));
+            Double d= new Double( SumMethodFactory.getInstance().
+                    createSumMethod( col.getSubTotalMethod() ).calculate(al));
+            
             int scale=  col.getScale();
             if(scale==0){
             	return Tools.addComma(String.valueOf(
             			 SumMethodFactory.getInstance().createSumMethod( col.getSubTotalMethod() ).calculate(al)));
             }else{
-            	return Tools.addComma(String.format("%10."+String.valueOf(scale)+"f",
-            		SumMethodFactory.getInstance().createSumMethod( col.getSubTotalMethod() ).calculate(al)).trim());
+            	long s= (long)Math.pow(10,scale);
+            	return Tools.addComma(String.format("%10."+String.valueOf(scale)+"f",(new Double(Math.round(d.doubleValue()*  s )/(s*1.0)))).trim());
             }
         }else{
             return needNBSP?StringUtils.NBSP:"";
