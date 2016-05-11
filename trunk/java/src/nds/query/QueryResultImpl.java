@@ -331,7 +331,8 @@ public class QueryResultImpl implements QueryResult , JSONString{
                 for( int i=1;i<= mt.getColumnCount();i++) {
                     d=rs.getDouble(i);
                     if ( rs.wasNull() ) fullRangeRowData.add(null);
-                    else fullRangeRowData.add(((java.text.DecimalFormat)QueryUtils.floatPrintFormatter.get()).format(d));
+                   // else fullRangeRowData.add(((java.text.DecimalFormat)QueryUtils.floatPrintFormatter.get()).format(d));
+                    else fullRangeRowData.add(Tools.addComma(String.valueOf(d)));
                 }
             }
         }
