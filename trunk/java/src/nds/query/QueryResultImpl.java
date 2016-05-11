@@ -752,8 +752,11 @@ public class QueryResultImpl implements QueryResult , JSONString{
 	                long s= (long)Math.pow(10,scale);
 	                //row.set(idInRowItems, Tools.addComma(String.valueOf(new Double(Math.round(d.doubleValue())))));
 	              //  row.set(idInRowItems, new Double(Math.round(d.doubleValue()*  s )/(s*1.0)));
-	                row.set(idInRowItems, Tools.addComma(
-	                		String.format("%10."+String.valueOf(scale)+"f",(new Double(Math.round(d.doubleValue()*  s )/(s*1.0)))).trim()));
+	                row.set(idInRowItems, 
+	                		Tools.addComma(
+	                		String.format("%10."+String.valueOf(scale)+"f",(double)(Math.round(d.doubleValue()*  s )/(s*1.0))).trim()
+	                		)
+	                );
                 }
             }
         }
