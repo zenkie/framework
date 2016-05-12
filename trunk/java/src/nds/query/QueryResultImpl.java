@@ -331,14 +331,14 @@ public class QueryResultImpl implements QueryResult , JSONString{
                 ResultSetMetaData mt= rs.getMetaData();
                
                 for( int i=1;i<= mt.getColumnCount();i++) {
-                	 System.out.print("columnname ->"+mt.getColumnName(i));
+                	// System.out.print("columnname ->"+mt.getColumnName(i));
                 	 if(mt.getColumnName(i).indexOf("SUM")>-1){
 	                	 String Dbname=mt.getColumnName(i).replace("SUM", "").trim();
 	                	 Dbname=Dbname.substring(1, Dbname.length()-1);
 	                	 Column col=(Column)manager.getColumn(Dbname);
 	                	 int scale=  col.getScale();
 	                     if(scale==0){
-	                    	 val=rs.getString(i);
+	                    	 val=Tools.addComma(String.format("%10.0f",(double)(Math.round(rs.getDouble(i)))).trim());
 	                     }else{
 	                    	 long s= (long)Math.pow(10,scale);
 	                    	 val=Tools.addComma(String.format("%10."+String.valueOf(scale)+"f",(double)(Math.round(rs.getDouble(i)*  s )/(s*1.0))).trim());
@@ -761,7 +761,10 @@ public class QueryResultImpl implements QueryResult , JSONString{
                 // format to specified precision
                 int scale=  col.getScale();
                 if(scale==0){
-	                  row.set(idInRowItems, new Long(Math.round(d.doubleValue())));
+	                 row.set(idInRowItems, Tools.addComma(
+		                		String.format("%10.0f",(double)(Math.round(d.doubleValue()))).trim()
+		                		)
+		                	);
                 	 //row.set(idInRowItems, Tools.addComma(String.valueOf(new Long(Math.round(d.doubleValue())))));
                 }else{
 	                long s= (long)Math.pow(10,scale);
