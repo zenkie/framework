@@ -336,7 +336,7 @@ public class QueryResultImpl implements QueryResult , JSONString{
 	                	 String Dbname=mt.getColumnName(i).replace("SUM", "").trim();
 	                	 Dbname=Dbname.substring(1, Dbname.length()-1);
 	                	 Column col=(Column)manager.getColumn(Dbname);
-	                	 int scale=  col.getScale();
+	                	 int scale=  Tools.getInt(col.getScale(), 0);
 	                     if(scale==0){
 	                    	 val=Tools.addComma(String.format("%10.0f",(double)(Math.round(rs.getDouble(i)))).trim());
 	                     }else{
