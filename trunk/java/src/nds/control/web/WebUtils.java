@@ -785,6 +785,10 @@ public final class WebUtils {
 
 		String filter = searchOnColumn.getFilter();
 		List wfc_rcs = searchOnColumn.getReferenceColumnsInWildcardFilter();
+		logger.debug("searchOnColumn ->"+searchOnColumn.getName());
+		Boolean wildtrans=true;
+		JSONObject colprp=searchOnColumn.getJSONProps();
+		if(colprp!=null)wildtrans=colprp.optBoolean("wildtranslate", true);
 		Column wfc_rc;
 		String wfc_rcv;
 		for (int i = 0; i < wfc_rcs.size(); i++) {
@@ -795,7 +799,7 @@ public final class WebUtils {
 			logger.debug("wfc_rcv is "+wfc_rcv);
 			if (wfc_rcv != null) {
 				// input value is ak, not id
-				if (wfc_rc.getReferenceTable() != null) {
+				if (wfc_rc.getReferenceTable() != null&&wildtrans) {
 					wfc_rcv = parseReferenceColumnValue(wfc_rcv, wfc_rc,
 							userWeb);
 				} else {

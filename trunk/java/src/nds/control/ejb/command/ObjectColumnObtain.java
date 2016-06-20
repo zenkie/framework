@@ -47,6 +47,20 @@ public class ObjectColumnObtain extends ColumnObtain{
     nds.security.User user= helper.getOperator(event);
     //logger.debug(" for column " + col.getName() + ":"+ event.toDetailString());
   	TableManager tm= helper.getTableManager();
+  	PairTable fixedColumns=helper.getFixedColumns(event);
+  	int masterId=-1;
+  	Table masterTable=null;
+    for(Iterator it= fixedColumns.keys();it.hasNext();){
+     	Integer key=((Integer)it.next()); 
+  		//这里作了直接的判断来获得主表的记录的ID，这样的操作具有相当的局限性
+  		int fkColumnId= Tools.getInt(key,-1);
+  		Column fkColumn=tm.getColumn(fkColumnId);
+  		if(fkColumn!=null){
+  			masterTable= fkColumn.getReferenceTable();
+	  		masterId=Tools.getInt( fixedColumns.get(key),-1);
+  		}
+  	}
+  	
     QueryEngine engine = QueryEngine.getInstance();
 
   	Table refTable = col.getReferenceTable();
@@ -204,7 +218,7 @@ public class ObjectColumnObtain extends ColumnObtain{
     		   * 2)m_product.c_project_id=@c_order.c_project_id@
     		   * 3)c_bpartner_location.c_bpartner_id=@l_order.s_bpartner_id@
     		   */ 
-    		  sqlStr.append(" AND ("+ constructWildcardFilter(col)+")");
+    		  sqlStr.append(" AND ("+ constructWildcardFilter(col,masterId)+")");
     		  parentFkColumn=tm.getParentFKColumn(col.getTable());
     	  }
       }      
@@ -233,12 +247,19 @@ public class ObjectColumnObtain extends ColumnObtain{
             
           	aliasPstmt=conn.prepareStatement(aliasTableFilterSql);
           }
-          logger.debug("test is uphere!!!!");
+          logger.debug("test is uphere!!!! length->"+length);
+          logger.debug("objectStr ->"+Arrays.deepToString(objectStr));
+          logger.debug("objectIds ->"+Arrays.deepToString(objectIds));
           int tableId= col.getTable().getId();
           List rcwf=col.getReferenceColumnsInWildcardFilter();
           Column rc;
 		  HashMap valuesHashMap=(HashMap)event.getParameterValue("ColumnValueHashMap");
 		  Vector v=null;
+		  
+		  Boolean wildtrans=true;
+		  JSONObject colprp=col.getJSONProps();
+		  if(colprp!=null)wildtrans=colprp.optBoolean("wildtranslate", true);
+		  
           for(int i = 0;i<length;i++){
               try{
                   checkImpl.isColumnValid(col,objectStr[i]);
@@ -258,16 +279,17 @@ public class ObjectColumnObtain extends ColumnObtain{
 		                  int cidx=1;
 		                  if(ak2Column!=null)pstmt.setString(++cidx,objectStr[i] );
 		                  
-		                  if(col.isFilteredByWildcard()){
+		                  if(col.isFilteredByWildcard()&&wildtrans){
 		                	  for(int j=0;j<rcwf.size();j++ ){
 		                		  rc= (Column) rcwf.get(j);
+		                		  logger.debug("rcwf ->"+rc.getName());
 		                		  if(tableId!= rc.getTable().getId()){
 		                			  //parent table, find parent column id
 		                			  v=  (Vector)valuesHashMap.get(parentFkColumn.getName() );
 		                			  if(v==null || v.size()==0) throw new NDSException("Internal error:"+ col+" need values from "+ rc+" while not found, check parentFKcolumn setting");
 		                		  }else{
 		                			  //same table
-		                			  System.out.print("column name ->"+rc.getName());
+		                			 //System.out.print("column name ->"+rc.getName());
 		                	         if( rc.getReferenceTable()!=null){
 		                	        		String name= rc.getName() +"__"+ rc.getReferenceTable().getAlternateKey().getName().toUpperCase();
 		                	        		//System.out.print(event.getParameterValue("ColumnValueHashMap"));
@@ -279,6 +301,7 @@ public class ObjectColumnObtain extends ColumnObtain{
 		                						query.setMainTable(rc.getReferenceTable().getId());
 		                						query.addSelection(rc.getReferenceColumn().getId());
 		                						query.addParam(rc.getReferenceTable().getAlternateKey().getId(), "="+ value);
+		                						logger.debug("wildcol ->"+rc.getName()+" sql->"+query.toSQL());
 		                						QueryResult rs = QueryEngine.getInstance().doQuery(query);
 		                						if (rs != null && rs.getTotalRowCount() > 0) {
 		                							while (rs.next()) {
@@ -422,24 +445,46 @@ public class ObjectColumnObtain extends ColumnObtain{
     		   * 1)m_locator.m_warehouse_id=@m_v_inout.m_whsout_id@
     		   * 2)m_product.c_project_id=@c_order.c_project_id@
     		   * 3)c_bpartner_location.c_bpartner_id=@l_order.s_bpartner_id@
+    		   * 增加主标记录id 获取过滤信息
    *  
-   * @param column
+   * @param column,masterId
    * @return for "m_locator.m_warehouse_id=@m_v_inout.m_whsout_id@" 
    * 	return "m_locator.m_warehouse_id=(select m_whsout_id from m_inout m_v_inout where m_v_inout.id=?)"
    * 	and in event, set value for @m_v_inout.m_whsout_id@ of each row
+ * @throws QueryException 
    * @throws Excpetion
    */
-  private String constructWildcardFilter(Column column){
+  private String constructWildcardFilter(Column column,int masterId) throws QueryException{
 	  int tableId= column.getTable().getId();
 	  List al=column.getReferenceColumnsInWildcardFilter();
 	  String sql= column.getFilter();
 	  String sql2;
+	  
+	  Boolean wildtrans=true;
+	  JSONObject colprp=column.getJSONProps();
+	  if(colprp!=null)wildtrans=colprp.optBoolean("wildtranslate", true);
+	  
 	  for(int i=0;i< al.size();i++){
+		  QueryRequestImpl query = QueryEngine.getInstance().createRequest(null);
 		  Column col= (Column) al.get(i);
 		  if(col.getTable().getId()!=tableId){
-			  // parent table column
-			  sql2="(select " + col.getName()+ " from "+ col.getTable().getRealTableName()+" "+
-			  		col.getTable().getName()+" where id=?)"; 
+		  // parent table column
+		  	if(wildtrans){
+			    sql2="(select " + col.getName()+ " from "+ col.getTable().getRealTableName()+" "+
+				  		col.getTable().getName()+" where id=?)"; 	
+		  	}else{
+			    query.setMainTable(col.getTable().getId());
+			    query.addSelection(col.getId(),col.getReferenceTable().getAlternateKey().getId(),false);
+				query.addParam(col.getTable().getPrimaryKey().getId(),""+masterId);
+				QueryResult result= QueryEngine.getInstance().doQuery(query);
+				if (result.next())
+					sql2 = result.getString(1);
+				else
+					sql2 = "";
+		  	}
+			  	
+//			  sql2="(select " + (wildtrans?col.getName():col.getReferenceTable().getAlternateKey())+ " from "+ col.getTable().getRealTableName()+" "+
+//			  		col.getTable().getName()+" where id=?)"; 
 		  }else{
 			  // same table
 			  sql2="?";
