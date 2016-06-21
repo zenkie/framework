@@ -78,7 +78,9 @@ public class ReportUtils {
           return Integer.valueOf(quota.substring(0,quota.length())).longValue();
   }
   public long getSpaceUsed(){
-      File dir = new File(getExportRootPath()+File.separator+ user.getClientDomain()+File.separator+  getUserName());
+	  
+	  Boolean byuserid= nds.util.Tools.getBoolean(conf.getProperty("report_savepathbyuserid","false"),false);
+      File dir = new File(getExportRootPath()+File.separator+ user.getClientDomain()+File.separator+(byuserid?user.getUserId():getUserName()));
       
       if(!dir.exists() || !dir.isDirectory())
           return 0;
