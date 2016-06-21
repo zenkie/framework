@@ -80,7 +80,7 @@ public class Text extends TagSupport {
             JspWriter out = pageContext.getOut();
 
             // start building up the tag
-            out.print("<input type=\"text\" ");
+            out.print("<input autocomplete=\"off\" type=\"text\" ");
             out.print("name=\"" + Util.quote(name) + "\" ");
 
             // include any attributes we've got here
