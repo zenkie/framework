@@ -49,8 +49,10 @@ public class DeleteCxtabFiles  extends Command{
 
 	    
 	    Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);	    
+	    Boolean byuserid= nds.util.Tools.getBoolean(conf.getProperty("report_savepathbyuserid","false"),false);
+
 	    String svrPath = conf.getProperty("export.root.nds","/aic/home")
-	    	+ File.separator + usr.getClientDomain()+File.separator+ usr.getName();
+	    	+ File.separator + usr.getClientDomain()+File.separator+ (byuserid?usr.getId():usr.getName());
 	    try{
 		    int cxtabId=Tools.getInt( event.getParameterValue("cxtabid",true),-1);
 		    
