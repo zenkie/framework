@@ -60,7 +60,7 @@ public class DeleteCxtabFiles  extends Command{
 		    nds.control.util.ValueHolder vh = new nds.control.util.ValueHolder();
 		    JSONObject jo=new JSONObject();
 		    
-	    	TableFilter tf=new TableFilter("CXR_"+cxtabId);
+	    	TableFilter tf=new TableFilter("CXR_"+cxtabId+"_");//new TableFilter("CXR_"+cxtabId);
 	    	File dir = new File(svrPath);
 	    	File[] files = dir.listFiles(tf);
 	    	
