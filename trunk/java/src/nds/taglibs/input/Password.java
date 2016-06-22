@@ -79,7 +79,7 @@ public class Password extends TagSupport {
             JspWriter out = pageContext.getOut();
 
             // start building up the tag
-            out.print("<input autocomplete£½\"off\" type=\"password\" ");
+            out.print("<input autocomplete£½\"off\" type=\"text\" onfocus=\"$(event.target).setAttribute('type', 'password')\"");
             out.print("name=\"" + Util.quote(name) + "\" ");
 
             // include any attributes we've got here
