@@ -79,7 +79,7 @@ public class Password extends TagSupport {
             JspWriter out = pageContext.getOut();
 
             // start building up the tag
-            out.print("<input autocomplete£½\"off\" type=\"text\" onfocus=\"$(event.target).setAttribute('type', 'password')\"");
+            out.print("<input autocomplete£½\"off\" type=\"text\" ");
             out.print("name=\"" + Util.quote(name) + "\" ");
 
             // include any attributes we've got here
@@ -107,13 +107,18 @@ public class Password extends TagSupport {
                 //out.print("value=\"\" ");
             } else {
                 if (dVal != null)
-                    out.print("value=\"" + Util.quote(dVal) + "\" ");
+                    //out.print("value=\"" + Util.quote(dVal) + "\" ");
+                	out.print("value=\"" + Util.quote(dVal) + "\" ");
                 	//out.print("value=\"\" ");
                 else
-                    out.print("value=\"\" ");
+                    out.print("value=\"*\" ");
             }
             // end the tag
             out.print("/>");
+            
+            if(attributes!=null && attributes.get("id")!=null){
+            	out.print("<script>jQuery('#"+attributes.get("id")+"').get(0).type='password'</script>");
+            }
 
         } catch (Exception ex) {
             throw new JspTagException(ex.getMessage());
