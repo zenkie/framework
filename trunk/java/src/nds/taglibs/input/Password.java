@@ -99,16 +99,16 @@ public class Password extends TagSupport {
             String beanValue = (beanId != null ? Util.beanPropertyValue(
                     pageContext.findAttribute(beanId), name) : null);
             if (beanValue != null) {
-                //out.print("value=\"" + Util.quote(beanValue) + "\" ");
-                out.print("value=\"\" ");
+                out.print("value=\"" + Util.quote(beanValue) + "\" ");
+                //out.print("value=\"\" ");
             } else if (req.getParameter(name) != null) {
-                //out.print("value=\"" + Util.quote(req.getParameter(name))
-                 //       + "\" ");
-                out.print("value=\"\" ");
+                out.print("value=\"" + Util.quote(req.getParameter(name))
+                        + "\" ");
+                //out.print("value=\"\" ");
             } else {
                 if (dVal != null)
-                    //out.print("value=\"" + Util.quote(dVal) + "\" ");
-                	out.print("value=\"\" ");
+                    out.print("value=\"" + Util.quote(dVal) + "\" ");
+                	//out.print("value=\"\" ");
                 else
                     out.print("value=\"\" ");
             }
