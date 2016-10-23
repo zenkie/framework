@@ -79,7 +79,7 @@ public class Password extends TagSupport {
             JspWriter out = pageContext.getOut();
 
             // start building up the tag
-            out.print("<input autocomplete£½\"off\" type=\"text\" ");
+            out.print("<input readonly autocomplete£½\"off\" type=\"password\" onfocus=\"this.removeAttribute('readOnly','readOnly');\" onBlur=\"this.setAttribute('readonly');\"");
             out.print("name=\"" + Util.quote(name) + "\" ");
 
             // include any attributes we've got here
@@ -100,25 +100,31 @@ public class Password extends TagSupport {
                     pageContext.findAttribute(beanId), name) : null);
             if (beanValue != null) {
                 out.print("value=\"" + Util.quote(beanValue) + "\" ");
+                System.out.println("beanValue is not null!");
                 //out.print("value=\"\" ");
             } else if (req.getParameter(name) != null) {
                 out.print("value=\"" + Util.quote(req.getParameter(name))
                         + "\" ");
+                System.out.println("beanValue get parame is not null!");
                 //out.print("value=\"\" ");
             } else {
-                if (dVal != null)
+                if (dVal != null){
                     //out.print("value=\"" + Util.quote(dVal) + "\" ");
                 	out.print("value=\"" + Util.quote(dVal) + "\" ");
+                	System.out.println("dVal is not null!");
                 	//out.print("value=\"\" ");
-                else
-                    out.print("value=\"*\" ");
+                }else{
+                    out.print("value=\"\" ");
+                }
             }
             // end the tag
             out.print("/>");
-            
-            if(attributes!=null && attributes.get("id")!=null){
+            /*
+            if(attributes!=null && attributes.get("id")!=null&&dVal!=null){
             	out.print("<script>jQuery('#"+attributes.get("id")+"').get(0).type='password'</script>");
-            }
+            }else{
+            	out.print("<script>jQuery('#"+attributes.get("id")+"').focus(function(){this.setAttribute('type', 'password')})</script>");
+            }*/
 
         } catch (Exception ex) {
             throw new JspTagException(ex.getMessage());
