@@ -50,6 +50,7 @@ public class QueryEngine {
     private static QueryEngine instance=null;
     private DBController controller= new DBController();
     private DataSource datasource;
+    private DataSource readsource;
 
     private  int logDuration =10;// IF query time (seconds) exceeds this value, it will be logged
     /* if query result has more lines than this value, powerful range sql will be created
@@ -80,8 +81,16 @@ public class QueryEngine {
         Context ctx = new InitialContext();
         // Look up myDataSource
         String name= nds.control.util.EJBUtils.getApplicationConfigurations().getProperty("jndi.datasource", "/nds/jdbc/DataSource");
+        String readname= nds.control.util.EJBUtils.getApplicationConfigurations().getProperty("jndi.readsource", "java:/ReadSource");
         logger.info("Using datasource:"+name);
         datasource = (DataSource) ctx.lookup (name);
+        try{
+        	readsource=(DataSource) ctx.lookup (readname);
+        }catch(Exception e){
+        	logger.error("readsource is error->"+e.getMessage());
+        	readsource=datasource;
+        }
+
 
 
     }
@@ -126,6 +135,7 @@ public class QueryEngine {
         	logger.debug(sql);
             return stmt.executeUpdate(sql);
         }finally{
+        	 try{stmt.close();}catch(Exception ea){}
             try{closeConnection(conn);}catch(Exception e){}
         }
 	}
@@ -143,6 +153,7 @@ public class QueryEngine {
         	logger.debug(sql);
             return stmt.executeUpdate(sql);
         }finally{
+        	 try{stmt.close();}catch(Exception ea){}
             try{closeConnection(con);}catch(Exception e){}
         }
     }
@@ -839,6 +850,17 @@ public class QueryEngine {
         try{
         Connection dbConnection = null;
         if (datasource != null) dbConnection = datasource.getConnection();
+        return dbConnection;
+        }catch(SQLException e){
+            throw new QueryException(e.getLocalizedMessage(), e);
+        }
+    }
+    
+    
+    public Connection getReadConnection() throws QueryException {
+        try{
+        Connection dbConnection = null;
+        if (readsource != null) dbConnection = readsource.getConnection();
         return dbConnection;
         }catch(SQLException e){
             throw new QueryException(e.getLocalizedMessage(), e);
