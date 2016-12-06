@@ -119,7 +119,8 @@ public class ExecuteCxtab extends Command {
   	
   	QueryEngine engine= QueryEngine.getInstance();
     
-	conn= engine.getConnection();
+	//conn= engine.getConnection();
+	conn= engine.getReadConnection();
 	try{
 		User user=helper.getOperator(event);
 		int userId=user.getId().intValue();
@@ -212,7 +213,7 @@ public class ExecuteCxtab extends Command {
 		String filterDesc=null;
 		if(Validator.isNotNull(preProcedure)){
 			
-			piId = engine.getSequence("ad_pinstance");
+			piId = engine.getSequence("ad_pinstance",conn);
 			
 			//create filter for cxtab data
 			Expression expr=null;
@@ -327,7 +328,7 @@ public class ExecuteCxtab extends Command {
 		  		if(maxJobCount>-1 && maxJobCount==runningJobCount){
 		  			lastMaxJobCountReachedTime=System.currentTimeMillis();//record, so when time is too long, admin should get in to check 
 		  		}
-	  			hd=ProcessUtils.executeImmediateADProcessInstance(piId , userId, false);
+	  			hd=ProcessUtils.executeImmediateADProcessInstance(piId , userId, false,conn);
 	  			
 	  		}finally{
 	  			runningJobCount--;

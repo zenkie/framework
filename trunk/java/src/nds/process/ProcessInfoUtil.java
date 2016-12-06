@@ -10,6 +10,7 @@ import java.util.*;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.query.QueryEngine;
+import nds.query.QueryException;
 import nds.query.QueryUtils;
 import nds.util.Validator;
 
@@ -167,11 +168,22 @@ public class ProcessInfoUtil
 		pi.setLogList(null);	//	otherwise log entries are twice
 	}   //  saveLogToDB
 
+	
+	public static void setParameterFromDB (ProcessInfo pi){
+		try {
+			setParameterFromDB (pi,QueryEngine.getInstance().getConnection());
+		} catch (QueryException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
 	/**
 	 *  Set Parameter of Process (and Client/User)
 	 * 	@param pi Process Info, only need AD_PInstance set
 	 */
-	public static void setParameterFromDB (ProcessInfo pi)
+	public static void setParameterFromDB (ProcessInfo pi,Connection conn)
 	{
 		ArrayList list = new ArrayList();
 		String sql = "SELECT p.Name,"         			    	//  1
@@ -182,13 +194,13 @@ public class ProcessInfoUtil
 			+ " INNER JOIN AD_PInstance i ON (p.AD_PInstance_ID=i.id) "
 			+ "WHERE p.AD_PInstance_ID=? "
 			+ "ORDER BY p.OrderNO";
-		Connection conn=null;
+		//Connection conn=null;
 		PreparedStatement pstmt=null;
 		ResultSet rs=null;
 
 		try
 		{
-			conn= QueryEngine.getInstance().getConnection();
+			//conn= QueryEngine.getInstance().getConnection();
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, pi.getAD_PInstance_ID());
 			//System.out.println("After : " + sql+pi.getAD_PInstance_ID());

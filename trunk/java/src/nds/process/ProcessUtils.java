@@ -23,6 +23,7 @@ import nds.control.web.WebUtils;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.query.QueryEngine;
+import nds.query.QueryException;
 import nds.query.QueryUtils;
 import nds.schema.TableManager;
 import nds.security.User;
@@ -155,6 +156,11 @@ public class ProcessUtils {
         }		
 		return processInstanceId;
 	}
+	
+	public static ValueHolder executeImmediateADProcessInstance(int ad_pinstance_id, int userId, boolean doTransaction) throws Exception{
+		return executeImmediateADProcessInstance(ad_pinstance_id,userId,doTransaction,QueryEngine.getInstance().getConnection());
+	}
+	
 
 	/**
      * Execute immediately one ad_pinstance record, no matter its queue status
@@ -166,16 +172,16 @@ public class ProcessUtils {
 	 * @return false if something error, outside should handle transcation carefully.
      * @throws Exception
      */
-    public static ValueHolder executeImmediateADProcessInstance(int ad_pinstance_id, int userId, boolean doTransaction) throws Exception{
+    public static ValueHolder executeImmediateADProcessInstance(int ad_pinstance_id, int userId, boolean doTransaction,Connection conn) throws Exception{
 
-    	List al = (List)QueryEngine.getInstance().doQueryList("select p.ID, p.CLASSNAME,p.PROCEDURENAME from ad_pinstance i, ad_process p where i.id="+ad_pinstance_id+" and p.id=i.ad_process_id").get(0);
+    	List al = (List)QueryEngine.getInstance().doQueryList("select p.ID, p.CLASSNAME,p.PROCEDURENAME from ad_pinstance i, ad_process p where i.id="+ad_pinstance_id+" and p.id=i.ad_process_id",conn).get(0);
 		int processId=Tools.getInt( al.get(0),-1);
 		String clazz= (String) al.get(1);
 		String proc= (String) al.get(2);
 		ProcessInfo pi= new ProcessInfo("", processId);
 		pi.setAD_PInstance_ID(ad_pinstance_id);
 		
-		ProcessInfoUtil.setParameterFromDB(pi);
+		ProcessInfoUtil.setParameterFromDB(pi,conn);
 		pi.setAD_User_ID( userId); // should be set after setParameterFromDB
 		//boolean b=false;
 		ValueHolder holder=null;
@@ -189,7 +195,7 @@ public class ProcessUtils {
 			ctx.setProperty(ProcessUtils.TRANSACTION_TIMEOUT, String.valueOf( piTransactionTimeout));
 			holder=startClass(ctx, clazz, pi, doTransaction) ;
 		}else if(Validator.isNotNull(proc)){
-			holder=startProcedure(proc, pi );
+			holder=startProcedure(proc, pi ,conn);
 		}else{
 			throw new NDSException("Found pinstance id="+ ad_pinstance_id + " has neither class nor procedure set.");
 		}
@@ -318,6 +324,16 @@ public class ProcessUtils {
 		return holder;
 	}   //  startClass
 
+    
+    public static ValueHolder startProcedure (String ProcedureName, ProcessInfo pi){
+    	try {
+			return startProcedure (ProcedureName,pi, QueryEngine.getInstance().getConnection());
+		} catch (QueryException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+    }
 
 	/**************************************************************************
 	 *  Start Database Process
@@ -325,7 +341,7 @@ public class ProcessUtils {
 	 *  @param pi orocess info
 	 *  @return true if success
 	 */
-    public static ValueHolder startProcedure (String ProcedureName, ProcessInfo pi)
+    public static ValueHolder startProcedure (String ProcedureName, ProcessInfo pi,Connection conn)
 	{
 		//  execute on this thread/connection
 		logger.debug("startProcedure --" +ProcedureName + "(" + pi.getAD_PInstance_ID() + ")");
@@ -334,8 +350,8 @@ public class ProcessUtils {
 		{
 			ArrayList para=new ArrayList();
 			para.add(new Integer(pi.getAD_PInstance_ID() ));
-			QueryEngine.getInstance().executeStoredProcedure(ProcedureName, para, false);
-			holder= getProcedureResult(pi.getAD_PInstance_ID());
+			QueryEngine.getInstance().executeStoredProcedure(ProcedureName, para, false,conn);
+			holder= getProcedureResult(pi.getAD_PInstance_ID(),conn);
 		}
 		catch (Exception e)
 		{
@@ -354,9 +370,9 @@ public class ProcessUtils {
      * @return ValueHoder code from AD_PInstance.result and message from AD_PInstance.ERRORMSG
      * @throws Exception
      */
-    private static ValueHolder getProcedureResult(int pinstanceId ) throws Exception{
+    private static ValueHolder getProcedureResult(int pinstanceId,Connection conn) throws Exception{
     	ValueHolder holder= new ValueHolder();
-    	List al=(List)QueryEngine.getInstance().doQueryList("select result, errormsg from AD_PInstance where id="+ pinstanceId).get(0);
+    	List al=(List)QueryEngine.getInstance().doQueryList("select result, errormsg from AD_PInstance where id="+ pinstanceId,conn).get(0);
     	int code=Tools.getInt( al.get(0), 0);
     	String msg=(String) al.get(1);;
     	holder.put("code", String.valueOf(code));

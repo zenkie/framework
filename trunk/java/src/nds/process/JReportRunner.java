@@ -80,7 +80,7 @@ public class JReportRunner extends SvrProcess
 		engine=  QueryEngine.getInstance();
 		boolean isBackground=true;
 	    try{
-		    conn= engine.getConnection();
+		    conn= engine.getReadConnection();
 		    // check PRE_PROCEDURE for cxtab add tmp table
 		    conn.setAutoCommit(false);
 		    // check PRE_PROCEDURE for cxtab add tmp table

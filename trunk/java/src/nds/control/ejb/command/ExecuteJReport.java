@@ -58,7 +58,7 @@ public class ExecuteJReport extends Command {
   	
   	QueryEngine engine= QueryEngine.getInstance();
     
-	conn= engine.getConnection();
+	conn= engine.getReadConnection();
 
 	try{
 		User user=helper.getOperator(event);
@@ -201,7 +201,7 @@ public class ExecuteJReport extends Command {
 	    	returnObj.put("message", MessagesHolder.getInstance().translateMessage("@cxtab-task-generated@",event.getLocale()));
 	  	}else{
 	  		//run now
-	  		hd=ProcessUtils.executeImmediateADProcessInstance(piId , userId, false);
+	  		hd=ProcessUtils.executeImmediateADProcessInstance(piId , userId, false,conn);
 
 	  		/**
 	  		 * For htm type, will direct to print page, for xls, direct download

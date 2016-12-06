@@ -117,7 +117,7 @@ public class CxtabRunner extends SvrProcess
 		boolean iscus = "cus".equalsIgnoreCase(this.fileType);
 		
 	    try{
-		    conn= engine.getConnection();
+		    conn= engine.getReadConnection();
 		    // check PRE_PROCEDURE for cxtab
 		    if (iscus) conn.setAutoCommit(false);
 		    

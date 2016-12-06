@@ -125,7 +125,7 @@ public class CreateCxtabRunnerProcessInstance extends Command {
         if("Y".equals(chk_run_now)){
         	// run immdiate
       		// the transaction will be maintained by out side ClientControllerBean
-        	ValueHolder hd=ProcessUtils.executeImmediateADProcessInstance(piId , userId, false);
+        	ValueHolder hd=ProcessUtils.executeImmediateADProcessInstance(piId , userId, false,conn);
     	  	if(!hd.isOK()){
     	  		throw new NDSException("@process-instance-failed@:"+ hd.get("message"));
     	  	}
