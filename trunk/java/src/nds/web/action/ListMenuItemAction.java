@@ -5,6 +5,7 @@ import java.util.*;
 import nds.query.QueryEngine;
 import nds.query.QueryUtils;
 import nds.schema.WebAction;
+import nds.util.MessagesHolder;
 import nds.util.NDSException;
 import nds.util.StringUtils;
 import nds.util.Tools;
@@ -79,7 +80,7 @@ public class ListMenuItemAction extends WebActionImpl {
 		}		
 		
 		
-		sb.append(StringUtils.escapeForXML(this.getDescription()));
+		sb.append(MessagesHolder.getInstance().getMessage4(locale,StringUtils.escapeForXML(this.getDescription())));
 		sb.append("</a></li>");
 		return sb.toString();
 	}

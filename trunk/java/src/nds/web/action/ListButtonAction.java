@@ -7,6 +7,7 @@ import nds.query.QueryEngine;
 import nds.query.QueryUtils;
 import nds.schema.WebAction;
 import nds.util.Configurations;
+import nds.util.MessagesHolder;
 import nds.util.NDSException;
 import nds.util.StringUtils;
 import nds.util.Tools;
@@ -24,7 +25,7 @@ public class ListButtonAction extends WebActionImpl {
 		sb.append("<input type='button' class='cbutton' id=\"wa_").
 			append(this.getId()).append("\" name=\"wa_").append(this.getId()).append("\" value=\"");
 
-		sb.append(StringUtils.escapeForXML(this.getDescription())).append("\" onclick=\"");
+		sb.append(MessagesHolder.getInstance().getMessage4(locale,StringUtils.escapeForXML(this.getDescription()))).append("\" onclick=\"");
 		
 		WebAction.ActionTypeEnum ate= this.getActionType();
 		String target=this.getUrlTarget();
@@ -142,7 +143,7 @@ public class ListButtonAction extends WebActionImpl {
 		if( nds.util.Validator.isNotNull( s)){
 			sb.append("<img src=\"").append(s).append("\"/>");
 		}
-		sb.append(StringUtils.escapeForXML(this.getDescription()));
+		sb.append(MessagesHolder.getInstance().getMessage4(locale,StringUtils.escapeForXML(this.getDescription())));
 		sb.append("</a>");
 		return sb.toString();
 	}

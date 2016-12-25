@@ -11,6 +11,7 @@ import nds.query.QueryEngine;
 import nds.query.QueryUtils;
 import nds.schema.WebAction;
 import nds.util.BshScriptUtils;
+import nds.util.MessagesHolder;
 import nds.util.NDSException;
 import nds.util.StringUtils;
 import nds.util.Tools;
@@ -25,7 +26,7 @@ public class ObjButtonAction extends WebActionImpl {
 		
 		StringBuffer sb=new StringBuffer();
 		sb.append("<input type=\"button\" class=\"cbutton\" value=\"");
-		sb.append(StringUtils.escapeForXML(this.getDescription())).append("\" ");
+		sb.append(MessagesHolder.getInstance().getMessage4(locale,StringUtils.escapeForXML(this.getDescription()))).append("\" ");
 		sb.append("name=\"").append(StringUtils.escapeForXML(this.getName())).append("\" ");
 		sb.append("onclick=\"");
 		
@@ -196,7 +197,7 @@ public class ObjButtonAction extends WebActionImpl {
 		if( nds.util.Validator.isNotNull( s)){
 			sb.append("<img src=\"").append(s).append("\"/>");
 		}
-		sb.append(StringUtils.escapeForXML(this.getDescription()));
+		sb.append(MessagesHolder.getInstance().getMessage4(locale,StringUtils.escapeForXML(this.getDescription())));
 		sb.append("</a>");
 		
 		String f= StringUtils.replace(sb.toString(),"$OBJECTID$", 

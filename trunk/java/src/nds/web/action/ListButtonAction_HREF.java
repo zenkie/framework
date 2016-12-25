@@ -7,6 +7,7 @@ import nds.query.QueryEngine;
 import nds.query.QueryUtils;
 import nds.schema.WebAction;
 import nds.util.Configurations;
+import nds.util.MessagesHolder;
 import nds.util.NDSException;
 import nds.util.StringUtils;
 import nds.util.Tools;
@@ -80,7 +81,7 @@ public class ListButtonAction_HREF extends WebActionImpl {
 		if( nds.util.Validator.isNotNull( s)){
 			sb.append("<img src=\"").append(s).append("\"/>");
 		}
-		sb.append(StringUtils.escapeForXML(this.getDescription()));
+		sb.append(MessagesHolder.getInstance().getMessage4(locale,StringUtils.escapeForXML(this.getDescription())));
 		sb.append("</a>");
 		return sb.toString();
 	}

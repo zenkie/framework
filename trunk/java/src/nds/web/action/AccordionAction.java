@@ -149,7 +149,8 @@ public class AccordionAction extends WebActionImpl {
 		
 		// 在JSONOBJECT 中解析Accordion XML 结构体
 		StringBuffer accord_xml = new StringBuffer();
-		Object text_lable = jo.optString("text");
+		//Object text_lable = jo.optString("text");
+		Object text_lable = MessagesHolder.getInstance().getMessage4(local,jo.optString("text"));
 		String ico_png;// 定义标签图片
 		boolean showico;
 		//tabimg="<img src=\""+StringUtils.escapeForXML(table.getAccordico())+"\" style=\"height:16px;width:20px;\"></img>";
@@ -175,7 +176,7 @@ public class AccordionAction extends WebActionImpl {
 			if (Validator.isNull(ico_png))
 				ico_png = " ";
 			if (Validator.isNull((String) text_lable))
-				text_lable = "自定义菜单";
+				text_lable = MessagesHolder.getInstance().getMessage4(local,"自定义菜单");
 			//System.out.println(((JSONArray) folder).length());  
 			int folder_size= ((JSONArray) folder).length();
 			folder = writeXmlFromJSONArray((JSONArray) folder,

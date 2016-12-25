@@ -150,7 +150,7 @@ public class TreeNodeAction extends WebActionImpl {
 		// TODO Auto-generated method stub
 		// 在JSONOBJECT 中解析XTREE XML 结构体
 		StringBuffer xtree_xml = new StringBuffer();
-		Object text_lable = jo.optString("text");
+		Object text_lable = MessagesHolder.getInstance().getMessage4(local,jo.optString("text"));
 		String ico_png;// 定义标签图片
 		if ((Validator.isNotNull(ico_png = jo.optString("icon")))
 				&& (!ico_png.startsWith("http:")) && (!ico_png.startsWith("/"))) {

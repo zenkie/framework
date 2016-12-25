@@ -5,6 +5,7 @@ import java.util.*;
 import nds.query.QueryEngine;
 import nds.query.QueryUtils;
 import nds.schema.WebAction;
+import nds.util.MessagesHolder;
 import nds.util.NDSException;
 import nds.util.StringUtils;
 import nds.util.Tools;
@@ -71,7 +72,7 @@ public class ObjMenuItemAction extends ObjButtonAction {
 		
 		
 		sb.append(" />");
-		sb.append(StringUtils.escapeForXML(this.getDescription())).append("</a></li>");
+		sb.append(MessagesHolder.getInstance().getMessage4(locale,StringUtils.escapeForXML(this.getDescription()))).append("</a></li>");
 		String f= StringUtils.replace(sb.toString(),"$OBJECTID$", 
 				String.valueOf(getValueFromMap("objectid", env, null,true)));
 
