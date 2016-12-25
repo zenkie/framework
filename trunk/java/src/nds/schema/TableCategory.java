@@ -55,7 +55,7 @@ public class TableCategory {
 	public String getDescription(Locale locale){
 		if( TableManager.getInstance().getDefaultLocale().hashCode()==locale.hashCode())
 			return name;
-		return MessagesHolder.getInstance().getMessage(locale, "tablecategory_"+id);
+		return MessagesHolder.getInstance().getMessage3(locale, "tablecategory_"+id,name);
 	}
 	/**
 	 *  

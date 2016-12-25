@@ -220,8 +220,10 @@ public class RefByTable implements Serializable {
 		if( TableManager.getInstance().getDefaultLocale().hashCode()==locale.hashCode()){
 			if( description!=null) return description;
 			return TableManager.getInstance().getTable(tableId).getDescription(locale);
-		}else
-			return MessagesHolder.getInstance().getMessage(locale, descKey);
+		}else{
+			if( description!=null) return  MessagesHolder.getInstance().getMessage3(locale, descKey,description);
+			return TableManager.getInstance().getTable(tableId).getDescription(locale);
+		}
 	}
 	/**
 	 * Each object in main table can has one or more records in ref-by-table

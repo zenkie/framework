@@ -765,8 +765,8 @@ public class TableImpl implements Table {
     public String getDescription(Locale locale) {
         if(TableManager.getInstance().getDefaultLocale().hashCode()==locale.hashCode())
         	return description;
-        return MessagesHolder.getInstance().getMessage(locale,
-        		name.toLowerCase() );
+        return MessagesHolder.getInstance().getMessage3(locale,
+        		name.toLowerCase(), description);
     }
 
     /**

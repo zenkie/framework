@@ -93,7 +93,7 @@ public class SubSystem {
 	public String getDescription(Locale locale){
 		if( TableManager.getInstance().getDefaultLocale().hashCode()==locale.hashCode())
 			return name;
-		return MessagesHolder.getInstance().getMessage(locale, "subsystem_"+id);
+		return MessagesHolder.getInstance().getMessage3(locale, "subsystem_"+id,name);
 	}
 	
 	public String getPageURL() {

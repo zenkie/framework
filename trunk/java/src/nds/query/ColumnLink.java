@@ -10,6 +10,7 @@ import java.util.*;
 import nds.log.Logger;
 import nds.log.LoggerManager;
 import org.json.*;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 /**
  * 结构是这样的：
@@ -169,8 +170,9 @@ public class ColumnLink implements java.io.Serializable, JSONString {
         return new ColumnLink(ids);
 
     }
-    public String getDescription(java.util.Locale locale){
-        if(description==null){
+    public String getDescription(Locale locale){
+    	logger.debug("cl locale ->"+locale);
+      //  if(description==null){
 	    	String s="";
 	        if( TableManager.getInstance().getDefaultLocale().hashCode()==locale.hashCode()){
 		        for(int i=0;i< columns.length;i++) {
@@ -182,7 +184,7 @@ public class ColumnLink implements java.io.Serializable, JSONString {
 		        }
 	        }
 	        description=s;
-        }
+      //  }
         return description;
     }
     /**
@@ -286,7 +288,8 @@ public class ColumnLink implements java.io.Serializable, JSONString {
 		try{
 			JSONObject jo=new JSONObject();
 			jo.put("c",toString());
-			jo.put("d", this.getDescription(TableManager.getInstance().getDefaultLocale()));
+			//jo.put("d", this.getDescription(TableManager.getInstance().getDefaultLocale()));
+			jo.put("d", this.getDescription(LocaleContextHolder.getLocale()));
 			if(this.tag!=null)jo.put("t", tag);
 			return jo.toString();
 		}catch(Throwable t){

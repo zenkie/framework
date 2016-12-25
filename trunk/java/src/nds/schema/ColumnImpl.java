@@ -14,6 +14,8 @@ import java.sql.Types;
 import java.util.*;
 import java.util.regex.*;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -26,6 +28,7 @@ import bsh.Interpreter;
 /**
  */
 public class ColumnImpl implements Column {
+	private static final Log logger = LogFactory.getLog(ColumnImpl.class);
     //warning to programmer: Any time a new variable added, remind add it to clone() method
     private int id=-1;
     private String name;
@@ -458,10 +461,17 @@ Specify SET NULL if you want db to convert dependent foreign key values to NULL.
        	}
        	if(pt==null){
 			pt= new PairTable();
-			for(Iterator it=getValues(TableManager.getInstance().getDefaultLocale()).keys();it.hasNext();){
-				Object value= it.next();
-				pt.put(value,MessagesHolder.getInstance().getMessage(locale, ("lmt_"+ this.valueGroupName+"_"+ value).toLowerCase()));
+			PairTable defpt=getValues(TableManager.getInstance().getDefaultLocale()); 
+			logger.debug("PairTable value local->"+defpt.toJSONString());
+			for(Iterator it3= defpt.keys();it3.hasNext();){
+				String key= (String)it3.next();
+				pt.put(key, MessagesHolder.getInstance().getMessage4(locale,String.valueOf(defpt.get(key))));
 			}
+//			for(Iterator it=getValues(TableManager.getInstance().getDefaultLocale()).keys();it.hasNext();){
+//				Object value= it.next();
+//				pt.put(value,MessagesHolder.getInstance().getMessage(locale, ("lmt_"+ this.valueGroupName+"_"+ value).toLowerCase()));
+//			}
+			logger.debug("PairTable value local->"+pt.toJSONString());
 			values.put(locale, pt);
        	}
        	return pt;
@@ -543,7 +553,7 @@ Specify SET NULL if you want db to convert dependent foreign key values to NULL.
         if( TableManager.getInstance().getDefaultLocale().hashCode()==locale.hashCode())
         	return description; 
         return MessagesHolder.getInstance().getMessage2(locale,
-        	( table.getName()+"."+ toMessageKey(name)).toLowerCase(),toMessageKey(name.toLowerCase() ));
+        	( table.getName()+"."+ toMessageKey(name)).toLowerCase(),toMessageKey(name.toLowerCase() ),description);
     }
     
     /**
