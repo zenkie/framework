@@ -32,6 +32,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.json.JSONException;
 import org.json.JSONObject;
 //import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 //import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import nds.control.ejb.Command;
@@ -43,7 +44,9 @@ import nds.schema.Column;
 import nds.schema.Table;
 import nds.schema.TableManager;
 import nds.util.NDSException;
+import nds.util.Tools;
 import nds.util.Validator;
+import nds.web.config.QueryListConfig;
 
 
 /**
@@ -72,6 +75,8 @@ public class ExportExcel extends Command {
     String separator = (String)event.getParameterValue("separator"); 
     boolean ak= ((Boolean)event.getParameterValue("ak")).booleanValue() ;
     boolean pk= ((Boolean)event.getParameterValue("pk")).booleanValue() ; 
+    
+	
     //03 xls max 65535
     if(fileName.endsWith(".xls")&&QueryEngine.getInstance().getTotalResultRowCount(req)> MAX_REPORT_LINES )
      	throw new NDSException("@file-lines-greater-than@"+MAX_REPORT_LINES+",@please-export-by-page@");
@@ -87,7 +92,7 @@ public class ExportExcel extends Command {
          throw new NDSEventException("@file@" +" ("+file.getName()+") "+ "@already-exists@");
      }
 */     
-     Locale locale= event.getLocale();
+     Locale locale= LocaleContextHolder.getLocale();//event.getLocale();
      
      Connection con=null;
      ResultSet rs=null;
@@ -124,7 +129,7 @@ public class ExportExcel extends Command {
              if(showColumnName){
              	excel_row= sheet.createRow(row);
     	         // create header information
-    	         if(colNames==null)colNames=getDisplayColumnNames(false,req,pk,ak, locale);
+    	         if(colNames==null)colNames=getDisplayColumnNames(false,req,pk,ak, locale,event);
     	         for( i=0;i< colNames.length ; i++){
     	             cell= excel_row.createCell((short)i);
     	             cell.setCellType(HSSFCell.CELL_TYPE_STRING);
@@ -285,7 +290,7 @@ public class ExportExcel extends Command {
              if(showColumnName){
              	excel_row= sheet.createRow(row);
     	         // create header information
-    	         if(colNames==null)colNames=getDisplayColumnNames(false,req,pk,ak, locale);
+    	         if(colNames==null)colNames=getDisplayColumnNames(false,req,pk,ak, locale,event);
                  logger.debug("colNames length is:"+colNames.length);
     	         for( i=0;i< colNames.length ; i++){
     	             cell= excel_row.createCell(i);
@@ -470,28 +475,47 @@ public class ExportExcel extends Command {
    *      申请人部门名称
    */
   private String[] getDisplayColumnNames(boolean showNullableIndicator, QueryRequest req,
-		  boolean pk, boolean ak, Locale locale) throws QueryException {
+		  boolean pk, boolean ak, Locale locale,DefaultWebEvent event) throws QueryException {
+	  List<ColumnLink> selections=null;
+	  List<ColumnLink> qlcselections=null;
+		
       int[] ids=  req.getReportDisplayColumnIndices(pk,ak);
-      ArrayList selections=req.getAllSelectionColumnLinks();
+       selections=req.getAllSelectionColumnLinks();
+	    //support qlc
+	    int qlcId=Tools.getInt(event.getParameterValue("qlcid"),-1);
+	    logger.debug("getDisplayColumnNames qlcid->"+qlcId);
+		QueryListConfig qlc=null;
+		if(qlcId>0&&qlcId!=-1) {
+			qlc=nds.web.config.QueryListConfigManager.getInstance().getQueryListConfig(qlcId);
+			qlcselections=qlc.getSelections();
+		}
       String[] dcns=new String[ids.length];
       ArrayList cls=req.getMainTable().getAllColumns();
       Column col=null;
-     /*for(int j=0;j< cls.size();j++){
-    	  col= (Column ) cls.get(j);
-    	  ColumnLink colLink=col.getColumnLink();
-    	  if(col.getReferenceColumn()!=null){ // 对于 FK表，需要获取FK.AK
-    		  colLink.addColumn(col.getReferenceTable().getAlternateKey());
-    	  }
-   		  logger.debug("for cls : "+ colLink);
-      }*/
+//     for(int j=0;j< cls.size();j++){
+//    	  col= (Column ) cls.get(j);
+//    	  ColumnLink colLink=col.getColumnLink();
+//    	  if(col.getReferenceColumn()!=null){ // 对于 FK表，需要获取FK.AK
+//    		  colLink.addColumn(col.getReferenceTable().getAlternateKey());
+//    	  }
+//   		  logger.debug("for cls : "+ colLink);
+//      }
+      
+      if(qlcselections!=null&&qlcselections.size()>0)for(int j=0;j< qlcselections.size();j++){
+    		  logger.debug("get equals: "+ qlcselections.get(j));
+	  }
       for(int i=0;i< ids.length;i++) {
           ColumnLink clink=(ColumnLink)selections.get(ids[i]);
+          
+   
+          
           
           //logger.debug(clink.toString());
           /**
            * 在主表中查找与clink 一致的字段，如果有，以主表字段名称显示
            * 9.34 add 关联名称输出 扩展属性{reflable:{"tabid":12853,"ref_id":1853}} 支持
            */
+          if(qlcId<1){
           for(int j=0;j< cls.size();j++){
         	  col= (Column ) cls.get(j);
         	  ColumnLink colLink=col.getColumnLink();
@@ -538,6 +562,25 @@ public class ExportExcel extends Command {
         		  break;
         	  }
           }
+          }else{
+        	  logger.debug("clink is: "+ clink.getDescription(locale));
+        	  logger.debug("clink last is: "+ clink.getColumnLinkExcludeLastColumn());
+        	  logger.debug("clink is: "+ clink);
+        	  
+        	  if(qlcselections!=null&&qlcselections.size()>0){
+        		  dcns[i]= qlcselections.get(i).getDescription(locale);
+        		  logger.debug("get equals: "+ qlcselections.get(i).getDescription(locale));
+        		  
+        	  }
+//        	  for(int j=0;j< qlcselections.size();j++){
+//        		  if( clink.equals(qlcselections.get(j))){
+//            		  dcns[i]= qlcselections.get(j).getDescription(locale);
+//            		  logger.debug("get equals: "+ qlcselections.get(j).getDescription(locale));
+//            		  break;
+//            	  }
+//        	  }
+          }
+          
           if(dcns[i]!=null) continue;
           dcns[i]="";
           int len=clink.getColumns().length;

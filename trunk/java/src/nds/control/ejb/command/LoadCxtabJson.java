@@ -1,10 +1,10 @@
 package nds.control.ejb.command;
 
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 
 import org.directwebremoting.WebContext;
 import org.json.*;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 import nds.control.ejb.Command;
 import nds.control.event.DefaultWebEvent;
@@ -51,6 +51,7 @@ public class LoadCxtabJson extends Command {
   	User usr=helper.getOperator(event);
   	QueryEngine engine=QueryEngine.getInstance();
   	MessagesHolder mh= MessagesHolder.getInstance();
+  	Locale locale= LocaleContextHolder.getLocale();
   	try{
 	  	JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
 	  	Object tag= jo.opt("tag");
@@ -81,10 +82,10 @@ public class LoadCxtabJson extends Command {
 	  		JSONObject dim=new JSONObject();
   			dim.put("columnlink", clink);
   			dim.put("hidehtml", hidehtml);
-  			String desc=(String) d.get(1);
+  			String desc=d.get(1)!=null?MessagesHolder.getInstance().getMessage4(locale,(String) d.get(1)):null;
   			if(Validator.isNull(desc)){
   				ColumnLink cl= new ColumnLink(clink);
-  				desc ="["+ cl.getDescription(event.getLocale())+"]"; 	  		
+  				desc ="["+ cl.getDescription(locale)+"]"; 	  		
   			}
   			
   			dim.put("description", desc);
@@ -112,10 +113,10 @@ public class LoadCxtabJson extends Command {
 		  		JSONObject m=new JSONObject();
 	  			m.put("column",  colName);
 	  			
-	  			String desc=(String) d.get(1);
+	  			String desc=d.get(1)!=null?MessagesHolder.getInstance().getMessage4(locale,(String) d.get(1)):null;
 	  			if(Validator.isNull(desc)){
 	  				//ColumnLink cl= new ColumnLink(new int[]{colId});
-	  				desc ="["+ manager.getColumn(colId).getDescription(event.getLocale())+"]"; 	  		
+	  				desc ="["+ manager.getColumn(colId).getDescription(locale)+"]"; 	  		
 	  			}  		
 	  			
 	  			m.put("description", desc);

@@ -3,11 +3,10 @@ package nds.control.ejb.command;
 import java.rmi.RemoteException;
 import java.sql.PreparedStatement;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Properties;
 
 import org.directwebremoting.WebContext;
 import org.json.*;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 import nds.control.ejb.Command;
 import nds.control.event.DefaultWebEvent;
@@ -62,12 +61,13 @@ public class SaveCxtabJson extends Command {
   	boolean flag=false;
   	ValueHolder holder= new ValueHolder();
   	JSONObject ro=new JSONObject();
+  	Locale locale= LocaleContextHolder.getLocale();
   	try{
 	  	conn=engine.getConnection();
   		JSONObject jo=(JSONObject)event.getParameterValue("jsonObject");
 	  	Object tag= jo.opt("tag");
 	  	int cxtabId= jo.getInt("cxtabId");
-	  	int parentId =jo.optInt("parentId",cxtabId);
+	  	int parentId =jo.optInt("parentId",-1);
 	  	String savetype=(String)jo.opt("savetype");
 		String name=(String)jo.opt("name");
 	  	
@@ -101,13 +101,13 @@ public class SaveCxtabJson extends Command {
 		  		int user_dims = 0;
 		  		//before save check user_dims if 0 then getProperty
 		  		//jack by
-		  	    if (parentId != -1) {
-		  	    	user_dims = Tools.getInt(engine.doQueryOne("select user_dims from ad_cxtab where id="+parentId,conn),0);
-		  			}
-		  		if (user_dims < 1) {
+		  	   // if (parentId != -1) {
+		  	    user_dims = Tools.getInt(engine.doQueryOne("select user_dims from ad_cxtab where id="+(parentId>0?parentId:cxtabId),conn),-1);
+		  		//	}
+		  		if (user_dims < 0) {
 		  			Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
 		  			user_dims = Tools.getInt(conf.getProperty("cxtab.dimension.threshold"), 0);
-		  		    }
+		  		  	}
 		  			pstmt= conn.prepareStatement(INSERT_CXTAB);
 		  			pstmt.setInt(1, cxtabId);
 		  			pstmt.setInt(2, user.adClientId);
@@ -168,7 +168,15 @@ public class SaveCxtabJson extends Command {
 		  		pstmt.setString(3, clink);
 		  		String desc=  dim.getString("description");
 		  		if(Validator.isNull(desc )|| desc.startsWith("[")){
-			  		pstmt.setNull(4, Types.VARCHAR);
+			  		//pstmt.setNull(4, Types.VARCHAR);
+		  			try{
+		  				pstmt.setString(4,new ColumnLink(clink).getDescription(locale));
+			  		}catch(Throwable t){
+			  			logger.debug("clink "+ clink +" not valid:"+ t);
+			  			//continue;
+			  			pstmt.setNull(4, Types.VARCHAR);
+			  		}
+		  			pstmt.setString(4,desc);
 		  		}else{
 		  			pstmt.setString(4,desc);
 		  		}

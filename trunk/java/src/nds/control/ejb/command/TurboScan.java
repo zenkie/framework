@@ -1,10 +1,10 @@
 package nds.control.ejb.command;
 
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 
 import org.directwebremoting.WebContext;
 import org.json.*;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 import nds.control.ejb.Command;
 import nds.control.event.DefaultWebEvent;
@@ -50,6 +50,7 @@ public class TurboScan extends Command {
   	Connection conn= QueryEngine.getInstance().getConnection();
   	PreparedStatement pstmt=null;
   	ResultSet rs=null;
+  	 Locale locale= LocaleContextHolder.getLocale();//event.getLocale();
   	
   	String msg;
   	try{
@@ -65,7 +66,7 @@ public class TurboScan extends Command {
 	  		asiid=rs.getInt(2);
 	  		msg= rs.getString(3)+","+rs.getString(4)+","+rs.getString(5)+","+rs.getString(6);
 	  	}else{
-	  		throw new NDSException("商品未找到"+ barcode);
+	  		throw new NDSException(MessagesHolder.getInstance().getMessage4(locale,"商品未找到")+ barcode);
 	  	}
 	  	rs.close();
 	  	rs=null;
@@ -85,7 +86,7 @@ public class TurboScan extends Command {
 		
 		DefaultWebEvent evt,template;
 		
-	  	java.util.Locale locale= event.getLocale();
+	  	//java.util.Locale locale= event.getLocale();
 	  	template=(DefaultWebEvent)event.clone();
 		template.setParameter("table", String.valueOf(tableId));
 		template.setParameter("command",table.getName()+"Create");

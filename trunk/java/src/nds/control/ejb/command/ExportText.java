@@ -13,6 +13,7 @@ import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 import nds.control.ejb.Command;
 import nds.control.event.DefaultWebEvent;
@@ -21,6 +22,7 @@ import nds.control.util.ValueHolder;
 import nds.query.*;
 import nds.schema.Column;
 import nds.schema.TableManager;
+import nds.util.MessagesHolder;
 import nds.util.NDSException;
 import nds.util.StringUtils;
 import nds.util.Validator;
@@ -74,6 +76,7 @@ public class ExportText extends Command {
 
         FileOutputStream fos=new FileOutputStream(fullFileName, false);
         OutputStreamWriter w= new OutputStreamWriter(fos, "UTF-8");
+        Locale locale= LocaleContextHolder.getLocale();
         
             int i;
             // Create a row and put some cells in it. Rows are 0 based.
@@ -85,7 +88,7 @@ public class ExportText extends Command {
             		StringBuffer sb=new StringBuffer();
             		for(int d=0;d< colNames.length;d++){
             			if(d>0)sb.append(",");
-            			sb.append(colNames[d]);
+            			sb.append(MessagesHolder.getInstance().getMessage4(locale,colNames[d]));
             		}
             		header= sb.toString();
             	}
@@ -102,12 +105,14 @@ public class ExportText extends Command {
             StringBuffer sb;//=new StringBuffer();
             String s;Object o;
             TableManager tm= TableManager.getInstance();
-            java.util.Locale locale= event.getLocale();
+           // java.util.Locale locale= event.getLocale();
             while( rs.next() ){
             	sb=new StringBuffer();
                 for ( i=0 ;i< cols.length;i++){
                 	if(i!=0) sb.append(separator);
                 	Column col= cols[i];
+                	//logger.debug("col name->"+col.getName());
+                	//logger.debug("col type->"+col.getType());
                 	if ( col.isValueLimited() ){
                 		o= rs.getObject(i+1);
                 		if(!rs.wasNull()){
@@ -116,9 +121,11 @@ public class ExportText extends Command {
                 	}else{
                 		switch(col.getType()){
 	                    case Column.DATE:
-	                        date= rs.getDate(i+1);
+	                        //date= rs.getDate(i+1);
+	                        s= rs.getString(i+1);
 	                        if( ! rs.wasNull() ){
-	                        	sb.append(((java.text.SimpleDateFormat)QueryUtils.dateFormatter.get()).format(date));
+	                        	 sb.append(s);
+	                        	//sb.append(((java.text.SimpleDateFormat)QueryUtils.dateTimeSecondsFormatter.get()).format(date));
 	                        }
 	                        break;
 	                    case Column.NUMBER :
@@ -133,6 +140,13 @@ public class ExportText extends Command {
 	                            sb.append(s);
 	                        }
 	                        break;
+	                    case Column.DATENUMBER :
+	                        s= rs.getString(i+1);
+	                        if( ! rs.wasNull() ){
+	                            sb.append(s);
+	                        }
+	                        break;
+	                    
 	                    default:
 	                        logger.error("Find at col(" + (i+1)+") type is invalid:"+ cols[i].getType());
 	                    }
