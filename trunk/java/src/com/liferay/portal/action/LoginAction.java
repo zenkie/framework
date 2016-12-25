@@ -158,10 +158,10 @@ public class LoginAction extends Action {
 		 */
 		String remoteAddress=req.getRemoteAddr();
 		try{
-			authResult= authenticateByLoginIPRule(remoteAddress, userId);
+			/*authResult= authenticateByLoginIPRule(remoteAddress, userId);
 			if (authResult != Authenticator.SUCCESS) {
 				throw new InvalidIPException("@invalid-login-ip@");
-			}
+			}*/	
 		// following is original codes	
 		if (company.getAuthType().equals(CompanyImpl.AUTH_TYPE_EA)) {
 			userId = UserLocalServiceUtil.getUserId(company.getCompanyId(), login);
@@ -172,6 +172,7 @@ public class LoginAction extends Action {
 		}
 		catch (Exception e) {
 		}
+		logger.debug("userId ->"+userId);
 		authResult=Authenticator.SUCCESS;// always success
 		if (authResult == Authenticator.SUCCESS) {
 			if (GetterUtil.getBoolean(PropsUtil.get(
@@ -224,15 +225,25 @@ public class LoginAction extends Action {
 				idCookie.setMaxAge(0);
 				passwordCookie.setMaxAge(0);
 			}
+			
+			//String serverUrl="";//= Tools.toString(req);
+			String fromaddress=req.getParameter("fr");
+			Cookie fromserver=new Cookie("fromaddress", fromaddress);
+			fromserver.setPath(StringPool.SLASH);
+			fromserver.setMaxAge(1000000);
 
 			Cookie loginCookie = new Cookie(CookieKeys.LOGIN, login);
+			Cookie portCookie = new Cookie("Port", String.valueOf(req.getRemotePort()));
 
 			loginCookie.setPath(StringPool.SLASH);
 			loginCookie.setMaxAge(loginMaxAge);
+	
 
 			CookieKeys.addCookie(res, idCookie);
 			CookieKeys.addCookie(res, passwordCookie);
 			CookieKeys.addCookie(res, loginCookie);
+			CookieKeys.addCookie(res,portCookie);
+			CookieKeys.addCookie(res,fromserver);
 		}
 		else {
 			throw new AuthException();
@@ -248,6 +259,7 @@ public class LoginAction extends Action {
 			
 		}				
 	}
+	
 	public static void login(
 			HttpServletRequest req, HttpServletResponse res, String login,
 			String password, boolean rememberMe)
@@ -314,6 +326,12 @@ public class LoginAction extends Action {
 			if (authResult != Authenticator.SUCCESS) {
 				throw new InvalidIPException("@invalid-login-ip@");
 		}
+	    nds.util.Configurations conf=(nds.util.Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
+	
+		 boolean isreport="true".equals(conf.getProperty("report.isserver","false"));	
+		 if(isreport)
+			 throw new InvalidIPException("@invalid-login-ip@");
+			
 		// following is original codes	
 		if (company.getAuthType().equals(CompanyImpl.AUTH_TYPE_EA)) {
 			authResult = UserLocalServiceUtil.authenticateByEmailAddress(
@@ -392,13 +410,16 @@ public class LoginAction extends Action {
 			}
 
 			Cookie loginCookie = new Cookie(CookieKeys.LOGIN, login);
+			Cookie portCookie = new Cookie("Port", String.valueOf(req.getRemotePort()));
 
 			loginCookie.setPath(StringPool.SLASH);
 			loginCookie.setMaxAge(loginMaxAge);
+	
 
 			CookieKeys.addCookie(res, idCookie);
 			CookieKeys.addCookie(res, passwordCookie);
 			CookieKeys.addCookie(res, loginCookie);
+			CookieKeys.addCookie(res,portCookie);
 		}
 		else {
 			throw new AuthException();
@@ -426,9 +447,18 @@ public class LoginAction extends Action {
 		
 		HttpSession ses = req.getSession();
 		String redirect=req.getParameter("redirect");
+		 String clang=null;
+		if(ParamUtil.getString(req, "login").toLowerCase()!=null){
+		 clang=(String) QueryEngine.getInstance().doQueryOne("select t.LANGUAGE from users t where t.email='"
+		+ParamUtil.getString(req, "login").toLowerCase()+"'");
+		}
+		
 		
 		if (nds.util.Validator.isNotNull(redirect)) redirect="redirect="+java.net.URLEncoder.encode(redirect,"UTF-8");
 		else redirect="";
+		if(clang!=null){
+			redirect="lang="+clang+"&"+redirect;
+		}
 		
 		if(req.getAttribute("USER_ID")!=null){
 			// already login
