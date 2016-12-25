@@ -5,6 +5,7 @@ import java.io.PrintStream;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Random;
 
 import javax.servlet.ServletContext;
@@ -37,9 +38,10 @@ public class SQLiteDB {
 	private String dataSQL;
 	private Connection oraConn;
 	private String filePath;
+	private Locale locale;
 
 	public SQLiteDB(int pid, int dimc, String sql_str, String fname, int cxid, String ctname,
-			String expr, User us, Connection pcon) {
+			String expr, User us, Connection pcon,Locale loc) {
 		piId = pid;
 		filename = fname;
 		sql = sql_str;
@@ -49,6 +51,7 @@ public class SQLiteDB {
 		cxtabName = ctname;
 		user = us;
 		cxtabId = cxid;
+		locale =loc;
 		Configurations conf=(Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
 		String exportRootPath=conf.getProperty("export.root.nds","/act/home");
 		filePath =exportRootPath + File.separator+user.getClientDomain()+File.separator+ user.getName();
@@ -177,7 +180,7 @@ public class SQLiteDB {
 						if (dim_data_list.isNull(1))
 							cx_ptmt.setNull(2, 12);
 						else
-							cx_ptmt.setString(2,dim_data_list.getString(1));
+							cx_ptmt.setString(2,MessagesHolder.getInstance().getMessage4(locale,dim_data_list.getString(1)));
 						if (dim_data_list.isNull(2))
 							cx_ptmt.setNull(3, 12);
 						else
@@ -339,7 +342,7 @@ public class SQLiteDB {
 				if (jsonarray.isNull(1))
 					ptmt.setNull(2, 12);
 				else
-					ptmt.setString(2, jsonarray.getString(1));
+					ptmt.setString(2, MessagesHolder.getInstance().getMessage4(locale,jsonarray.getString(1)));
 				if (jsonarray.isNull(2))
 					ptmt.setNull(3, 12);
 				else

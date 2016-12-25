@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.sql.*;
 import java.io.*;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -95,7 +96,15 @@ public class CxtabReport {
 			String exportRootPath=conf.getProperty("export.root.nds","/act/home");
 			boolean isSystemInDebug=false;// "develope".equals( conf.getProperty("schema.mode", "production"));
 			
-			user= SecurityUtils.getUser( userId);    
+			user= SecurityUtils.getUser( userId); 
+			
+			String lang=(String) QueryEngine.getInstance().doQueryOne("select LANGUAGE from users t where t.id="+userId,conn);
+			Locale locale=new Locale("zh","CN"); 
+			if(lang!=null){
+				String[] clang=lang.split("_");
+				 locale=new Locale(clang[0],clang[1]); 
+			}
+			
 			String filePath =Validator.isNull(folder)?exportRootPath + File.separator+user.getClientDomain()+File.separator+ user.getName():folder;
 			if("xls".equalsIgnoreCase(fileType)){
 				QueryRequest query=this.prepareReport(conn,true, false,false,false); // generate sql only
@@ -133,7 +142,7 @@ public class CxtabReport {
 				if(!f.exists())f.mkdirs();
 
 				file=this.fileName+ ".csv";
-		    	this.writeCSVFile(filePath+File.separator+file,query, conn);
+		    	this.writeCSVFile(filePath+File.separator+file,query, conn,locale);
 		    	
 		    }else if("cus".equalsIgnoreCase(fileType)){
 		    	
@@ -152,7 +161,7 @@ public class CxtabReport {
 		    	QueryEngine.getInstance().executeUpdate("update ad_pinstance_para set p_clob=? where name='filter' and ad_pinstance_id=?", new Object[] { new StringBuffer(sql), Integer.valueOf(((CxtabReport)this).processInstanceId) },conn);
 		    	QueryEngine.getInstance().executeUpdate("update ad_pinstance_para set info=? where name='filename' and ad_pinstance_id=?", new Object[] { filename, Integer.valueOf(processInstanceId) },conn);
 				SQLiteDB sqldb = new SQLiteDB(processInstanceId, dimCount, sql,
-						filename, cxtabId, cxtabName, filterDesc, user, conn);
+						filename, cxtabId, cxtabName, filterDesc, user, conn,locale);
 				recordsCount=sqldb.save();
 				// confirm cube file created
 				File f=new File(filename);
@@ -452,7 +461,7 @@ public class CxtabReport {
 	 * @param filePath the absolute path with file name
 	 * @param query the group by query
 	 */
-	private void writeCSVFile(String filePath, QueryRequest query, Connection conn) throws Exception{
+	private void writeCSVFile(String filePath, QueryRequest query, Connection conn,Locale locale) throws Exception{
 		
 		startTime=System.currentTimeMillis();
 		
@@ -478,16 +487,29 @@ public class CxtabReport {
 		outStream=new BufferedWriter(fw, 512*1024); // default is 8kb cache, we expand to bigger one
 		
 		int colcnt= rs.getMetaData().getColumnCount();
+		logger.debug("colcnt ->"+colcnt);
 		//header
 		ArrayList al=query.getAllSelectionDescriptions();
+		
+		ArrayList cl=query.getAllSelectionColumns();
+	
+		HashMap cols=new HashMap();
+		logger.debug("alsize ->"+al.size());
 		for(int i=0;i< al.size();i++){
-			outStream.write(al.get(i)+",");
+			String colname=MessagesHolder.getInstance().getMessage4(locale,String.valueOf(al.get(i)));
+			outStream.write(colname+",");
+			//logger.debug("col name ->"+((Column)cl.get(i)));
+			cols.put(i+1, (Column)cl.get(i));
+			
 		}
+		logger.debug("factDescssize ->"+factDescs.size());
 		//sumary fact
 		for(int i=0;i< factDescs.size()-1;i++){
-			outStream.write(factDescs.get(i)+",");
+			logger.debug("factDesc ->"+String.valueOf(factDescs.get(i)));
+			String factname=MessagesHolder.getInstance().getMessage4(locale,String.valueOf(factDescs.get(i)));
+			outStream.write(factname+",");
 		}
-		outStream.write((String)factDescs.get(factDescs.size()-1)+"\r\n");
+		outStream.write(MessagesHolder.getInstance().getMessage4(locale,String.valueOf(factDescs.get(factDescs.size()-1)))+"\r\n");
 		
 		Object obj;
 		String val;
@@ -496,9 +518,27 @@ public class CxtabReport {
 	        	for(int i=1;i<colcnt;i++) {
 	        		//obj= rs.getObject(i);
 	        		val=rs.getString(i);
-	        		if(rs.wasNull()) outStream.write(",");
+	        		if(rs.wasNull()){ 
+	        			outStream.write(",");
+	        			continue;
+	        		}
 	        		//else outStream.write(obj.toString()+",");
-	        		else outStream.write("=\""+val+"\",");
+	        		if(i>al.size()){
+	        			if(isENum(val)){
+	        			logger.debug("isENum ->"+val);
+	        			BigDecimal db = new BigDecimal(val);
+	        			String ii = db.toPlainString();
+	        			outStream.write(ii+",");
+	        			}else{
+	        			outStream.write(val+",");
+	        			}
+	        			continue;
+	        		}
+	        		if(cols.get(i)!=null&&((Column)cols.get(i)).getSQLType()==Column.NUMBER){
+	        			outStream.write(val+",");
+	        			continue;
+	        		}
+	        		outStream.write("=\""+val+"\",");
 	        	}
 	        	//last col
         		obj= rs.getObject(colcnt);
@@ -1497,4 +1537,11 @@ public class CxtabReport {
     	}
     	return sql;
 	}
+	
+	static String regx = "^((-?\\d+.?\\d*)[Ee]{1}(-?\\d+))$";//科学计数法正则表达式
+    static Pattern pattern = Pattern.compile(regx);
+    public static boolean isENum(String input){//判断输入字符串是否为科学计数法
+        return pattern.matcher(input).matches();
+    }
+
 }
