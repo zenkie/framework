@@ -9,6 +9,9 @@ package nds.util;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.util.*;
+
+import nds.schema.TableManager;
+
 import java.util.*;
 import java.util.regex.*;
 
@@ -68,9 +71,37 @@ public class MessagesHolder {
 		m.appendTail(sb);
 		return sb.toString();		 
 	}
+	
 	public String getMessage(Locale locale, String key){
 		String m=resources.getMessage(locale,key);
-		if(m==null) m= ("?" + messageKey(locale, key) + "?");
+		logger.debug("getMessage m->"+m);
+		if(m==null) m=key;//m= ("?" + messageKey(locale, key) + "?");
+		return m;
+	}
+	
+	
+	public String getMessage4(Locale locale, String desc){
+		logger.debug("getMessage4 locale->"+locale);
+		logger.debug("getMessage4 desc->"+desc);
+		if(TableManager.getInstance().getDefaultLocale().hashCode()==locale.hashCode())
+	    	return desc;
+		else
+			return getMessage(locale,desc);
+	}
+	
+	public String getMessage3(Locale locale, String key,String desc){
+		logger.debug("getMessage3 locale->"+locale);
+		logger.debug("getMessage3 desc->"+desc);
+		String m=null;
+		if(desc!=null)
+			m=resources.getMessage(locale,desc);
+		else if(m==null)
+			m=resources.getMessage(locale,key);
+		if(m==null&&desc!=null) 
+			m= ("?" + messageKey(locale, desc) + "?");
+		else if(m==null)
+			m= ("?" + messageKey(locale, key) + "?");
+		logger.debug("getMessage3 m->"+m);
 		return m;
 	}
 	/**
@@ -80,11 +111,36 @@ public class MessagesHolder {
 	 * @param key2
 	 * @return
 	 */
-	public String getMessage2(Locale locale, String key, String key2){
-		String m=resources.getMessage(locale,key);
-		if(m==null)m=resources.getMessage(locale,key2); 
-		if(m==null) m= ("?" + messageKey(locale, key) + "?");
+	public String getMessage2(Locale locale, String key, String key2,String desc){
+		logger.debug("getMessage2 locale->"+locale);
+		logger.debug("getMessage2 desc->"+desc);
+//		String m=resources.getMessage(locale,key);
+//		if(m==null)m=resources.getMessage(locale,key2);
+//		if(m==null&&desc!=null)m=resources.getMessage(locale,desc);
+//		if(m==null) m= ("?" + messageKey(locale, desc) + "?");
+		String m=null;
+		
+		if(desc!=null)
+			m=resources.getMessage(locale,desc);
+		else if(m==null&&key2!=null)
+			m=resources.getMessage(locale,key2);
+		else if(m==null)
+			m=resources.getMessage(locale,key);
+		
+		if(m==null&&desc!=null) 
+			m= ("?" + messageKey(locale, desc) + "?");
+		else if(m==null&&key2!=null)
+			m= ("?" + messageKey(locale, key2) + "?");
+		else if(m==null)
+			m= ("?" + messageKey(locale, key) + "?");
+		
+		logger.debug("getMessage2 m->"+m);
 		return m;
+	}
+	
+	public String getMessage2(Locale locale, String key, String key2){
+		
+		return getMessage2( locale, key,key2,null);
 	}
 	/**
 	 * If message for key not found, defaultValue will be used
