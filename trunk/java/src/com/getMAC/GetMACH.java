@@ -12,6 +12,8 @@ public class GetMACH {
 	 * 利用CPU个数与所有的MAC地址生成一个字符串，中间用,分开
 	 * @return 机器的唯一标示码
 	 */
+	
+	private static final String a="eXFxbG1nczFjNg==";
     public static String getMach() {
     	StringBuffer MACstr = new StringBuffer();
         try {
@@ -20,7 +22,8 @@ public class GetMACH {
         	MACstr.append(String.valueOf(cpuThreadNum));
             // 以太网信息
         	//MACstr = ethernet(MACstr);
-        	MACstr.append(","+NetInterfaceData.getCPUSerial()+NetInterfaceData.getMotherboardSN());
+        	String sign=nds.util.MD5Sum.toCheckSumStr(NetInterfaceData.getCPUSerial()+NetInterfaceData.getHardDiskSN("C")+NetInterfaceData.getMotherboardSN());
+        	MACstr.append(","+sign);
         } catch (Exception e1) {
             e1.printStackTrace();
         }
@@ -32,6 +35,7 @@ public class GetMACH {
      * @return threadNum CPU个数
      * @throws SigarException
      */
+
     private static int cpuThreadNum() throws SigarException {
         Sigar sigar = new Sigar();
         CpuInfo infos[] = sigar.getCpuInfoList();
@@ -44,6 +48,7 @@ public class GetMACH {
      * @return 所有MAC地址
      * @throws SigarException
      */
+    @Deprecated
     private static StringBuffer ethernet(StringBuffer MACstr) throws SigarException {
         Sigar sigar = null;
         String currStr = null;
@@ -75,8 +80,8 @@ public class GetMACH {
      * @throws Exception 
      */
     public static String  get_maconly() throws Exception{
-    	AES aes=new AES("burgeon");
-    	String str = aes.encrypt(GetMACH.getMach()+";");
+    	AES aes=new AES(a);
+    	String str = aes.encrypt(GetMACH.getMach());
     	return str;
     }
 }
