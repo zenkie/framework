@@ -85,6 +85,7 @@ public class GetMACH {
     
     /**
      * get_mac addresss for aes
+     * move licenseManager
      * @throws Exception 
      */
     @Deprecated
