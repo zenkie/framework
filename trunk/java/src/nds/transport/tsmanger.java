@@ -66,7 +66,13 @@ public final class tsmanger {
     	//System.out.print(tbid);
 		query.setMainTable(tbid);
 		ColumnLink cl =new ColumnLink(jor.getString("cp"));
+		
 		query.addSelection(cl.getColumnIDs(),false,null);
+		if(jor.has("cpname")){
+		ColumnLink cpl =new ColumnLink(jor.getString("cpname"));
+		query.addSelection(cpl.getColumnIDs(),false,null);
+		}
+		
 		query.addSelection(table.getColumn(jor.getString("mailno")).getId());
 	    query.addParam( table.getPrimaryKey().getId(), ""+ objectid );
 	    List q=engine.doQueryList(query.toSQL());
@@ -77,7 +83,7 @@ public final class tsmanger {
 	    		if(descs!=null&&!descs.isEmpty()){
 	    		tsval=new HashMap();
 	    		tsval.put("cp", descs.get(0)==null?"null":descs.get(0).toString());
-	    		tsval.put("mailno", descs.get(1)==null?"null":descs.get(1).toString());
+	    		tsval.put("mailno", descs.get(2)==null?"null":descs.get(2).toString());
 	    		}
 	    	}
 	    }
@@ -91,28 +97,38 @@ public final class tsmanger {
 		String cp = (String)tsval.get("cp"),mailno =(String)tsval.get("mailno");
 		logger.debug("cp :"+cp+"mailno"+ mailno);
 		if(cp=="null"||mailno=="null") return;
-		URL url = new URL("http://api.ickd.cn/?id=EA08B368D6C199E50704D412EB3B5DEA&com="+cp+"&nu="+mailno+"&type=json");  
-        URLConnection connection = url.openConnection(); 
-        connection.setConnectTimeout(20000);
-        connection.setReadTimeout(20000);
-        //connection.connect(); 
-        InputStream l_urlStream;  
-        l_urlStream = connection.getInputStream();  
-        String sCurrentLine;  
-        String sTotalString;  
-        sCurrentLine = "";  
-        sTotalString = ""; 
-        BufferedReader l_reader = new BufferedReader(new InputStreamReader(  
-                l_urlStream));  
-        while ((sCurrentLine = l_reader.readLine()) != null) {  
-            sTotalString += sCurrentLine;
-  
-        }  
+//		URL url = new URL("http://api.ickd.cn/?id=EA08B368D6C199E50704D412EB3B5DEA&com="+cp+"&nu="+mailno+"&type=json");  
+//        URLConnection connection = url.openConnection(); 
+//        connection.setConnectTimeout(20000);
+//        connection.setReadTimeout(20000);
+//        //connection.connect(); 
+//        InputStream l_urlStream;  
+//        l_urlStream = connection.getInputStream();  
+//        String sCurrentLine;  
+//        String sTotalString;  
+//        sCurrentLine = "";  
+//        sTotalString = ""; 
+//        BufferedReader l_reader = new BufferedReader(new InputStreamReader(  
+//                l_urlStream));  
+//        while ((sCurrentLine = l_reader.readLine()) != null) {  
+//            sTotalString += sCurrentLine;
+//  
+//        }  
         //System.out.println(sTotalString); 
+		String result = "";
+		KdniaoTrackQueryAPI api = new KdniaoTrackQueryAPI();
+		try {
+			result = api.getOrderTracesByJson(cp, mailno);
+			logger.debug(result);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
         try {
-			JSONObject jo=new JSONObject(sTotalString);
-			ts=new transport(jo.getString("mailNo"), jo.optInt("status"), jo.getString("data"), jo.optInt("update"),  jo.getString("expSpellName"),  jo.getString("expTextName"));
-			ts.setMessage(jo.optString("message"));
+			JSONObject jo=new JSONObject(result);
+			ts=new transport(jo.getString("LogisticCode"), jo.optInt("State"), jo.getString("Traces"),System.currentTimeMillis(),  jo.getString("ShipperCode"), 
+					tsval.containsKey("cpname")?String.valueOf(tsval.get("cpname")):jo.getString("ShipperCode"));
+			ts.setMessage(jo.optString("Reason"));
 			ts.setHtml(ts.toHtml(ts).toString());
 			ts.setFh_Info(ts.getStatus());
 			//System.out.println(ts.toLine(ts));

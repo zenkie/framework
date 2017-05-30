@@ -14,7 +14,7 @@ public final class transport {
 	private String message;
 	private String data;
 	private String html;
-	private int  update;
+	private long  update;
 	private String expSpellName;	 
 	private String expTextName;
 	private  String Fh_Info=null;
@@ -23,7 +23,7 @@ public final class transport {
 	
 	
 	transport(String mailNo,int status,String data,
-			int update,String expSpellName,String expTextName){
+			long update,String expSpellName,String expTextName){
 		this.mailNo=mailNo;
 		this.status=status;
 		this.data=data;
@@ -51,8 +51,8 @@ public final class transport {
 			for(int i=0;i< ja.length();i++){
 			 String rowcon="";
 			 JSONObject	jo= ja.getJSONObject(i);
-			 time =jo.getString("time");
-			 context=jo.getString("context");
+			 time =jo.getString("AcceptTime");
+			 context=jo.getString("AcceptStation");
 			 rowcon=("<tr><td>"+time+"</td><td>"+context+"</td></tr>");
 			 ret.append(rowcon);
 			}
@@ -99,21 +99,27 @@ public final class transport {
 			}
 			JSONArray ja= new JSONArray((String)data);
 			JSONObject	jo= ja.getJSONObject(0);
-			 if(status>=1)context=jo.getString("context")+"<br>"+jo.getString("time")+"<"+expTextName+">";
+			 if(status>=1)context=jo.getString("AcceptTime")+"<br>"+jo.getString("AcceptTime")+"<"+expTextName+">";
 			 Fh_Info = context;
 		}
-		if(status>=2){
+		if(status==2){
 			JSONArray ja= new JSONArray((String)data);
-			JSONObject	jo= ja.getJSONObject(1);
+			JSONObject jo=new JSONObject();
+			if(ja.length()<2){
+				jo= ja.getJSONObject(ja.length()-1);
+			}else{
+				jo= ja.getJSONObject(1);
+			}
+				
 			 //String time =jo.getString("time");
-			 String context=jo.getString("context")+"<br>"+jo.getString("time")+"<"+expTextName+">"+"<a href=javascript:art.artDialog(jQuery('#ts_html').html())>详细信息</a>";
+			 String context=jo.getString("AcceptStation")+"<br>"+jo.getString("AcceptTime")+"<"+expTextName+">"+"<a href=javascript:void(0); onclick=art.artDialog(jQuery('#ts_html').html())>详细信息</a>";
 			 Ps_Info = context;
 		}
 		if(status>=3){
 			JSONArray ja= new JSONArray((String)data);
 			JSONObject	jo= ja.getJSONObject(ja.length()-1);
 			 //String time =jo.getString("time");
-			 String context=jo.getString("context")+"<br>"+jo.getString("time")+"<"+expTextName+">"+"<a href=javascript:art.artDialog(jQuery('#ts_html').html())>详细信息</a>";
+			 String context=jo.getString("AcceptStation")+"<br>"+jo.getString("AcceptTime")+"<"+expTextName+">"+"<a href=javascript:void(0); onclick=art.artDialog(jQuery('#ts_html').html())>详细信息</a>";
 			 Qr_Info = context;
 		}
 	}
