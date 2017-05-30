@@ -205,7 +205,13 @@ public class FileUtils {
      * @throws NDSException if the copy of the file failed
      */
     public static void copyFile(String src, String dest) throws NDSException {
-        copyFile(new File(src), new File(dest));
+    	 File f = new File(dest);
+    	 File p = new File(f.getParent());
+          if(!p.exists()){
+         	  logger.debug("create dest file directory"+p);
+              p.mkdirs();
+          }
+        copyFile(new File(src), p);
     }
 
     /**
