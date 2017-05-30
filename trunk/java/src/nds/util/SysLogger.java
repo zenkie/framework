@@ -17,6 +17,8 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import nds.control.web.WebUtils;
+
 
 ;
 /**
@@ -125,8 +127,12 @@ public class SysLogger {
 	 * @param msg
 	 */
 	private void record(int level, String module,String submodule, String operator, String host, String msg,int adClientId){
+	    Configurations conf= (Configurations)WebUtils.getServletContextManager().getActor( nds.util.WebKeys.CONFIGURATIONS);
+	    Boolean enableLog= Tools.getBoolean(conf.getProperty("portal.ensyslog"), false);
+	    if(enableLog){
 		LogEvent event= new LogEvent(adClientId,level, module,submodule,operator, host,msg );
 		queue.addElement(event);
+	    }
 	}
     public void debug(String module,String submodule, String operator, String host, String msg,int adClientId){
     	record(DEBUG,  module,submodule,operator, host,msg ,adClientId );
