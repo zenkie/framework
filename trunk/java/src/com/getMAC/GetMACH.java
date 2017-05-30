@@ -5,6 +5,9 @@ import org.hyperic.sigar.NetFlags;
 import org.hyperic.sigar.NetInterfaceConfig;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
+
+import nds.control.web.ServletContextManager;
+import nds.control.web.WebUtils;
 import nds.util.AES;
 
 public class GetMACH {
@@ -13,8 +16,13 @@ public class GetMACH {
 	 * @return 机器的唯一标示码
 	 */
 	
-	private static final String a="eXFxbG1nczFjNg==";
-    public static String getMach() {
+	private static  String a;
+	
+    public static void setA(String a) {
+		GetMACH.a = a;
+	}
+
+	public static String getMach() {
     	StringBuffer MACstr = new StringBuffer();
         try {
              //cpu数量
@@ -79,8 +87,9 @@ public class GetMACH {
      * get_mac addresss for aes
      * @throws Exception 
      */
-    public static String  get_maconly() throws Exception{
-    	AES aes=new AES(a);
+    @Deprecated
+    public static String  get_maconly(String pwd) throws Exception{
+    	AES aes=new AES(pwd);
     	String str = aes.encrypt(GetMACH.getMach());
     	return str;
     }
