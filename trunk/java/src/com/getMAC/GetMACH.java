@@ -30,7 +30,32 @@ public class GetMACH {
         	MACstr.append(String.valueOf(cpuThreadNum));
             // 以太网信息
         	//MACstr = ethernet(MACstr);
-        	String sign=nds.util.MD5Sum.toCheckSumStr(NetInterfaceData.getCPUSerial()+NetInterfaceData.getHardDiskSN("C")+NetInterfaceData.getMotherboardSN());
+        	String sign;
+        	long startTime=System.currentTimeMillis();   //获取开始时间
+        	//String sign=nds.util.MD5Sum.toCheckSumStr(NetInterfaceData.getCPUSerial()+NetInterfaceData.getHardDiskSN("C")+NetInterfaceData.getMotherboardSN());
+        	sign=nds.util.MD5Sum.toCheckSumStr(NetInterfaceData.getHardDiskSN("C")+NetInterfaceData.getMotherboardSN());
+            
+        	long endTime=System.currentTimeMillis(); //获取结束时间
+        	System.out.println("程序运行时间： "+(endTime-startTime)+"ms");
+        	
+        	
+//        	
+//        	 startTime=System.currentTimeMillis();   //获取开始时间
+//        	//String sign=nds.util.MD5Sum.toCheckSumStr(NetInterfaceData.getCPUSerial()+NetInterfaceData.getHardDiskSN("C")+NetInterfaceData.getMotherboardSN());
+//        	sign=nds.util.MD5Sum.toCheckSumStr(NetInterfaceData.getHardDiskSN("C"));
+//            
+//        	 endTime=System.currentTimeMillis(); //获取结束时间
+//        	System.out.println("disksn程序运行时间： "+(endTime-startTime)+"ms");
+//        	
+//        	
+//        	
+//        	
+//        	 startTime=System.currentTimeMillis();   //获取开始时间
+//        	//String sign=nds.util.MD5Sum.toCheckSumStr(NetInterfaceData.getCPUSerial()+NetInterfaceData.getHardDiskSN("C")+NetInterfaceData.getMotherboardSN());
+//        	sign=nds.util.MD5Sum.toCheckSumStr(NetInterfaceData.getMotherboardSN());
+//            
+//        	 endTime=System.currentTimeMillis(); //获取结束时间
+//        	System.out.println("HB程序运行时间： "+(endTime-startTime)+"ms");
         	MACstr.append(","+sign);
         } catch (Exception e1) {
             e1.printStackTrace();
