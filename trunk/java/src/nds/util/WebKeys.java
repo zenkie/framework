@@ -49,9 +49,12 @@ package nds.util;
  * values are the same as those used in the JSP
  * pages (useBean tags).
  */
-public interface WebKeys {
+public class WebKeys {
 
-    public static final String LOGGER = "nds.web.logger";// ServletContext
+    public static String getPrdname() {
+		return PRDNAME;
+	}
+	public static final String LOGGER = "nds.web.logger";// ServletContext
     public static final String CONFIGURATIONS = "nds.web.configs";// ServletContext
     public static final String REQUEST_PROCESSOR = "nds.web.rps";// ServletContext
     public static final String FLOW_PROCESSOR = "nds.web.flows";// ServletContext
@@ -67,6 +70,7 @@ public interface WebKeys {
     public static final String  PORTLETCONFIG_MANAGER="nds.web.config.PortletConfigManager";// ServletContext
     public static final String  USER_WELCOME_MANAGER="nds.web.welcome.Manager";// ServletContext
     public static final String  PLUGIN_CONTROLLER="nds.io.plugincontroller";// ServletContext
+    public static final String  LIC_MANAGER="nds.web.licmanager";// ServletContext
     
     // user information, is UserWebImpl
     public static final String USER = "nds.web.authorization";
