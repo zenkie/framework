@@ -55,6 +55,8 @@
 
 package nds.control.web;
 
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 import java.net.URL;
 import java.util.Properties;
 
@@ -67,6 +69,7 @@ import nds.model.dao._RootDAO;
 import nds.schema.TableManager;
 import nds.util.Configurations;
 import nds.util.Director;
+import nds.util.LicenseMake;
 import nds.util.Manager;
 import nds.util.MessagesHolder;
 import nds.util.NativeTools;
@@ -82,7 +85,8 @@ Maintains application level information
 public class ServletContextManager implements ServletContextActor,java.io.Serializable {
     private Logger logger=LoggerManager.getInstance().getLogger(ServletContextManager.class.getName());
     private Manager manager;
-    private  static boolean doLog=true;
+
+	private  static boolean doLog=true;
     private void debug(String str) {
         if(doLog)
             System.out.println("[ServletContextManager] "+ str);
@@ -91,6 +95,11 @@ public class ServletContextManager implements ServletContextActor,java.io.Serial
     public ServletContextManager() {
         manager=new Manager();
     }
+    
+    public Manager getManager() {
+		return manager;
+	}
+    
     private Object create(String name, ServletContext context) {
         Object actor= manager.create(name, this.getClass().getClassLoader());
         if( actor instanceof ServletContextActor) {
@@ -156,6 +165,13 @@ public class ServletContextManager implements ServletContextActor,java.io.Serial
             tm.init(props);
 
             manager.setRole(WebKeys.TABLE_MANAGER,tm );
+            
+            //licmanage
+            ObjectInputStream is = new ObjectInputStream(new FileInputStream( conf.getProperty("portal.licpath","act.nea/home/lic")));  
+            LicenseMake lic = (LicenseMake) is.readObject();// 从流中读取User的数据  
+            manager.setRole(WebKeys.LIC_MANAGER,lic );
+            
+            
             // security manager
             actor =create("nds.control.web.SecurityManagerWebImpl",context);
             manager.setRole(WebKeys.SECURITY_MANAGER,actor );

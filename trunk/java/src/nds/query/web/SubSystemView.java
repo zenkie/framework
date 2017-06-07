@@ -114,8 +114,15 @@ public class SubSystemView {
 		if(userWeb.getUserId()==userWeb.GUEST_ID){
 			return subs;
 		}
-		LicenseManager.validateLicense(WebKeys.PRDNAME,"5.0","",false);
-		Iterator b=LicenseManager.getLicenses();
+		
+	    ServletContextManager scm= WebUtils.getServletContextManager();
+	    
+	    LicenseMake licmark=(LicenseMake)scm.getActor(nds.util.WebKeys.LIC_MANAGER);
+	    
+	    licmark.validateLicense(nds.util.WebKeys.getPrdname(),"5.0","");
+	    
+		Iterator b=licmark.getLicenses();
+		
 		String licsubsys=null;
 	    while (b.hasNext()) {
 	    	LicenseWrapper o = (LicenseWrapper)b.next();

@@ -73,8 +73,11 @@ import javax.sql.DataSource;
 
 
 import nds.control.event.NDSEventException;
+import nds.control.web.ServletContextManager;
+import nds.control.web.WebUtils;
 import nds.schema.TableManager;
 import nds.util.License;
+import nds.util.LicenseMake;
 import nds.util.LicenseManager;
 import nds.util.LicenseWrapper;
 import nds.util.SysLogger;
@@ -500,20 +503,10 @@ public class LoginAction extends Action {
 		    	if("ABCDEFG".equalsIgnoreCase(userValidCode)){
 		    		
 		    	}else{
-		    	if(serverValidCode!=null && (serverValidCode.equalsIgnoreCase(userValidCode))){
-		    		// so server memory space saved. used later
-		    		//ses.removeAttribute("nds.control.web.ValidateMServlet");
-		    		//logger.debug("verify code ok");
-		    		//Thread.dumpStack();
-		    		//logger.debug(nds.util.Tools.toString(req));
-		    	}else{
-		    		//Thread.dumpStack();
-		    		//logger.debug(nds.util.Tools.toString(req));
-		    		
-		    		//logger.debug("error verify code:"+ userValidCode+", serverValidCode:"+serverValidCode);
-		    		SessionErrors.add(req, "VERIFY_CODE_ERROR");
-		    		return mapping.findForward("portal.login");
-		    	}
+			    	if((serverValidCode!=null && (!serverValidCode.equalsIgnoreCase(userValidCode)))||serverValidCode==null){
+			    		SessionErrors.add(req, "VERIFY_CODE_ERROR");
+			    		return mapping.findForward("portal.login");
+			    	}
 		    	}
 		    	// 是否当前处于禁止登录状态
 		    	if(!checkInactiveUser(req)){
@@ -950,7 +943,13 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 	    boolean isexp=false;
 	  	try{
 	  	// logger.debug("upload keyfile is"+mac);
-	    Iterator b=LicenseManager.getLicenses();
+	  	ServletContextManager scm= WebUtils.getServletContextManager();
+		    
+		LicenseMake licmark=(LicenseMake)scm.getActor(nds.util.WebKeys.LIC_MANAGER);
+		    
+		licmark.validateLicense(nds.util.WebKeys.getPrdname(),"5.0","");
+		    
+		Iterator b=licmark.getLicenses();
 
 	    while (b.hasNext()) {
 	    	LicenseWrapper o = (LicenseWrapper)b.next();
@@ -990,73 +989,12 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 	 * 
 	 */
 	private boolean check_mac(HttpServletRequest req){
-
-		Connection conn = null; 
-		Object sc=null;
-		String mac =null;
-		ResultSet rs = null;
-		PreparedStatement pstmt = null;
-		//if mac pass exists
-		//get mac file to check it
 		try{
-			conn= nds.query.QueryEngine.getInstance().getConnection();
-			pstmt= conn.prepareStatement("select mac from users where id=?");
-			pstmt.setInt(1, 893);
-			rs= pstmt.executeQuery();
-			if(rs.next()){
-				sc=rs.getObject(1);
-				if(sc instanceof java.sql.Clob) {
-					mac=((java.sql.Clob)sc).getSubString(1, (int) ((java.sql.Clob)sc).length());
-	        	}else{
-	        		mac=(String)sc;
-	        	}	
-			}
-			logger.debug("keyfile :"+mac);
-			if(mac==null){
-				SessionErrors.add(req, "VERIFY_KEYFILE_ERROR");
-				return false;
-				}
-			try{if(conn!=null) conn.close();}catch(Throwable t){}
-		}catch(Throwable t){
-			return false;
-		}finally{
-			try{if(rs!=null) rs.close();}catch(Throwable t){}
-			try{if(pstmt!=null) pstmt.close();}catch(Throwable t){}
-			try{if(conn!=null) conn.close();}catch(Throwable t){}
-		}	
-		//else
-		nds.util.Configurations conf=(nds.util.Configurations)nds.control.web.WebUtils.getServletContextManager().getActor(nds.util.WebKeys.CONFIGURATIONS);
-		try{
-			LicenseManager.validateLicense(nds.util.WebKeys.PRDNAME,"5.0", mac);
-			/*
-		    Iterator b=LicenseManager.getLicenses();
-		    while (b.hasNext()) {
-		    LicenseWrapper o = (LicenseWrapper)b.next();
-	    	logger.debug("ltype :"+o.getLicenseType().toString());
-	   
-	    	if(o.getLicenseType()==License.LicenseType.COMMERCIAL){
-				//logger.error("The license should contain machine code.");
-				//return;
-				//if(license.getExpiresDate().getTime() - license.getCreationDate().getTime() > 1L * 100 * 24 * 3600* 1000  ){
-					if(System.currentTimeMillis() >o.getExpiresDate().getTime()  ){
-					//logger.error("Non-Commercial license valid duration should not be greater than 100 days");
-					logger.error("your company service day is old!!!!!!!");
-					o.setMms(LicenseManager.sendmss(o.getName(),o.getExpiresDate()));
-					//nds.control.web.WebUtils.setMms(o.getMms());
-				}
-		    }else if(o.getLicenseType()==License.LicenseType.EVALUATION){
-				// Evaluation should not have valid duration over 31 days
-				logger.debug("Evaluation should not have valid duration over");
-				//if(license.getExpiresDate().getTime() - license.getCreationDate().getTime() > 1L * 31 * 24 * 3600* 1000  ){
-				if(System.currentTimeMillis() >o.getExpiresDate().getTime()  ){
-					logger.error("Evaluation license valid duration should not be greater than 30 days");
-					o.setExpdate(true);
-			    	//nds.control.web.WebUtils.setLtype(o.getLicenseType());
-					//return;
-				}
-		    }
-		    }
-		    */
+		  	ServletContextManager scm= WebUtils.getServletContextManager();
+		    
+			LicenseMake licmark=(LicenseMake)scm.getActor(nds.util.WebKeys.LIC_MANAGER);
+			    
+			licmark.validateLicense(nds.util.WebKeys.getPrdname(),"5.0","");
 			return true;
 		} catch (Exception e) {
 			logger.debug("check mackey invaild",e);
@@ -1065,6 +1003,8 @@ WAN_ADDR是不必验证USBKEY的地址，如内网地址 192.168.1.100，用户使用此域名访问时，
 		}
 	}
 }
+
+
 class HMAC_MD5
 {
 	

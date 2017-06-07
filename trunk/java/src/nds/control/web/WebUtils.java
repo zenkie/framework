@@ -1277,7 +1277,13 @@ public final class WebUtils {
 	public static String getMms() {
 		//return mmS;
 		String mms=null;
-		Iterator b=LicenseManager.getLicenses();
+		  ServletContextManager scm= WebUtils.getServletContextManager();
+		    
+		    LicenseMake licmark=(LicenseMake)scm.getActor(nds.util.WebKeys.LIC_MANAGER);
+		    
+		    licmark.validateLicense(WebKeys.getPrdname(),"5.0","");
+		    
+			Iterator b=licmark.getLicenses();
 	    while (b.hasNext()) {
 	    LicenseWrapper o = (LicenseWrapper)b.next();
 	    mms=o.getMms();
@@ -1292,7 +1298,13 @@ public final class WebUtils {
 	public static LicenseType getLtype() {
 		// TODO Auto-generated method stub
 		LicenseType ltype=null;
-		Iterator b=LicenseManager.getLicenses();
+		  ServletContextManager scm= WebUtils.getServletContextManager();
+		    
+		    LicenseMake licmark=(LicenseMake)scm.getActor(nds.util.WebKeys.LIC_MANAGER);
+		    
+		    //licmark.validateLicense(WebKeys.getPrdname(),"5.0","");
+		    
+			Iterator b=licmark.getLicenses();
 	    while (b.hasNext()) {
 	    LicenseWrapper o = (LicenseWrapper)b.next();
 	    ltype=o.getLicenseType();
@@ -1304,7 +1316,13 @@ public final class WebUtils {
 	public static String  getCompany() {
 		// TODO Auto-generated method stub
 		String cp=null;
-		Iterator b=LicenseManager.getLicenses();
+		  ServletContextManager scm= WebUtils.getServletContextManager();
+		    
+		    LicenseMake licmark=(LicenseMake)scm.getActor(nds.util.WebKeys.LIC_MANAGER);
+		    
+		    //licmark.validateLicense(WebKeys.getPrdname(),"5.0","");
+		    
+			Iterator b=licmark.getLicenses();
 	    while (b.hasNext()) {
 	    LicenseWrapper o = (LicenseWrapper)b.next();
 	    cp= o.getName();
@@ -1316,7 +1334,13 @@ public final class WebUtils {
 	public static boolean  getExpdate() {
 		// TODO Auto-generated method stub
 		boolean cp=false;
-		Iterator b=LicenseManager.getLicenses();
+		  ServletContextManager scm= WebUtils.getServletContextManager();
+		    
+		    LicenseMake licmark=(LicenseMake)scm.getActor(nds.util.WebKeys.LIC_MANAGER);
+		    
+		    //licmark.validateLicense(WebKeys.getPrdname(),"5.0","");
+		    
+			Iterator b=licmark.getLicenses();
 	    while (b.hasNext()) {
 	    LicenseWrapper o = (LicenseWrapper)b.next();
 	    cp= o.getExpdate();

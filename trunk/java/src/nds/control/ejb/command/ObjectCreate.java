@@ -12,6 +12,7 @@ import java.util.*;
 
 import nds.util.*;
 import nds.control.web.AttachmentManager;
+import nds.control.web.ServletContextManager;
 import nds.control.web.WebUtils;
 import nds.control.ejb.Command;
 import nds.control.ejb.DefaultWebEventHelper;
@@ -35,11 +36,7 @@ import nds.schema.RefByTable;
 import nds.schema.Table;
 import nds.schema.TableManager;
 import nds.security.User;
-import nds.util.Attachment;
-import nds.util.NDSException;
-import nds.util.PairTable;
-import nds.util.Tools;
-import nds.util.Validator;
+
 import org.json.*;
 /**
  * Do object creation
@@ -333,8 +330,15 @@ public class ObjectCreate extends Command{
                 	   //add padpos check
                 	   try{
                		    stmt.executeUpdate();
-           			    LicenseManager.validateLicense(WebKeys.PRDNAME,"5.0","",false);
-           				Iterator b=LicenseManager.getLicenses();
+               		    
+               		    ServletContextManager scm= WebUtils.getServletContextManager();
+              	    
+	              	    LicenseMake licmark=(LicenseMake)scm.getActor(nds.util.WebKeys.LIC_MANAGER);
+	              	    
+	              	    licmark.validateLicense(nds.util.WebKeys.getPrdname(),"5.0","");
+	              	    
+	              		Iterator b=licmark.getLicenses();
+	              		
            				int un=0,pn = 0,padpos=0;
            			    while (b.hasNext()) {
            			    	LicenseWrapper o = (LicenseWrapper)b.next();

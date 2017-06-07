@@ -21,6 +21,7 @@ import nds.control.ejb.ObjectModifyImpl;
 import nds.control.event.DefaultWebEvent;
 import nds.control.event.NDSEventException;
 import nds.control.util.ValueHolder;
+import nds.control.web.ServletContextManager;
 import nds.control.web.WebUtils;
 import nds.mail.NotificationManager;
 import nds.monitor.MonitorManager;
@@ -30,6 +31,7 @@ import nds.query.*;
 import nds.schema.*;
 import nds.security.User;
 import nds.util.Configurations;
+import nds.util.LicenseMake;
 import nds.util.LicenseManager;
 import nds.util.LicenseWrapper;
 import nds.util.NDSException;
@@ -216,9 +218,13 @@ public class ObjectModify extends Command{
        //add licenses c_store and users check
 		ResultSet rs=null;
        try{
-				LicenseManager.validateLicense(WebKeys.PRDNAME, "5.0", "",
-						false);
-				Iterator b = LicenseManager.getLicenses();
+    	   		ServletContextManager scm= WebUtils.getServletContextManager();
+   	    
+		   	    LicenseMake licmark=(LicenseMake)scm.getActor(nds.util.WebKeys.LIC_MANAGER);
+		   	    
+		   	    licmark.validateLicense(nds.util.WebKeys.getPrdname(),"5.0","");
+		   	    
+		   		Iterator b=licmark.getLicenses();
 				int un = 0, pn = 0, padpos = 0;
 				while (b.hasNext()) {
 					LicenseWrapper o = (LicenseWrapper) b.next();

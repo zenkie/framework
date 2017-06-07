@@ -1,7 +1,9 @@
 package nds.control.web.reqhandler;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -27,6 +29,7 @@ import nds.log.Logger;
 import nds.log.LoggerManager;
 import nds.schema.TableManager;
 import nds.util.Configurations;
+import nds.util.LicenseMake;
 import nds.util.NDSException;
 import nds.util.Tools;
 import nds.util.WebKeys;
@@ -103,6 +106,11 @@ public class UploadKeyHandler extends RequestHandlerSupport {
 				logger.debug(e.getMessage());
 				throw new NDSException("save keyfile->"+keyfile+" is wrong!");
 			}
+		
+            ObjectInputStream is = new ObjectInputStream(new FileInputStream( conf.getProperty("portal.licpath","act.nea/home/lic")));  
+            LicenseMake lic = (LicenseMake) is.readObject();// 从流中读取User的数据  
+            ServletContextManager scm= WebUtils.getServletContextManager();
+            scm.getManager().setRole(WebKeys.LIC_MANAGER,lic);
 
 			// jo.put("file", absFileName);
 			jo.put("javax.servlet.http.HttpServletRequest", request);
