@@ -12,7 +12,8 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public final class License {
+public final class License implements Serializable {
+	private static final long serialVersionUID = 1L;
 	private long licenseID;
 
 	private String product;
@@ -414,7 +415,8 @@ public final class License {
 				+ ", creationDate=" + creationDate + "}";
 	}
 
-	public static final class LicenseType {
+	public static final class LicenseType  implements Serializable {
+		private static final long serialVersionUID = 1L;
 
 		public String toString() {
 			return name;
@@ -475,7 +477,10 @@ public final class License {
 		
 		if(this.licenseType==License.LicenseType.COMMERCIAL){
 				if(System.currentTimeMillis() >this.expiresDate.getTime()  ){
-				 return LicenseManager.sendmss(this.name,this.expiresDate);
+					SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+					String cont=this.name+">您的服务期已于"+df.format(this.expiresDate)+"到期！请与产品客服联系！";
+					String mss="art.dialog.notice({title: '系统消息',width: 220,content: '尊敬的客户<"+cont+"',icon: 'warning',time: 5});";
+					return mss;
 				}
 		}		
 		return null;
