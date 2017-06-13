@@ -66,6 +66,11 @@ public final class LicenseWrapper {
 	public Boolean getSupportJFR() {
 		return lic.getSupportJFR();
 	}
+	
+	
+	public Boolean getEnablelanguage() {
+		return lic.getEnablelanguage();
+	}
 
 	public String getURL() {
 		return lic.getURL();

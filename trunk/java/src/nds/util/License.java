@@ -50,7 +50,17 @@ public final class License implements Serializable {
 	
 	private int padPOS=0;
 	
+	private Boolean enablelanguage=false;
 	
+	
+	public Boolean getEnablelanguage() {
+		return enablelanguage;
+	}
+
+	public void setEnablelanguage(Boolean enablelanguage) {
+		this.enablelanguage = enablelanguage;
+	}
+
 	private Boolean supportJFR=false;
 	
 
@@ -223,6 +233,7 @@ public final class License implements Serializable {
 		buf.append(Subsystems).append(seperator);
 		buf.append(supportJFR).append(seperator);
 		buf.append(cus_code).append(seperator);
+		buf.append(enablelanguage).append(seperator);
 		try {
 			if (expiresDate != null)
 				buf.append(formatter.format(expiresDate)).append(seperator);;
@@ -288,6 +299,8 @@ public final class License implements Serializable {
 		el.addContent((new Element("Subsystems")).addContent(""
 				+ license.getSubsystems()));
 		el.addContent((new Element("supportjfr")).addContent(""
+				+ license.getSupportJFR()));
+		el.addContent((new Element("enablelanguage")).addContent(""
 				+ license.getSupportJFR()));
 		el.addContent((new Element("cuscode")).addContent(""
 				+ license.getCuscode()));
@@ -357,6 +370,7 @@ public final class License implements Serializable {
 		license.setPadPOS(Integer.parseInt(el.getChild("padPOS")==null?"0":el.getChild("padPOS").getText()));
 
 		String supportjfr=null;
+		String language=null;
 		
 		try{
 			supportjfr =el.getChild("supportjfr").getText();
@@ -370,8 +384,20 @@ public final class License implements Serializable {
 			if (supportjfr != null&&supportjfr.equalsIgnoreCase("true")){
 				license.setSupportJFR(true);
 			}
+			
+			try{
+				language =el.getChild("enablelanguage").getText();
+			
+			} catch (Exception e) {
+				language=null;
+			}
 		
-		
+			System.out.print("enablelanguage ->"+language);
+			
+			if (language != null&&language.equalsIgnoreCase("true")){
+				license.setEnablelanguage(true);
+			}
+			
 		
 		if (el.getChild("url") != null) {
 			String url = el.getChild("url").getText();
@@ -410,6 +436,8 @@ public final class License implements Serializable {
 				+ ", numPOS="+ numPOS
 				+ ", padPOS="+ padPOS
 				+ ", url='" + url
+				+ ", enablelanguage='" + enablelanguage
+				+ ", supportjfr='" + supportJFR
 				+ "'" + ", expiresDate=" + expiresDate
 				+ ", maintenanceExpiresDate=" + maintenanceExpiresDate
 				+ ", creationDate=" + creationDate + "}";
