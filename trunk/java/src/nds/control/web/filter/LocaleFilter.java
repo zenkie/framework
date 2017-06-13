@@ -8,7 +8,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.util.CookieKeys;
 import com.liferay.util.CookieUtil;
 
+import nds.control.web.ServletContextManager;
+import nds.control.web.WebUtils;
 import nds.control.web.reqhandler.LocaleRequestWrapper;
+import nds.util.LicenseMake;
+import nds.util.LicenseWrapper;
 import nds.util.ParamUtils;
 import nds.util.Validator;
 
@@ -17,6 +21,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -42,6 +47,19 @@ public class LocaleFilter extends OncePerRequestFilter {
 	    String langCookie=CookieUtil.get(request.getCookies(),"lang");
 	    logger.debug("currentLocale ->"+currentLocale.toString());
 	    logger.debug("language ->"+language);
+	    
+		ServletContextManager scm= WebUtils.getServletContextManager();
+      	    
+  	    LicenseMake licmark=(LicenseMake)scm.getActor(nds.util.WebKeys.LIC_MANAGER);
+  	    
+  		Iterator b=licmark.getLicenses();
+  		
+  		Boolean enablelanguage=false;
+  		
+  		 while (b.hasNext()) {
+		    	LicenseWrapper o = (LicenseWrapper)b.next();
+		    	enablelanguage=o.getEnablelanguage();
+		    }
 		
 //		if (Validator.isNotNull(langCookie)&&langCookie.contains("_")) {
 //			language=langCookie;
@@ -51,7 +69,7 @@ public class LocaleFilter extends OncePerRequestFilter {
 			/**
 			 * 1.如果cookies中是有值的（前提条件是从页面传过来的语言为空才进下面的逻辑）
 			 */
-			 if(language != null){
+			 if(language != null&&enablelanguage){
 				 String[] clang=language.split("_");
 				    Locale defaultLocale=new Locale(clang[0],clang[1]); 
 		        	String lang=defaultLocale.getLanguage();
@@ -64,7 +82,7 @@ public class LocaleFilter extends OncePerRequestFilter {
 		            preferredLocale=new Locale(lang,country,variant);
 		            request = new LocaleRequestWrapper(request, preferredLocale);
 		            LocaleContextHolder.setLocale(preferredLocale);
-			}else if(Validator.isNotNull(langCookie)&&langCookie.contains("_")){
+			}else if(Validator.isNotNull(langCookie)&&langCookie.contains("_")&&enablelanguage){
 				logger.debug("cookie lang->"+langCookie);
 				 	String[] clang=langCookie.split("_");
 				    Locale defaultLocale=new Locale(clang[0],clang[1]); 
